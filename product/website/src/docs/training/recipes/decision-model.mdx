@@ -62,33 +62,22 @@ dataset = client.datasets.push("ticket-triage", [
 
 ## Train the decision model
 
-`DecisionModelRecipe` picks the right loss automatically for each question type (`losses.CrossEntropy()` for `choice`, `losses.BCEWithLogits()` for `noul`, and `losses.OrdinalBCE()` for `score`).
-
-The recipe manages the backbone for you:
-
-- **`gradiated/linden-1`** *(default)*: the recipe specializes `linden-1` on your own questions and state format. It's a recipe-managed backbone, so you get it by leaving `model` out; it isn't a base model for `SFTRecipe` or `GRPORecipe`.
-- **`"qwen/qwen3-0.6b"`**: pass it as `model=` if you want to train a lightweight decision model from a general open model instead.
+`DecisionModelRecipe` picks the right loss for each question type and specializes the `gradiated/linden-1` backbone on your questions and state format, so the recipe needs no arguments:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, splits
+from grad import Grad
 from grad.recipes import DecisionModelRecipe
 
 client = Grad()
 dataset = client.datasets.get("ticket-triage")
 
-recipe = DecisionModelRecipe(
-    split=splits.BySession(eval_fraction=0.15),  # backbone defaults to gradiated/linden-1
-)
-print(client.runs.plan(dataset=dataset, recipe=recipe))  # $0: resolved defaults + estimate
-
 run = client.runs.create(
     dataset=dataset,
     name="ticket-triage",
-    recipe=recipe,
-    max_cost_usd=10,
+    recipe=DecisionModelRecipe(),
 ).wait()
 
 print(run.artifact.id)
@@ -99,17 +88,13 @@ print(run.eval_report)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, recipes, splits } from "@gradiated/grad";
+import { Grad, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("ticket-triage");
 
-const recipe = recipes.decisionModel({
-  split: splits.bySession({ evalFraction: 0.15 }),
-});
-
 const run = await grad.runs
-  .create({ dataset, name: "ticket-triage", recipe, maxCostUsd: 10 })
+  .create({ dataset, name: "ticket-triage", recipe: recipes.decisionModel() })
   .wait();
 
 console.log(run.artifact.id, run.evalReport);
@@ -124,12 +109,9 @@ ctx := context.Background()
 dataset, _ := client.Datasets.Get(ctx, "ticket-triage")
 
 run, _ := client.Runs.Create(ctx, grad.RunParams{
-	Dataset:    dataset,
-	Name:       "ticket-triage",
-	MaxCostUSD: 10,
-	Recipe: grad.DecisionModelRecipe{
-		Split: grad.BySessionSplit{EvalFraction: 0.15},
-	},
+	Dataset: dataset,
+	Name:    "ticket-triage",
+	Recipe:  grad.DecisionModelRecipe{},
 }).Wait(ctx)
 fmt.Println(run.Artifact.ID, run.EvalReport)
 ```
@@ -138,8 +120,7 @@ fmt.Println(run.Artifact.ID, run.EvalReport)
   <DocsCodeTab label="CLI">
 
 ```bash
-grad train --dataset ticket-triage --name ticket-triage --recipe decision-model --dry-run
-grad train --dataset ticket-triage --name ticket-triage --recipe decision-model --max-cost-usd 10 --wait
+grad train --dataset ticket-triage --name ticket-triage --recipe decision-model --wait
 grad deploy ticket-triage@latest
 ```
 
@@ -152,12 +133,12 @@ grad deploy ticket-triage@latest
 - **Use a [Model router](/docs/training/recipes/router/)** when the decision is specifically *which LLM should answer this prompt* to save money within a quality budget.
 - **Use [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/)** when the model needs to generate free-form text, JSON, SQL, or code edits.
 
-### Key parameters
+### Parameters you might change
 
-- **`model`:** leave it out to specialize the recipe-managed `gradiated/linden-1` backbone. Pass `"qwen/qwen3-0.6b"` if you want to train a fresh lightweight model instead.
-- **Training defaults:** adapter, `lr="auto"`, batch size and epochs are picked for the backbone and printed by `client.runs.plan(...)` (or `grad train --dry-run`). Checkpoints are saved every 10% of steps, and `run.artifact` is the checkpoint with the lowest held-out loss.
-- **`loss`:** picked automatically from each question type (`losses.CrossEntropy()` for `choice`, `losses.BCEWithLogits()` for `noul`, `losses.OrdinalBCE()` for `score`); pass `loss=` only if you want to override it.
-- **`split`:** `splits.BySession(eval_fraction=0.15)` keeps related requests from the same `session_id` together so eval numbers stay honest.
+- **`model`:** leave it out to specialize the recipe-managed `gradiated/linden-1` backbone. Pass `model="qwen/qwen3-0.6b"` to train a lightweight decision model from a general open model instead.
+- **`loss`:** picked from each question type (cross-entropy for `choice`, binary cross-entropy for `noul`, ordinal loss for `score`). Pass `loss=` only to override it.
+
+Every other setting, including the eval split (15% of sessions held out), has a default; see the [training parameters reference](/docs/reference/training-parameters/#decisionmodelrecipe). Add `--dry-run` to `grad train` to see them resolved, with a cost estimate.
 
 ## Read the evaluation report
 

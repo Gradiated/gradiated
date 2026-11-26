@@ -30,7 +30,7 @@ You can pass any trained `Artifact` anywhere a model name is accepted:
 
 ## Which checkpoint becomes the artifact
 
-Managed runs checkpoint automatically as they train (every 10% of steps, and at least every 20 steps), including optimizer state, and evaluate each checkpoint on the held-out split. `run.artifact` is the checkpoint with the best eval score by default. Pass `select="last"` on the recipe to keep the final checkpoint instead, for example when you've added your own `evals=` and want to choose by hand:
+Managed runs save checkpoints automatically as they train and evaluate each one on the held-out split. `run.artifact` is the checkpoint with the best eval score. To pick a different one yourself, list the checkpoints and promote it:
 
 ```python
 from grad import Grad
@@ -44,7 +44,7 @@ for ckpt in run.checkpoints():
 art = run.checkpoints()[-1].promote(name="fast-diff-merge")  # save a checkpoint as a versioned Artifact
 ```
 
-The checkpoint that becomes `run.artifact` and the final checkpoint never expire. Other checkpoints are kept for 30 days (`checkpoint_ttl_days=` on the run changes this). Artifacts, including promoted checkpoints, are kept until you delete them. Each checkpoint records the base model revision, adapter config, chat template revision, `thinking` setting, and resolved `lr` and `loss`, so evaluations and deploys use the same settings it was trained with. If a run stops early (a crash, a `max_cost_usd` budget, or a cancel), continue it from its latest checkpoint with `client.runs.resume("run_01J9Z2")`.
+The best and final checkpoints never expire; other checkpoints are kept for 30 days unless you promote them. Each checkpoint remembers the settings it was trained with (base model, chat template, learning rate), so evaluations and deploys reuse them automatically. If a run stops early, continue it from its latest checkpoint with `client.runs.resume("run_01J9Z2")`. Checkpoint frequency, retention and selection settings are in the [reference](/docs/reference/training-parameters/#checkpoints-and-evaluation).
 
 ## Deploy on Gradiated Cloud or download weights
 

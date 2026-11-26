@@ -313,6 +313,11 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Reference for the core objects and JSON schemas used across the Gradiated SDKs and API.",
   },
+  "/docs/reference/training-parameters/": {
+    title: "Training parameters reference",
+    description:
+      "Every training setting, its default, and how the \"auto\" defaults are chosen. You rarely need to set any of them.",
+  },
   "/privacy/": {
     title: "Privacy",
     description:

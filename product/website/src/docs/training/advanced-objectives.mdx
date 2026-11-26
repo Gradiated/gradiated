@@ -32,7 +32,7 @@ import itertools
 from concurrent.futures import ThreadPoolExecutor
 
 import grad
-from grad import Grad, Rubric, Scorer, adapters, advantages, environments, losses, optim, validators
+from grad import Grad, Rubric, Scorer, advantages, environments, losses, optim, validators
 
 client = Grad()
 tasks = client.datasets.from_hf(
@@ -44,7 +44,7 @@ env = environments.Tools(
 )
 batches = list(itertools.islice(tasks.batches(32), 100))
 
-with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32)) as trainer, \
+with client.trainers.create(model="qwen/qwen3-8b") as trainer, \
         ThreadPoolExecutor(max_workers=1) as pool:
     # Overlap rollouts for step N+1 with training on step N; rollouts lag the weights by one step.
     rollout = lambda b: env.rollout_groups(artifact=trainer.snapshot(), tasks=b, group_size=8)
@@ -57,7 +57,7 @@ with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32
 
         batch = grad.with_advantages(groups, advantage=advantages.GroupStd(), skip_zero_var=True)
         fb = trainer.forward_backward(batch, loss=losses.GRPO(clip_low=0.2, clip_high=0.28, mask_ratio=(0.5, 2.0)))
-        trainer.optim_step(optim.AdamW(lr=5e-5, grad_clip=1.0))
+        trainer.optim_step(optim.AdamW(lr=5e-5))
         print(f"step={step} kl_sample_train={fb.result().metrics['kl_sample_train']:.4f}")
 ```
 
@@ -151,7 +151,7 @@ Fetch `top_k` opaque `TensorRef`s from the teacher and pass `gather_indices=t_re
 
 ```python
 import torch
-from grad import Grad, adapters, losses, optim
+from grad import Grad, losses, optim
 
 class JSDLoss(losses.CustomLoss):
     outputs = ("topk_logprobs",)
@@ -176,7 +176,7 @@ prompt_inputs = [
     [{"role": "user", "content": "Write a SQL query that returns the 5 newest orders."}],
 ]
 
-with client.trainers.create(model="qwen/qwen3-4b", adapter=adapters.LoRA(rank=32)) as trainer:
+with client.trainers.create(model="qwen/qwen3-4b") as trainer:
     for step in range(20):
         # On-policy: the student samples, the teacher scores the student's own tokens.
         rollouts = [g[0] for g in trainer.snapshot().sample(prompt_inputs, n=1, max_new_tokens=256)]
@@ -194,7 +194,7 @@ with client.trainers.create(model="qwen/qwen3-4b", adapter=adapters.LoRA(rank=32
 In SDFT, the **same base model** acts as teacher when shown the question *plus* a golden demonstration in context, while the student sees only the question. That lets you teach new skills without the model forgetting what it already knows:
 
 ```python
-from grad import Grad, adapters, losses, optim
+from grad import Grad, losses, optim
 
 client = Grad()
 teacher = client.models.get("qwen/qwen3-8b")  # frozen base model, no extra deployment
@@ -210,7 +210,7 @@ demo_prefixes = [
     for q, demo in demos
 ]
 
-with client.trainers.create(model=teacher, adapter=adapters.LoRA(rank=32)) as trainer:
+with client.trainers.create(model=teacher) as trainer:
     for step in range(50):
         rollouts = [g[0] for g in trainer.snapshot().sample(question_inputs, n=1, max_new_tokens=512)]
         t_refs = teacher.score_logprobs(
@@ -233,7 +233,7 @@ with client.trainers.create(model=teacher, adapter=adapters.LoRA(rank=32)) as tr
 import torch
 import torch.nn.functional as F
 import grad
-from grad import Grad, PreferencePair, adapters, heads, losses, optim
+from grad import Grad, PreferencePair, heads, losses, optim
 
 class BradleyTerryLoss(losses.CustomLoss):
     outputs = ("heads",)
@@ -256,7 +256,6 @@ pairs = [
 
 with client.trainers.create(
     model="qwen/qwen3-8b",
-    adapter=adapters.LoRA(rank=32),
     heads={"rm": heads.Linear(dim=1)},
 ) as trainer:
     for epoch in range(3):
@@ -271,7 +270,7 @@ with client.trainers.create(
   <DocsCodeTab label="Step-level PRM (BCESparsePositions)">
 
 ```python
-from grad import Grad, Record, adapters, heads, losses, optim
+from grad import Grad, Record, heads, losses, optim
 
 client = Grad()
 base = client.models.get("qwen/qwen3-8b")
@@ -290,7 +289,6 @@ records = [Record(tokens=tokens, positions=positions, labels=[1.0, 1.0, 0.0])]  
 
 with client.trainers.create(
     model="qwen/qwen3-8b",
-    adapter=adapters.LoRA(rank=32),
     heads={"prm": heads.Linear(dim=1, token_level=True)},
 ) as trainer:
     trainer.forward_backward(records, loss=losses.BCESparsePositions(head="prm"))
@@ -398,7 +396,7 @@ When your choice set varies per request (for example, ranking dynamic tools or z
 
 ```python
 import torch
-from grad import Grad, Record, adapters, losses, optim
+from grad import Grad, Record, losses, optim
 
 client = Grad()
 base = client.models.get("qwen/qwen3-8b")
@@ -428,7 +426,7 @@ decision_records = [
     Record(messages=prompt_messages, metadata={"target_probs": [0.05, 0.9, 0.05]}),
 ]
 
-with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32)) as trainer:
+with client.trainers.create(model="qwen/qwen3-8b") as trainer:
     fb = trainer.forward_backward(decision_records, loss=BrierLoss(), gather_indices=choice_ids)
     trainer.optim_step(optim.AdamW(lr=5e-5))
     print(f"before={probs.tolist()} brier={fb.result().loss:.4f}")

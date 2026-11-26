@@ -72,7 +72,7 @@ grad datasets push support-sft ./train.jsonl
 - **`"session_id"`:** groups records from the same conversation so they always land on the same side of the train/eval split. One is generated per record if you leave it out.
 - **`"scores"`:** any outcome you already know, such as `{"tests_passed": 1.0}`.
 
-By default only the final assistant turn is trained. To train on every assistant turn in a multi-turn agent trace, or to control thinking blocks for reasoning models, set `train_on=` and `thinking=` on the recipe. See [Chat templates](/docs/training/tuning-troubleshooting/#chat-templates-and-loss-masks) to preview exactly which tokens will be trained before you pay for a run.
+By default only the final assistant turn is trained. To train on every assistant turn of a multi-turn agent trace, pass `train_on="all_assistant"` to the recipe. Run `grad render <dataset> --model qwen/qwen3-8b` to see exactly which tokens will be trained; the other chat-template settings are in the [reference](/docs/reference/training-parameters/#data-and-chat-templates).
 
 ## Import a Hugging Face dataset
 

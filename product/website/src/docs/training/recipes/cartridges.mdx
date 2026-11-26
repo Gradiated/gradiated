@@ -10,7 +10,7 @@ A Cartridge shrinks a long system prompt or large block of background context in
 
 1. **`context`** is the text you want the model to know without resending it every time: your entire system prompt, instructions and examples, or large chunks of docs and runbooks (`Context.from_text(...)`, `Context.from_file(...)`, or `Context.from_uri("s3://...")`).
 2. **`dataset`** is 500–2,000 real questions or tasks that depend on that context, as plain chat records ending in a user turn (`{"messages": [...]}`), with no labeled answers needed.
-3. **`num_tokens`** is how small to compress that context (for example, `256` virtual tokens standing in for a 50,000-token prompt). Generally `256` works fine, and you can experiment with increasing it for very large contexts.
+3. **`num_tokens`** is how small to compress that context. The default, `256` virtual tokens, can stand in for a 50,000-token prompt; try `512` or `1024` for very large contexts.
 
 During training, the model reads `context` + each question to see what it *would* answer with the full text, and trains the Cartridge to give the same answer **without** sending `context` in the prompt.
 
@@ -22,7 +22,7 @@ Pass your model, the `context` you want to compress, and a dataset of example pr
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Context, Grad, losses
+from grad import Context, Grad
 from grad.recipes import CartridgeRecipe
 
 client = Grad()
@@ -31,18 +31,9 @@ dataset = client.datasets.get("api-docs-qa-prompts")  # pushed or imported earli
 recipe = CartridgeRecipe(
     model="qwen/qwen3-8b",
     context=Context.from_file("./api-docs-bundle.md"),  # or Context.from_uri("s3://...") / Context.from_text(...)
-    num_tokens=256,
-    loss=losses.TopKKLDistill(top_k=20),
-    # lr="auto" resolves to about 1e-2: Cartridges train far fewer weights than LoRA
 )
-print(client.runs.plan(dataset=dataset, recipe=recipe))
 
-run = client.runs.create(
-    dataset=dataset,
-    name="api-docs-cartridge",
-    recipe=recipe,
-    max_cost_usd=30,
-).wait()
+run = client.runs.create(dataset=dataset, name="api-docs-cartridge", recipe=recipe).wait()
 
 print(run.artifact.id, run.eval_report)
 ```
@@ -51,7 +42,7 @@ print(run.artifact.id, run.eval_report)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Context, Grad, losses, recipes } from "@gradiated/grad";
+import { Context, Grad, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("api-docs-qa-prompts");
@@ -63,10 +54,7 @@ const run = await grad.runs
     recipe: recipes.cartridge({
       model: "qwen/qwen3-8b",
       context: Context.fromFile("./api-docs-bundle.md"),
-      numTokens: 256,
-      loss: losses.topKKLDistill({ topK: 20 }),
     }),
-    maxCostUsd: 30,
   })
   .wait();
 
@@ -84,11 +72,6 @@ recipe: cartridge
 model: qwen/qwen3-8b
 context:
   file: ./api-docs-bundle.md
-num_tokens: 256
-loss:
-  kind: topk_kl_distill
-  top_k: 20
-max_cost_usd: 30
 ```
 
 ```bash
@@ -106,13 +89,12 @@ Cartridges export as standard `.grad` [`Artifact`](/docs/training/artifacts/)s (
 run.deploy()
 ```
 
-### Key parameters
+### Parameters you might change
 
-- **`context`:** the text you want the model to know without resending it every time (your entire system prompt, instructions and examples, or large chunks of docs and runbooks via `Context.from_text(...)`, `Context.from_file(...)`, or `Context.from_uri("s3://...")`).
-- **`num_tokens`:** how small to compress that context. Generally `256` works fine, and you can experiment with increasing it (for example, `512` or `1024`) for very large contexts. Compare answer accuracy in `eval_report` against the full-context model to check quality.
-- **`teacher`:** optional. Defaults to the same model as `model=`, or pass a larger model if you also want to distill from a stronger teacher.
-- **`lr="auto"`** *(default)*: Cartridges need a much higher learning rate than LoRA adapters; it resolves to about `1e-2`. Keep any override within `1e-2`–`2e-2`.
-- **Checkpoints:** saved every 10% of steps; `run.artifact` is the checkpoint whose answers are closest to the full-context model on held-out prompts.
+- **`num_tokens`:** `256` by default. Increase it (to `512` or `1024`) for very large contexts, and compare answer accuracy in `eval_report` against the full-context model to check quality.
+- **`teacher`:** defaults to the same model as `model=` reading the full context. Pass a larger model if you also want to distill from a stronger teacher.
+
+Cartridges need a much higher learning rate than LoRA adapters, and `lr="auto"` handles that for you. `run.artifact` is the checkpoint whose answers are closest to the full-context model on held-out prompts. Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#cartridgerecipe).
 
 ## When to use Cartridges vs. distillation vs. RAG
 
@@ -125,8 +107,8 @@ run.deploy()
 If you prefer a regular LoRA fine-tune instead of a Cartridge, pass `context=` to [`DistillRecipe`](/docs/training/recipes/distillation/):
 
 ```python
-from grad import Context, Grad, losses
-from grad.recipes import DistillRecipe, OnPolicy
+from grad import Context, Grad
+from grad.recipes import DistillRecipe
 
 client = Grad()
 dataset = client.datasets.get("api-docs-qa-prompts")
@@ -135,17 +117,9 @@ recipe = DistillRecipe(
     model="qwen/qwen3-8b",
     teacher="qwen/qwen3-8b",  # the same model, reading the full context
     context=Context.from_uri("s3://my-bucket/api-docs-bundle.md"),
-    rollout=OnPolicy(max_new_tokens="auto"),
-    loss=losses.TopKKLDistill(top_k=32),
-    # Defaults: LoRA(rank=32), lr="auto"
 )
 
-run = client.runs.create(
-    dataset=dataset,
-    name="api-docs-prompt-distilled",
-    recipe=recipe,
-    max_cost_usd=40,
-).wait()
+run = client.runs.create(dataset=dataset, name="api-docs-prompt-distilled", recipe=recipe).wait()
 ```
 
 ## Want more control?

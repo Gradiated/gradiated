@@ -25,14 +25,9 @@ tasks = client.datasets.from_hf(
 recipe = GRPORecipe(
     model="qwen/qwen3-4b",
     rubric=Rubric([Scorer("correct", fn=validators.NumericMatch(field="answer"))]),
-    max_cost_usd=50,
 )
 
-print(client.runs.plan(dataset=tasks, recipe=recipe))  # resolved defaults and cost, for $0
-
-run = client.runs.create(dataset=tasks, name="gsm8k-grpo", recipe=recipe).wait(
-    on_metric=lambda m: print(f"step={m.step} reward={m.metrics['mean_reward']:.3f} truncated={m.metrics['truncation_rate']:.1%}"),
-)
+run = client.runs.create(dataset=tasks, name="gsm8k-grpo", recipe=recipe).wait()
 print(run.artifact.id)
 ```
 
@@ -53,10 +48,7 @@ const tasks = await grad.datasets.fromHf("openai/gsm8k", {
 const recipe = recipes.grpo({
   model: "qwen/qwen3-4b",
   rubric: new Rubric([new Scorer("correct", { fn: validators.numericMatch({ field: "answer" }) })]),
-  maxCostUsd: 50,
 });
-
-console.log(await grad.runs.plan({ dataset: tasks, recipe }));
 
 const run = await grad.runs.create({ dataset: tasks, name: "gsm8k-grpo", recipe }).wait();
 console.log(run.artifact.id);
@@ -64,6 +56,8 @@ console.log(run.artifact.id);
 
   </DocsCodeTab>
 </DocsCodeTabs>
+
+Call `client.runs.plan(dataset=tasks, recipe=recipe)` before `create` to see the resolved settings and estimated cost for $0.
 
 For open-ended outputs, mix code checks (`validators.SQL()`, `validators.TypeScriptAST()`, `validators.JSONSchema(...)`) with a `Judge` (a frontier model or your own [reward model](/docs/training/recipes/reward-models/) `Artifact`) in the same [`Rubric`](/docs/training/rubrics/).
 
@@ -96,7 +90,7 @@ env = environments.Tools(
 run = client.runs.create(
     dataset=tasks,
     name="gsm8k-calculator",
-    recipe=GRPORecipe(model="qwen/qwen3-4b", env=env, max_cost_usd=50),
+    recipe=GRPORecipe(model="qwen/qwen3-4b", env=env),
 ).wait()
 ```
 
@@ -108,26 +102,16 @@ The same `env=` argument takes any environment:
 
 Python tools and scorers are packaged and run in an isolated sandbox; see [Where your code runs](/docs/training/recipes/#where-your-code-runs).
 
-## Defaults
+## Parameters you might change
 
-You don't need to set any of these. `client.runs.plan(...)` (or `grad train --dry-run`) prints the value each one resolved to, and anything you pass wins.
+- **`group_size`** *(default `8`)*: how many attempts the model makes at each prompt; they're scored and compared against each other. Raise it to `16` when most prompts score all `0` or all `1`.
+- **`max_turns`**: the turn limit for a multi-turn environment, when you want a different one from the environment's own.
+- **`max_staleness`** *(default `0`)*: let rollouts run up to this many weight versions behind training. `1`–`2` keeps the GPUs busy when container rollouts are slow.
+- **`kl_coef`** *(default `0.0`)*: set `0.01`–`0.05` only if outputs drift away from your starting model's style.
 
-| Parameter | Default | What it means |
-| --- | --- | --- |
-| `batch_size` | `32` | Prompts per training step. |
-| `group_size` | `8` | Attempts per prompt, compared against each other. Raise to `16` when most groups score all `0` or all `1`. |
-| `max_new_tokens` | `"auto"` | The 95th-percentile completion length of the base model on 64 of your prompts, measured during the plan and capped by the context window. Watch `truncation_rate` in the metrics; cut-off answers score `0` and teach the model nothing. |
-| `lr` | `"auto"` | Calibrated per base model and adapter; about `5e-5` for `qwen/qwen3-8b` with `LoRA(rank=32)`. |
-| `adapter` | `adapters.LoRA(rank=32)` | Ranks as low as 8 work well for RL. |
-| `loss` | `"auto"` | `losses.GRPO(clip_low=0.2, clip_high=0.28)` when rollouts are on-policy, plus `mask_ratio=(0.5, 2.0)` when you set `max_staleness > 0`. The run config records what `auto` resolved to and the rule version (`auto@1`). |
-| `max_staleness` | `0` | The one async setting: how many weight versions a rollout may lag behind the trainer. `1`–`2` overlaps slow container rollouts with training. Stale rollouts are kept, not discarded, so slow hard tasks still count; metrics report `staleness_mean` and `staleness_max`. |
-| `temperature` | `1.0` | Sampling temperature for training attempts. |
-| `kl_coef` | `0.0` | No reference-model penalty. Set `0.01`–`0.05` only if outputs drift away from your starting model's style. |
-| `max_turns` | env's own | Turn limit for multi-turn environments. |
-| `eval_every`, `select` | `"auto"`, `"best"` | Evaluates on the held-out split every 10% of steps; `run.artifact` is the best checkpoint. |
-| `max_cost_usd` | none | Stops gracefully, saves a checkpoint, and marks the run `stopped: budget`. |
+Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#grporecipe).
 
-### When to use RL vs. SFT vs. DPO
+## When to use RL vs. SFT vs. DPO
 
 - **Use [SFT](/docs/training/recipes/sft/)** first if the model doesn't reliably produce valid JSON, SQL, or tool calls yet, since RL works much better once formatting is solid.
 - **Use [DPO](/docs/training/recipes/dpo/)** when you already have offline `(chosen, rejected)` pairs and don't need the model to explore new solutions.
@@ -138,7 +122,7 @@ You don't need to set any of these. `client.runs.plan(...)` (or `grad train --dr
 1. **Check the base model first:** run `client.evals.create(model="qwen/qwen3-4b", tasks=tasks.take(200), rubric=..., samples=4)`. A base model that scores near 0% or near 100% leaves RL nothing to learn from.
 2. **Start with SFT if formatting is shaky:** if the base model outputs broken JSON or tool calls on more than 30% of tries, run a short [SFT](/docs/training/recipes/sft/) job on 200–500 good examples first, then pass `model=sft.artifact`.
 3. **Watch for all-pass or all-fail prompts:** if more than 70% of prompt groups score all `0.0` (too hard) or all `1.0` (too easy), add partial-credit checks to your [`Rubric`](/docs/training/rubrics/), raise `group_size`, or filter your dataset to medium-difficulty prompts.
-4. **Watch `truncation_rate`:** above 5% means answers are being cut off. Raise `max_new_tokens`, or use `thinking="off"` if the task doesn't need long reasoning.
+4. **Watch for cut-off answers:** if the run's `truncation_rate` metric is above 5%, answers are too long for the generation limit. Raise `max_new_tokens`, or use `thinking="off"` if the task doesn't need long reasoning.
 5. **Starting from logs?** See [Traces to environments](/docs/training/recipes/traces-to-environments/).
 
 ## Deploy and call your agent

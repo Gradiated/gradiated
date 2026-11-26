@@ -72,12 +72,12 @@ Training on Gradiated Cloud uses the same token-metered model as inference:
 - **Training & sampling tokens:** billed **per million tokens processed** across forward/backward passes, RL/distillation rollouts, and logprob scoring, so you don't pay for idle GPU time.
 - **Weight & checkpoint storage:** billed for saved `.grad` artifacts and checkpoints (automatic recipe checkpoints and `save_state()` checkpoints) retained in your workspace.
 - **Zero-cost pre-flight estimate:** run `grad train --dry-run` or `client.runs.plan(...)` before launching any managed recipe to see `estimated_tokens` and `estimated_cost_usd` at `$0`.
-- **Spend cap:** pass `max_cost_usd=` (or `--max-cost-usd`) on any run. When it's reached, the run stops gracefully, saves a checkpoint, and is marked `stopped: budget`.
-- **Checkpoint retention:** the best and final checkpoints of every run are kept until you delete them. Other automatic checkpoints are kept for 30 days unless you promote one to an `Artifact`.
+- **Spend cap:** pass `max_cost_usd=` on any run; it stops cleanly and saves a checkpoint when the cap is reached.
+- **Checkpoint retention:** the best and final checkpoints of every run are kept until you delete them; other checkpoints expire after 30 days.
 
 ```bash
 grad train --dataset support-prod --name support-sft --recipe sft --dry-run
-grad train --dataset support-prod --name support-sft --recipe sft --max-cost-usd 25 --wait
+grad train --dataset support-prod --name support-sft --recipe sft --wait
 ```
 
 For current per-token rates and service tiers, see [Models and pricing](/docs/models-pricing/).

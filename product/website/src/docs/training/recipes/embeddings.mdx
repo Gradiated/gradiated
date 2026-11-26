@@ -38,23 +38,16 @@ dataset = client.datasets.push("docs-retrieval-triplets", [
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, losses
+from grad import Grad
 from grad.recipes import EmbeddingRecipe
 
 client = Grad()
 dataset = client.datasets.get("docs-retrieval-triplets")
 
-recipe = EmbeddingRecipe(
-    loss=losses.InfoNCE(temp=0.05),
-    # Defaults: baai/bge-small-en-v1.5, adapters.Full(), pooling.Mean(), lr="auto" (about 2e-5)
-)
-print(client.runs.plan(dataset=dataset, recipe=recipe))
-
 run = client.runs.create(
     dataset=dataset,
     name="docs-embedder",
-    recipe=recipe,
-    max_cost_usd=5,
+    recipe=EmbeddingRecipe(),  # manages its own encoder, baai/bge-small-en-v1.5
 ).wait()
 
 print(run.artifact.id, run.eval_report)
@@ -64,7 +57,7 @@ print(run.artifact.id, run.eval_report)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, losses, recipes } from "@gradiated/grad";
+import { Grad, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("docs-retrieval-triplets");
@@ -73,10 +66,7 @@ const run = await grad.runs
   .create({
     dataset,
     name: "docs-embedder",
-    recipe: recipes.embedding({
-      loss: losses.infoNCE({ temp: 0.05 }),
-    }),
-    maxCostUsd: 5,
+    recipe: recipes.embedding(),
   })
   .wait();
 
@@ -87,8 +77,7 @@ console.log(run.artifact.id, run.evalReport);
   <DocsCodeTab label="CLI">
 
 ```bash
-grad train --dataset docs-retrieval-triplets --name docs-embedder --recipe embedding --dry-run
-grad train --dataset docs-retrieval-triplets --name docs-embedder --recipe embedding --max-cost-usd 5 --wait
+grad train --dataset docs-retrieval-triplets --name docs-embedder --recipe embedding --wait
 grad deploy docs-embedder@latest
 ```
 
@@ -101,25 +90,21 @@ grad deploy docs-embedder@latest
 - **Use a [Decision model](/docs/training/recipes/decision-model/)** when you want a direct answer (a category, yes/no probability, or score) rather than nearest-neighbor search.
 - **Use [Context Cartridges](/docs/training/recipes/cartridges/)** when your docs fit in up to ~500k tokens and are mostly static, so you can skip retrieval and bake them straight into a small KV prefix.
 
-### Key parameters
+### Parameters you might change
 
-- **Backbone:** the recipe manages a compact encoder, `baai/bge-small-en-v1.5` (sub-10 ms inference), so you can leave `model` out. It's specific to `EmbeddingRecipe` and isn't a base model for generation recipes. `grad models list --training` shows any other encoders available to your workspace.
-- **`adapter=adapters.Full()`** *(default)*: embedding encoders are small (~33M–300M parameters), so training all weights is fast and usually beats LoRA.
-- **`pool=pooling.Mean()`** *(default)*: averages token vectors into one vector per document (the standard choice for dense search).
-- **`losses.InfoNCE(temp=0.05)`:** pulls matching `(query, positive)` pairs together and pushes `negatives` apart; lower `temp` (`0.03`–`0.05`) sharpens rankings when wrong docs are very similar to the right one.
-- **`lr="auto"`** *(default)*: resolves to about `2e-5` for full encoder fine-tuning (keep any override in `1e-5`–`3e-5`). `run.artifact` is the checkpoint with the best held-out top-10 hit rate.
+- **`loss=losses.InfoNCE(temp=...)`:** pulls matching `(query, positive)` pairs together and pushes `negatives` apart. `temp` is `0.05` by default; lower it (to `0.03`) to sharpen rankings when wrong docs are very similar to the right one.
+- **`model`:** leave it out to use the recipe-managed encoder, `baai/bge-small-en-v1.5` (sub-10 ms inference). `grad models list --training` shows any other encoders available to your workspace.
+
+The recipe trains every weight of the encoder (they're small enough that this beats LoRA), and `run.artifact` is the checkpoint with the best held-out top-10 hit rate. Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#embeddingrecipe).
 
 ## Embed offline or deploy
 
 Extract normalized embeddings directly from the exported [`Artifact`](/docs/training/artifacts/), [deploy](/docs/training/deploying/) it on Gradiated Cloud (callable via `openai.embeddings.create(model="your-org/docs-embedder", ...)`), or download the weights for your own serving stack:
 
 ```python
-from grad import Record, pooling
+from grad import Record
 
-vectors = run.artifact.embed(
-    [Record(text="rotate api keys")],
-    pool=pooling.Mean(),
-).embeddings
+vectors = run.artifact.embed([Record(text="rotate api keys")]).embeddings  # uses the trained pooling
 
 run.deploy()
 ```

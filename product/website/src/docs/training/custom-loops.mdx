@@ -23,7 +23,7 @@ With the sync client (`Grad`), every `Trainer` call such as `forward_backward()`
 <DocsPipelineDiagram />
 
 ```python
-from grad import Grad, Record, adapters, losses, optim
+from grad import Grad, Record, losses, optim
 
 client = Grad()
 batch = [
@@ -33,7 +33,7 @@ batch = [
     ]),
 ]
 
-with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32)) as trainer:
+with client.trainers.create(model="qwen/qwen3-8b") as trainer:
     fb = trainer.forward_backward(batch, loss=losses.CrossEntropy())  # queued, returns a Future
     trainer.optim_step(optim.AdamW(lr=5e-4))                          # queued right behind it
     print(fb.result().loss)                                           # waits once
@@ -89,7 +89,7 @@ This loop runs a calculator-tool agent on GSM8K in a built-in [`environments.Too
 import itertools
 
 import grad
-from grad import Grad, Rubric, Scorer, adapters, advantages, environments, losses, optim, validators
+from grad import Grad, Rubric, Scorer, advantages, environments, losses, optim, validators
 
 client = Grad()
 tasks = client.datasets.from_hf(
@@ -109,7 +109,7 @@ env = environments.Tools(
     max_turns=6,
 )
 
-with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32)) as trainer:
+with client.trainers.create(model="qwen/qwen3-8b") as trainer:
     for step, task_batch in enumerate(itertools.islice(tasks.batches(32), 100)):
         groups = env.rollout_groups(
             artifact=trainer.snapshot(),
@@ -124,7 +124,7 @@ with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32
 
         # Queue both calls before reading results so they run back-to-back.
         fb = trainer.forward_backward(batch, loss=losses.GRPO(clip_low=0.2, clip_high=0.28))
-        trainer.optim_step(optim.AdamW(lr=5e-5, grad_clip=1.0))
+        trainer.optim_step(optim.AdamW(lr=5e-5))
 
         metrics = fb.result()
         print(f"step={step} loss={metrics.loss:.4f} grad_norm={metrics.metrics['grad_norm']:.3f}")
@@ -155,7 +155,7 @@ Here is reference-free SimPO using `PreferencePair` (no manual `group_id` or `ro
 import torch
 import torch.nn.functional as F
 import grad
-from grad import Grad, PreferencePair, adapters, losses, optim
+from grad import Grad, PreferencePair, losses, optim
 
 class SimPOLoss(losses.CustomLoss):
     outputs = ("logprobs",)
@@ -182,7 +182,7 @@ pairs = [
     ),
 ]
 
-with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32)) as trainer:
+with client.trainers.create(model="qwen/qwen3-8b") as trainer:
     fb = trainer.forward_backward(pairs, loss=SimPOLoss(beta=2.0, gamma=0.5))
     trainer.optim_step(optim.AdamW(lr=2e-5))
     print(fb.result().loss)
@@ -201,7 +201,7 @@ For multi-turn trajectories with no single prompt/response boundary, pass the `T
 - **Stage transitions (`SFT → DPO`, `SFT → GRPO`):** pass the previous stage's `Artifact` as `model=` to start from those weights with a fresh optimizer.
 
 ```python
-from grad import Grad, Record, adapters, losses, optim
+from grad import Grad, Record, losses, optim
 
 client = Grad()
 records = [
@@ -213,7 +213,6 @@ records = [
 
 with client.trainers.create(
     model="qwen/qwen3-8b",
-    adapter=adapters.LoRA(rank=32),
     autosave_every=50,
 ) as trainer:
     trainer.forward_backward(records, loss=losses.CrossEntropy())
@@ -226,7 +225,7 @@ with client.trainers.resume(ckpt) as resumed:
     print(resumed.step)
 
 # Or start a fresh stage from exported weights (fresh optimizer):
-with client.trainers.create(model=sft_art, adapter=adapters.LoRA(rank=32)) as grpo_trainer:
+with client.trainers.create(model=sft_art) as grpo_trainer:
     print(grpo_trainer.model)
 ```
 
@@ -240,7 +239,7 @@ Because `forward_backward()` accumulates gradients on the trainer until `optim_s
 
 ```python
 import itertools
-from grad import Grad, adapters, losses, optim
+from grad import Grad, losses, optim
 
 client = Grad()
 train = client.datasets.from_hf("HuggingFaceH4/ultrachat_200k", split="train_sft", messages="messages")
@@ -257,14 +256,14 @@ def linear_lr(step: int) -> float:
 
 microbatches = train.batches(32)
 
-with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32)) as trainer:
+with client.trainers.create(model="qwen/qwen3-8b") as trainer:
     for step in range(total_steps):
         # Accumulate 4 microbatches of 32 (an effective batch of 128) before one optimizer update
         futs = [
             trainer.forward_backward(mb, loss=losses.CrossEntropy())
             for mb in itertools.islice(microbatches, accum)
         ]
-        trainer.optim_step(optim.AdamW(lr=linear_lr(step), grad_clip=1.0))
+        trainer.optim_step(optim.AdamW(lr=linear_lr(step)))
         mean_loss = sum(f.result().loss for f in futs) / len(futs)
 
         if step % 20 == 0:
@@ -283,7 +282,7 @@ import itertools
 import re
 
 import grad
-from grad import AsyncGrad, adapters, advantages, losses, optim
+from grad import AsyncGrad, advantages, losses, optim
 
 def last_number(text: str) -> str | None:
     nums = re.findall(r"-?\d+(?:\.\d+)?", text.replace(",", ""))
@@ -300,7 +299,7 @@ async def main():
         tasks = await client.datasets.from_hf(
             "openai/gsm8k", subset="main", split="train", prompt="question", answer="answer"
         )
-        async with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32)) as trainer:
+        async with client.trainers.create(model="qwen/qwen3-8b") as trainer:
             for task_batch in itertools.islice(tasks.batches(32), 50):
                 snap = await trainer.snapshot()
                 groups = await asyncio.gather(*(
@@ -311,7 +310,7 @@ async def main():
 
                 # Start both calls before awaiting so they run back-to-back on the server.
                 fb = asyncio.create_task(trainer.forward_backward(batch, loss=losses.GRPO()))
-                opt = asyncio.create_task(trainer.optim_step(optim.AdamW(lr=5e-5, grad_clip=1.0)))
+                opt = asyncio.create_task(trainer.optim_step(optim.AdamW(lr=5e-5)))
                 metrics, _ = await asyncio.gather(fb, opt)
                 print(metrics.loss)
 

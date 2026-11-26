@@ -227,12 +227,10 @@ Prefer to run on your own infrastructure or locally? See the [self-hosting guide
 
 The SDKs follow semantic versioning, so upgrading within a major version shouldn't break your code:
 
-- **Patch releases never break anything.** They only fix bugs.
-- **Renames keep the old name working** for at least two minor releases. The old name raises a `DeprecationWarning` that names the replacement and the version it will be removed in, and the API sends the same warning to older SDKs that call deprecated endpoints.
-- **Removed CLI commands stay as stubs** that explain what replaced them, instead of failing with "unknown command".
-- **Every release note has three sections:** New, Deprecated and Breaking, with a migration example for each breaking change.
-- **Defaults that change training results are versioned.** If we change what `lr="auto"` or `loss="auto"` resolves to, the rule gets a new version, existing run configs keep the old one, and the dry run shows both values on the first run after the change.
-- **Optional integrations never block a run.** If W&B, MLflow or another tracker is misconfigured, the run starts and the dry run warns you. Training needs nothing beyond the base package; integrations install as extras such as `pip install "grad-sdk[wandb]"`.
+- **Patch releases only fix bugs.**
+- **Renamed APIs keep their old name for at least two minor releases**, with a `DeprecationWarning` that names the replacement. Removed CLI commands print what replaced them.
+- **Release notes always have New, Deprecated and Breaking sections**, with a migration example for every breaking change.
+- **Changes to how `"auto"` defaults resolve are versioned**, so an existing run config keeps training the same way.
 
 Base model retirement follows its own notice policy; see [Model retirement](/docs/training/models/#model-retirement).
 

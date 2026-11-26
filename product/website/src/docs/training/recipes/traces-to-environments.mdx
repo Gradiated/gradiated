@@ -65,7 +65,7 @@ rubric = Rubric([
 run = client.runs.create(
     dataset=hard_traces,
     name="sql-agent-grpo",
-    recipe=GRPORecipe(model="qwen/qwen3-8b", rubric=rubric, max_cost_usd=50),
+    recipe=GRPORecipe(model="qwen/qwen3-8b", rubric=rubric),
 ).wait()
 ```
 
@@ -142,7 +142,7 @@ env = TraceReplayEnv(rubric=rubric)
 run = client.runs.create(
     dataset=tasks,
     name="refund-agent",
-    recipe=GRPORecipe(model="qwen/qwen3-8b", env=env, max_cost_usd=100),
+    recipe=GRPORecipe(model="qwen/qwen3-8b", env=env),
 ).wait()
 ```
 
@@ -193,7 +193,7 @@ print(f"Kept {len(verified_tasks)}/{len(raw_tasks)} verified tasks")
 run = client.runs.create(
     dataset=verified_tasks,
     name="code-agent-harbor",
-    recipe=GRPORecipe(model="qwen/qwen3-32b", env=env, max_cost_usd=500),
+    recipe=GRPORecipe(model="qwen/qwen3-32b", env=env),
 ).wait()
 print(run.artifact.id)
 ```

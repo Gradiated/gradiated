@@ -25,7 +25,7 @@ from grad import Grad
 # 1. Deploy your trained artifact (or promote a new version at 10% canary)
 client = Grad()
 artifact = client.artifacts.get("fast-diff-merge@2026-11-26-1")
-artifact.deploy(canary=0.10, rollback_if_quality_drop=0.02)
+artifact.deploy(canary=0.10)
 
 # 2. Call it with the standard OpenAI SDK (only `model` changes)
 oai = OpenAI(
@@ -49,7 +49,7 @@ import { Grad } from "@gradiated/grad";
 // 1. Deploy your trained artifact (or promote a new version at 10% canary)
 const grad = new Grad();
 const artifact = await grad.artifacts.get("fast-diff-merge@2026-11-26-1");
-await artifact.deploy({ canary: 0.1, rollbackIfQualityDrop: 0.02 });
+await artifact.deploy({ canary: 0.1 });
 
 // 2. Call it with the standard OpenAI SDK (only `model` changes)
 const oai = new OpenAI({
@@ -68,7 +68,7 @@ console.log(res.choices[0].message.content);
 
 ```go
 artifact, _ := client.Artifacts.Get(ctx, "fast-diff-merge@2026-11-26-1")
-_, _ = artifact.Deploy(ctx, grad.DeployOpts{Canary: 0.10, RollbackIfQualityDrop: 0.02})
+_, _ = artifact.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
 // Then pass "your-org/fast-diff-merge" as `model` in your OpenAI or Anthropic client.
 ```
 
@@ -114,7 +114,7 @@ Canary   fast-diff-merge@2026-12-03-1  (10% traffic ·  2,044 req/hr · p50 365m
 
 </DocsTerminal>
 
-Set `rollback_if_quality_drop=` on a canary to make rollback automatic: if live canary quality falls more than that much below the active version (`0.02` is 2 points) once enough feedback has arrived to tell, Gradiated moves all traffic back to the active version and marks the canary `rolled_back`. Without it, the canary stays at its traffic share until you promote or roll back. This is a deployment guardrail. It's separate from a router's `max_quality_drop`, which sets how much quality the [router](/docs/training/recipes/router/) may trade for cost during training.
+Pass `rollback_if_quality_drop=0.02` to `deploy()` (`--rollback-if-quality-drop 0.02` in the CLI) to make rollback automatic: if live canary quality falls more than that much below the active version (`0.02` is 2 points) once enough feedback has arrived to tell, Gradiated moves all traffic back to the active version and marks the canary `rolled_back`. Without it, the canary stays at its traffic share until you promote or roll back. This is a deployment guardrail. It's separate from a router's `max_quality_drop`, which sets how much quality the [router](/docs/training/recipes/router/) may trade for cost during training.
 
 ### Log feedback for the next training run
 

@@ -2,7 +2,7 @@
 
 <DocsLead>How recipe defaults are chosen, when to change them, how to check chat templates before you pay, and how to fix common SFT, DPO, and RL failure modes.</DocsLead>
 
-The built-in [recipes](/docs/training/recipes/) resolve every hyperparameter for your base model and dataset, so your first run rarely needs tuning. `runs.plan()` and `--dry-run` print each resolved value. Use this page when you want to push quality further, hook up experiment tracking, or diagnose a run that isn't converging.
+The built-in [recipes](/docs/training/recipes/) resolve every hyperparameter for your base model and dataset, so your first run rarely needs tuning. `runs.plan()` and `--dry-run` print each resolved value. Use this page when you want to push quality further, hook up experiment tracking, or diagnose a run that isn't converging. For every parameter and its default in one place, see the [training parameters reference](/docs/reference/training-parameters/).
 
 ## Learning rate
 
@@ -60,7 +60,6 @@ runs = [
         dataset=dataset,
         name=f"support-sft-lr{scale}",
         recipe=SFTRecipe(model="qwen/qwen3-8b", lr_scale=scale),
-        max_cost_usd=20,
     )
     for scale in (0.5, 1.0, 2.0)
 ]
@@ -81,7 +80,7 @@ The default is `adapters.LoRA(rank=32)`. Rank has little effect on cost, so you 
 
 ## Batch size and number of steps
 
-SFT defaults to `batch_size=128` sequences for `epochs=1`. GRPO defaults to `batch_size=32` prompts with `group_size=8` attempts each.
+SFT defaults to `batch_size=128` sequences for `epochs=1`. GRPO defaults to `batch_size=32` prompts with `group_size=8` attempts each. Defaults for every recipe are in the [reference](/docs/reference/training-parameters/#optimization).
 
 The plan warns when a run will take fewer than 100 optimizer steps, because short runs end before the learning rate schedule does its job. Fix it with a smaller batch, more epochs, or more data:
 

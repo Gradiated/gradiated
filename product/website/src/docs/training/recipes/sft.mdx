@@ -22,7 +22,7 @@ Use **`SFTRecipe`** when you have good examples of what the model should produce
 
 ## Try it on a public dataset
 
-This runs as pasted. It imports 2,000 conversations from Hugging Face, prints the plan and cost estimate, and trains with the defaults:
+This runs as pasted. It imports 2,000 conversations from Hugging Face and trains with the defaults:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -39,14 +39,10 @@ chats = client.datasets.from_hf(
     limit=2000,
 )
 
-recipe = SFTRecipe(model="qwen/qwen3-8b")
-print(client.runs.plan(dataset=chats, recipe=recipe))  # $0: resolved defaults + estimate
-
 run = client.runs.create(
     dataset=chats,
     name="ultrachat-sft",
-    recipe=recipe,
-    max_cost_usd=20,
+    recipe=SFTRecipe(model="qwen/qwen3-8b"),
 ).wait()
 print(run.artifact.id)
 ```
@@ -56,24 +52,23 @@ print(run.artifact.id)
 
 ```bash
 grad datasets import hf HuggingFaceH4/ultrachat_200k --split train_sft --limit 2000 --name ultrachat
-grad train --dataset ultrachat --name ultrachat-sft --recipe sft --dry-run
-grad train --dataset ultrachat --name ultrachat-sft --recipe sft --max-cost-usd 20 --wait
+grad train --dataset ultrachat --name ultrachat-sft --recipe sft --wait
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
 
-To train on your own file instead, pass its path: `client.datasets.push("my-sft", "train.jsonl")`.
+To train on your own file instead, pass its path: `client.datasets.push("my-sft", "train.jsonl")`. Add `--dry-run` to any `grad train` command to see the resolved defaults and a cost estimate first.
 
 ## Train on your production logs
 
-Score your `Dataset` once with a [`Judge`](/docs/training/rubrics/) to keep only good examples, train a LoRA adapter, and split by `session_id` so multi-turn conversations never leak into eval:
+Score your `Dataset` once with a [`Judge`](/docs/training/rubrics/) to keep only good examples, then train a LoRA adapter. The held-out eval split is grouped by `session_id` by default, so multi-turn conversations never leak into eval:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Judge, splits
+from grad import Grad, Judge
 from grad.recipes import SFTRecipe
 
 client = Grad()
@@ -88,17 +83,10 @@ judge = Judge(
 # Field filters run server-side, with no download
 clean_dataset = dataset.score(judge).wait().filter(scores={"clean_merge": ">=0.8"})
 
-sft_recipe = SFTRecipe(
-    model="qwen/qwen3-8b",
-    split=splits.BySession(eval_fraction=0.10),
-    # Defaults: LoRA(rank=32), lr="auto", batch_size=128, epochs=1, linear schedule
-)
-
 sft = client.runs.create(
     dataset=clean_dataset,
     name="fast-diff-merge",
-    recipe=sft_recipe,
-    max_cost_usd=50,
+    recipe=SFTRecipe(model="qwen/qwen3-8b"),
 ).wait(
     on_metric=lambda m: print(f"step={m.step} loss={m.loss:.4f}"),
 )
@@ -110,7 +98,7 @@ print(sft.artifact.id)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Judge, recipes, splits } from "@gradiated/grad";
+import { Grad, Judge, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("diff-merge-prod");
@@ -128,11 +116,7 @@ const sft = await grad.runs
   .create({
     dataset: cleanDataset,
     name: "fast-diff-merge",
-    recipe: recipes.sft({
-      model: "qwen/qwen3-8b",
-      split: splits.bySession({ evalFraction: 0.1 }),
-    }),
-    maxCostUsd: 50,
+    recipe: recipes.sft({ model: "qwen/qwen3-8b" }),
   })
   .wait();
 
@@ -152,11 +136,6 @@ dataset:
 name: fast-diff-merge
 recipe: sft
 model: qwen/qwen3-8b
-split:
-  strategy: by_session
-  eval_fraction: 0.10
-max_cost_usd: 50
-# adapter, optimizer, batch_size and epochs use the defaults below
 ```
 
 ```bash
@@ -174,21 +153,13 @@ If your logs already include a deterministic score (like `tests_passed` from CI)
 - **Follow with [DPO (`DPORecipe`)](/docs/training/recipes/dpo/)** when the model already follows your format but keeps making specific mistakes you can contrast as `(chosen, rejected)` pairs.
 - **Use [Distillation (`DistillRecipe`)](/docs/training/recipes/distillation/)** when you don't have gold answers yet, just prompts and a larger teacher model you want a small model to imitate.
 
-### Defaults and key parameters
+### Parameters you might change
 
-Every default below is printed with its resolved value by `client.runs.plan(...)` or `grad train --dry-run`, so you can see exactly what will run before you pay for it.
+- **`adapter`:** LoRA by default. For large datasets (50,000+ records), `adapters.LoRA(rank=64)` or higher can help; `adapters.Full()` is only worth it once LoRA stops improving.
+- **`train_on`:** trains only the final assistant turn by default. Use `train_on="all_assistant"` for multi-turn agent traces.
+- **`epochs`:** one pass by default. The dry run suggests a second epoch when a small dataset gives too few training steps.
 
-- **`adapter=adapters.LoRA(rank=32)`** *(default)*: `alpha` is fixed at `32`, so changing the rank doesn't change the right learning rate. Use rank `64`–`128` for SFT on large datasets (50,000+ records); `8`–`16` is enough for small datasets. Adapters export small, so many fine-tuned models can share one base model in production. Pass `merge_on_export=True` only if you want a standalone merged checkpoint.
-- **`adapters.Full()`:** trains every weight. Only worth it once you have 10,000+ examples and LoRA stops improving (see [LoRA Without Regret](https://thinkingmachines.ai/blog/lora/)).
-- **`lr="auto"`** *(default)*: resolved from the base model, objective, adapter and batch size. For `qwen/qwen3-8b` with LoRA rank 32 and batch 128 it typically resolves to about `5e-4`; full fine-tuning resolves about 10x lower (around `3e-5`). Pass a float to override it, or sweep `0.5x` and `2x` around the resolved value.
-- **`optimizer=optim.AdamW(lr="auto", betas=(0.9, 0.95), weight_decay=0.0, grad_clip=1.0)`**, **`schedule="linear"`** with **`warmup=0.03`**: linear decay to zero after a 3% warmup.
-- **`batch_size=128`**, **`epochs=1`**: the plan warns when a run has fewer than 100 optimizer steps and suggests a smaller batch or a second epoch.
-- **`train_on="last"`** *(default for chat records)*: trains only on the final assistant turn. Use `"all_assistant"` for multi-turn agent traces. To control single messages, set `"train": true` or `false` on a message in the record.
-- **`reduction="per_example"`** *(default)*: the loss is averaged within each example and then across the batch, so a long example counts as much as a short one rather than drowning it out. Pass `reduction="per_token"` to weight every trained token equally.
-- **`thinking="auto"`** *(default)*: keeps the base model's thinking mode. Records with no `<think>` block train with thinking off. Run `grad render <dataset> --model qwen/qwen3-8b` to see the exact tokens and which ones are trained; see [Chat templates](/docs/training/tuning-troubleshooting/#chat-templates-and-loss-masks).
-- **`splits.BySession(eval_fraction=0.10)`:** keeps all turns from the same conversation together so eval scores aren't inflated by leakage.
-- **Checkpoints and evals:** the run saves a checkpoint (with optimizer state) every 10% of steps and evaluates on the held-out split at the same points. `run.artifact` is the best checkpoint by eval loss. Resume an interrupted run with `client.runs.resume(run_id)`.
-- **`max_cost_usd`:** the run stops cleanly, saves a checkpoint and reports `stopped: budget` when it reaches the cap.
+Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#sftrecipe). To see the exact tokens that get trained, run `grad render <dataset> --model qwen/qwen3-8b` (see [chat templates](/docs/training/tuning-troubleshooting/#chat-templates-and-loss-masks)).
 
 ## Deploy and call your model
 

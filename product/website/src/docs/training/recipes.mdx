@@ -24,7 +24,7 @@ Any dataset works as input: a list of plain chat records or a `.jsonl` file (`cl
 
 ## Start with recipe defaults
 
-Every recipe comes with working defaults for the base model, train/eval split, learning rate, batch size, schedule, checkpoints and evals. You pay per million tokens trained plus storage for saved weights, so you don't pay for idle GPUs. Pass your dataset, output name, and recipe, and use `--dry-run` (or `runs.plan()`) to check data coverage and estimated cost before launching. Set `max_cost_usd=` on any run to cap spend. You can also attach `loggers=[loggers.WandB(project="...")]` or `loggers.MLflow(...)` and inspect live completions with `grad runs logs <run_id> --samples 5` (see [Tuning & troubleshooting](/docs/training/tuning-troubleshooting/)).
+Every recipe comes with working defaults for the base model, split, learning rate, batch size, schedule, checkpoints and evals. Pass your dataset, an output name and the recipe. Run `--dry-run` (or `runs.plan()`) first to check your data and see the estimated cost, and set `max_cost_usd=` to cap spend. You pay per million tokens trained plus storage for saved weights, never for idle GPUs.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -148,25 +148,9 @@ Warnings    1
 
 </DocsTerminal>
 
-### Defaults every recipe resolves
+### Defaults
 
-You don't need to set any of these. The dry run prints the value each one resolved to, and any argument you pass wins.
-
-| Setting | Default | How it's chosen |
-| --- | --- | --- |
-| `model` | `qwen/qwen3-8b` (`qwen/qwen3-0.6b` for routers) | Any trainable base model or a previous `Artifact`. See [Supported models](/docs/training/models/). |
-| `lr` | `"auto"` | A per-model table calibrated by sweep, scaled for your adapter and batch size. Models without a calibrated entry require an explicit `lr=`. Typical values for `qwen/qwen3-8b`: SFT `5e-4`, DPO `2e-5`, GRPO `5e-5`. See [Tuning & troubleshooting](/docs/training/tuning-troubleshooting/#learning-rate). |
-| `adapter` | `adapters.LoRA(rank=32)` | `alpha` is fixed at `32`, so changing the rank doesn't change the right learning rate. |
-| `optimizer` | `optim.AdamW(betas=(0.9, 0.95), weight_decay=0.0, grad_clip=1.0)` | Standard settings for LoRA and RL; you rarely need to change them. |
-| `schedule`, `warmup` | `"linear"`, `0.03` | Linear decay to zero after 3% warmup. |
-| `batch_size`, `epochs` | `128`, `1` (SFT) · `32` prompts × `group_size=8` (GRPO) | The plan warns when a run has fewer than 100 steps. |
-| `max_new_tokens` (RL, distillation) | `"auto"` | p95 completion length of the base model on 64 of your prompts, measured during the plan. Metrics report `truncation_rate`. |
-| `loss` (GRPO) | `"auto"` | `losses.GRPO(clip_low=0.2, clip_high=0.28)` on-policy, plus `mask_ratio=(0.5, 2.0)` when `max_staleness > 0`. Recorded on the run with its rule version (`auto@1`). |
-| `reduction` (SFT, distillation) | `"per_example"` | Each example counts equally regardless of length; `"per_token"` weights every trained token equally. |
-| `thinking`, `train_on` | `"auto"`, `"last"` | How the chat template is rendered and which assistant turns are trained. Preview with `grad render`. |
-| Checkpoints | every 10% of steps, and at least every 20 steps | Includes optimizer state. The best and final checkpoints never expire; the rest are kept 30 days. Resume with `client.runs.resume(run_id)`. |
-| `eval_every`, `select` | `"auto"` (10% of steps), `"best"` | `run.artifact` is the best checkpoint by held-out eval; pass `select="last"` to keep the final one. |
-| `max_cost_usd` | none | Stops the run gracefully, saves a checkpoint, and marks it `stopped: budget`. |
+You don't need to set anything beyond `model=`. Learning rate, adapter, batch size, schedule, checkpoints and evals all resolve automatically, and the dry run above prints each value. Anything you pass overrides the default. The full list, and how each `"auto"` value is chosen, is in the [training parameters reference](/docs/reference/training-parameters/#common-run-parameters).
 
 ### Inspect resolved defaults
 
@@ -180,10 +164,12 @@ grad runs inspect run_01J9X --yaml > recipe.yaml
 
 Managed runs execute on Gradiated's servers, so closing your laptop never stops them. That works for your own Python code too:
 
-- **Built-in specs run on Gradiated's servers:** `Rubric` checks, `Judge`, `validators.*` (regex, JSON schema, SQL, exact and numeric match), and built-in environments (`environments.Tools`, `Harbor`, remote `MCP` servers by URL, and [verifiers](/docs/training/environments/) Hub environments).
-- **Your Python functions are packaged automatically.** When a managed run starts, the SDK uploads the source of each function you passed (a `Scorer(fn=...)`, a `rubric=` function, a custom `Environment` subclass) with the `requirements=[...]` you declare, and runs it in an isolated sandbox with no network access unless you set `network=True`. `runs.plan()` packages everything before anything is billed and fails with a specific message if a function can't be packaged, for example because it reads a local file or captures a database connection from your script. It also resolves `requirements` to exact versions, locks them for the run, and calls each function once on a sample record inside the sandbox, so a missing dependency or a crash shows up in the plan instead of an hour into training. Keep heavy grading (compiling code, running test suites) inside your scorer or environment: it runs in its own sandbox pool, separate from sampling, so it can't slow generation down.
-- **Need it on your machine?** Pass `runtime="local"` and keep `grad worker` running wherever the code has access to what it needs. The run pauses while no worker is connected and resumes when one reconnects. For environments, `grad env serve` does the same for rollout workers (see [Environments](/docs/training/environments/)).
-- **Filtering data:** field filters such as `dataset.filter(scores={"resolved": ">=0.8"})` run on the server with no download. `dataset.filter(fn)` with a Python function runs on your machine when you call it and saves the selected IDs as a server-side view, so no trajectories are copied.
+- **Built-in specs run on Gradiated's servers:** `Rubric` checks, `Judge`, `validators.*` and built-in environments (`environments.Tools`, `Harbor`, remote `MCP` servers, and [verifiers](/docs/training/environments/) Hub environments).
+- **Your Python functions are packaged automatically.** A `Scorer(fn=...)`, a `rubric=` function or a custom `Environment` is uploaded with any `requirements=[...]` you declare and runs in an isolated sandbox. `runs.plan()` packages and test-runs each one before anything is billed, so a function that can't run there (for example, one that reads a local file) fails in the plan, not mid-training.
+- **Need it on your machine?** Pass `runtime="local"` and keep `grad worker` running where the code has what it needs. For environments, `grad env serve` does the same (see [Environments](/docs/training/environments/)).
+- **Filtering data:** field filters such as `dataset.filter(scores={"resolved": ">=0.8"})` run on the server. `dataset.filter(fn)` with a Python function runs on your machine and saves the matching IDs as a server-side view.
+
+Sandbox details (network access, dependency locking, worker behavior) are in the [reference](/docs/reference/training-parameters/#where-code-runs).
 
 ```python
 import re
@@ -231,7 +217,6 @@ recipe = RouterRecipe(
         model="{{SONNET_MODEL}}",
         prompt="Did the assistant solve the user's issue accurately?",
     ),
-    max_quality_drop=0.02,
 )
 
 run = client.runs.create(dataset=dataset, name="support-router", recipe=recipe).wait()
@@ -259,7 +244,7 @@ run = client.runs.create(dataset=dataset, name="ticket-triage", recipe=recipe).w
   <DocsCodeTab label="SFT">
 
 ```python
-from grad import Grad, Judge, adapters, splits
+from grad import Grad, Judge, adapters
 from grad.recipes import SFTRecipe
 
 client = Grad()
@@ -275,8 +260,6 @@ dataset = client.datasets.get("diff-merge-prod").score(judge).wait().filter(
 recipe = SFTRecipe(
     model="qwen/qwen3-8b",
     adapter=adapters.LoRA(rank=64),  # large dataset (>50k records): a higher rank helps
-    split=splits.BySession(eval_fraction=0.10),
-    # lr is left at "auto"; the dry run prints the value it resolves to
 )
 
 run = client.runs.create(dataset=dataset, name="fast-diff-merge", recipe=recipe).wait()
@@ -295,7 +278,7 @@ sft_art = client.artifacts.get("support-responder@sft-v1")
 
 recipe = DPORecipe(
     model=sft_art,               # continues the SFT artifact's adapter
-    loss=losses.DPO(beta=0.1),   # the default; raise beta to stay closer to the SFT model
+    loss=losses.DPO(beta=0.3),   # default 0.1; a higher beta stays closer to the SFT model
 )
 
 run = client.runs.create(dataset=dataset, name="support-responder", recipe=recipe).wait()
@@ -323,7 +306,6 @@ recipe = GRPORecipe(
             weight=0.6,
         ),
     ]),
-    group_size=8,  # the default: 8 attempts per prompt
 )
 
 run = client.runs.create(dataset=dataset, name="fast-diff-merge", recipe=recipe).wait()
@@ -360,18 +342,13 @@ run = client.runs.create(dataset=tasks, name="gsm8k-calculator", recipe=GRPOReci
   <DocsCodeTab label="Distill">
 
 ```python
-from grad import Grad, losses
-from grad.recipes import DistillRecipe, OnPolicy
+from grad import Grad
+from grad.recipes import DistillRecipe
 
 client = Grad()
 dataset = client.datasets.get("support-prompts")
 
-recipe = DistillRecipe(
-    model="qwen/qwen3-4b",
-    teacher="qwen/qwen3-32b",
-    rollout=OnPolicy(),  # max_new_tokens="auto" from the teacher's output lengths
-    loss=losses.TopKKLDistill(top_k=32),
-)
+recipe = DistillRecipe(model="qwen/qwen3-4b", teacher="qwen/qwen3-32b")
 
 run = client.runs.create(dataset=dataset, name="support-fast-distill", recipe=recipe).wait()
 ```
@@ -380,7 +357,7 @@ run = client.runs.create(dataset=dataset, name="support-fast-distill", recipe=re
   <DocsCodeTab label="Cartridge">
 
 ```python
-from grad import Context, Grad, losses, optim
+from grad import Context, Grad
 from grad.recipes import CartridgeRecipe
 
 client = Grad()
@@ -389,9 +366,6 @@ dataset = client.datasets.get("api-docs-corpus")
 recipe = CartridgeRecipe(
     model="qwen/qwen3-8b",
     context=Context.from_file("./api-docs-bundle.md"),
-    num_tokens=256,
-    loss=losses.TopKKLDistill(top_k=20),
-    optimizer=optim.AdamW(lr=2e-2),
 )
 
 run = client.runs.create(dataset=dataset, name="docs-cartridge", recipe=recipe).wait()
@@ -443,14 +417,7 @@ recipe: sft
 model: qwen/qwen3-8b
 adapter:
   kind: lora
-  rank: 32
-optimizer:
-  kind: adamw
-  lr: auto
-split:
-  strategy: by_session
-  eval_fraction: 0.10
-max_cost_usd: 25
+  rank: 64
 ```
 
 ```bash
@@ -536,7 +503,7 @@ rl = client.runs.create(
 
 ## Live metrics and evaluation
 
-Stream step-by-step telemetry (`step`, `loss`, `grad_norm`, `lr`, `tokens_per_sec`, `eval_metrics`, and running `tokens` and `cost_usd`) while a run is active, or inspect the saved `eval_report.json` afterward. Every run, checkpoint and artifact also has a `.url` that opens it in the console, and printing one shows the link:
+Stream step-by-step metrics (loss, eval scores, tokens and cost so far) while a run is active, or inspect the saved `eval_report.json` afterward. `run.url` opens the run in the console:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">

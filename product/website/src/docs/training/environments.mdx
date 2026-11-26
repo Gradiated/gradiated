@@ -62,7 +62,7 @@ run = client.runs.create(
 ).wait()
 ```
 
-`environments.Tools` takes `system_prompt=` for instructions, and `requirements=["sympy"]` when your tools import third-party packages. Tool return values go back to the model as context and are never trained on. With an empty tool list it is a single-turn prompt-and-answer environment.
+Tool return values go back to the model as context and are never trained on. With an empty tool list it is a single-turn prompt-and-answer environment. For a system prompt or third-party packages your tools import, see the [`environments.Tools` reference](/docs/reference/training-parameters/#environments).
 
 ## Harbor and agent harnesses
 
@@ -121,11 +121,9 @@ run = client.runs.create(
 
 Pass the environment's own arguments as keywords, such as `environments.from_verifiers("owner/env@1.0.0", difficulty="hard")`. You can also pass a `verifiers.v1` environment object you built locally; it is packaged like any other Python code.
 
-**Versions.** `verifiers` changes quickly and often breaks its API between minor releases, so the bridge never floats:
+Run `grad env check primeintellect/gsm8k@0.2.1` to confirm a Hub package works before you train. Each package runs with the `verifiers` version it pins, inside its own sandbox, so your local install doesn't matter.
 
-- Each SDK release supports a published list of exact `verifiers` versions, tested against every new upstream release before it's added. `grad env check primeintellect/gsm8k@0.2.1` tells you whether a Hub package works before you train.
-- A Hub package runs with the `verifiers` version its own lockfile pins, inside its sandbox, so your local install doesn't matter. `runs.plan()` reports that version and fails with a clear message if it isn't supported.
-- Environments written for the v0 API (`vf.load_environment("name")`, `vf.SingleTurnEnv`, `vf.ToolEnv`, `vf.Rubric`) were removed upstream in verifiers 0.4.0 and can't run. Many older Hub packages still use it. For those, port the reward function to a [`Rubric`](/docs/training/rubrics/) and the tools to [`environments.Tools`](#tools-from-python-functions); both are usually a few lines.
+Environments written for the old v0 API (`vf.load_environment("name")`, `vf.SingleTurnEnv`, `vf.ToolEnv`) were removed upstream in verifiers 0.4.0 and can't run, and many older Hub packages still use it. For those, port the reward function to a [`Rubric`](/docs/training/rubrics/) and the tools to [`environments.Tools`](#tools-from-python-functions); both are usually a few lines.
 
 ## Other built-in environments
 
@@ -239,12 +237,12 @@ The run pauses while no worker is connected and resumes when one reconnects. Run
 Already have an agent built on the OpenAI or Anthropic SDK, LangGraph, or your own loop? Point it at a training snapshot. Every model call runs against the current weights and is recorded as a `Trajectory`, so there is no rewrite:
 
 ```python
-from grad import Grad, adapters
+from grad import Grad
 from openai import OpenAI
 
 client = Grad()
 
-with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32)) as trainer:
+with client.trainers.create(model="qwen/qwen3-8b") as trainer:
     snap = trainer.snapshot()
 
     with snap.openai_client() as (oai, recorder):
@@ -279,7 +277,6 @@ groups = env.rollout_groups(
     artifact="qwen/qwen3-8b",
     tasks=tasks.take(16),
     group_size=8,
-    max_new_tokens=1024,
     max_concurrency=32,
     timeout_s=60,
 )

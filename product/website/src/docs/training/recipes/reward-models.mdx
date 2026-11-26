@@ -43,24 +43,16 @@ If a prompted judge is still missing subtle preferences you can demonstrate with
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, splits
+from grad import Grad
 from grad.recipes import RewardModelRecipe
 
 client = Grad()
 pairs_ds = client.datasets.get("sql-preferences")  # pushed or imported earlier
 
-recipe = RewardModelRecipe(
-    model="qwen/qwen3-8b",
-    split=splits.BySession(eval_fraction=0.10),
-    # Defaults: LoRA(rank=32), lr="auto" (about 1e-4 here), batch_size=128, epochs=1
-)
-print(client.runs.plan(dataset=pairs_ds, recipe=recipe))
-
 run = client.runs.create(
     dataset=pairs_ds,
     name="sql-verifier",
-    recipe=recipe,
-    max_cost_usd=25,
+    recipe=RewardModelRecipe(model="qwen/qwen3-8b"),
 ).wait()
 
 print(run.artifact.id, run.eval_report)
@@ -70,7 +62,7 @@ print(run.artifact.id, run.eval_report)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, recipes, splits } from "@gradiated/grad";
+import { Grad, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
 const pairsDs = await grad.datasets.get("sql-preferences");
@@ -79,11 +71,7 @@ const run = await grad.runs
   .create({
     dataset: pairsDs,
     name: "sql-verifier",
-    recipe: recipes.rewardModel({
-      model: "qwen/qwen3-8b",
-      split: splits.bySession({ evalFraction: 0.1 }),
-    }),
-    maxCostUsd: 25,
+    recipe: recipes.rewardModel({ model: "qwen/qwen3-8b" }),
   })
   .wait();
 
@@ -94,20 +82,17 @@ console.log(run.artifact.id, run.evalReport);
   <DocsCodeTab label="CLI">
 
 ```bash
-grad train --dataset sql-preferences --name sql-verifier --recipe reward-model --dry-run
-grad train --dataset sql-preferences --name sql-verifier --recipe reward-model --max-cost-usd 25 --wait
+grad train --dataset sql-preferences --name sql-verifier --recipe reward-model --wait
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
 
-### Key parameters
+### Parameters you might change
 
-- **`model`:** start with a fast 4B to 8B model (`"qwen/qwen3-8b"`). Reward models only score an output in a single forward pass, so an 8B model runs in milliseconds.
-- **`adapter`:** defaults to `adapters.LoRA(rank=32)` with `alpha=32` fixed, so changing the rank doesn't change the right learning rate. Rank `8`–`16` is enough for a few thousand pairs.
-- **`lr="auto"`** *(default)*: typically resolves to about `1e-4` for `qwen/qwen3-8b` at batch 128. The dry run prints the exact value; pass a float to override it.
-- **Checkpoints:** saved every 10% of steps; `run.artifact` is the checkpoint with the best held-out pair accuracy.
-- **`split`:** `splits.BySession(eval_fraction=0.10)` keeps paired examples and multi-turn conversations together so eval accuracy isn't inflated.
+- **`model`:** start with a fast 4B to 8B model (`"qwen/qwen3-8b"`). A reward model scores an output in a single forward pass, so an 8B model runs in milliseconds.
+
+Pairs always stay together in the same train or eval split, and `run.artifact` is the checkpoint with the best held-out pair accuracy. Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#rewardmodelrecipe).
 
 ## Use your reward model
 

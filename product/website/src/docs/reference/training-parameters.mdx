@@ -1,0 +1,273 @@
+# Training parameters reference
+
+<DocsLead>Every training setting, its default, and how the "auto" defaults are chosen. You rarely need to set any of them.</DocsLead>
+
+Every recipe works with only `model=` and a dataset. Anything you leave out takes the default below, and `grad train --dry-run` (or `client.runs.plan(...)`) prints the value each setting resolved to before you spend anything. To pin every resolved value, export a run's config with `grad runs inspect <run_id> --yaml` and check it into Git.
+
+Names are the same in every SDK, with each language's own casing: `max_cost_usd` is `maxCostUsd` in TypeScript, `MaxCostUSD` in Go and `--max-cost-usd` in the CLI.
+
+## Common run parameters
+
+These apply to every recipe and to `client.runs.create(...)`.
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `model` | `"qwen/qwen3-8b"`; `"qwen/qwen3-0.6b"` for `RouterRecipe`; chosen by the recipe for `DecisionModelRecipe` and `EmbeddingRecipe` | Base model ID, or a previous `Artifact` to keep training. If you leave it out, the dry run names the current default and warns if it changed since the last run with the same `name`. See [Supported models](/docs/training/models/). |
+| `dataset` | required | A `Dataset` from `client.datasets.push(name, records_or_path)`, `client.datasets.from_hf(...)` or an observability import. |
+| `name` | required | Output name. Artifacts are versioned under it (`name@<date>-<n>`). |
+| `max_cost_usd` | none | Spend cap. When it's reached, the run stops gracefully, saves a checkpoint and is marked `stopped: budget`. Raise it and continue with `client.runs.resume(run_id, max_cost_usd=...)`. |
+| `split` | `splits.BySession(eval_fraction=0.10)`; `0.15` for routers and decision models | Holds out sessions for evaluation. Records with the same `session_id` (or preference pairs with the same `group_id`) stay on the same side. |
+| `evals` | none | Extra evaluations run at each eval point, such as `[benchmarks.IFEval(limit=200)]`. |
+| `loggers` | none | Experiment trackers such as `[loggers.WandB(project="...")]` or `loggers.MLflow(...)`. A misconfigured logger never blocks a run; the dry run warns instead. Install them as extras: `pip install "grad-sdk[wandb]"`. |
+
+Live metrics from `run.metrics(follow=True)` include `step`, `loss`, `grad_norm`, `lr`, `tokens_per_sec`, `eval_metrics`, and running `tokens` and `cost_usd`. Every run, checkpoint and artifact has a `.url` that opens it in the console.
+
+## Optimization
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `lr` | `"auto"` | Looked up per base model and objective, then scaled for your adapter and batch size. See [How "auto" values resolve](#how-auto-values-resolve). Pass a float to override. |
+| `lr_scale` | `1.0` | Multiplies whatever `"auto"` resolved to. Sweep `0.5`, `1.0` and `2.0` to tune without picking raw numbers. |
+| `adapter` | `adapters.LoRA(rank=32)` (`adapters.Full()` for `EmbeddingRecipe`) | `alpha` is fixed at `32`, so changing `rank` doesn't change the right learning rate. Ranks `8`–`16` are enough for RL and datasets under about 5,000 records; use `64`–`128` for SFT on more than about 50,000. `adapters.Full()` trains every weight and is worth it only once LoRA stops improving on 10,000+ examples. |
+| `optimizer` | `optim.AdamW(lr="auto", betas=(0.9, 0.95), weight_decay=0.0, grad_clip=1.0)` | Standard settings for LoRA and RL. |
+| `schedule`, `warmup` | `"linear"`, `0.03` | Linear decay to zero after a 3% warmup. |
+| `batch_size` | `128` examples (SFT records, DPO pairs, distillation, reward models); `32` prompts for GRPO | Examples per optimizer step. |
+| `epochs` | `1` | Passes over the data. The dry run warns when a run has fewer than 100 optimizer steps and suggests a smaller batch or a second epoch. |
+| `loss` | set per recipe (see each recipe below) | `GRPORecipe` uses `"auto"`; see [How "auto" values resolve](#how-auto-values-resolve). |
+
+## Data and chat templates
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `train_on` | `"last"` for chat records | Trains only the final assistant turn. `"all_assistant"` trains every assistant turn, for multi-turn agent traces. Tool outputs and user turns are never trained. |
+| `"train"` on a message | unset | `"train": true` or `false` on a single message overrides `train_on` for that message. |
+| `thinking` | `"auto"` | `"auto"` keeps the base model's thinking mode, and records with no `<think>` block train with thinking off. Also takes `"on"`, `"off"`, or an effort level (`"low"`, `"medium"`, `"high"`) on models that support one. A target that contradicts the setting fails the dry run with its record ID. |
+| `preserve_thinking` | `False` | Whether earlier assistant turns keep their reasoning in the prompt. Set `True` for agents that rely on reasoning from previous turns. |
+| `reduction` (SFT, distillation) | `"per_example"` | Averages the loss within each example and then across the batch, so long examples don't drown out short ones. `"per_token"` weights every trained token equally. |
+| `session_id` (record field) | one per record | Groups records from the same conversation for the train/eval split. |
+
+Preview the exact tokens and which ones are trained with `grad render <dataset> --model <model>` or `client.datasets.render(dataset, model=..., limit=3)`. The dry run prints the pinned template revision (such as `qwen3@3`) and the share of tokens trained. See [Chat templates and loss masks](/docs/training/tuning-troubleshooting/#chat-templates-and-loss-masks).
+
+## Checkpoints and evaluation
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| Checkpoint frequency | every 10% of steps, and at least every 20 steps | Managed runs checkpoint automatically, including optimizer state. Resume with `client.runs.resume(run_id)`. |
+| `eval_every` | `"auto"` (every 10% of steps) | How often the held-out split and any `evals=` run during training. |
+| `select` | `"best"` | `run.artifact` is the best checkpoint by the recipe's held-out metric (listed under each recipe below). `"last"` keeps the final one. |
+| `checkpoint_ttl_days` | `30` | How long intermediate checkpoints are kept. The best and final checkpoints never expire, and `ckpt.promote(name=...)` turns any checkpoint into an artifact you keep until you delete it. |
+| `autosave_every` (on `client.trainers.create` and `client.trainers.resume`) | off | In custom loops, saves weights, optimizer state and step count every N optimizer steps. |
+| Trainer idle timeout | 30 minutes | Open `Trainer` sessions close after 30 minutes of inactivity. You aren't billed while idle. |
+
+Each checkpoint records its base model and revision, adapter config, chat template revision, `thinking`, `train_on`, the resolved `lr` and `loss` (with rule version) and its step, and evaluations and deploys reuse them. `run.checkpoints()` lists checkpoints with `step`, `eval_score` and `expires_at`.
+
+## Where code runs
+
+Built-in specs (`Rubric` checks, `Judge`, `validators.*` and built-in environments) need no packaging. Your own Python functions are packaged and run in a Gradiated sandbox; see [Where your code runs](/docs/training/recipes/#where-your-code-runs).
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `requirements` (on `Scorer`, `environments.Tools`) | `[]` | Third-party packages your function imports. Resolved to exact versions and locked for the run when you submit it. |
+| `network` (on `Scorer`) | `False` | Allows outbound network access from the sandbox. |
+| `runtime` (on `Scorer`) | Gradiated sandbox | `"local"` runs the function on your machine through `grad worker`. The run pauses while no worker is connected and resumes when one reconnects. |
+| Custom `Environment` subclass | packaged | Plain-Python environments run in the sandbox. Ones that start Docker containers or need your network run on your machines with `grad env serve` and `environments.Remote(...)`. |
+
+`runs.plan()` packages every function before anything is billed, calls each once on a sample record inside the sandbox, and fails with a specific message if one can't be packaged, for example because it reads a local file or holds a database connection. Heavy grading runs in its own sandbox pool, separate from sampling.
+
+## `SFTRecipe`
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `model` | `"qwen/qwen3-8b"` | Base model or a previous `Artifact`. |
+| `adapter`, `lr` | `adapters.LoRA(rank=32)`, `"auto"` (about `5e-4`; about `3e-5` with `adapters.Full()`) | See [Optimization](#optimization). |
+| `train_on`, `thinking`, `reduction` | `"last"`, `"auto"`, `"per_example"` | See [Data and chat templates](#data-and-chat-templates). |
+| `merge_on_export` | `False` | Exports a standalone merged checkpoint instead of a LoRA adapter. |
+
+Best checkpoint by held-out eval loss.
+
+## `DPORecipe`
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `loss` | `losses.DPO(beta=0.1)` | Higher `beta` (`0.2`–`0.5`) stays closer to the starting model; lower (`0.05`) pushes harder away from rejected answers. |
+| `lr` | `"auto"` (about `2e-5`) | Much lower than SFT, so formatting taught by SFT survives. |
+| `adapter` | the starting artifact's adapter when `model=` is an artifact; otherwise `adapters.LoRA(rank=32)` | |
+| Reference model | the starting checkpoint | Loaded for you; never passed explicitly. |
+
+In a `.then(...)` chain, `DPORecipe()` with no `model` starts from the previous stage's artifact. Best checkpoint by held-out preference accuracy.
+
+## `GRPORecipe`
+
+Pass either `rubric=` (single-turn) or `env=` (single- or multi-turn).
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `model` | `"qwen/qwen3-8b"` | Base model, or an `Artifact` (for example from SFT) to start RL from. |
+| `rubric` | none | How to score single-turn answers: a `Rubric`, `Judge`, `Scorer`, score name or function. |
+| `env` | none | An `Environment`: `environments.Tools`, `Harbor`, `MCP`, `from_verifiers`, `Remote`, or your own subclass. |
+| `batch_size` | `32` | Prompts per training step. |
+| `group_size` | `8` | Attempts per prompt, scored against each other. Raise to `16` when most groups score all `0` or all `1`. |
+| `max_new_tokens` | `"auto"` | Generation limit per turn. See [How "auto" values resolve](#how-auto-values-resolve). Cut-off answers score `0`. |
+| `temperature` | `1.0` | Sampling temperature for training attempts. |
+| `lr` | `"auto"` (about `5e-5`) | |
+| `adapter` | `adapters.LoRA(rank=32)` | Ranks as low as `8` work well for RL. |
+| `loss` | `"auto"` | See [How "auto" values resolve](#how-auto-values-resolve). |
+| `advantage` | `advantages.GroupStd()` | How each attempt's score becomes an advantage relative to its group. |
+| `max_staleness` | `0` | The one async setting: how many weight versions a rollout may lag behind the trainer. `1`–`2` overlaps slow container rollouts with training. Stale rollouts are kept, not discarded. |
+| `kl_coef` | `0.0` | Penalty for drifting from the starting model. Set `0.01`–`0.05` only if outputs drift from its style. |
+| `max_turns` | the environment's own | Turn limit for multi-turn environments. |
+| `thinking` | `"auto"` | Use `"off"` when the task doesn't need long reasoning and answers are getting cut off. |
+
+RL metrics: `mean_reward`; `truncation_rate`, the share of attempts cut off at `max_new_tokens` (above 5% needs attention); and for async runs, `staleness_mean` and `staleness_max`.
+
+## `DistillRecipe`
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `teacher` | required | Catalog model or `Artifact` to learn from. It must share the student's tokenizer for token-level KL. |
+| `rollout` | `OnPolicy(max_new_tokens="auto")` | The student generates and the teacher scores those tokens. `OffPolicy()` trains on fixed teacher completions instead. |
+| `loss` | `losses.TopKKLDistill(top_k=32)` | Matches the teacher's top-k next-token probabilities. `top_k` of 16–32 captures almost all the signal. |
+| `context` | none | A `Context` to bake into a LoRA fine-tune: the teacher reads it and the student doesn't. |
+| `lr` | `"auto"` (about `2e-4`) | |
+
+Best checkpoint by KL to the teacher on held-out prompts.
+
+## `RouterRecipe`
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `model` | `"qwen/qwen3-0.6b"` | Router backbone. |
+| `models` | the models found in `metadata.model` in your logs | Candidate models. If your logs cover only one model, prompts are replayed against the others. |
+| `rubric` | required unless your logs already carry scores | A `Judge`, `Rubric`, existing score name or function. |
+| `max_quality_drop` | `0.02` | Training target: how much quality, compared with your best model, the router may trade for cost savings. |
+| `pricing` | built-in catalog pricing | Override with `pricing=`, or `metrics.cost_usd` on your logs, for negotiated or self-hosted rates. |
+
+## `DecisionModelRecipe`
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `model` | `gradiated/linden-1`, chosen by the recipe | Pass `"qwen/qwen3-0.6b"` to train from a general open model instead. |
+| `loss` | by question type: `losses.CrossEntropy()` (`choice`), `losses.BCEWithLogits()` (`noul`), `losses.OrdinalBCE()` (`score`) | |
+| `adapter`, `lr`, `batch_size`, `epochs` | chosen for the backbone | Printed by the dry run. |
+
+Best checkpoint by held-out loss.
+
+## `RewardModelRecipe`
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `model` | `"qwen/qwen3-8b"` | 4B–8B models score in milliseconds. |
+| `adapter` | `adapters.LoRA(rank=32)` | Rank `8`–`16` is enough for a few thousand pairs. |
+| `lr` | `"auto"` (about `1e-4`) | |
+
+Pairs stay on the same side of the split. Best checkpoint by held-out pair accuracy.
+
+## `EmbeddingRecipe`
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `model` | `baai/bge-small-en-v1.5`, chosen by the recipe | Compact encoder with sub-10 ms inference. |
+| `adapter` | `adapters.Full()` | Encoders are small, so full training is fast and usually beats LoRA. |
+| `pool` | `pooling.Mean()` | Averages token vectors into one vector. Stored on the artifact, so `artifact.embed(...)` uses it automatically. |
+| `loss` | `losses.InfoNCE(temp=0.05)` | Lower `temp` (`0.03`) sharpens rankings when negatives are near-duplicates. Without `negatives`, other documents in the batch serve as negatives. |
+| `lr` | `"auto"` (about `2e-5`) | |
+
+Best checkpoint by held-out top-10 hit rate.
+
+## `CartridgeRecipe`
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `context` | required | `Context.from_text(...)`, `Context.from_file(...)` or `Context.from_uri("s3://...")`. |
+| `num_tokens` | `256` | Size of the compressed prefix. Try `512`–`1024` for very large contexts. |
+| `teacher` | the same model reading the full context | Pass a larger model to distill from it as well. |
+| `loss` | `losses.TopKKLDistill(top_k=20)` | |
+| `lr` | `"auto"` (about `1e-2`) | Prefix KV tokens need a far higher learning rate than LoRA weights. Keep overrides within `1e-2`–`2e-2`. |
+
+Best checkpoint by closeness to the model reading the full context.
+
+## Environments
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `environments.Tools(tools, ...)` | — | Turns typed Python functions into tools; each signature and docstring becomes the tool's JSON schema. An empty list gives a single-turn environment. |
+| `Tools(tasks=, rubric=)` | none | The task dataset, and how each finished attempt is scored. |
+| `Tools(max_turns=)`, `Harbor(max_turns=)` | the environment's default | Maximum model turns per attempt. |
+| `Tools(system_prompt=)` | none | System instructions added to every task. |
+| `Tools(requirements=)` | `[]` | Packages your tool functions import, installed in the sandbox. |
+| `environments.Harbor(agent=)` | `"default"` | The agent that drives the model inside each container: `"default"`, `"claude-code"`, `"codex"`, `"opencode"` or `"mini-swe-agent"`. Train in the harness you'll deploy in. |
+| `Harbor(rubric=)` | none | Extra `Judge` or code checks on top of each task's `tests/test.sh`. |
+| `environments.MCP(url=)` or `MCP(command=[...])` | — | Exposes an MCP server's tools. A remote URL is called from Gradiated's side; a local command is packaged with the run. |
+| `environments.DockerCompose(compose_file=)` | — | Multi-container stacks with a warm pool and database resets. |
+| `environments.from_gym(make_env)` | — | Wraps a Gymnasium environment. |
+| `environments.from_verifiers(id, **env_args)` | — | Runs a `verifiers.v1` Environments Hub package (`"owner/env@version"`) or a local `verifiers.v1` environment object. Keyword arguments go to the environment. |
+| `environments.Remote(name)` | — | An environment served from your machines by `grad env serve <module:env> --name <name> --concurrency <n>`. The run pauses while no worker is connected. |
+| `rollout_groups(max_concurrency=, timeout_s=)` | no limit, `Task.timeout_s` | When running rollouts directly: the most sandboxes at once, and the time limit after which an attempt is cancelled, scored `0.0` and still torn down. |
+
+`grad env check <owner/env@version>` tells you whether a verifiers Hub package is supported before you train. Each package runs with the `verifiers` version its own lockfile pins, and `runs.plan()` fails with a clear message if the SDK doesn't support that version.
+
+## `Judge` and `Scorer`
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `Judge(model=)` | required | There's no default model that could change under you. Every score records the exact judge model and prompt hash. |
+| `Scorer(weight=)` | `1.0` | Weight of this check in the `Rubric`'s overall score. |
+| `requirements`, `network`, `runtime` | see [Where code runs](#where-code-runs) | |
+
+## Evaluations
+
+For `client.evals.create(...)`.
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `samples` | `1` | Attempts per task. pass@k is reported for every k up to `samples`. Use 3–4 for decisions you'll act on. |
+| `baseline` | none | A model or artifact for a paired comparison, with a confidence interval on the difference. |
+| `pass_threshold` | `1.0` for binary checks, `0.5` otherwise | The score at or above which an attempt counts as passing, for pass@k. |
+| `benchmarks` | none | Standard benchmarks such as `benchmarks.IFEval()` or `benchmarks.GSM8K()`. |
+| `limit` (on `benchmarks.*`) | the full benchmark | A fixed random subset, the same one every time. |
+
+## Deploy
+
+For `run.deploy(...)` and `grad deploy`.
+
+| Parameter | Default | What it does |
+| --- | --- | --- |
+| `canary` | none (full rollout) | Share of traffic sent to the new version, such as `0.10`. |
+| `shadow` | `False` | Mirrors traffic to the new version without serving its responses. |
+| `rollback_if_quality_drop` | none | Rolls back automatically when live quality falls more than this below the active version (`0.02` is 2 points) once there's enough feedback, and marks the canary `rolled_back`. Without it, the canary stays at its share until you promote or roll it back. For routers, traffic goes to `fallback`. This is separate from the router's training target, `max_quality_drop`. |
+| `fallback` (routers) | none | The model that receives traffic when a router rolls back. |
+
+## How "auto" values resolve
+
+| Value | How it's chosen |
+| --- | --- |
+| `lr="auto"` | A per-model table, calibrated by a learning-rate sweep on each base model before it leaves preview. Each entry is measured at `batch_size=128` (SFT, DPO, distillation) or `32` prompts × `group_size=8` (RL), `LoRA(rank=32, alpha=32)`, linear decay with 3% warmup and `AdamW(betas=(0.9, 0.95))`, then scaled by the square root of your batch size relative to the measured one. Models with no calibrated entry (self-hosted custom checkpoints, uncalibrated preview models) make `runs.plan()` stop and ask for an explicit `lr=`. In a `Trainer`, `optim.AdamW(lr="auto")` uses the same table. |
+| `loss="auto"` (GRPO) | `losses.GRPO(clip_low=0.2, clip_high=0.28)` for on-policy runs. With `max_staleness > 0` it adds `mask_ratio=(0.5, 2.0)`, which drops tokens whose probability under the current weights has moved more than 2× from the sampler's. `auto` never picks `losses.CISPO`, and the dry run warns if you combine CISPO with `max_staleness > 0`. |
+| `max_new_tokens="auto"` (RL, distillation) | The 95th-percentile completion length of the base model on 64 of your prompts, measured during `runs.plan()` and capped by the context window. Metrics report `truncation_rate`. |
+| `thinking="auto"` | The base model's own default. For Qwen3, thinking is on, and records with no `<think>` block train with thinking off. |
+
+Typical resolved learning rates for `qwen/qwen3-8b` at the defaults:
+
+| Objective | `lr` |
+| --- | --- |
+| SFT (LoRA) | `5e-4` |
+| SFT (`adapters.Full()`) | `3e-5` |
+| DPO | `2e-5` |
+| RL (GRPO) | `5e-5` |
+| On-policy distillation | `2e-4` |
+| Reward models | `1e-4` |
+| Context Cartridges | `1e-2` |
+| Embeddings (`adapters.Full()`) | `2e-5` |
+
+**Rule versions.** Each `auto` rule is versioned, and the run config records the version it used (for example `loss: auto@1 -> GRPO(clip_low=0.2, clip_high=0.28)`). If we change what a rule resolves to, it gets a new version, existing run configs keep the old one, and the dry run shows both values on your first run after the change.
+
+<DocsNext>
+  <a href="/docs/training/recipes/">
+    <small>Guide</small>
+    <strong>Recipes</strong>
+  </a>
+  <a href="/docs/training/tuning-troubleshooting/">
+    <small>Practical guide</small>
+    <strong>Tuning &amp; troubleshooting</strong>
+  </a>
+</DocsNext>

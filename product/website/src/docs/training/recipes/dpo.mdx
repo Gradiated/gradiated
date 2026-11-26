@@ -55,14 +55,10 @@ prefs = client.datasets.from_hf(
     limit=2000,
 )
 
-recipe = DPORecipe(model="qwen/qwen3-8b")  # beta=0.1, lr="auto" (about 2e-5)
-print(client.runs.plan(dataset=prefs, recipe=recipe))
-
 run = client.runs.create(
     dataset=prefs,
     name="ultrafeedback-dpo",
-    recipe=recipe,
-    max_cost_usd=20,
+    recipe=DPORecipe(model="qwen/qwen3-8b"),
 ).wait()
 print(run.artifact.id, run.eval_report)
 ```
@@ -77,7 +73,7 @@ Pass an existing SFT [`Artifact`](/docs/training/artifacts/) directly as `model=
   <DocsCodeTab label="From an SFT artifact">
 
 ```python
-from grad import Grad, losses
+from grad import Grad
 from grad.recipes import DPORecipe
 
 client = Grad()
@@ -87,11 +83,7 @@ prefs = client.datasets.get("diff-merge-preferences")
 dpo = client.runs.create(
     dataset=prefs,
     name="fast-diff-merge",
-    recipe=DPORecipe(
-        model=sft_art,              # continues training the SFT adapter
-        loss=losses.DPO(beta=0.1),  # the default, shown for clarity
-    ),
-    max_cost_usd=30,
+    recipe=DPORecipe(model=sft_art),  # continues training the SFT adapter
 ).wait()
 
 print(dpo.artifact.id, dpo.eval_report)
@@ -101,7 +93,7 @@ print(dpo.artifact.id, dpo.eval_report)
   <DocsCodeTab label="Chain SFT → DPO (.then)">
 
 ```python
-from grad import Grad, losses, splits
+from grad import Grad
 from grad.recipes import DPORecipe, SFTRecipe
 
 client = Grad()
@@ -112,16 +104,9 @@ dpo = (
     client.runs.create(
         dataset=sft_ds,
         name="fast-diff-merge",
-        recipe=SFTRecipe(
-            model="qwen/qwen3-8b",
-            split=splits.BySession(eval_fraction=0.10),
-        ),
-        max_cost_usd=80,  # covers both stages
+        recipe=SFTRecipe(model="qwen/qwen3-8b"),
     )
-    .then(
-        dataset=prefs_ds,
-        recipe=DPORecipe(loss=losses.DPO(beta=0.1)),  # lr="auto" resolves lower than SFT
-    )
+    .then(dataset=prefs_ds, recipe=DPORecipe())  # starts from the SFT result
     .wait()
 )
 ```
@@ -130,7 +115,7 @@ dpo = (
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, losses, recipes } from "@gradiated/grad";
+import { Grad, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
 const sftArt = await grad.artifacts.get("fast-diff-merge@sft-v1");
@@ -140,11 +125,7 @@ const dpo = await grad.runs
   .create({
     dataset: prefs,
     name: "fast-diff-merge",
-    recipe: recipes.dpo({
-      model: sftArt,
-      loss: losses.dpo({ beta: 0.1 }),
-    }),
-    maxCostUsd: 30,
+    recipe: recipes.dpo({ model: sftArt }),
   })
   .wait();
 
@@ -160,16 +141,12 @@ console.log(dpo.artifact.id, dpo.evalReport);
 - **Follow with DPO (`DPORecipe`)** when the model mostly works but keeps repeating specific mistakes you can show as `(chosen, rejected)` pairs.
 - **Move to [RL (`GRPORecipe`)](/docs/training/recipes/rl-agents/)** when you can grade answers automatically with tests, validators, or a judge and want the model to discover better solutions on its own.
 
-### Defaults and key parameters
+### Parameters you might change
 
-`client.runs.plan(...)` and `grad train --dry-run` print every resolved value before you pay for the run.
+- **`loss=losses.DPO(beta=...)`:** `beta` is `0.1` by default. Higher (`0.2`–`0.5`) stays closer to your starting model; lower (`0.05`) pushes harder away from rejected patterns.
+- **`lr_scale`:** DPO's learning rate is set automatically and is much lower than SFT's. If held-out preference accuracy climbs fast but your format breaks, pass `lr_scale=0.5`.
 
-- **`loss=losses.DPO(beta=0.1)`** *(default)*: higher `beta` (`0.2`–`0.5`) stays closer to your starting model; lower (`0.05`) pushes harder away from rejected patterns.
-- **`lr="auto"`** *(default)*: DPO needs a much smaller learning rate than SFT. For `qwen/qwen3-8b` with LoRA rank 32 it typically resolves to about `2e-5` (roughly 25x lower than SFT). If eval accuracy on held-out pairs climbs fast but your format breaks, halve it.
-- **`adapter`:** when `model=` is an SFT artifact, DPO keeps training that same adapter. From a base model it defaults to `adapters.LoRA(rank=32)` with `alpha=32` fixed. Adapters export small so several can share one base model in production; pass `merge_on_export=True` only if you want a standalone merged checkpoint.
-- **`batch_size=128`** pairs, **`epochs=1`**, linear schedule with 3% warmup. The reference model is the starting checkpoint; you never load it yourself.
-- **Checkpoints:** saved every 10% of steps with optimizer state; `run.artifact` is the best checkpoint by held-out preference accuracy. Resume with `client.runs.resume(run_id)`.
-- **`max_cost_usd`:** stops the run cleanly at the cap and keeps the last checkpoint.
+When `model=` is an SFT artifact, DPO keeps training that same adapter, and the starting checkpoint is the reference model, so you never load one yourself. Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#dporecipe).
 
 ## Deploy
 

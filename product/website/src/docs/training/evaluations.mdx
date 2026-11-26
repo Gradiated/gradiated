@@ -118,7 +118,7 @@ grad eval \
 ### Reading the report
 
 - **`overall (95% CI)`:** the mean rubric score with a 95% bootstrap confidence interval over tasks. If two models' intervals overlap heavily, you don't have a winner yet: add tasks or samples.
-- **`pass@k`:** the share of tasks where at least one of `k` attempts scored at or above `pass_threshold` (default `1.0` for binary checks, `0.5` otherwise). Reported for every `k` up to `samples`. A big gap between pass@1 and pass@4 means the model can solve the task but isn't reliable yet, which is exactly what RL improves.
+- **`pass@k`:** the share of tasks where at least one of `k` attempts counted as passing (see `pass_threshold` in the [reference](/docs/reference/training-parameters/#evaluations)). Reported for every `k` up to `samples`. A big gap between pass@1 and pass@4 means the model can solve the task but isn't reliable yet, which is exactly what RL improves.
 - **`vs baseline`:** the paired difference from `baseline=` on the same tasks, with its own interval. Paired comparisons need far fewer tasks than comparing two separate means.
 - **`tokens/task` and `cost/1k tasks`:** output tokens and serving cost per task at current rates, so you can weigh quality against spend.
 
@@ -165,7 +165,7 @@ ev = client.evals.from_inspect(
 
 ## Evaluate during training
 
-Every recipe evaluates on its held-out split as it trains (`eval_every="auto"`, every 10% of steps), and `run.artifact` is the checkpoint with the best eval score unless you pass `select="last"`. Add `evals=` to also run benchmarks at each eval point, so you see a regression while the run is still going instead of after it finishes:
+Every recipe evaluates on its held-out split as it trains, and `run.artifact` is the checkpoint with the best eval score. Add `evals=` to also run benchmarks at each eval point, so you see a regression while the run is still going instead of after it finishes:
 
 ```python
 from grad import Grad, SFTRecipe, benchmarks
@@ -178,7 +178,6 @@ run = client.runs.create(
     recipe=SFTRecipe(
         model="qwen/qwen3-8b",
         evals=[benchmarks.IFEval(limit=200)],
-        eval_every="auto",
     ),
 ).wait()
 

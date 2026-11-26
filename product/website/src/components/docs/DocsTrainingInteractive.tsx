@@ -454,8 +454,8 @@ export const DocsTokenAlignment = (): ReactElement => {
   return (
     <figure className="gr-doc-widget" aria-label="Interactive 1:1 token alignment inspector">
       <div className="gr-doc-widget-head">
-        <span className="gr-doc-widget-kicker">Interactive invariant · len(all arrays) == T == 12</span>
-        <span className="gr-doc-widget-hint">Click any token to inspect index i</span>
+        <span className="gr-doc-widget-kicker">Token inspector · 12 tokens</span>
+        <span className="gr-doc-widget-hint">Click any token to see its values</span>
       </div>
 
       <div className="gr-doc-token-legend">
@@ -518,10 +518,10 @@ export const DocsTokenAlignment = (): ReactElement => {
         </div>
         <p className="gr-doc-inspector-detail">
           {tok.idx === 0
-            ? "Index 0 has no preceding context, so loss_mask[0] and logprobs[0] are always 0.0 (zero off-by-one slicing)."
+            ? "Token 0 is the start of the sequence, so it has no preceding tokens and loss_mask[0] is always 0.0."
             : tok.lossMask > 0
-              ? `Index ${tok.idx} predicts "${tok.text}" given tokens[0..${tok.idx - 1}]. Gradient applies because loss_mask[${tok.idx}] = 1.0.`
-              : `Index ${tok.idx} is a ${tok.role} observation token appended with loss_mask[${tok.idx}] = 0.0, so it stays in KV context without contributing to policy loss.`}
+              ? `Token ${tok.idx} ("${tok.text}") is predicted from tokens[0..${tok.idx - 1}]. Training updates weights here because loss_mask[${tok.idx}] = 1.0.`
+              : `Token ${tok.idx} ("${tok.text}") came from the ${tok.role}, so loss_mask[${tok.idx}] = 0.0: the model sees it as context, but training does not update weights on it.`}
         </p>
       </div>
     </figure>

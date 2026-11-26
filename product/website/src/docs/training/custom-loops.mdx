@@ -2,9 +2,9 @@
 
 <DocsLead>Write your own Python training loop when a built-in recipe isn't flexible enough.</DocsLead>
 
-Custom loops let you drive the remote `Trainer` and `Artifact` APIs directly from any CPU machine (your laptop, CI, or an orchestrator) using the same adapters, losses, and optimizers that power the built-in [recipes](/docs/training/recipes/).
+Custom loops let you drive the remote `Trainer` and `Artifact` APIs directly from any machine (your laptop, CI, or an orchestrator) using the same adapters, losses, and optimizers that power the built-in [recipes](/docs/training/recipes/).
 
-Install the Python SDK with the optional `torch` extra when writing client-side `CustomLoss` subclasses:
+If the built-in losses (`losses.CrossEntropy`, `losses.DPO`, `losses.GRPO`, etc.) cover your loop, the standard `grad-sdk` package is all you need. If you want to write your own loss formula in Python (a [`CustomLoss`](#example-2-custom-objectives-via-lossescustomloss), where your code computes the loss locally in PyTorch while Gradiated's GPUs still run the model forward and backward passes), install the optional `torch` extra:
 
 ```bash
 pip install "grad-sdk[torch]"
@@ -12,17 +12,21 @@ pip install "grad-sdk[torch]"
 
 ## Mental model
 
-- **`Trainer`** owns mutable weights and optimizer state on the server. Open it in a `with client.trainers.create(model=..., adapter=...) as trainer:` block so the remote trainer session closes cleanly on exit or error. Training is billed strictly **per million tokens processed** (forward/backward and sampling) plus storage for saved weights and checkpoints, never idle GPU time.
+- **`Trainer`** owns mutable weights and optimizer state on the server. Open it in a `with client.trainers.create(model=..., adapter=...) as trainer:` block so the remote trainer session closes cleanly on exit or error. Training is billed **per million tokens processed** (forward/backward and sampling) plus storage for saved weights and checkpoints, so you don't need to pay for idle GPU time.
 - **`trainer.snapshot()`** returns an immutable, ephemeral [**`Artifact`**](/docs/training/artifacts/) pointing at the current weights. Call `sample()`, `score_logprobs()`, `infer_batch()`, or `embed()` on it while training continues.
 - **`trainer.export(name=...)`** writes a versioned `.grad` [**`Artifact`**](/docs/training/artifacts/) ready to [deploy on Gradiated Cloud or download for vLLM / SGLang](/docs/training/deploying/).
 
-## Universal 1:1 token alignment
+## How tokens and masks line up
 
-Most training APIs force you to shift `input[:-1]` against `targets[1:]` and pad prompts manually, so a single off-by-one mistake silently trains on the wrong tokens. In `grad`, every per-token array on a `Record` or `Trajectory` (`loss_mask`, `sampling_logprobs`, `ref_logprobs`, `advantages`, and `out.logprobs`) has the **exact same length `T` as `tokens`**:
+Every training example is stored as a list of `tokens` of length `T` (covering the prompt, tool outputs, and assistant responses). Each per-token field on a `Record` or `Trajectory` (`loss_mask`, `turn_ids`, `sampling_logprobs`, `ref_logprobs`, `advantages`, and `out.logprobs`) has the **exact same length `T`**, so index `i` always refers to the same token everywhere:
+
+- **`loss_mask[i] = 0.0`** means the model sees token `i` as context (a user prompt or tool output), but training does not update weights on it.
+- **`loss_mask[i] = 1.0`** means the model generated token `i` and training updates weights on it (predicting `tokens[i]` given `tokens[0..i-1]`).
+- **`turn_ids[i]`** tracks which assistant turn generated token `i` in a multi-turn conversation.
 
 <DocsTokenAlignment />
 
-`Artifact.sample()`, `Artifact.score_logprobs()`, [`Trajectory.append_env_tokens()`](/docs/reference/primitives/), and `Record(messages=...)` all preserve this invariant automatically.
+You don't have to build or shift these arrays by hand: `Record(messages=...)`, `Artifact.sample()`, `Artifact.score_logprobs()`, and [`Trajectory.append_env_tokens()`](/docs/reference/primitives/) keep every array aligned automatically.
 
 ### Pipelining execution in one RTT
 
@@ -49,7 +53,7 @@ record = Record(
 
 ## Example 1: Multi-turn GRPO loop
 
-This loop runs rollouts in a [stateful environment](/docs/training/environments/), computes group-normalized advantages via `grad.with_advantages()` with an extensible `AdvantageEstimator` (skipping zero-variance groups automatically), updates LoRA weights with `losses.GRPO`, and exports a LoRA artifact. See the [RL for agents guide](/docs/training/recipes/rl-agents/) for swapping in DAPO, Dr. GRPO (`advantages.GroupMean()`), RLOO (`advantages.RLOO()`), async CISPO, or sequence-level GSPO.
+This loop runs rollouts in a [stateful environment](/docs/training/environments/), computes group-normalized advantages via `grad.with_advantages()` with an extensible `AdvantageEstimator` (skipping zero-variance groups automatically), updates LoRA weights with `losses.GRPO`, and exports a LoRA artifact. See [Advanced objectives](/docs/training/advanced-objectives/) for swapping in DAPO, Dr. GRPO (`advantages.GroupMean()`), RLOO (`advantages.RLOO()`), async CISPO, or sequence-level GSPO.
 
 ```python
 import grad
@@ -322,7 +326,7 @@ with client.trainers.create(model=encoder, adapter=adapters.FrozenHead()) as tra
 | `losses.TopKKLDistill(top_k=32)` | Distillation against `teacher_topk` (`TensorRef` or multi-teacher weighted list). |
 | `losses.InfoNCE(temp=0.05)` | Contrastive embedding training (`anchor` / `positive` / `negative`). |
 | `losses.BCESparsePositions(head="prm")` | Token-level or step-level heads at explicit `positions` (PRMs, prompt compression). |
-| `losses.CustomLoss` *(base class)* | Subclass to run any client-side PyTorch objective with exact surrogate gradients. |
+| `losses.CustomLoss` | Write your own loss formula locally in PyTorch while Gradiated's GPUs run the model forward and backward passes. |
 
 ### Built-in `adapters.*` dataclasses
 

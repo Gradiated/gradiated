@@ -100,7 +100,7 @@ grad deploy docs-embedder@latest
 
 - **Use `EmbeddingRecipe`** when you search or retrieve across thousands or millions of documents (RAG, code search, semantic deduplication) and general-purpose embeddings miss your domain terms.
 - **Use a [Decision model](/docs/training/recipes/decision-model/)** when you want a direct answer (a category, yes/no probability, or score) rather than nearest-neighbor search.
-- **Use [Context Cartridges](/docs/training/recipes/cartridges/)** when your docs fit in ~10k–100k tokens and are mostly static, so you can skip retrieval and bake them straight into a small KV prefix.
+- **Use [Context Cartridges](/docs/training/recipes/cartridges/)** when your docs fit in up to ~500k tokens and are mostly static, so you can skip retrieval and bake them straight into a small KV prefix.
 
 ### Key parameters
 
@@ -127,7 +127,7 @@ run.deploy()
 
 ## Want more control?
 
-Need Matryoshka resizable embeddings, per-token ColBERT search, or cross-encoder rerankers? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
+Need custom loss functions, embeddings you can truncate to smaller sizes to save storage, or a reranker that scores query/doc pairs directly? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
 
 <DocsNext>
   <a href="/docs/training/custom-loops/">

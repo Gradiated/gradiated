@@ -104,7 +104,7 @@ grad train -f distill-4b.yaml --wait
 
 - **`DistillRecipe`:** you have a strong, slow model (like a 32B or frontier model) and want a small 4B–8B model to match it on your prompts, with no labeled answers required.
 - **[`SFTRecipe`](/docs/training/recipes/sft/):** you already have verified gold answers (or human-edited outputs) you want the model to copy directly.
-- **[`CartridgeRecipe`](/docs/training/recipes/cartridges/):** you don't want to change the model's general behavior; you just want to stop resending the same 30k–100k tokens of docs or system prompt on every request.
+- **[`CartridgeRecipe`](/docs/training/recipes/cartridges/):** you don't want to change the model's general behavior; you just want to stop resending the same long docs or system prompt (up to ~500k tokens) on every request.
 
 ## Deploy and serve
 

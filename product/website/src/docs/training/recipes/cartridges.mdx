@@ -2,7 +2,7 @@
 
 <DocsLead>Turn a long, repeated prompt or doc set into a small add-on you don't have to resend on every request.</DocsLead>
 
-If every request sends the same 30k–100k tokens of runbooks, product docs, or compliance rules, you pay to re-read that text over and over and wait longer for the first token.
+If every request sends the same long block of runbooks, product docs, or compliance rules (up to ~500k tokens), you pay to re-read that text over and over and wait longer for the first token.
 
 ## How a Cartridge works
 
@@ -113,7 +113,7 @@ run.deploy()
 
 - **Use `CartridgeRecipe`** whenever you have a long system prompt, instructions, or large chunk of reference docs you don't want to resend on every request.
 - **Use [Model distillation](/docs/training/recipes/distillation/) (`DistillRecipe`)** when you want a smaller model to imitate a bigger teacher model overall (you can also pass `context=` to bake a prompt straight into a LoRA fine-tune).
-- **Use RAG ([Embeddings](/docs/training/recipes/embeddings/))** when your knowledge base changes every minute or has millions of documents. Cartridges work best for 10k to 100k tokens of context that stay mostly stable.
+- **Use RAG ([Embeddings](/docs/training/recipes/embeddings/))** when your knowledge base changes every minute or has millions of documents. Cartridges work best for up to ~500k tokens of context that stay mostly stable.
 
 ### Baking context into a LoRA fine-tune instead
 

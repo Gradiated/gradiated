@@ -6,6 +6,10 @@ import type { RoadmapEntry } from "../model-roadmap";
 import "./model-name-suggestion.css";
 
 const NAME_MAX = 80;
+
+// "Security review" → "Security Review"; acronyms such as "CI" stay as written.
+const titleCase = (text: string) =>
+  text.replace(/\b\p{Ll}/gu, (letter) => letter.toUpperCase());
 /* The API takes one string; the name and the reason are joined into it. */
 const REASON_MAX = MODEL_NAME_SUGGESTION_MAX_LENGTH - NAME_MAX - 3;
 
@@ -25,6 +29,10 @@ export const ModelNameSuggestion = ({
 
   useEffect(() => {
     if (!dialog.current?.open) dialog.current?.showModal();
+    // showModal focuses the first control (Close); start in the name field.
+    dialog.current
+      ?.querySelector<HTMLInputElement>("input[name=name]")
+      ?.focus();
   }, []);
 
   const close = () => {
@@ -129,7 +137,6 @@ export const ModelNameSuggestion = ({
           </div>
         ) : (
           <>
-            <p className="gr-label">{entry.category}</p>
             <h2
               className="gr-heading gr-name-modal-title"
               id="model-name-suggestion-title"
@@ -137,13 +144,17 @@ export const ModelNameSuggestion = ({
               Suggest a name
             </h2>
             <p className="gr-body gr-muted gr-name-modal-lede">
-              What should we call our {entry.category.toLowerCase()} model, and
-              why?
+              What should we call our{" "}
+              <strong className="gr-name-modal-model">
+                {titleCase(entry.category)} Model
+              </strong>
+              , and why?
             </p>
             <form className="gr-name-modal-form" onSubmit={submit}>
-              <label className="gr-name-modal-field">
+              <label className="gr-field gr-name-modal-field">
                 <span className="gr-label">Name</span>
                 <input
+                  className="gr-input"
                   autoComplete="off"
                   autoFocus
                   maxLength={NAME_MAX}
@@ -152,9 +163,14 @@ export const ModelNameSuggestion = ({
                   required
                 />
               </label>
-              <label className="gr-name-modal-field">
+              <label className="gr-field gr-name-modal-field">
                 <span className="gr-label">Why (optional)</span>
-                <textarea maxLength={REASON_MAX} name="reason" rows={3} />
+                <textarea
+                  className="gr-textarea"
+                  maxLength={REASON_MAX}
+                  name="reason"
+                  rows={3}
+                />
               </label>
               {error && (
                 <p className="gr-name-modal-error" role="alert">

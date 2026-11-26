@@ -9,7 +9,7 @@ Use `SFTRecipe` when you have verified examples of the exact output you want (fa
 ### For SFT
 
 - **Minimum volume:** 300–1,000 clean `(input, expected_output)` [trajectories](/docs/training/trajectories/) for narrow format or code-edit tasks; 2,000+ for broader tasks.
-- **Data quality beats volume:** Filter out low-scoring or unverified traces on the `Dataset` (`dataset.filter(filters.MinScore(...))`) rather than training on raw logs.
+- **Data quality beats volume:** Filter out low-scoring or unverified traces on the `Dataset` (`dataset.filter(lambda t: t.scores.get("tests_passed") == 1.0)`) rather than training on raw logs.
 
 ```json
 {
@@ -57,12 +57,12 @@ Train a LoRA adapter, filter to verified passing examples, split by `session_id`
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Model, adapters, filters, optim, splits
+from grad import Grad, Model, adapters, optim, splits
 from grad.recipes import SFTRecipe
 
 client = Grad()
 dataset = client.datasets.get("diff-merge-prod").filter(
-    filters.MinScore(tests_passed=1.0),
+    lambda t: t.scores.get("tests_passed") == 1.0,
 )
 
 sft_recipe = SFTRecipe(
@@ -87,11 +87,11 @@ print(sft.artifact.id)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Model, adapters, filters, optim, recipes, splits } from "@gradiated/grad";
+import { Grad, Model, adapters, optim, recipes, splits } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = (await grad.datasets.get("diff-merge-prod")).filter(
-  filters.minScore({ tests_passed: 1.0 }),
+  (t) => t.scores.tests_passed === 1.0,
 );
 
 const sft = await grad.runs
@@ -174,10 +174,12 @@ print(dpo.artifact.id, dpo.eval_report)
   <DocsCodeTab label="Fluent chaining (.then)">
 
 ```python
-from grad import Model, adapters, filters, losses, optim, splits
+from grad import Model, adapters, losses, optim, splits
 from grad.recipes import DPORecipe, SFTRecipe
 
-sft_ds = client.datasets.get("diff-merge-prod").filter(filters.MinScore(tests_passed=1.0))
+sft_ds = client.datasets.get("diff-merge-prod").filter(
+    lambda t: t.scores.get("tests_passed") == 1.0,
+)
 prefs_ds = client.datasets.get("diff-merge-preferences")
 
 dpo = (

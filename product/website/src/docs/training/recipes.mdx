@@ -197,12 +197,12 @@ run = client.runs.create(dataset=dataset, name="coding-effort", recipe=recipe).w
   <DocsCodeTab label="SFT">
 
 ```python
-from grad import Grad, Model, adapters, filters, optim, splits
+from grad import Grad, Model, adapters, optim, splits
 from grad.recipes import SFTRecipe
 
 client = Grad()
 dataset = client.datasets.get("diff-merge-prod").filter(
-    filters.MinScore(tests_passed=1.0),
+    lambda t: t.scores.get("tests_passed") == 1.0,
 )
 
 recipe = SFTRecipe(

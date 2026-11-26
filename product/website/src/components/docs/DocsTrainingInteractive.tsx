@@ -267,7 +267,7 @@ run = client.runs.create(
     dataNeeded: "Verified passing outputs (or chosen/rejected pairs)",
     href: "/docs/training/recipes/sft-dpo/",
     snippet: `dataset = client.datasets.get("diff-merge-prod").filter(
-    filters.MinScore(tests_passed=1.0),
+    lambda t: t.scores.get("tests_passed") == 1.0,
 )
 sft = client.runs.create(
     dataset=dataset,

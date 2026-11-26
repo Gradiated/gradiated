@@ -293,7 +293,7 @@ Read https://gradiated.com/docs/training/recipes/router.md and integrate a Gradi
 ```text
 Read https://gradiated.com/docs/training/recipes/sft-dpo.md and set up a fine-tuning pipeline for our task:
 1. Export verified passing examples into a Gradiated `Dataset` (`input.messages`, `expected_output`, `session_id`, and `scores`).
-2. Filter the dataset with `dataset.filter(filters.MinScore(...))` and configure an `SFTRecipe` (chaining into `DPORecipe` with `.then(...)` if needed) with `Model(...)` and `splits.BySession()`.
+2. Filter the dataset with `dataset.filter(lambda t: t.scores.get("tests_passed") == 1.0)` and configure an `SFTRecipe` (chaining into `DPORecipe` with `.then(...)` if needed) with `Model(...)` and `splits.BySession()`.
 3. Validate with `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json` before starting training.
 4. Deploy with `strategies.SyntaxFallback(fallback=Model(...))` and wire `feedback.record()` so human fixes are captured as `expected_output`.
 ```

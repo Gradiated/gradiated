@@ -153,15 +153,15 @@ The import result lists how many trajectories were parsed, how many were dropped
 
 ## Filter and slice datasets
 
-Filter a `Dataset` with composable `filters.*` specs before passing it to a training run — `dataset.filter(...)` returns a reusable `Dataset` view so filtering stays separate from your `Recipe` hyperparameters:
+Filter a `Dataset` with any predicate function `(Trajectory) -> bool` before passing it to a training run — `dataset.filter(...)` returns a reusable `Dataset` view so data selection stays separate from your `Recipe` hyperparameters:
 
 ```python
-from grad import Grad, filters
+from grad import Grad
 
 client = Grad()
 dataset = client.datasets.get("diff-merge-prod")
 
-passing = dataset.filter(filters.MinScore(tests_passed=1.0))
+passing = dataset.filter(lambda t: t.scores.get("tests_passed") == 1.0)
 print(passing.count())
 ```
 

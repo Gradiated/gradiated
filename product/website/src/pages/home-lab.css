@@ -13,11 +13,10 @@
 .gr-lab-stage {
   --px: calc(var(--bleed-w, 100vw) / 1464);
 
-  /* How far the Thesis stack drops below its design position. The copy keeps
-     its real size while the desk scales, so under about 1600px the column
-     reaches further down the desk than the design's does and the stack
-     makes room: nothing at 1600 and up, 120px at most. */
-  --lab-dy: clamp(0px, (1600px - 100vw) * 0.45, 120px);
+  /* How far the Thesis stack drops below its design position, so it clears
+     the statement's buttons. Measured and set by HeroCollage.tsx
+     (useThesisClearance); 0 until then. */
+  --lab-dy: 0px;
 
   position: relative;
   /* The design's desk ends at about 1440: the stickers' lower edge. */
@@ -654,7 +653,7 @@
   display: none;
 }
 
-@media (max-width: 75rem) {
+@media (max-width: 64rem) {
   /* Full column width, so the screen's offset is measured from the
      column's edge rather than from the end of "Source". */
   .gr-root .gr-lab-hero .gr-home-title {
@@ -721,7 +720,7 @@
 /* Phones and small tablets: the statement first, at a readable size, and
    the desk's left-hand cluster below it, scaled to fit the width. The
    right-edge pieces need the wide sheet to read as running off it. */
-@media (max-width: 75rem) {
+@media (max-width: 64rem) {
   .gr-lab-stage {
     --lab-dy: 0px;
 

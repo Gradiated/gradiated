@@ -182,9 +182,48 @@ const useParallax = (collage: RefObject<HTMLDivElement | null>) => {
   }, [collage]);
 };
 
+/* The Thesis stack sits low on the desk, under the statement's column. The
+   statement is centred in the first screen, so where its buttons end
+   depends on the window's height as much as its width; this measures it
+   and drops the stack (--lab-dy on the stage) just far enough to clear
+   them, at any size. Nothing to do in the stacked layout, where the stack
+   is hidden. */
+const THESIS_TOP = 1018; /* design px */
+const CLEARANCE = 40; /* px between the buttons and the stack */
+
+const useThesisClearance = (collage: RefObject<HTMLDivElement | null>) => {
+  useEffect(() => {
+    const element = collage.current;
+    const stage = element?.parentElement;
+    const actions = stage?.querySelector(".gr-lab-hero .gr-home-actions");
+    if (!element || !stage || !actions) return;
+
+    const measure = () => {
+      if (getComputedStyle(stage).display === "flex") {
+        stage.style.removeProperty("--lab-dy");
+        return;
+      }
+      const px = element.getBoundingClientRect().width / 1464;
+      const below =
+        actions.getBoundingClientRect().bottom -
+        stage.getBoundingClientRect().top;
+      const drop = Math.max(0, below + CLEARANCE - THESIS_TOP * px);
+      stage.style.setProperty("--lab-dy", `${Math.ceil(drop)}px`);
+    };
+
+    measure();
+    const sized = new ResizeObserver(measure);
+    sized.observe(stage);
+    sized.observe(actions);
+    void document.fonts?.ready.then(measure);
+    return () => sized.disconnect();
+  }, [collage]);
+};
+
 export const HeroCollage = (): ReactElement => {
   const collage = useRef<HTMLDivElement>(null);
   useParallax(collage);
+  useThesisClearance(collage);
   return <Desk collage={collage} />;
 };
 

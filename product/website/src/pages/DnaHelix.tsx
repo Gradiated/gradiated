@@ -1,22 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { ReactElement } from "react";
 
-/* A turning double helix, rendered on the GPU so it reads as a proper 3D
-   render rather than flat dots. No library: a few hundred spheres, each a
-   single point sprite whose fragment shader ray-traces a lit sphere
-   (diffuse from a key light, a soft fill, a tight specular highlight and a
-   fresnel rim) and writes its true depth, so the strands pass in front of
-   and behind each other exactly. Distance sinks into shadow.
-
-   Geometry: two backbones (beads close enough to read as smooth tubes),
-   larger nucleotide beads where the rungs meet them, and rungs as rows of
-   small two-toned beads. The colour runs along the helix's length, pink at
-   the top through violet and blue to teal.
-
-   Decorative; renders nothing without WebGL2. Runs only while on screen
-   and holds a frame for reduced motion. The context is not force-lost on
-   unmount: in development React remounts effects on the same canvas, and a
-   lost context would leave it blank. */
+/* Each bead is a point sprite shaded as a sphere and written at its true depth. */
 
 const PAIRS = 20;
 const TWIST = 0.55; /* radians per base pair */

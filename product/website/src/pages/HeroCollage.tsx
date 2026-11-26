@@ -4,20 +4,6 @@ import { DnaHelix } from "./DnaHelix";
 import { EvalChart, EvalHeatmap } from "./HeroEvals";
 import { SupportWave } from "./SupportWave";
 
-/* The homepage hero's collage, as designed in Figma ("New Home", node
-   1234:202489): the lab's desk around the statement.
-
-   Every piece is placed in the design's own coordinates — pixels on the
-   1464px-wide sheet of the 1728px frame — and home-lab.css turns them into
-   lengths with --px, so the composition scales with the sheet rather than
-   being re-laid at each width. The interface pieces — the support call, the
-   one-line switch, both eval cards and the tracking screen — are code; the
-   objects (posters, the magazine, the chip, the stickers) are the design's
-   own renders, at 2x, in /brand/home/.
-
-   Decorative as a whole: hidden from assistive tech, not clickable, and
-   still on hover, so the headline stays the page's first heading. */
-
 type PieceProps = {
   children: ReactNode;
   className: string;
@@ -46,9 +32,7 @@ const Piece = ({ children, className, h, i, w, x, y }: PieceProps) => (
   </div>
 );
 
-/* The tracking screen: the footage turned on its side to fill a portrait
-   display, as in the design. Muted and looped; held on its first frame for
-   anyone who asks for reduced motion. */
+/* Muted and looped; paused while hidden or for reduced motion. */
 const TrackingVideo = ({
   className = "gr-lab-screen-video",
 }: {
@@ -67,7 +51,13 @@ const TrackingVideo = ({
     };
     sync();
     still.addEventListener("change", sync);
-    return () => still.removeEventListener("change", sync);
+    /* The layout swaps which screen shows (e.g. rotating a tablet). */
+    const laidOut = new ResizeObserver(sync);
+    laidOut.observe(document.documentElement);
+    return () => {
+      still.removeEventListener("change", sync);
+      laidOut.disconnect();
+    };
   }, []);
 
   return (
@@ -90,33 +80,22 @@ const Render = ({ src }: { src: string }) => (
   <img alt="" decoding="async" src={`/brand/home/${src}.webp`} />
 );
 
-/* Parallax. Each piece has a --depth (home-lab.css); this feeds the collage
-   three numbers and the CSS does the rest:
-     --mx, --my  where the pointer is over the hero, -1..1, eased, with a slow
-                 wander mixed in so the desk is never quite still;
-     --sy        how far the page has scrolled, in px;
-     --par       0..1, ramped up once the entrance has landed, so the
-                 parallax never fights the float-in.
-   One rAF loop, running only while the hero is on screen; nothing at all
-   for reduced motion. */
+/* Feeds --mx/--my (pointer), --sy (scroll) and --par (0..1 after the entrance) to the pieces. */
 const ENTRANCE_MS = 2600;
 
 const useParallax = (collage: RefObject<HTMLDivElement | null>) => {
   useEffect(() => {
     const element = collage.current;
     if (!element) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (still.matches) {
       element.dataset.seen = "";
       return;
     }
 
     const target = { x: 0, y: 0 };
     const eased = { x: 0, y: 0, par: 0 };
-    /* When the desk first came into view, and where the page was then. On
-       the wide layout that is on load at the top; on phones the desk sits on
-       the second screen and its entrance waits for it (data-seen, see
-       home-lab.css). The parallax counts from that moment, so it starts at
-       rest wherever the reader is. */
+    /* The entrance waits until the desk is in view (on phones it is below the fold). */
     let seenAt: number | null = null;
     let seenScroll = 0;
     let visible = false;
@@ -156,7 +135,16 @@ const useParallax = (collage: RefObject<HTMLDivElement | null>) => {
       element.style.setProperty("--my", eased.y.toFixed(4));
       element.style.setProperty("--sy", `${Math.round(scrollY - seenScroll)}`);
       element.style.setProperty("--par", eased.par.toFixed(4));
-      frame = visible ? requestAnimationFrame(tick) : 0;
+      frame = visible && !still.matches ? requestAnimationFrame(tick) : 0;
+    };
+
+    const quiet = () => {
+      if (!still.matches) return;
+      cancelAnimationFrame(frame);
+      frame = 0;
+      element.dataset.seen = "";
+      for (const name of ["--mx", "--my", "--sy", "--par"])
+        element.style.removeProperty(name);
     };
 
     const seen = new IntersectionObserver(
@@ -167,31 +155,26 @@ const useParallax = (collage: RefObject<HTMLDivElement | null>) => {
           seenScroll = scrollY;
           element.dataset.seen = "";
         }
-        if (visible && !frame) frame = requestAnimationFrame(tick);
+        if (visible && !frame && !still.matches)
+          frame = requestAnimationFrame(tick);
       },
       { threshold: 0.12 },
     );
     seen.observe(element);
     addEventListener("pointermove", point, { passive: true });
     document.documentElement.addEventListener("pointerleave", leave);
+    still.addEventListener("change", quiet);
     return () => {
       cancelAnimationFrame(frame);
       seen.disconnect();
+      still.removeEventListener("change", quiet);
       removeEventListener("pointermove", point);
       document.documentElement.removeEventListener("pointerleave", leave);
     };
   }, [collage]);
 };
 
-/* The collage has no fixed rules about the statement: any lower piece that
-   would run into its text simply drops below the buttons. The statement is
-   centred in the first screen and its column moves with the window, so
-   this is measured rather than guessed: each piece's layout box (offsets,
-   which ignore the entrance and parallax transforms) is checked against
-   the text column, and pieces that belong together drop together so their
-   arrangement holds. The drop is --drop on the piece; the stage grows by
-   --lab-extra to keep the desk inside it. Nothing to do in the stacked
-   layout, where the desk sits below the text anyway. */
+/* Pieces that would overlap the copy drop below the buttons (--drop); the stage grows to fit. */
 const GROUPS = [
   ["gr-lab-thesis-map", "gr-lab-thesis"],
   ["gr-lab-paper-map", "gr-lab-paper"],
@@ -257,9 +240,7 @@ const useTextClearance = (collage: RefObject<HTMLDivElement | null>) => {
         if (drop) piece.style.setProperty("--drop", `${drop}px`);
       }
 
-      /* The stage grows to hold the pieces you can see, as they now sit
-         (offsets include the drop): one mostly off the frame's edge
-         doesn't count. */
+      /* Pieces mostly off the frame's edge don't count towards the stage height. */
       let lowest = 0;
       for (const piece of pieces) {
         if (piece.offsetParent === null) continue;
@@ -423,10 +404,7 @@ const Desk = ({
   </div>
 );
 
-/* Phones and small tablets: the tracking screen in the space to the right
-   of the headline, running off the screen's edge so only its left part
-   shows. It plays the same footage as the wide layout's screen; whichever
-   is hidden stays paused. Hidden on the wide layout. */
+/* Phones: the tracking screen beside the headline, running off the edge. */
 export const HeadlineScreen = (): ReactElement => (
   <span aria-hidden="true" className="gr-lab-title-screen">
     <TrackingVideo className="gr-lab-title-video" />

@@ -1,11 +1,6 @@
 import type { CSSProperties, ReactElement } from "react";
 
-/* The hero's two eval cards, drawn from the designs in
-   homepage-imgs/agr-eval-score.png and eval-viz-1.png (both 4x). Each is one
-   SVG whose viewBox is the card in design px, so its type and marks scale
-   with the rest of the desk; the animation is CSS, in home-lab.css, and
-   plays once on load. Illustrative figures for a model being trained, not
-   measurements. */
+/* Illustrative figures, not measurements. Animations live in home-lab.css. */
 
 /* -- Aggregate eval score: a line over twelve versions ------------------- */
 

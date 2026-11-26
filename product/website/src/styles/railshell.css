@@ -1054,11 +1054,7 @@
   }
 }
 
-/* The rail's scroll areas (the docs nav, the menu's reveal) only scroll on
-   short windows. Where the OS shows classic scrollbars (Windows, macOS with
-   a mouse attached), that drew a bright bar on the black rail. The bar is
-   hidden; wheel, touch and keyboard scrolling are unchanged, and the docs
-   nav fades at its foot when there is more below. */
+/* Hide the rail's scrollbars on systems that always show them; scrolling still works. */
 .gr-rail-docnav,
 .gr-rail-under,
 .gr-rail-menu,

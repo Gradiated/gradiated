@@ -29,7 +29,7 @@ export const formatPageTitle = (title: string): string =>
 
 const pageMetadata: Record<string, PageMetadataContent> = {
   "/": {
-    title: "Open source AI lab",
+    title: "Open Source AI Lab",
     description:
       "Gradiated builds open models for everyday software work and trains custom models for teams moving workloads off frontier APIs.",
   },
@@ -228,6 +228,7 @@ const metadataDetailsFor = (
       publishedAt: "2026-08-28",
     };
   }
+  if (pathname === "/") return { image: "/brand/og-home.jpg", kind: "website" };
   return { image: defaultImage, kind: "website" };
 };
 

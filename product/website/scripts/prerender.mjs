@@ -41,7 +41,8 @@ const renderHead = ({ metadata, path, structuredData, title }) => {
     `<meta property="og:url" content="${canonicalUrl}" />`,
     `<meta property="og:image" content="${imageUrl}" />`,
     `<meta property="og:image:alt" content="${escapeHtml(`${metadata.title} - Gradiated`)}" />`,
-    `<meta name="twitter:card" content="${metadata.image.startsWith("/assets/") ? "summary_large_image" : "summary"}" />`,
+    // The square brand mark is the only image made for a small card.
+    `<meta name="twitter:card" content="${metadata.image.includes("gradiated-mark") ? "summary" : "summary_large_image"}" />`,
     `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(metadata.description)}" />`,
     `<meta name="twitter:image" content="${imageUrl}" />`,

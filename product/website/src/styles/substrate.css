@@ -613,11 +613,7 @@
   color: var(--color-interactive);
 }
 
-/* When the footer is too narrow for the valley, the mark takes its own row
-   and the links fall to two columns. Keyed to the footer's own width rather
-   than the page tier: the mid tier starts at 1162px, where the single row
-   still had about 150px of valley to spare. 52rem is the footer box with
-   its inset: the row needs about 700px of content plus some valley. */
+/* The footer stacks only when its own width runs out, not at the page tier. */
 .gr-footer {
   container: gr-footer / inline-size;
 }

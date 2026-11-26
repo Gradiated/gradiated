@@ -1,20 +1,8 @@
-/* -- the hero: the statement on the lab's desk ------------------------------
-   Built from the Figma design ("New Home", node 1234:202489). The statement
-   holds the upper right; the collage (HeroCollage.tsx) is laid around it and
-   runs on down the page into the roadmap.
-
-   ONE UNIT. The design is drawn on a 1728px frame whose sheet, right of the
-   264px rail, is 1464px wide. --px is one of those design pixels at the
-   current sheet width, so every position and size below is the design's own
-   number times --px, and the composition scales as one piece instead of
-   being re-laid at each width. Body copy and buttons stay at their real
-   sizes: they are for reading, not part of the picture. */
+/* Positions and sizes are the Figma frame's, in design px (--px). */
 
 .gr-lab-stage {
   --px: calc(var(--bleed-w, 100vw) / 1464);
-  /* Breathing room for the statement on narrower windows: the desk's
-     pieces slide outward, off the frame's edges, by up to 64px. Nothing
-     at 1440 and up. */
+  /* Pieces slide outward by up to 64px below 1440px. */
   --pull: clamp(0px, (1440px - 100vw) * 0.13, 64px);
 
   position: relative;
@@ -22,30 +10,21 @@
   min-height: calc(1440 * max(var(--px), 0.74px) + var(--lab-extra, 0px));
 }
 
-/* The homepage sits on a cool grey a step below the site's ground, so the
-   desk's pieces read as objects laid on a surface. The whole page, not just
-   the fold, so the scatter can taper into the roadmap without a seam. Dark
-   keeps the site's own ground. */
+/* The homepage's cool grey ground; dark keeps the site's own. */
 :is(.gr-rail-sheet, .gr-substrate):has(.gr-lab-stage):not(
     [data-theme="dark"] *
   ) {
   --color-substrate: #e6e7e9;
 }
 
-/* On the grey ground the secondary button's grey fill sits a step from the
-   page; on hover it lifts to white rather than fading, so it reads as
-   rising off the surface. Every secondary button on the page (View Docs, the
-   roadmap's links and votes), light theme only. */
+/* On the grey ground, secondary buttons lift to white on hover. */
 :is(.gr-rail-sheet, .gr-substrate):has(.gr-lab-stage):not([data-theme="dark"] *)
   .gr-button--secondary:hover {
   opacity: 1;
   background: #fff;
 }
 
-/* One continuous page: the homepage's sections don't draw the site's
-   section dividers (each module's top rule, and the bottom rule of the last
-   in a band), so the grey ground runs unbroken from the hero to the footer.
-   The footer keeps its own rule. */
+/* The homepage runs as one continuous ground; only the footer keeps its rule. */
 :is(.gr-rail-sheet, .gr-substrate):has(.gr-lab-stage)
   .gr-module:not(.gr-footer)::before,
 :is(.gr-rail-sheet, .gr-substrate):has(.gr-lab-stage)
@@ -61,28 +40,20 @@
   display: grid;
   justify-items: start;
   gap: clamp(1rem, 2.4vw, 1.75rem);
-  /* The column runs from the design's x 750 to the stage's right edge. On
-     narrower windows its start moves left only as far as it must to keep
-     a 22rem column, so the statement holds the right-hand side down to
-     tablet widths. */
+  /* Starts at the design's x 750, moving left only to keep a 22rem column. */
   width: auto;
   min-width: 0;
   margin-inline-start: calc(
     min(750 * var(--px) - (var(--bleed-w, 100vw) - 100%) / 2, 100% - 22rem) -
       var(--lab-nudge)
   );
-  /* Below 1024px the rail folds to a strip and the desk's left-hand pieces
-     stop shrinking, which left a wide empty band before the copy; the copy
-     moves left into it, by up to 56px, easing back in toward tablet width. */
+  /* Below 1024px the copy moves left into the space the folded rail leaves. */
   --lab-nudge: clamp(
     0px,
     min((1024px - 100vw) * 0.9, (100vw - 768px) * 1.2),
     56px
   );
-  /* Vertically centred in the first screen, so the space above the
-     headline's capitals equals the space below the buttons at any window
-     height. (The design's y 146 only balances on its own 1728x1117 frame.)
-     A screen too short for the block just lets it run on, with a margin. */
+  /* Centred in the first screen, so the gaps above and below are equal. */
   align-content: center;
   min-height: 100svh;
   padding-block: calc(2 * var(--u));
@@ -98,16 +69,12 @@
   font-size: calc(149.48 * var(--px));
   line-height: 0.98;
   letter-spacing: -0.03em;
-  /* Trim the line box to the capitals and the baseline, as Figma does, so
-     the centring is measured from the letters you see rather than from
-     the leading above them. */
+  /* Trim to cap height and baseline, so centring measures the visible letters. */
   text-box: trim-both cap alphabetic;
 }
 
 .gr-root .gr-lab-hero .gr-lab-lede {
-  /* The design's 478, but never past the right-edge pieces (the map at x 1259): the copy
-     keeps its real size while the desk scales, so at smaller sheets the
-     measure has to give way instead. */
+  /* Never past the right-edge pieces: the copy doesn't scale with the desk. */
   max-width: min(26rem, max(calc(500 * var(--px)), 20rem));
   margin: calc(5 * var(--u)) 0 0;
   color: var(--color-text);
@@ -131,18 +98,11 @@
 /* Spans the whole sheet, edge to edge, so the right-hand pieces can run off
    it as they do in the design. */
 .gr-lab-collage {
-  /* Two units. --P places pieces: the design's coordinates at the sheet's
-     width. Each piece then sizes itself in its own --px, which follows --P
-     but never drops below --zmin, so on narrower windows the pieces stay
-     a decent size and run off the frame's edges instead of shrinking into
-     a column of thumbnails. */
+  /* --P places pieces; each piece's --px follows it but never drops below --zmin. */
   --P: var(--px);
   --zmin: 0.74px;
 
-  /* One shadow for every coded piece, lit from straight above: no sideways
-     offset, six stacked layers doubling in reach (contact shadow to ambient)
-     at low opacity each, in an ink drawn from the cool grey ground rather
-     than neutral grey. In design px, so it scales with the desk. */
+  /* Lit from above: six faint layers, contact to ambient, in an ink from the grey ground. */
   --lab-ink: 222deg 18% 22%;
   --lab-shadow:
     0 calc(0.5 * var(--px)) calc(1 * var(--px)) hsl(var(--lab-ink) / 0.08),
@@ -172,19 +132,14 @@
   --px: max(var(--P), var(--zmin));
 
   position: absolute;
-  /* Placed at the design's x, slid outward by --pull (--side: -1 left, 1
-     right). A piece larger than its design size grows away from the text:
-     left-hand pieces keep their right edge and grow left, off the frame;
-     right-hand ones keep their left edge and grow right. */
+  /* Pieces larger than their design size grow away from the copy. */
   left: calc(
     var(--x) * var(--P) + var(--pull, 0px) * var(--side, -1) + var(--w) *
       (var(--P) - var(--px)) * (1 - var(--side, -1)) / 2
   );
   /* --drop: set by HeroCollage.tsx when the piece would run into the
      statement's text; it moves down below the buttons instead. */
-  /* Vertical positions scale with the piece's own size, not the sheet's
-     width, so the spacing between pieces grows with them and a narrow
-     window spreads the desk down rather than piling it up. */
+  /* Vertical spacing grows with the piece, so narrow windows spread the desk down. */
   top: calc(var(--y) * var(--px) + var(--drop, 0px));
   width: calc(var(--w) * var(--px));
   /* Decorative: nothing here takes a pointer, so it never feels clickable. */
@@ -195,11 +150,7 @@
   /* Which way the piece is skewed as it floats in; alternates. */
   --lab-skew: -1;
 
-  /* Parallax, driven by HeroCollage.tsx's --mx, --my, --sy and --par.
-     Pointer: near pieces slide against it and tilt a few degrees. Scroll:
-     near pieces rise faster than the page. --par is 0 until the entrance has
-     landed, so both rest at zero and the entrance hands over without a
-     jump (it fills backwards only, then these take over). */
+  /* Parallax; --par stays 0 until the entrance lands, so the two never fight. */
   translate: calc(var(--mx, 0) * var(--depth) * var(--par, 0) * -18px)
     calc(
       (var(--my, 0) * -12px - var(--sy, 0) * 0.09px) * var(--depth) *
@@ -271,9 +222,7 @@
   left: auto;
 }
 
-/* The right-hand pieces slide right. The Thesis stack sits under the copy
-   rather than at an edge, so it holds its place (side 0) and stays close
-   to the stickers beside it. */
+/* The Thesis stack stays put so it keeps close to the stickers. */
 .gr-lab-screen {
   --side: 1;
 }
@@ -305,14 +254,7 @@
   --side: -0.45;
 }
 
-/* -- the coded pieces -------------------------------------------------------
-   Figma's sizes, in design px like everything else on the desk, so they
-   scale with it. Their animations play once on load, after the desk's own
-   entrance (--i), except the waveform and the tracking footage, which run. */
-
-/* support_call.wav, on a slowly moving gradient: soft violet, magenta and
-   lilac fields drifting under a pale top edge, so the black filename reads
-   and the card never sits still. */
+/* A slowly drifting gradient behind the support card. */
 .gr-lab-support {
   height: calc(var(--h) * var(--px));
   overflow: hidden;
@@ -602,9 +544,7 @@
   animation: gr-lab-fade 0.5s ease calc(1.1s + var(--i) * 90ms + 1.25s) both;
 }
 
-/* The tracking screen: a portrait display with the footage turned on its
-   side. The video is laid out landscape (607.6 x 341.8, 16:9) and rotated
-   a quarter turn, so its left edge runs along the display's foot. */
+/* Landscape footage turned a quarter turn to fill the portrait screen. */
 .gr-lab-screen {
   height: calc(var(--h) * var(--px));
   overflow: hidden;
@@ -624,10 +564,7 @@
   transform: translate(-50%, -50%) rotate(-90deg);
 }
 
-/* Floating in, in three dimensions: each piece starts below its place and
-   lifted toward the viewer on z (so it projects larger and out of focus),
-   tilted back and skewed a little, then rises and settles flat onto the
-   desk's surface. Opacity arrives early so the flight is seen, not a fade. */
+/* From below and nearer the viewer, tilted and skewed, settling flat. */
 @keyframes gr-lab-in {
   0% {
     opacity: 0;
@@ -707,11 +644,6 @@
   }
 }
 
-/* -- the screen beside the headline (stacked layout only) --------------------
-   HeroCollage.tsx's HeadlineScreen, inside the h1 so it spans exactly the
-   headline's height. Its left edge sits 16vw in from the screen's right
-   edge, clear of "Source", and the rest runs off; the sheet clips it. The
-   footage is turned on its side, as on the wide layout's screen. */
 .gr-lab-title-screen {
   display: none;
 }
@@ -780,9 +712,7 @@
   }
 }
 
-/* Phones and small tablets: the statement first, at a readable size, and
-   the desk's left-hand cluster below it, scaled to fit the width. The
-   right-edge pieces need the wide sheet to read as running off it. */
+/* Phones and small tablets: the copy first, then the desk's left-hand cluster. */
 @media (max-width: 48rem) {
   .gr-lab-stage {
     --pull: 0px;
@@ -808,9 +738,7 @@
     margin-block-start: 1.75rem;
   }
 
-  /* The desk is on the second screen here: its entrance (and the cards'
-     own load animations) hold until it scrolls into view. HeroCollage.tsx
-     sets data-seen then. */
+  /* Here the desk's entrance waits until it scrolls into view (data-seen). */
   .gr-lab-collage:not([data-seen]) .gr-lab-piece,
   .gr-lab-collage:not([data-seen]) .gr-lab-piece *,
   .gr-lab-collage:not([data-seen]) .gr-lab-piece *::before,
@@ -842,10 +770,7 @@
     flex-direction: column;
   }
 
-  /* Below the statement, the design's left-hand cluster: x 0 to 740 (the
-     Joules badge's right edge), y 0 to 1440. Measured against the collage's
-     own width, as a container, because the phone's rail strip is not part of
-     --bleed-w. */
+  /* The design's x 0–740 cluster, sized to the collage's own width. */
   .gr-lab-collage {
     --P: calc(100cqw / 740);
     --zmin: 0px;
@@ -872,7 +797,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .gr-lab-piece,
+  .gr-lab-piece::before,
+  .gr-lab-piece::after,
   .gr-lab-piece *,
+  .gr-lab-piece *::before,
   .gr-lab-piece *::after {
     animation: none;
   }
@@ -888,10 +816,6 @@
   margin-block-start: var(--u);
 }
 
-/* -- the roadmap's head -------------------------------------------------------
-   Figma: "MODEL ROADMAP" in Barlow Bold 20/1, +1.2px tracking; then the
-   promise in Instrument Sans Bold 56/1, -1.68px, centred on a 600px measure
-   so it breaks after "release". */
 .gr-roadmap-head {
   display: grid;
   justify-items: center;
@@ -919,12 +843,6 @@
   text-wrap: balance;
 }
 
-/* -- the roadmap table ------------------------------------------------------
-   Built from the system's own parts: caps labels for the column heads, a
-   badge for the status, and the system's buttons (secondary for links and
-   the vote, main once voted, ghost for the name suggestion). The table itself
-   is a light surface with the site's --radius and hairline rows; no vertical
-   rules. Below 48rem each row stacks into a block. */
 .gr-roadmap {
   display: grid;
   gap: var(--u);
@@ -940,10 +858,7 @@
   border-collapse: separate;
   border-spacing: 0;
   border-radius: var(--radius);
-  /* The hero pieces' shadow (--lab-shadow on .gr-lab-collage): lit from
-     straight above, six faint layers from contact to ambient, inked from the
-     cool grey ground. In plain px here; the table doesn't scale with the
-     desk. */
+  /* The hero pieces' shadow, in plain px. */
   box-shadow:
     0 0.5px 1px hsl(222deg 18% 22% / 0.08),
     0 1px 2px hsl(222deg 18% 22% / 0.07),
@@ -1031,11 +946,7 @@
   font-size: 0.8125rem;
 }
 
-/* Mid widths: a fixed actions column squeezes the description into a thin
-   column. Below 1200px each row becomes a two-column grid instead: the
-   model on the left, and the description with its buttons beneath it on
-   the right. The "Actions" head goes, since the buttons now sit with the
-   copy they act on. */
+/* 768–1200px: the buttons sit under the description instead of in a column. */
 @media (min-width: 48.01rem) and (max-width: 75rem) {
   .gr-roadmap-table,
   .gr-roadmap-table :is(thead, tbody) {
@@ -1105,10 +1016,6 @@
   }
 }
 
-/* -- the chip runner ---------------------------------------------------------
-   ChipRunner.tsx, above "Get your own model running": a 240x64 pixel scene
-   scaled up with hard edges, in the page's ink (the canvas reads its own
-   colour). Click or tap it, or press space, to make the chip jump. */
 /* The scene brings its own sky, so the card needs less room above it. */
 .gr-root .gr-home-cta:has(.gr-chip-runner) {
   padding-block-start: clamp(32px, 3.5vw, 56px);
@@ -1126,10 +1033,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Phones: the card's 28px gap and the mobile rhythm's margins stacked up
-   into loose spacing between the game, title, copy and button. Set each
-   gap outright, tighter, with more room under the button. Classes doubled
-   to outrank rhythm.css, which loads last. */
+/* Phones: explicit gaps; doubled classes outrank rhythm.css, which loads last. */
 @media (max-width: 48rem) {
   .gr-rail-sheet .gr-root .gr-home-cta.gr-home-cta:has(.gr-chip-runner) {
     row-gap: 0;
@@ -1153,10 +1057,7 @@
   }
 }
 
-/* "Latest from the lab" is three posters, a triptych: on the homepage it
-   holds three across down to tablet width, the posters shrinking, rather
-   than taking the Library's two-column step at 80rem (which leaves the
-   third card alone on a row). */
+/* The homepage keeps the three posters in one row down to 640px. */
 @media (min-width: 40rem) and (max-width: 79.99rem) {
   .gr-root .gr-news.gr-library-grid .gr-story-row[data-uniform] {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -1164,9 +1065,7 @@
   }
 }
 
-/* Dark mode: the terminal and the eval chart are dark cards, which sank
-   into the near-black page. They lift a step off it, with a hairline edge,
-   as raised panels do on a dark ground. */
+/* Dark mode: the dark cards lift off the near-black page. */
 [data-theme="dark"] .gr-lab-code {
   background: #1d1d21;
   box-shadow:

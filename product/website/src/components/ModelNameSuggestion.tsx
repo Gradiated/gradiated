@@ -8,10 +8,7 @@ const NAME_MAX = 80;
 /* The API takes one string; the name and the reason are joined into it. */
 const REASON_MAX = MODEL_NAME_SUGGESTION_MAX_LENGTH - NAME_MAX - 3;
 
-/* "Suggest a name": a small centred modal over a blurred page, not a
-   drawer. It scales in on open and out on close (the close waits for the
-   exit animation, then closes the native dialog, which keeps Escape, focus
-   return and the inert page for free). */
+/* Closing waits for the exit animation, then closes the native dialog. */
 export const ModelNameSuggestion = ({
   entry,
   onClose,

@@ -79,10 +79,7 @@ const RailBackContext = createContext<(back: RailBack | null) => void>(
   () => {},
 );
 
-/* The docs nav scrolls only on short windows, and its scrollbar is hidden
-   (railshell.css), so it fades at its foot while there is more below. A
-   ref callback: it watches the nav while mounted and returns its cleanup
-   (React 19). */
+/* Fades the docs nav at its foot while there is more below (its scrollbar is hidden). */
 const fadeWhileMore = (nav: HTMLElement | null) => {
   if (!nav) return;
   const update = () => {

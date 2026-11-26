@@ -1,14 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { ReactElement } from "react";
 
-/* The support call's voice: layered sine curves under one envelope, the
-   modern assistant-style waveform. Each curve has its own frequency, speed
-   and weight; the envelope pins the ends to the centre line so the wave
-   swells in the middle; and the amplitude rises and falls on a slow,
-   irregular rhythm, so it reads as someone speaking rather than a tone.
-
-   Canvas, sized to its box at the device's pixel ratio. It only runs while
-   on screen, and draws a single still frame for reduced motion. */
+/* Layered sine curves under one envelope; amplitude follows a speech-like rhythm. */
 
 const CURVES = [
   { alpha: 0.95, amp: 1, freq: 3.2, speed: 1.9, width: 1.4 },
@@ -38,9 +31,7 @@ export const SupportWave = (): ReactElement => {
     const still = window.matchMedia("(prefers-reduced-motion: reduce)");
     let frame = 0;
     let visible = false;
-    /* When the card was first seen. The wave waits for the card to land,
-       then draws itself in from the left as its voice swells, as the eval
-       cards draw on load. */
+    /* The wave draws in once the card has landed. */
     let woke: number | null = null;
     let width = 0;
     let height = 0;

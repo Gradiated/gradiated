@@ -1,15 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { ReactElement } from "react";
 
-/* "Get your own model running", literally: a little chip with arms and
-   legs running along a ground line and hopping over bugs and stray
-   components, in a one-colour 8-bit side-scroller. Original pixel art,
-   drawn on a 240x64 canvas scaled up with hard pixels, in the page's ink.
-
-   It plays itself (the chip jumps on its own), and a tap, click or the
-   space bar makes it jump too. It only runs while on screen, and holds a
-   single still frame for reduced motion. Decorative: hidden from assistive
-   tech; the heading beside it carries the meaning. */
+/* Original pixel art on a 240x64 canvas; click, tap or space makes the chip jump. */
 
 const W = 240;
 const H = 64;

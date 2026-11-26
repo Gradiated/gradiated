@@ -244,6 +244,19 @@ async fn a_model_reads_deployments_attached_to_its_aliases() {
         .await
         .unwrap();
 
+    let mismatched_id = Uuid::now_v7();
+    let mut mismatched_release = record["deployments"][0]["release"].clone();
+    mismatched_release["protocol"] = serde_json::json!("system_one");
+    client
+        .execute(
+            "insert into model_deployments
+               (id, model_id, status, provider, region, fault_domain, service_url, release)
+             values ($1, $2, 'available', 'local', 'local', 'local:decision', 'http://127.0.0.1:30001', $3::text::jsonb)",
+            &[&mismatched_id, &tenant.model_id, &mismatched_release.to_string()],
+        )
+        .await
+        .unwrap();
+
     for lookup in [&canonical_id, &tenant.model_id] {
         let json = reader
             .model_json(lookup)
@@ -253,6 +266,7 @@ async fn a_model_reads_deployments_attached_to_its_aliases() {
         let model: GatewayModel = serde_json::from_str(&json).unwrap();
         assert_eq!(model.id, canonical_id);
         assert_eq!(model.deployments.len(), 1);
+        assert_ne!(model.deployments[0].id, mismatched_id);
     }
 
     client

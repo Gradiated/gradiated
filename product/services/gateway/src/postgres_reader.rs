@@ -174,7 +174,11 @@ select json_build_object(
           )
         from model_deployments
         where model_deployments.model_id = models.id
-           or model_deployments.model_id = any(models.aliases)
+           or (
+             model_deployments.model_id = any(models.aliases)
+             and (coalesce(model_deployments.release->>'protocol', '') = 'system_one')
+               = (models.type = 'decision')
+           )
       ),
       '[]'::json
     )

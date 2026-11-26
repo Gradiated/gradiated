@@ -125,7 +125,14 @@ export const ModelRoadmap = (): ReactElement => {
                         {/* The status sits over the description, so the row's
                             weight is spread across both text columns. */}
                         <span
-                          className={`gr-badge${entry.status ? " gr-badge--emphasis" : ""}`}
+                          className="gr-badge gr-roadmap-status"
+                          data-status={
+                            entry.release
+                              ? "released"
+                              : entry.status
+                                ? "active"
+                                : "planned"
+                          }
                         >
                           {entry.release ? (
                             <>

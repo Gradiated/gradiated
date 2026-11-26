@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { CSSProperties, ReactElement, ReactNode, RefObject } from "react";
+import { DnaHelix } from "./DnaHelix";
 import { EvalChart, EvalHeatmap } from "./HeroEvals";
 import { SupportWave } from "./SupportWave";
 
@@ -364,6 +365,12 @@ const Desk = ({
       y={742}
     >
       <Render src="paper" />
+    </Piece>
+
+    {/* A turning double helix, below the map and the math excerpt and to
+        the right of the Thesis stack. */}
+    <Piece className="gr-lab-dna" h={330} i={14} w={210} x={1150} y={1175}>
+      <DnaHelix />
     </Piece>
 
     <Piece

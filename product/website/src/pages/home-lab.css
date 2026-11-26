@@ -275,6 +275,21 @@
   --side: 0;
 }
 
+/* The double helix (DnaHelix.tsx): a canvas the piece's size, near the
+   viewer, sliding right with the right-hand pieces. */
+.gr-lab-dna {
+  --depth: 0.8;
+  --side: 1;
+
+  height: calc(var(--h) * var(--px));
+}
+
+.gr-lab-dna-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 /* The stickers slide left only partway with the other left-hand pieces,
    so they stay near the Thesis stack without crowding it. */
 .gr-lab-sticker-joules,
@@ -839,6 +854,7 @@
   }
 
   .gr-lab-edge,
+  .gr-lab-dna,
   .gr-lab-screen,
   .gr-lab-thesis,
   .gr-lab-thesis-map {

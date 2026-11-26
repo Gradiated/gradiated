@@ -183,6 +183,10 @@ with client.trainers.create(model=sft_art, adapter=adapters.LoRA(rank=8)) as grp
     ...
 ```
 
+<DocsCallout label="Session timeouts, W&B logging, and debugging" tone="tip">
+Open `Trainer` sessions close automatically after 30 minutes of inactivity (you are never billed while idle), so checkpoint every 50–100 steps with `trainer.save_state()`. See [Tuning & troubleshooting](/docs/training/tuning-troubleshooting/) for crash recovery, W&B / MLflow logging, and fixing KL spikes or flat RL rewards.
+</DocsCallout>
+
 ### Gradient accumulation, LR schedules, and held-out eval
 
 Because `forward_backward()` accumulates gradients on the trainer until `optim_step()` runs, multi-microbatch accumulation and per-step cosine schedules take four lines:

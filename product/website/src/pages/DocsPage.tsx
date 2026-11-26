@@ -49,10 +49,13 @@ import DocsTrainingArtifacts from "../docs/training/artifacts.mdx";
 import DocsTrainingCustomLoops from "../docs/training/custom-loops.mdx";
 import DocsTrainingDeploying from "../docs/training/deploying.mdx";
 import DocsTrainingEnvironments from "../docs/training/environments.mdx";
+import DocsTrainingEvaluations from "../docs/training/evaluations.mdx";
+import DocsTrainingModels from "../docs/training/models.mdx";
 import DocsTrainingOverview from "../docs/training/index.mdx";
 import DocsTrainingRecipes from "../docs/training/recipes.mdx";
 import DocsTrainingRubrics from "../docs/training/rubrics.mdx";
 import DocsTrainingSelfHosting from "../docs/training/self-hosting.mdx";
+import DocsTrainingTuningTroubleshooting from "../docs/training/tuning-troubleshooting.mdx";
 import DocsRecipeCartridges from "../docs/training/recipes/cartridges.mdx";
 import DocsRecipeDecisionModel from "../docs/training/recipes/decision-model.mdx";
 import DocsRecipeDistillation from "../docs/training/recipes/distillation.mdx";
@@ -152,6 +155,11 @@ export const documents = {
     path: "/docs/training/environments/",
     Component: DocsTrainingEnvironments,
   },
+  "training-evaluations": {
+    title: "Evaluations",
+    path: "/docs/training/evaluations/",
+    Component: DocsTrainingEvaluations,
+  },
   "training-artifacts": {
     title: "Artifacts",
     path: "/docs/training/artifacts/",
@@ -162,6 +170,11 @@ export const documents = {
     path: "/docs/training/deploying/",
     Component: DocsTrainingDeploying,
   },
+  "training-models": {
+    title: "Supported models",
+    path: "/docs/training/models/",
+    Component: DocsTrainingModels,
+  },
   "training-custom-loops": {
     title: "Custom loops",
     path: "/docs/training/custom-loops/",
@@ -171,6 +184,11 @@ export const documents = {
     title: "Advanced objectives",
     path: "/docs/training/advanced-objectives/",
     Component: DocsTrainingAdvancedObjectives,
+  },
+  "training-tuning-troubleshooting": {
+    title: "Tuning & troubleshooting",
+    path: "/docs/training/tuning-troubleshooting/",
+    Component: DocsTrainingTuningTroubleshooting,
   },
   "training-self-hosting": {
     title: "Self-hosting",
@@ -264,8 +282,10 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
       "training-recipes",
       "training-rubrics",
       "training-environments",
+      "training-evaluations",
       "training-artifacts",
       "training-deploying",
+      "training-models",
     ],
   },
   {
@@ -288,6 +308,7 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
     items: [
       "training-custom-loops",
       "training-advanced-objectives",
+      "training-tuning-troubleshooting",
       "training-self-hosting",
     ],
   },

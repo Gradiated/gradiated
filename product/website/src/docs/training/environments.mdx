@@ -47,9 +47,22 @@ groups = env.rollout_groups(
 | Adapter | Use it for |
 | --- | --- |
 | **`environments.Harbor`** | Harbor / Terminal-Bench task folders (`task.toml`, `instruction.md`, `environment/Dockerfile`, `tests/test.sh`, `solution/solve.sh`). |
+| **`environments.from_verifiers(vf_env)`** | Wrap any environment built with the open-source `verifiers` Python library so its tasks, tools, and rubrics run directly in `env.rollout_groups()` or `client.evals.create()`. |
 | **`environments.MCP`** | Expose tools from any Model Context Protocol server directly to the model; `step()` calls MCP `call_tool` and keeps tool responses excluded from training loss. |
 | **`environments.DockerCompose`** | Multi-container stacks (Postgres, Redis, API) with a warm pool and fast template-database resets. |
 | **`environments.from_gym(make_env)`** | Wrap any Gymnasium environment (`reset` → `setup`, `step` → `step`, `close` → `teardown`). |
+
+For example, wrapping an existing `verifiers` environment takes two lines:
+
+```python
+import verifiers as vf
+from grad import environments
+
+vf_env = vf.load_environment("math-python")
+env, tasks = environments.from_verifiers(vf_env)
+
+groups = env.rollout_groups(artifact=trainer.snapshot(), tasks=tasks[:16], group_size=8)
+```
 
 ## Writing a custom `Environment`
 
@@ -160,13 +173,13 @@ groups = env.rollout_groups(
 Every run handles three things automatically:
 
 - **Tool outputs stay read-only:** tool responses and retrieved docs are excluded from training updates so the model only learns from its own tokens.
-- **Concurrency limits:** `max_concurrency` caps how many sandboxes run at once so you don't run out of CPU or RAM.
+- **Concurrency limits:** `max_concurrency` caps how many sandboxes run at once so you don't run out of CPU or RAM. For 32+ parallel Docker or Harbor containers, run your `Environment` script on a cloud VM or Kubernetes node rather than a laptop.
 - **Timeout cleanup:** runs that hit `timeout_s` are cancelled, get a score of `0.0`, and still run `teardown()`.
 
 <DocsNext>
-  <a href="/docs/training/artifacts/">
+  <a href="/docs/training/evaluations/">
     <small>Next</small>
-    <strong>Artifacts</strong>
+    <strong>Evaluations</strong>
   </a>
   <a href="/docs/training/recipes/traces-to-environments/">
     <small>Recipe guide</small>

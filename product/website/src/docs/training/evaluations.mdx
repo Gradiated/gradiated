@@ -1,0 +1,154 @@
+# Evaluations
+
+<DocsLead>Benchmark base models, frontier models, and trained artifacts side by side using the same Rubric or Environment before you ship.</DocsLead>
+
+Every training run produces an automatic held-out `eval_report`, and you can also run standalone evaluations anytime with **`client.evals.create(...)`** or **`grad eval`**. Use standalone evals to:
+
+- **Measure your baseline before training:** see how `"qwen/qwen3-8b"` compares against `"{{SONNET_MODEL}}"` on your exact tasks before spending tokens on training.
+- **Compare checkpoints apples-to-apples:** score a base model, an SFT artifact, an RL artifact, and a frontier reference on the same held-out dataset or environment.
+- **Mine hard examples:** export failing predictions directly into a new [`Dataset`](/docs/training/trajectories/) for your next training run.
+
+## Evaluate a dataset with a `Rubric`
+
+Pass one or more models (base model strings, frontier models, or trained [`Artifact`](/docs/training/artifacts/) IDs), a held-out `Dataset`, and the same [`Rubric`](/docs/training/rubrics/) you use for training:
+
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, Judge, Rubric, Scorer, validators
+
+client = Grad()
+eval_ds = client.datasets.get("sql-eval-holdout")
+
+rubric = Rubric([
+    Scorer("valid_sql", weight=0.3, fn=validators.SQL()),
+    Judge(
+        name="correct_query",
+        model="{{SONNET_MODEL}}",
+        prompt="Verify the SQL answers the user's question accurately without hallucinated columns.",
+        weight=0.7,
+    ),
+])
+
+ev = client.evals.create(
+    name="sql-baseline-vs-rl",
+    models=["qwen/qwen3-8b", "sql-agent@latest", "{{SONNET_MODEL}}"],
+    dataset=eval_ds,
+    rubric=rubric,
+).wait()
+
+print(ev.summary_table())
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, Judge, Rubric, Scorer, validators } from "@gradiated/grad";
+
+const grad = new Grad();
+const evalDs = await grad.datasets.get("sql-eval-holdout");
+
+const rubric = new Rubric([
+  new Scorer("valid_sql", { weight: 0.3, fn: validators.sql() }),
+  new Judge({
+    name: "correct_query",
+    model: "{{SONNET_MODEL}}",
+    prompt: "Verify the SQL answers the user's question accurately without hallucinated columns.",
+    weight: 0.7,
+  }),
+]);
+
+const ev = await grad.evals
+  .create({
+    name: "sql-baseline-vs-rl",
+    models: ["qwen/qwen3-8b", "sql-agent@latest", "{{SONNET_MODEL}}"],
+    dataset: evalDs,
+    rubric,
+  })
+  .wait();
+
+console.log(ev.summaryTable());
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad eval \
+  --name sql-baseline-vs-rl \
+  --models qwen/qwen3-8b,sql-agent@latest,{{SONNET_MODEL}} \
+  --dataset sql-eval-holdout \
+  --rubric ./rubric.py \
+  --wait
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+<DocsTerminal
+  title="Side-by-side evaluation summary"
+  command="grad eval --models qwen/qwen3-8b,sql-agent@latest,{{SONNET_MODEL}} --dataset sql-eval-holdout --rubric ./rubric.py --wait"
+>
+
+```text
+✓ Evaluated 3 models on 400 tasks (sql-eval-holdout)
+
+  Model                        valid_sql   correct_query   overall   p50 latency
+  qwen/qwen3-8b                    78.5%           61.2%     66.4%        290 ms
+  sql-agent@latest                 99.0%           91.8%     94.0%        305 ms
+  {{SONNET_MODEL}}   99.5%           93.0%     95.0%      1,420 ms
+
+✓ Saved eval report eval_01J9Z4K
+```
+
+</DocsTerminal>
+
+## Evaluate multi-turn agents in an `Environment`
+
+To benchmark multi-turn tool use, Docker Compose apps, or Harbor coding tasks, pass your [`Environment`](/docs/training/environments/) and held-out `Task` list directly. Your containers still run locally or in your own cluster while Gradiated records the scores and trajectories:
+
+```python
+from grad import Grad, environments
+
+client = Grad()
+eval_tasks = environments.Harbor.load_tasks("./harbor-eval-tasks/")
+env = environments.Harbor()
+
+ev = client.evals.create(
+    name="harbor-coding-eval",
+    models=["qwen/qwen3-8b", "code-agent-grpo@latest"],
+    env=env,
+    tasks=eval_tasks,
+    max_turns=12,
+    max_concurrency=8,
+).wait()
+
+print(ev.summary_table())
+```
+
+## Turn eval failures into your next training dataset
+
+Every completed evaluation stores per-task trajectories and scores. Filter to the examples where a model fell short and save them straight into a [`Dataset`](/docs/training/trajectories/) for targeted SFT, DPO, or RL:
+
+```python
+# Save tasks where the current artifact scored below 0.8
+hard_cases = ev.failures(model="sql-agent@latest", threshold=0.8).to_dataset("sql-hard-cases")
+print(f"Saved {hard_cases.count()} failing examples for the next training round")
+```
+
+<DocsCallout label="Keep an untouched holdout set" tone="tip">
+Never train on your evaluation holdout dataset. Use `ev.failures(...)` on a separate staging or production sample dataset to mine hard examples, and keep `sql-eval-holdout` strictly for apples-to-apples comparisons across versions.
+</DocsCallout>
+
+<DocsNext>
+  <a href="/docs/training/artifacts/">
+    <small>Next</small>
+    <strong>Artifacts</strong>
+  </a>
+  <a href="/docs/training/rubrics/">
+    <small>Scoring</small>
+    <strong>Rubrics</strong>
+  </a>
+</DocsNext>

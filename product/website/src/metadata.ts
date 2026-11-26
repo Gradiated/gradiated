@@ -213,6 +213,11 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Run your agent against your own tools, databases, Harbor tasks, or Docker containers during reinforcement learning.",
   },
+  "/docs/training/evaluations/": {
+    title: "Evaluations",
+    description:
+      "Benchmark base models, frontier models, and trained artifacts side by side using the same Rubric or Environment before you ship.",
+  },
   "/docs/training/artifacts/": {
     title: "Artifacts",
     description:
@@ -223,6 +228,11 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Host trained artifacts on Gradiated Cloud with canary rollouts, or download standard weights to run on your own vLLM or SGLang servers.",
   },
+  "/docs/training/models/": {
+    title: "Supported training models",
+    description:
+      "See which base models you can fine-tune, what each size is best at, and how token-based training billing works.",
+  },
   "/docs/training/custom-loops/": {
     title: "Custom training loops",
     description:
@@ -232,6 +242,11 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     title: "Advanced objectives",
     description:
       "Custom PyTorch losses and specialized training patterns built on Trainer and CustomLoss.",
+  },
+  "/docs/training/tuning-troubleshooting/": {
+    title: "Tuning & troubleshooting",
+    description:
+      "Practical defaults for learning rates, LoRA rank, W&B and MLflow logging, crash recovery, and fixing common SFT, DPO, and RL failure modes.",
   },
   "/docs/training/self-hosting/": {
     title: "Self-hosting grad",

@@ -3,7 +3,37 @@
 <DocsLead>Train routers, decision models, and fine-tuned models from your production logs or test environments.</DocsLead>
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
-  <DocsCodeTab label="Python">
+  <DocsCodeTab label="Fine-tune a model (60s)">
+
+```python
+from grad import Grad, Trajectory, TrajectoryInput
+from grad.recipes import SFTRecipe
+
+client = Grad()
+dataset = client.datasets.create("sql-quickstart")
+dataset.push([
+    Trajectory(
+        session_id="s1",
+        input=TrajectoryInput(messages=[{"role": "user", "content": "Count active users from yesterday."}]),
+        expected_output={"content": "SELECT count(*) FROM users WHERE active_at >= current_date - 1;"},
+    ),
+    Trajectory(
+        session_id="s2",
+        input=TrajectoryInput(messages=[{"role": "user", "content": "Total revenue by plan this month."}]),
+        expected_output={"content": "SELECT plan, sum(amount_usd) FROM invoices WHERE created_at >= date_trunc('month', current_date) GROUP BY plan;"},
+    ),
+])
+
+# Preview tokens and cost ($0) before training
+plan = client.runs.plan(dataset=dataset, name="sql-helper", recipe=SFTRecipe(model="qwen/qwen3-8b"))
+print(plan.estimated_tokens, plan.estimated_cost_usd)
+
+run = client.runs.create(dataset=dataset, name="sql-helper", recipe=SFTRecipe(model="qwen/qwen3-8b")).wait()
+run.deploy(canary=0.10)  # Or download LoRA weights for vLLM / SGLang
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Train a router">
 
 ```python
 from grad import Grad
@@ -53,7 +83,9 @@ _, _ = run.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
   <DocsCodeTab label="CLI">
 
 ```bash
+grad login
 grad import ./support_traces.jsonl --dataset support-prod
+grad train --dataset support-prod --name support-router --recipe router --dry-run
 grad train --dataset support-prod --name support-router --recipe router --wait
 grad deploy support-router@latest --canary 0.10
 ```
@@ -84,6 +116,15 @@ Already sending inference requests through Gradiated with the `x-gradiated-task`
 ```
 
 </DocsTerminal>
+
+## Where to start
+
+| If you are... | Recommended path |
+| --- | --- |
+| **Shipping a product feature** (lower LLM spend, fine-tune a smaller model, compress a long prompt) | [Trajectories](/docs/training/trajectories/) → [Recipes](/docs/training/recipes/) → [Deploying](/docs/training/deploying/) |
+| **Running RL, evals, or custom research** (custom graders, tool sandboxes, PyTorch loss functions) | [Rubrics](/docs/training/rubrics/) & [Environments](/docs/training/environments/) → [Evaluations](/docs/training/evaluations/) → [Custom loops](/docs/training/custom-loops/) |
+
+See [Supported models](/docs/training/models/) for trainable base models and how token billing works.
 
 ## Pick a starting point
 
@@ -130,12 +171,13 @@ cargo add grad-sdk
 
 ```bash
 brew install gradiated/tap/grad
+grad login
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
 
-All SDKs and the CLI read `GRADIATED_API_KEY` from your environment automatically (create one in the [quickstart](/docs/quickstart/)) and connect to `https://api.gradiated.com`. You can also pass the key directly when creating the client:
+Run `grad login` for interactive CLI authentication, or set `GRADIATED_API_KEY` in your environment (create a key in the [quickstart](/docs/quickstart/)). All SDKs read `GRADIATED_API_KEY` automatically and connect to `https://api.gradiated.com`, or you can pass the key directly:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -184,7 +226,31 @@ Prefer to run on your own infrastructure or locally? See the [self-hosting guide
 `run.deploy()` (and `grad deploy`) hosts your artifact on Gradiated Cloud under `your-org/<name>`, so you can call it with the OpenAI, Anthropic, or SystemOne SDK (or `client.route(...)` for routers). If you prefer to self-host serving, download the LoRA weights with `grad artifacts download` and load them into vLLM or SGLang.
 
 <DocsCodeTabs>
-  <DocsCodeTab label="Python">
+  <DocsCodeTab label="Chat model (OpenAI SDK)">
+
+```python
+import os
+from openai import OpenAI
+from grad import Grad
+
+oai = OpenAI(base_url="https://api.gradiated.com/v1", api_key=os.environ["GRADIATED_API_KEY"])
+raw = oai.chat.completions.with_raw_response.create(
+    model="your-org/sql-helper",
+    messages=messages,
+)
+inference_id = raw.headers["x-gradiated-inference-id"]
+reply = raw.parse()
+
+# Log real outcomes for live canary metrics and your next training run
+Grad().feedback.record(
+    inference_id=inference_id,
+    idempotency_key=f"query-{request_id}",
+    score=1.0 if query_succeeded else 0.0,
+)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Model router (Python)">
 
 ```python
 decision = client.route("support-router", messages=messages, tools=tools)

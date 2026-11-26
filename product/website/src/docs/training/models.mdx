@@ -1,0 +1,63 @@
+# Supported training models
+
+<DocsLead>See which base models you can fine-tune, what each size is best at, and how token-based training billing works.</DocsLead>
+
+Pass any model ID as a plain lowercase string (such as `"qwen/qwen3-8b"`) to a [`Recipe`](/docs/training/recipes/) or [`Trainer`](/docs/training/custom-loops/). You can also pass a previously trained `.grad` [`Artifact`](/docs/training/artifacts/) to continue training from an earlier stage (for example, `SFT -> DPO` or `SFT -> GRPO`).
+
+## Trainable base models
+
+| Model ID | Best for | Adapters | Notes |
+| --- | --- | --- | --- |
+| `qwen/qwen3-0.6b` | Model routers, fast classifiers, latency-critical SFT | LoRA, Full | Default backbone for `RouterRecipe`; sub-15 ms routing. |
+| `qwen/qwen3-1.7b` | Lightweight extraction, formatting, high-volume structured outputs | LoRA, Full | Great balance of speed and instruction following. |
+| `qwen/qwen3-4b` | Fast distilled assistants, narrow coding and SQL helpers | LoRA, Full, Cartridge | Common student target for `DistillRecipe`. |
+| `qwen/qwen3-8b` | General SFT, DPO, RL agents, reward models, Cartridges | LoRA, Full, Cartridge | Default starting point for most fine-tuning and RL workflows. |
+| `qwen/qwen3-14b` | Harder reasoning, multi-step tool use, domain synthesis | LoRA, Cartridge | Strong step up when 8B plateaus on complex logic. |
+| `qwen/qwen3-32b` | High-accuracy RL, distillation teacher, complex coding agents | LoRA, Cartridge | Also widely used as an open teacher for `DistillRecipe`. |
+| `z-ai/glm-5.3-flash` | Multimodal (image + text) fine-tuning and UI/document agents | LoRA | Supports `MediaRef.image(...)` inputs natively. |
+| `deepseek/deepseek-v4.1-flash-1017` | High-throughput coding, reasoning, and tool-use post-training | LoRA | Fast reasoning backbone for SFT and RL. |
+| `gradiated/linden-1` | SystemOne decision models (`Choice`, `Noul`, `Score`) | LoRA | Default backbone for `DecisionModelRecipe` (`/v1/systemone`). |
+| `baai/bge-small-en-v1.5` | Domain search and RAG embeddings | Full | Default backbone for `EmbeddingRecipe`; sub-10 ms inference. |
+
+### Querying the live catalog
+
+Check the exact list of trainable models and their context limits at any time via the CLI or API:
+
+```bash
+grad models list --training
+```
+
+Or fetch `GET https://api.gradiated.com/v1/models` and filter for entries whose `properties.supported_uses` includes `"training"`. See [Models and pricing](/docs/models-pricing/) for the live catalog table and serving rates.
+
+<DocsCallout label="Self-hosting custom Hugging Face checkpoints" tone="tip">
+When [self-hosting](/docs/training/self-hosting/) `grad` in your own VPC, you can train any compatible Hugging Face model stored in your internal `models.mirrorUri` bucket, including internal pretrained checkpoints or domain-specific encoders.
+</DocsCallout>
+
+## Judge and comparison models
+
+[`Judge`](/docs/training/rubrics/) and [`Evaluations`](/docs/training/evaluations/) can call any frontier or open model in the catalog (such as `"{{SONNET_MODEL}}"`, `"{{OPUS_MODEL}}"`, `"{{GPT_MODEL}}"`, or `"qwen/qwen3-32b"`), or any fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact` you trained yourself.
+
+## How training billing works
+
+Training on Gradiated Cloud uses the same token-metered model as inference:
+
+- **Training & sampling tokens:** billed **per million tokens processed** across forward/backward passes, RL/distillation rollouts, and logprob scoring, so you don't pay for idle GPU time.
+- **Weight & checkpoint storage:** billed for saved `.grad` artifacts and `save_state()` checkpoints retained in your workspace.
+- **Zero-cost pre-flight estimate:** run `grad train --dry-run` or `client.runs.plan(...)` before launching any managed recipe to see `estimated_tokens` and `estimated_cost_usd` at `$0`.
+
+```bash
+grad train --dataset support-prod --name support-sft --recipe sft --dry-run
+```
+
+For current per-token rates and service tiers, see [Models and pricing](/docs/models-pricing/).
+
+<DocsNext>
+  <a href="/docs/training/tuning-troubleshooting/">
+    <small>Practical guide</small>
+    <strong>Tuning &amp; troubleshooting</strong>
+  </a>
+  <a href="/docs/models-pricing/">
+    <small>Rates</small>
+    <strong>Models and pricing</strong>
+  </a>
+</DocsNext>

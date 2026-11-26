@@ -22,7 +22,7 @@ A **recipe** is a Python class that wires up a common training workflow (`Router
 
 ## Start with recipe defaults
 
-Every recipe comes with working defaults for the base model, train/eval split, and optimizer. You pay per million tokens trained plus storage for saved weights, never for idle GPUs. Pass your dataset, output name, and recipe, and use `--dry-run` (or `runs.plan()`) to check data coverage and estimated cost before launching.
+Every recipe comes with working defaults for the base model, train/eval split, and optimizer. You pay per million tokens trained plus storage for saved weights, so you don't need to pay for idle GPUs. Pass your dataset, output name, and recipe, and use `--dry-run` (or `runs.plan()`) to check data coverage and estimated cost before launching. You can also attach `loggers=[loggers.WandB(project="...")]` or `loggers.MLflow(...)` and inspect live completions with `grad runs logs <run_id> --samples 5` (see [Tuning & troubleshooting](/docs/training/tuning-troubleshooting/)).
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">

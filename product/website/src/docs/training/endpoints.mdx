@@ -10,13 +10,16 @@ Separating raw model weights from live traffic slots keeps rollbacks instant and
 | --- | --- | --- |
 | **Cardinality** | Always **1** immutable model | **1 or many** artifacts |
 | **Changes over time?** | Never; every retrain writes a new `name@version` | Yes; promote, canary, shadow, or roll back in place |
-| **Primary use** | Offline evals, RL rollouts (`sample`), distillation (`score_logprobs`), embeddings (`embed`), weight merges | Production serving (`infer`), traffic splits, online SLA guardrails, delayed feedback capture |
+| **Primary use** | Offline evals, RL rollouts (`sample`), distillation (`score_logprobs`), embeddings (`embed`), weight merges | Production serving (`infer` / `route`), traffic splits, online SLA guardrails, delayed feedback capture |
 
-You can call a pinned `Artifact` directly during evaluation, calibration, or hard-negative mining, including batched calls via `artifact.infer_batch(inputs)`. Multi-head models always return `heads: { name: tensor }` (respecting `token_level: true` heads) alongside `logits` for single-head models:
+You can call a pinned `Artifact` directly during evaluation, calibration, or hard-negative mining, including batched calls via `artifact.infer_batch(inputs)`. Multi-head models always populate `res.heads` (respecting `token_level=True` heads) alongside `res.logits` for single-head models:
 
 ```python
+from grad import ModelInput
+
 art = client.artifacts.get("coding-effort@2026-11-25-1")
-preds = art.infer_batch([{"messages": m} for m in eval_messages])
+preds = art.infer_batch([ModelInput(messages=m) for m in eval_messages])
+print(preds[0].logits)
 ```
 
 ## Deploy in one line (or configure explicitly)
@@ -27,9 +30,9 @@ Every trained `.grad` artifact carries its model type, source dataset, and defau
   <DocsCodeTab label="Python">
 
 ```python
-# Deploy straight from a completed run or any pinned artifact ID
+# Deploy straight from a completed run or any pinned artifact
 endpoint = run.deploy(canary=0.10)
-# Or: client.endpoints.deploy("support-router@2026-11-26-1", canary=0.10)
+# Or: endpoint = client.endpoints.deploy("support-router@2026-11-26-1", canary=0.10)
 ```
 
   </DocsCodeTab>
@@ -37,7 +40,7 @@ endpoint = run.deploy(canary=0.10)
 
 ```ts
 const endpoint = await run.deploy({ canary: 0.1 });
-// Or: await grad.endpoints.deploy("support-router@2026-11-26-1", { canary: 0.1 });
+// Or: const endpoint = await grad.endpoints.deploy("support-router@2026-11-26-1", { canary: 0.1 });
 ```
 
   </DocsCodeTab>
@@ -45,7 +48,7 @@ const endpoint = await run.deploy({ canary: 0.1 });
 
 ```go
 endpoint, _ := run.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
-// Or: client.Endpoints.Deploy(ctx, "support-router@2026-11-26-1", grad.DeployOpts{Canary: 0.10})
+// Or: endpoint, _ := client.Endpoints.Deploy(ctx, "support-router@2026-11-26-1", grad.DeployOpts{Canary: 0.10})
 ```
 
   </DocsCodeTab>
@@ -65,28 +68,27 @@ grad deploy support-router@2026-11-26-1 --active
   </DocsCodeTab>
 </DocsCodeTabs>
 
-When you want explicit control over fallback models, SLA bounds, or multi-artifact strategies, use `endpoints.create()` directly:
+When you want explicit control over fallback models, SLA bounds, or multi-artifact strategies, pass a typed `strategies.*` dataclass to `client.endpoints.create()`:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad
+from grad import Grad, strategies
 
 client = Grad()
 
-client.endpoints.create(
+router = client.endpoints.create(
     slug="support-router",
     artifact="support-router@2026-11-25-1",
     capture_dataset="support-prod",
-    strategy={
-        "kind": "sla_lagrangian",
-        "fallback": "claude-opus-4-7",
-        "max_quality_drop": 0.02,
-    },
+    strategy=strategies.SLALagrangian(
+        fallback="claude-opus-4-7",
+        max_quality_drop=0.02,
+    ),
 )
 
-decision = client.router("support-router").route(messages=messages, tools=tools)
+decision = router.route(messages=messages, tools=tools)
 reply = call_your_llm(decision.model, messages, tools)
 ```
 
@@ -94,26 +96,21 @@ reply = call_your_llm(decision.model, messages, tools)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad } from "@gradiated/grad";
+import { Grad, strategies } from "@gradiated/grad";
 
 const grad = new Grad();
 
-await grad.endpoints.create({
+const router = await grad.endpoints.create({
   slug: "support-router",
   artifact: "support-router@2026-11-25-1",
   captureDataset: "support-prod",
-  strategy: {
-    kind: "sla_lagrangian",
+  strategy: strategies.slaLagrangian({
     fallback: "claude-opus-4-7",
     maxQualityDrop: 0.02,
-  },
+  }),
 });
 
-const decision = await grad.router("support-router").route({
-  messages,
-  tools,
-});
-
+const decision = await router.route({ messages, tools });
 const reply = await callYourLLM(decision.model, messages, tools);
 ```
 
@@ -121,18 +118,17 @@ const reply = await callYourLLM(decision.model, messages, tools);
   <DocsCodeTab label="Go">
 
 ```go
-_, _ = client.Endpoints.Create(ctx, grad.EndpointParams{
+router, _ := client.Endpoints.Create(ctx, grad.EndpointParams{
 	Slug:           "support-router",
 	Artifact:       "support-router@2026-11-25-1",
 	CaptureDataset: "support-prod",
-	Strategy: map[string]any{
-		"kind":             "sla_lagrangian",
-		"fallback":         "claude-opus-4-7",
-		"max_quality_drop": 0.02,
+	Strategy: grad.SLALagrangianStrategy{
+		Fallback:       "claude-opus-4-7",
+		MaxQualityDrop: 0.02,
 	},
 })
 
-decision, _ := client.Router("support-router").Route(ctx, grad.RouteInput{Messages: messages, Tools: tools})
+decision, _ := router.Route(ctx, grad.RouteInput{Messages: messages, Tools: tools})
 reply := callYourLLM(decision.Model, messages, tools)
 ```
 
@@ -153,13 +149,13 @@ curl https://api.gradiated.com/v1/endpoints/support-router/infer \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-For classifiers, effort detectors, or generative models, call `endpoint(...).infer`:
+For classifiers, effort detectors, or generative models, grab the endpoint handle with `client.endpoints.get(...)` and call `.infer(...)`:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
-effort = client.endpoint("coding-effort").infer(input={"messages": messages})
+effort = client.endpoints.get("coding-effort").infer(messages=messages)
 print(effort.output["label"], effort.output["confidence"])
 ```
 
@@ -167,11 +163,9 @@ print(effort.output["label"], effort.output["confidence"])
   <DocsCodeTab label="TypeScript">
 
 ```ts
-const effort = await grad
-  .endpoint("coding-effort")
-  .infer<{ messages: Msg[] }, { label: "low" | "medium" | "high"; confidence: number }>({
-    input: { messages },
-  });
+const effort = await grad.endpoints
+  .get("coding-effort")
+  .infer<{ label: "low" | "medium" | "high"; confidence: number }>({ messages });
 ```
 
   </DocsCodeTab>
@@ -182,7 +176,7 @@ type EffortOut struct {
 	Label      string  `json:"label"`
 	Confidence float64 `json:"confidence"`
 }
-effort, _ := grad.InferAs[EffortOut](ctx, client, "coding-effort", grad.InferInput{Messages: messages})
+effort, _ := grad.InferAs[EffortOut](ctx, client.Endpoints.Get("coding-effort"), grad.InferInput{Messages: messages})
 ```
 
   </DocsCodeTab>
@@ -287,7 +281,7 @@ grad deploy support-router@2026-11-25-1 --active
 >
 
 ```text
-Endpoint  support-router · strategy=sla_lagrangian · circuit_breaker=ARMED
+Endpoint  support-router · strategy=SLALagrangian · circuit_breaker=ARMED
 Active    support-router@2026-11-25-1  (90% traffic · 18,412 req/hr · p50 6.2ms)
 Canary    support-router@2026-11-26-1  (10% traffic ·  2,044 req/hr · p50 5.9ms)
 
@@ -302,38 +296,39 @@ Canary    support-router@2026-11-26-1  (10% traffic ·  2,044 req/hr · p50 5.9m
 
 ## Serving strategies
 
-Endpoints support single-artifact and multi-artifact strategies. Select a strategy to inspect its request path and guardrail:
+Endpoints support single-artifact and multi-artifact strategies via typed `strategies.*` dataclasses. Select a strategy to inspect its request path and guardrail:
 
 <DocsEndpointDiagram />
 
-| `strategy.kind` | Artifacts | Behavior | Guide |
+| Strategy dataclass | Artifacts | Behavior | Guide |
 | --- | --- | --- | --- |
-| `direct` | 1 | Pass-through inference on the active artifact. | [Distillation & Cartridges](/docs/training/recipes/distillation/) |
-| `sla_lagrangian` | 1 | Calibrated lower-confidence-bound routing with fallback probes (`10%`), online primal-dual `λ`, and a hard-stop circuit breaker. | [Model router](/docs/training/recipes/router/) |
-| `confidence_fallback` | 1 | Temperature- or conformal-calibrated softmax threshold with automatic fallback label or model. | [Classifiers & decisions](/docs/training/recipes/classifier/) |
-| `syntax_fallback` | 1–2 | Validates JSON schema or AST on generated output and retries on a fallback artifact if invalid. | [Fine-tuning (SFT & DPO)](/docs/training/recipes/sft-dpo/) |
-| `cascade` | 2–3 | Runs a fast draft artifact, scores it with a [verifier](/docs/training/recipes/reward-models/), and escalates to a frontier artifact only below threshold. | [RL for agents](/docs/training/recipes/rl-agents/) |
-| `best_of_n` / `majority_vote` | 1–2 | Samples `N` completions and picks the majority answer or highest verifier-scored candidate. | [Reward models & verifiers](/docs/training/recipes/reward-models/) |
-| `budget_forcing` | 1 | Enforces thinking-token budgets or continuation prompts at test time. | [Custom loops](/docs/training/custom-loops/) |
+| `strategies.Direct()` | 1 | Pass-through inference on the active artifact. | [Distillation & Cartridges](/docs/training/recipes/distillation/) |
+| `strategies.SLALagrangian(...)` | 1 | Calibrated lower-confidence-bound routing with fallback probes (`10%`), online primal-dual `λ`, and a hard-stop circuit breaker. | [Model router](/docs/training/recipes/router/) |
+| `strategies.ConfidenceFallback(...)` | 1 | Temperature- or conformal-calibrated softmax threshold with automatic fallback label or model. | [Classifiers & decisions](/docs/training/recipes/classifier/) |
+| `strategies.SyntaxFallback(...)` | 1–2 | Validates JSON schema or AST on generated output and retries on a fallback artifact if invalid. | [Fine-tuning (SFT & DPO)](/docs/training/recipes/sft-dpo/) |
+| `strategies.Cascade(...)` | 2–3 | Runs a fast draft artifact, scores it with a [verifier](/docs/training/recipes/reward-models/), and escalates to a frontier artifact only below threshold. | [RL for agents](/docs/training/recipes/rl-agents/) |
+| `strategies.BestOfN(...)` / `MajorityVote(...)` | 1–2 | Samples `N` completions and picks the majority answer or highest verifier-scored candidate. | [Reward models & verifiers](/docs/training/recipes/reward-models/) |
+| `strategies.BudgetForcing(...)` | 1 | Enforces thinking-token budgets or continuation prompts at test time. | [Custom loops](/docs/training/custom-loops/) |
 
 ### Multi-artifact example: cascade
 
 ```python
+from grad import strategies
+
 client.endpoints.create(
     slug="sql-assistant",
     artifact="sql-8b@v3",
-    strategy={
-        "kind": "cascade",
-        "verifier": "sql-verifier@v2",
-        "frontier": "Qwen/Qwen3-32B",
-        "threshold": 0.75,
-    },
+    strategy=strategies.Cascade(
+        verifier="sql-verifier@v2",
+        frontier="Qwen/Qwen3-32B",
+        threshold=0.75,
+    ),
 )
 ```
 
 ## Zero-hop gateway routing
 
-On Gradiated Cloud, `router` endpoints also run directly inside the [OpenAI SDK](/docs/openai-sdk/) and [Anthropic SDK](/docs/anthropic-sdk/) inference gateway with no extra round trip. Pass `"model": "<org>/<endpoint-slug>"` to `/v1/chat/completions`, `/v1/responses`, or `/v1/messages`. The gateway runs the router in-process, dispatches to the selected model, and returns `x-gradiated-inference-id`, `x-gradiated-action`, and `x-gradiated-artifact` headers so you can still send outcomes to `grad.feedback.record()`.
+On Gradiated Cloud, `router` endpoints also run directly inside the [OpenAI SDK](/docs/openai-sdk/) and [Anthropic SDK](/docs/anthropic-sdk/) inference gateway with no extra round trip. Pass `"model": "<org>/<endpoint-slug>"` to `/v1/chat/completions`, `/v1/responses`, or `/v1/messages`. The gateway runs the router in-process, dispatches to the selected model, and returns `x-gradiated-inference-id`, `x-gradiated-action`, and `x-gradiated-artifact` headers so you can still send outcomes to `client.feedback.record()`.
 
 <DocsNext>
   <a href="/docs/api-reference/">

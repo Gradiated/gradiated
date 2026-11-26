@@ -1,38 +1,36 @@
 # Environments and rubrics
 
-<DocsLead>Score trajectories with composable rubrics and run multi-turn RL rollouts against real apps, seeded databases, and Docker Compose stacks.</DocsLead>
+<DocsLead>Score trajectories with composable, statically typed rubrics and run multi-turn RL rollouts against real apps, seeded databases, and Docker Compose stacks.</DocsLead>
 
 Environments run **outside the GPU training cluster**, on your own CPU machines, Kubernetes cluster, or sandbox pool, and call Gradiated [Artifact](/docs/training/endpoints/) and [Trainer](/docs/training/custom-loops/) endpoints over HTTP. Your containers, seed scripts, and internal credentials never leave your network.
 
 ## Rubrics
 
-A `Rubric` combines weighted `RubricTerm` scorers into a single `reward` while storing every sub-score in [`trajectory.scores`](/docs/training/trajectories/).
+A `Rubric` combines weighted scorers into a single `reward` while storing every sub-score in [`trajectory.scores`](/docs/training/trajectories/). Each scoring mode is its own typed class so static type checkers verify your scorer function signature automatically:
 
 ```python
-from grad import Rubric, RubricTerm
+from grad import GroupScorer, Rubric, Scorer, StatefulScorer
 
 def passes_unit_tests(traj, handle) -> float:
     res = handle.exec("pytest -q tests/target_test.py")
     return 1.0 if res.returncode == 0 else 0.0
 
 def concise_patch(traj) -> float:
-    return 1.0 if len(traj.output["token_ids"]) < 1024 else 0.5
+    return 1.0 if len(traj.token_ids) < 1024 else 0.5
 
 rubric = Rubric([
-    RubricTerm("tests", weight=0.8, fn=passes_unit_tests, stateful=True),
-    RubricTerm("concise", weight=0.2, fn=concise_patch),
+    StatefulScorer("tests", weight=0.8, fn=passes_unit_tests),
+    Scorer("concise", weight=0.2, fn=concise_patch),
 ])
 ```
 
-Rubrics support three scoring modes:
-
-| Mode | Flag | Use it for |
+| Scorer class | Function signature | Use it for |
 | --- | --- | --- |
-| **Pointwise** | *(default)* | Deterministic checks (unit tests, AST/JSON validation, exact match) or single-trajectory LLM judges. |
-| **Stateful** | `stateful=True` | Checks that inspect live Postgres rows, Redis keys, API responses, or files before teardown. |
-| **Groupwise** | `groupwise=True` | Comparing all `G` rollouts for the same prompt side by side (comparative judges, pairwise win rates). |
+| **`Scorer`** | `(traj: Trajectory) -> float` | Deterministic checks (AST/JSON validation, exact match) or single-trajectory LLM judges. |
+| **`StatefulScorer`** | `(traj: Trajectory, handle: Handle) -> float` | Checks that inspect live Postgres rows, Redis keys, API responses, or files before teardown. |
+| **`GroupScorer`** | `(group: list[Trajectory]) -> list[float]` | Comparing all `G` rollouts for the same prompt side by side (comparative judges, pairwise win rates). |
 
-To reuse scores already attached to imported production traces, pass `RubricTerm.from_score("task_success", weight=1.0)`.
+To reuse scores already attached to imported production traces, pass `Scorer.from_score("task_success", weight=1.0)`. For managed `GRPORecipe` runs graded by an HTTP endpoint, pass `WebhookRubric(url="...", secret="eval-webhook-token")`.
 
 ## Stateful environments (Docker Compose and seed scripts)
 
@@ -44,7 +42,7 @@ Subclass `Environment` and implement those four hooks:
 
 1. `setup(task, rollout_id)` — start or lease an isolated environment and run your seed script.
 2. `step(handle, action)` — run the agent's tool call against `handle` and return an `Observation(text=..., done=...)`.
-3. `evaluate(handle, trajectory)` — score the trajectory **while the environment is still running** so stateful rubric terms can query Postgres, Redis, or your API.
+3. `evaluate(handle, trajectory)` — score the trajectory **while the environment is still running** so `StatefulScorer` terms can query Postgres, Redis, or your API.
 4. `teardown(handle)` — stop containers or reset the database. `rollout_groups()` always runs `teardown` in a `finally:` block, even on timeout or error.
 
 ```python
@@ -58,7 +56,7 @@ class ComposeHandle:
     base_url: str
     db_url: str
 
-class AppComposeEnv(Environment):
+class AppComposeEnv(Environment[ComposeHandle]):
     def __init__(self, compose_file: str, rubric: Rubric):
         super().__init__(rubric)
         self.compose_file = compose_file
@@ -90,7 +88,7 @@ class AppComposeEnv(Environment):
         return Observation(text=obs_text, done=False)
 
     def evaluate(self, handle: ComposeHandle, trajectory) -> dict[str, float]:
-        # Runs BEFORE teardown so stateful RubricTerms can query `handle.db_url`.
+        # Runs BEFORE teardown so StatefulScorer terms can query `handle.db_url`.
         self.rubric.score(trajectory, state=handle)
         return trajectory.scores
 
@@ -152,7 +150,7 @@ groups = env.rollout_groups(
 
 Every rollout enforces three guarantees automatically:
 
-- **Observation masking:** tool outputs and retrieved documents are appended via [`append_env_tokens()`](/docs/training/trajectories/) with `loss_mask = 0.0` and `sampling_logprobs = 0.0`, so gradients apply only to tokens generated by the model.
+- **Observation masking:** tool outputs and retrieved documents are appended via [`append_env_tokens()`](/docs/reference/primitives/) with `loss_mask = 0.0` and `sampling_logprobs = 0.0`, so gradients apply only to tokens generated by the model.
 - **Bounded concurrency:** `max_concurrency` caps active stacks so large rollout groups do not exhaust CPU or memory.
 - **Timeout cleanup:** rollouts exceeding `timeout_s` are cancelled, assigned `reward = 0.0`, and still run `teardown()`.
 

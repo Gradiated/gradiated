@@ -2,13 +2,13 @@
 
 <DocsLead>Route each request to the cheapest model that meets your quality bar, with calibrated fallback probes and a hard-stop SLA guardrail.</DocsLead>
 
-A model router inspects each incoming prompt and predicts the probability that each candidate model will succeed. At serving time, the endpoint picks the lowest-cost model that satisfies your quality drop budget — typically running in under 10 ms on CPU with a frozen 33M-parameter encoder.
+A model router inspects each incoming prompt and predicts the probability that each candidate model will succeed. At serving time, the endpoint picks the lowest-cost model that satisfies your quality drop budget — typically running in under 10 ms with a frozen 33M-parameter encoder.
 
 ## What data you need
 
 A router needs historical trajectories with **at least two candidate models**, a **quality score**, and **request cost**:
 
-- **Minimum volume:** ~500 scored trajectories per candidate model to fit a reliable CPU dual-head router (2,000+ for noisy multi-domain traffic).
+- **Minimum volume:** ~500 scored trajectories per candidate model to fit a reliable dual-head router (2,000+ for noisy multi-domain traffic).
 - **Required fields:** `input.messages` (plus optional `input.tools` and `input.features`), `metadata.model` (or `output.payload.action`), a scalar quality signal in `scores` (e.g. `task_success` in `[0, 1]`), and `metrics.cost_usd`.
 - **Fallback coverage:** Include trajectories from your frontier fallback model so calibration can measure quality drop directly against it.
 
@@ -28,29 +28,28 @@ A router needs historical trajectories with **at least two candidate models**, a
 
 ## Train the router
 
-Start on CPU with the default dual-head solver (`dual_head_kernel_lbfgs`), which combines a kernel nearest-neighbor estimator with an L2-regularized linear head over frozen embeddings. Move to `compute="gpu"` with a larger backbone only if CPU held-out AUC plateaus.
+Start with `RouterRecipe` and its default `solvers.DualHeadKernelLBFGS` solver, which combines a kernel nearest-neighbor estimator with an L2-regularized linear head over frozen embeddings. Move to a larger backbone like `Qwen/Qwen3-0.6B` only if held-out AUC plateaus on long code or multi-file prompts.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad
+from grad import Grad, calibration, solvers, splits
+from grad.recipes import RouterRecipe
 
 client = Grad()
 
-run = client.runs.create(
-    dataset="support-traces",
-    name="support-router",
-    recipe="router",
-    base="BAAI/bge-small-en-v1.5",
-    compute="cpu",
-    solver="dual_head_kernel_lbfgs",
+recipe = RouterRecipe(
+    model="BAAI/bge-small-en-v1.5",
+    solver=solvers.DualHeadKernelLBFGS(l2=0.1),
     score_key="task_success",
-    split={"strategy": "by_session", "eval_fraction": 0.15},
-    calibration={"max_quality_drop": 0.02},
-).wait()
+    split=splits.BySession(eval_fraction=0.15),
+    calibration=calibration.SLA(max_quality_drop=0.02),
+)
 
-print(run.artifact_id)
+run = client.runs.create(dataset="support-traces", name="support-router", recipe=recipe).wait()
+
+print(run.artifact.id)
 print(run.eval_report["pareto_summary"])
 ```
 
@@ -58,25 +57,23 @@ print(run.eval_report["pareto_summary"])
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad } from "@gradiated/grad";
+import { Grad, calibration, recipes, solvers, splits } from "@gradiated/grad";
 
 const grad = new Grad();
 
+const recipe = recipes.router({
+  model: "BAAI/bge-small-en-v1.5",
+  solver: solvers.dualHeadKernelLBFGS({ l2: 0.1 }),
+  scoreKey: "task_success",
+  split: splits.bySession({ evalFraction: 0.15 }),
+  calibration: calibration.sla({ maxQualityDrop: 0.02 }),
+});
+
 const run = await grad.runs
-  .create({
-    dataset: "support-traces",
-    name: "support-router",
-    recipe: "router",
-    base: "BAAI/bge-small-en-v1.5",
-    compute: "cpu",
-    solver: "dual_head_kernel_lbfgs",
-    scoreKey: "task_success",
-    split: { strategy: "by_session", evalFraction: 0.15 },
-    calibration: { maxQualityDrop: 0.02 },
-  })
+  .create({ dataset: "support-traces", name: "support-router", recipe })
   .wait();
 
-console.log(run.artifactId, run.evalReport.paretoSummary);
+console.log(run.artifact.id, run.evalReport.paretoSummary);
 ```
 
   </DocsCodeTab>
@@ -84,15 +81,17 @@ console.log(run.artifactId, run.evalReport.paretoSummary);
 
 ```go
 run, _ := client.Runs.Create(ctx, grad.RunParams{
-	Dataset:     "support-traces",
-	Name:        "support-router",
-	Recipe:      "router",
-	Base:        "BAAI/bge-small-en-v1.5",
-	Compute:     "cpu",
-	ScoreKey:    "task_success",
-	Calibration: &grad.Calibration{MaxQualityDrop: 0.02},
+	Dataset: "support-traces",
+	Name:    "support-router",
+	Recipe: grad.RouterRecipe{
+		Model:       "BAAI/bge-small-en-v1.5",
+		Solver:      grad.DualHeadKernelLBFGS{L2: 0.1},
+		ScoreKey:    "task_success",
+		Split:       grad.BySessionSplit{EvalFraction: 0.15},
+		Calibration: grad.SLACalibration{MaxQualityDrop: 0.02},
+	},
 }).Wait(ctx)
-fmt.Println(run.ArtifactID, run.EvalReport)
+fmt.Println(run.Artifact.ID, run.EvalReport)
 ```
 
   </DocsCodeTab>
@@ -108,13 +107,13 @@ grad deploy support-router@latest --canary 0.10
 
 ### Key parameters
 
-| Field | Default | What it controls |
+| Component | Default | What it controls |
 | --- | --- | --- |
-| `base` | `BAAI/bge-small-en-v1.5` | Frozen text encoder (`Qwen/Qwen3-0.6B` on GPU for complex code or long context). |
-| `solver` | `dual_head_kernel_lbfgs` | `dual_head_kernel_lbfgs` (fast, calibrated on small data) or `lightgbm` (tabular-heavy inputs). |
+| `model` | `"BAAI/bge-small-en-v1.5"` | Frozen text encoder (`"Qwen/Qwen3-0.6B"` for complex code or long context). |
+| `solver` | `solvers.DualHeadKernelLBFGS()` | `DualHeadKernelLBFGS` (fast, calibrated on small data), `LightGBM` (tabular-heavy inputs), or a custom `Solver` subclass. |
 | `score_key` | Auto-detected | Key inside `trajectory.scores` treated as task success. |
-| `split.strategy` | `by_session` | Splits whole conversations so turns from one session never leak across train and eval. |
-| `calibration.max_quality_drop` | `0.02` | Maximum held-out quality loss vs. your fallback model used to pick the initial Lagrangian multiplier `λ`. |
+| `split` | `splits.BySession(0.15)` | Splits whole conversations so turns from one session never leak across train and eval. |
+| `calibration` | `calibration.SLA(max_quality_drop=0.02)` | Maximum held-out quality loss vs. your fallback model used to pick the initial Lagrangian multiplier `λ`. |
 
 ## Read the evaluation report
 
@@ -142,35 +141,34 @@ Before deploying, inspect `run.eval_report`:
 - **Calibration error (`ece`):** Confirms predicted success probabilities match observed win rates.
 
 <DocsCallout label="Why 10% fallback probes matter" tone="tip">
-Without unbiased probes, a router only observes outcomes on the model it picked — so silent drift on offloaded traffic goes unnoticed. Setting `fallback_probe_rate: 0.10` gives you an inverse-propensity-weighted live quality delta against your frontier model continuously, with no separate A/B test.
+Without unbiased probes, a router only observes outcomes on the model it picked — so silent drift on offloaded traffic goes unnoticed. Setting `fallback_probe_rate=0.10` gives you an inverse-propensity-weighted live quality delta against your frontier model continuously, with no separate A/B test.
 </DocsCallout>
 
 ## Deploy with SLA guardrails
 
-The trained router artifact already records its candidate models and default pricing in `manifest.json`. Name the fallback model and quality budget when creating the endpoint:
+The trained router artifact already records its candidate models and default pricing in `manifest.json`. Configure the fallback model and quality budget with `strategies.SLALagrangian`:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad
+from grad import Grad, strategies
 
 client = Grad()
 
-client.endpoints.create(
+router = client.endpoints.create(
     slug="support-router",
-    artifact="support-router@2026-11-25-1",
+    artifact=run.artifact,
     capture_dataset="support-traces",
-    strategy={
-        "kind": "sla_lagrangian",
-        "fallback": "claude-opus-4-7",
-        "max_quality_drop": 0.02,
-        "hard_stop_drop": 0.05,
-        "fallback_probe_rate": 0.10,
-    },
+    strategy=strategies.SLALagrangian(
+        fallback="claude-opus-4-7",
+        max_quality_drop=0.02,
+        hard_stop_drop=0.05,
+        fallback_probe_rate=0.10,
+    ),
 )
 
-decision = client.router("support-router").route(messages=messages, tools=tools)
+decision = router.route(messages=messages, tools=tools)
 reply = call_your_llm(decision.model, messages, tools)
 
 client.feedback.record(
@@ -184,28 +182,23 @@ client.feedback.record(
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad } from "@gradiated/grad";
+import { Grad, strategies } from "@gradiated/grad";
 
 const grad = new Grad();
 
-await grad.endpoints.create({
+const router = await grad.endpoints.create({
   slug: "support-router",
-  artifact: "support-router@2026-11-25-1",
+  artifact: run.artifact,
   captureDataset: "support-traces",
-  strategy: {
-    kind: "sla_lagrangian",
+  strategy: strategies.slaLagrangian({
     fallback: "claude-opus-4-7",
     maxQualityDrop: 0.02,
     hardStopDrop: 0.05,
     fallbackProbeRate: 0.1,
-  },
+  }),
 });
 
-const decision = await grad.router("support-router").route({
-  messages,
-  tools,
-});
-
+const decision = await router.route({ messages, tools });
 const reply = await callYourLLM(decision.model, messages, tools);
 
 await grad.feedback.record({
@@ -219,7 +212,8 @@ await grad.feedback.record({
   <DocsCodeTab label="Go">
 
 ```go
-decision, _ := client.Router("support-router").Route(ctx, grad.RouteInput{Messages: messages, Tools: tools})
+router := client.Endpoints.Get("support-router")
+decision, _ := router.Route(ctx, grad.RouteInput{Messages: messages, Tools: tools})
 reply := callYourLLM(decision.Model, messages, tools)
 
 _ = client.Feedback.Record(ctx, grad.FeedbackEvent{

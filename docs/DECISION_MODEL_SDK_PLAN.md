@@ -420,7 +420,8 @@ grad train --dataset support-prod --name support-router --recipe router --wait
 grad runs inspect run_01J9X --yaml > recipe.yaml
 grad deploy support-router@latest --canary 0.10 # 1-line upsert deploy using artifact defaults
 grad endpoints status support-router --watch    # live canary & IPS SLA monitor
-grad sources add langfuse --dataset support-prod --host https://cloud.langfuse.com --secret-ref env:LANGFUSE_API_KEY --schedule "*/15 * * * *"
+grad secrets set langfuse-prod
+grad sources add langfuse --dataset support-prod --host https://cloud.langfuse.com --secret langfuse-prod --schedule "*/15 * * * *"
 ```
 
 ---

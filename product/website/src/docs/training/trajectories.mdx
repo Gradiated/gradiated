@@ -11,25 +11,25 @@ Populate a dataset in any of four ways:
 
 ## Push trajectories from code
 
-If your labeled examples or production logs already live in your own database, push them directly into a dataset with `trajectories.push`.
+If your labeled examples or production logs already live in your own database, push typed `Trajectory` records directly into a dataset with `trajectories.push`.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad
+from grad import Grad, Trajectory, TrajectoryInput
 
 client = Grad()
 
 client.trajectories.push(
     dataset="diff-merge-gold",
     trajectories=[
-        {
-            "session_id": "pr_481",
-            "input": {"messages": [{"role": "user", "content": prompt}]},
-            "expected_output": {"content": gold_merged_code},
-            "scores": {"tests_passed": 1.0},
-        },
+        Trajectory(
+            session_id="pr_481",
+            input=TrajectoryInput(messages=[{"role": "user", "content": prompt}]),
+            expected_output={"content": gold_merged_code},
+            scores={"tests_passed": 1.0},
+        ),
     ],
 )
 ```
@@ -162,21 +162,22 @@ The import result lists how many trajectories were parsed, how many were dropped
 
 ## Sync from observability providers
 
-Register a source to pull new traces and feedback scores incrementally on a cron schedule. Provider credentials stay behind a secret reference and are never written into dataset records or `.grad` artifacts.
+Register a source to pull new traces and feedback scores incrementally on a cron schedule. Store provider keys once as a **named workspace secret** (`grad secrets set langfuse-prod`, Console UI, or Kubernetes Secret in self-hosted mode) so credentials work identically in Cloud and self-hosted deployments and are never written into datasets or `.grad` artifacts.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad
+from grad import Grad, sources
 
 client = Grad()
 
 source = client.sources.create(
-    provider="langfuse",
     dataset="support-prod",
-    config={"host": "https://cloud.langfuse.com"},
-    secret_ref="env:LANGFUSE_API_KEY",
+    provider=sources.Langfuse(
+        host="https://cloud.langfuse.com",
+        secret="langfuse-prod",
+    ),
     schedule="*/15 * * * *",
 )
 
@@ -187,15 +188,16 @@ client.sources.sync(source.id)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad } from "@gradiated/grad";
+import { Grad, sources } from "@gradiated/grad";
 
 const grad = new Grad();
 
 const source = await grad.sources.create({
-  provider: "langfuse",
   dataset: "support-prod",
-  config: { host: "https://cloud.langfuse.com" },
-  secretRef: "env:LANGFUSE_API_KEY",
+  provider: sources.langfuse({
+    host: "https://cloud.langfuse.com",
+    secret: "langfuse-prod",
+  }),
   schedule: "*/15 * * * *",
 });
 
@@ -207,11 +209,9 @@ await grad.sources.sync(source.id);
 
 ```go
 source, _ := client.Sources.Create(ctx, grad.SourceParams{
-	Provider:  "langfuse",
-	Dataset:   "support-prod",
-	Config:    map[string]any{"host": "https://cloud.langfuse.com"},
-	SecretRef: "env:LANGFUSE_API_KEY",
-	Schedule:  "*/15 * * * *",
+	Dataset:  "support-prod",
+	Provider: grad.LangfuseSource{Host: "https://cloud.langfuse.com", Secret: "langfuse-prod"},
+	Schedule: "*/15 * * * *",
 })
 _ = client.Sources.Sync(ctx, source.ID)
 ```
@@ -220,10 +220,13 @@ _ = client.Sources.Sync(ctx, source.ID)
   <DocsCodeTab label="CLI">
 
 ```bash
+# Store credential once in your workspace secret store (reads from stdin)
+grad secrets set langfuse-prod
+
 grad sources add langfuse \
   --dataset support-prod \
   --host https://cloud.langfuse.com \
-  --secret-ref env:LANGFUSE_API_KEY \
+  --secret langfuse-prod \
   --schedule "*/15 * * * *"
 
 grad sources sync src_01J9X
@@ -251,17 +254,18 @@ grad sources sync src_01J9X
 | Laminar | `laminar` | SQL export | Query API |
 | Helicone | `helicone` | JSONL, CSV | Query API |
 
-## Fields recipes use
+## What to include in your data
 
-Managed recipes operate directly on `grad.trajectory/1` records — you do not pre-tokenize datasets or reshape columns per model family. The main fields recipes look for:
+Every trajectory needs an `input` (usually `input.messages`). Beyond that, include only the fields your recipe uses:
 
-- `input.messages`, `input.tools`, `input.media`, and `input.features` hold text, tool schemas, image or audio refs, and tabular features.
-- `expected_output` holds gold corrections (a human-edited diff or label) for `sft` and `classifier` runs.
-- `scores` and `metrics.cost_usd` provide quality and cost signals for `router` runs, data filters, and rubrics.
-- `group_id` and `role` (`chosen`, `rejected`, `anchor`, `positive`, `negative`, `rollout`) keep pairs and rollout groups atomic across splits and microbatches.
-- `session_id` splits multi-turn conversations by session so turns never leak into held-out evaluation.
+| If you are training... | Also include |
+| --- | --- |
+| **Model router (`RouterRecipe`)** | `scores` (e.g. `task_success`), `metrics.cost_usd`, and `metadata.model` |
+| **Fine-tune (`SFTRecipe`) or classifier (`ClassifierRecipe`)** | `expected_output` (the gold response or target label) |
+| **Preference alignment (`DPORecipe`)** | Paired records sharing a `group_id` with `role="chosen"` and `role="rejected"` |
+| **Multi-turn conversations** *(recommended)* | `session_id` so turns from the same conversation stay together across train and eval splits |
 
-See the [Primitives reference](/docs/reference/primitives/) for the full `grad.trajectory/1` JSON schema and custom-loop helpers (`append_env_tokens()` and `to_datum()`).
+Need images, audio, tools, or the full JSON field list? See the [Primitives reference](/docs/reference/primitives/).
 
 <DocsNext>
   <a href="/docs/training/recipes/">

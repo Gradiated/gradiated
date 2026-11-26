@@ -37,20 +37,21 @@ See the [SystemOne SDK guide](/docs/systemone-sdk/) for linden-1 examples and su
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `POST` | `/v1/runs` | Start a managed recipe run (`router`, `classifier`, `sft`, `dpo`, `grpo`, `distill`, `cartridge`). |
-| `POST` | `/v1/runs/plan` | Dry-run pre-flight check: validate dataset coverage, resolve recipe defaults, and estimate training tokens and cost (`--dry-run`). |
+| `POST` | `/v1/runs` | Start a managed `Recipe` or multi-stage `Pipeline` run. |
+| `POST` | `/v1/runs/plan` | Dry-run pre-flight check: validate dataset coverage, resolve recipe/pipeline defaults, and estimate training tokens and cost (`--dry-run`). |
 | `GET` | `/v1/runs/{id}` | Inspect run status, resolved `recipe_spec`, `eval_report`, and produced `artifact_id`. |
 | `GET` | `/v1/runs/{id}/metrics` | Stream step-by-step training telemetry (SSE or JSON). |
 | `POST` | `/v1/runs/{id}/cancel` | Cancel an active training run. |
-| `POST` / `DELETE` | `/v1/trainers` / `/v1/trainers/{id}` | Allocate or release an interactive `Trainer` lease for custom loops. |
+| `POST` / `DELETE` | `/v1/trainers` / `/v1/trainers/{id}` | Open or close an interactive `Trainer` session (or resume from a saved checkpoint). |
 | `POST` | `/v1/trainers/{id}/fit-batch` | Closed-form or convex fit over embeddings or datums. |
 | `POST` | `/v1/trainers/{id}/forward-backward` | Run a pipelined forward and backward pass with a built-in loss. |
 | `POST` | `/v1/trainers/{id}/forward` | Run a forward pass returning requested differentiable tensors (`logprobs`, `topk_logprobs`, `embeddings`, `heads`, `layers`). |
-| `POST` | `/v1/trainers/{id}/backward-surrogate` | Apply client-computed surrogate gradients (`dLoss/dOut`). |
+| `POST` | `/v1/trainers/{id}/backward-surrogate` | Apply client-computed surrogate gradients (`dLoss/dOut`) for `CustomLoss` subclasses. |
 | `POST` | `/v1/trainers/{id}/optim-step` | Apply an optimizer step (`adamw`, `muon`, `sgd`, `param_groups`, `weight_anchor`). |
 | `POST` | `/v1/trainers/{id}/snapshot` | Snapshot current weights into an ephemeral callable `Artifact`. |
-| `POST` | `/v1/trainers/{id}/save-state` | Checkpoint trainer and optimizer state for pause/resume. |
+| `POST` | `/v1/trainers/{id}/save-state` | Checkpoint trainer and optimizer state for `trainers.resume(ckpt)`. |
 | `POST` | `/v1/trainers/{id}/export` | Freeze trained weights and `eval_report` into an immutable `.grad` artifact. |
+| `POST` / `DELETE` | `/v1/secrets` / `/v1/secrets/{name}` | Store or delete write-only named workspace secrets for observability sync and webhook rubrics. |
 
 ## Artifacts and endpoints
 

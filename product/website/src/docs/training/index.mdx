@@ -1,17 +1,18 @@
 # Training overview
 
-<DocsLead>Train routers, classifiers, reward models, and fine-tuned or RL-tuned LLMs from traces or live environments. Start in three lines, and drop down into full PyTorch loops whenever you need to.</DocsLead>
+<DocsLead>Train routers, classifiers, reward models, and fine-tuned or RL-tuned LLMs from traces or live environments. Start with open, composable recipes and swap in custom PyTorch losses or environments whenever you need to.</DocsLead>
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
 
 ```python
 from grad import Grad
+from grad.recipes import RouterRecipe
 
 client = Grad()
 client.trajectories.import_file("./support_traces.jsonl", dataset="support-prod").wait()
 
-run = client.runs.create(dataset="support-prod", name="support-router", recipe="router").wait()
+run = client.runs.create(dataset="support-prod", name="support-router", recipe=RouterRecipe()).wait()
 endpoint = run.deploy(canary=0.10)
 ```
 
@@ -19,13 +20,13 @@ endpoint = run.deploy(canary=0.10)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad } from "@gradiated/grad";
+import { Grad, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
 await grad.trajectories.importFile("./support_traces.jsonl", { dataset: "support-prod" }).wait();
 
 const run = await grad.runs
-  .create({ dataset: "support-prod", name: "support-router", recipe: "router" })
+  .create({ dataset: "support-prod", name: "support-router", recipe: recipes.router() })
   .wait();
 const endpoint = await run.deploy({ canary: 0.1 });
 ```
@@ -40,7 +41,7 @@ client.Trajectories.ImportFile(ctx, "./support_traces.jsonl", grad.ImportOpts{Da
 run, _ := client.Runs.Create(ctx, grad.RunParams{
 	Dataset: "support-prod",
 	Name:    "support-router",
-	Recipe:  "router",
+	Recipe:  grad.RouterRecipe{},
 }).Wait(ctx)
 endpoint, _ := run.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
 ```
@@ -67,7 +68,7 @@ Already sending inference requests through Gradiated with the `x-gradiated-task`
 ```text
 ✓ Dataset support-prod: 4,820 trajectories (3 models, 0 schema errors)
 ✓ Split: 4,097 train / 723 eval (grouped by session_id — 0 leakage)
-✓ Fitted dual_head_kernel_lbfgs on cpu in 3.8s
+✓ Fitted DualHeadKernelLBFGS in 3.8s (~0.6M embed tokens · $0.00 train tokens)
 
   Eval report (vs. claude-opus-4-7 fallback, 95% bootstrap CI):
     Fallback quality : 91.2%
@@ -87,7 +88,7 @@ Already sending inference requests through Gradiated with the `x-gradiated-task`
 
 ## The five primitives
 
-Every workflow in `grad` — from a 4-second CPU router to a multi-turn Docker Compose RL agent — composes the same five primitives. Click any stage to inspect its operations:
+Every workflow in `grad` — from a 4-second router to a multi-turn Docker Compose RL agent — composes the same five primitives. Click any stage to inspect its operations:
 
 <DocsTrainingFlywheel />
 
@@ -183,7 +184,8 @@ Prefer to run on your own infrastructure or locally? See the [self-hosting guide
   <DocsCodeTab label="Python">
 
 ```python
-decision = client.router("support-router").route(messages=messages, tools=tools)
+router = client.endpoints.get("support-router")
+decision = router.route(messages=messages, tools=tools)
 reply = call_your_llm(decision.model, messages, tools)
 
 client.feedback.record(
@@ -197,7 +199,8 @@ client.feedback.record(
   <DocsCodeTab label="TypeScript">
 
 ```ts
-const decision = await grad.router("support-router").route({ messages, tools });
+const router = grad.endpoints.get("support-router");
+const decision = await router.route({ messages, tools });
 const reply = await callYourLLM(decision.model, messages, tools);
 
 await grad.feedback.record({
@@ -211,7 +214,8 @@ await grad.feedback.record({
   <DocsCodeTab label="Go">
 
 ```go
-decision, _ := client.Router("support-router").Route(ctx, grad.RouteInput{
+router := client.Endpoints.Get("support-router")
+decision, _ := router.Route(ctx, grad.RouteInput{
 	Messages: messages,
 	Tools:    tools,
 })
@@ -248,16 +252,16 @@ curl https://api.gradiated.com/v1/endpoints/support-router/infer \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-## Two ways to train
+## Two ways to train — with no cliff between them
 
-Start with a managed recipe and its built-in defaults. Drop down to custom loops only when you need control a recipe does not expose.
+Every built-in `Recipe` is an open Python class composed out of the five primitives and typed specs (`Adapter`, `Loss`, `Optimizer`, `Splitter`, `Rubric`). Start with defaults, override a single component (even passing a custom PyTorch `CustomLoss` or local `Environment`), or drive `Trainer` directly in your own loop.
 
 | Mode | How it works | When to use it |
 | --- | --- | --- |
-| [**Managed recipes**](/docs/training/recipes/) | Pick a recipe ([router](/docs/training/recipes/router/), [classifier](/docs/training/recipes/classifier/), [sft](/docs/training/recipes/sft-dpo/), [dpo](/docs/training/recipes/sft-dpo/), [grpo](/docs/training/recipes/rl-agents/), [distill](/docs/training/recipes/distillation/), [cartridge](/docs/training/recipes/distillation/)). Start with defaults in one call, then pass typed fields or checked-in YAML to tune base model, adapter, loss, optimizer, split, or filters. | You want fast, reproducible training and held-out evals without maintaining a training loop. |
-| [**Custom loops**](/docs/training/custom-loops/) | Drive `Trainer`, `Artifact`, `Environment`, and `Rubric` directly in Python with built-in losses or client-side PyTorch losses. | You need custom losses, stateful Docker Compose environments, reward models, or custom RL curricula. |
+| [**Recipes & pipelines**](/docs/training/recipes/) | Instantiate a typed recipe (`RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`), optionally compose stages into a `Pipeline`, or serialize to YAML. | You want fast, reproducible training, held-out evals, or to swap just one component (loss, splitter, or rubric) without rewriting loop plumbing. |
+| [**Custom loops**](/docs/training/custom-loops/) | Drive `Trainer`, `Artifact`, `Environment`, and `Rubric` directly in Python with built-in or `CustomLoss` PyTorch objectives. | You need custom multi-trainer loops, replay buffers, branched tree search, or multi-agent self-play. |
 
-Any managed run can export its full resolved defaults as YAML (`grad runs inspect <run_id> --yaml > recipe.yaml`), so moving from defaults to version-controlled config takes one command.
+Any run can export its full resolved config as YAML (`grad runs inspect <run_id> --yaml > recipe.yaml`), so moving from Python defaults to version-controlled config takes one command.
 
 <DocsCallout label="Token-based training billing" tone="tip">
 Training is metered **per million tokens processed** (forward/backward and sampling) plus storage for saved `.grad` artifacts and checkpoints — never idle GPU hours. Start at the cheapest layer that proves value: a lightweight router or classifier runs in seconds, then move to SFT, distillation, or RL once you have a measured baseline.
@@ -280,7 +284,7 @@ Read https://gradiated.com/docs/training/recipes/router.md and integrate a Gradi
 2. Push or import historical traces into a Gradiated dataset using GRADIATED_API_KEY from env.
 3. Run `grad train --dataset <name> --name <router> --recipe router --dry-run --json` first and fix any data warnings.
 4. Train the router, verify `eval_report.pareto_summary.quality_drop_ci95` stays inside 2%, and deploy with `grad deploy <router>@latest --canary 0.10`.
-5. Wire `grad.router("<router>").route(...)` and `grad.feedback.record(...)` with idempotency keys.
+5. Wire `client.endpoints.get("<router>").route(...)` and `client.feedback.record(...)` with idempotency keys.
 ```
 
   </DocsCodeTab>
@@ -289,9 +293,9 @@ Read https://gradiated.com/docs/training/recipes/router.md and integrate a Gradi
 ```text
 Read https://gradiated.com/docs/training/recipes/sft-dpo.md and set up a fine-tuning pipeline for our task:
 1. Export verified passing examples into a Gradiated dataset (`input.messages`, `expected_output`, `session_id`, and `scores`).
-2. Create a checked-in `recipe.yaml` for `recipe: sft` with `split.strategy: by_session` and a score filter.
-3. Validate with `grad train -f recipe.yaml --dry-run --json` before running on GPU.
-4. Deploy behind a `syntax_fallback` endpoint and wire `feedback.record()` so human fixes are captured as `expected_output`.
+2. Configure an `SFTRecipe` (or `Pipeline` chaining SFT -> DPO) with `splits.BySession()` and `filters.MinScore(...)`.
+3. Validate with `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json` before starting training.
+4. Deploy with `strategies.SyntaxFallback(...)` and wire `feedback.record()` so human fixes are captured as `expected_output`.
 ```
 
   </DocsCodeTab>
@@ -300,9 +304,9 @@ Read https://gradiated.com/docs/training/recipes/sft-dpo.md and set up a fine-tu
 ```text
 Read https://gradiated.com/docs/training/environments.md and https://gradiated.com/docs/training/recipes/rl-agents.md:
 1. Subclass `grad.Environment` around our existing `docker-compose.yml` and seed script (`setup`, `step` returning `Observation(text=...)`, `evaluate` before `teardown`, and guaranteed `teardown`).
-2. Write a `Rubric` with deterministic stateful assertions against the live container state.
+2. Write a `Rubric` with deterministic `StatefulScorer` assertions against the live container state.
 3. Run a 2-task smoke test against a base `Artifact` (`max_concurrency=2`) to verify `loss_mask` masks tool outputs and containers clean up cleanly.
-4. Wire a GRPO / async CISPO custom loop using `with client.trainers.create(...) as trainer:`.
+4. Wire a GRPO / async CISPO loop using `with client.trainers.create(model=..., adapter=adapters.LoRA(rank=32)) as trainer:`.
 ```
 
   </DocsCodeTab>
@@ -311,8 +315,8 @@ Read https://gradiated.com/docs/training/environments.md and https://gradiated.c
 ```text
 Read https://gradiated.com/docs/training/recipes/distillation.md:
 1. Identify our high-volume frontier prompts or repeated long system prompts.
-2. Write a flat YAML recipe for on-policy `distill` (32B teacher -> 4B/8B student) or `cartridge` (`prefix_kv` over our static context).
-3. Validate with `grad train -f recipe.yaml --dry-run --json`, run training, compare `eval_report` against the baseline, and deploy with `--shadow` first.
+2. Configure `DistillRecipe` (32B teacher -> 4B/8B student) or `CartridgeRecipe` (`adapters.PrefixKV` over our static context).
+3. Validate with `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json`, run training, compare `eval_report` against the baseline, and deploy with `--shadow` first.
 ```
 
   </DocsCodeTab>

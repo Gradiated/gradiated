@@ -4,50 +4,49 @@
 
 Both recipes reduce serving cost and latency without sacrificing task quality, in two different ways:
 
-- **`distill`** transfers behavior from a larger teacher model (e.g. `Qwen/Qwen3-32B`) into a smaller student (`Qwen/Qwen3-4B`) using token-level probability distributions instead of hard text labels.
-- **`cartridge`** compresses a large static corpus (API docs, internal runbooks, repository manuals) into a small trainable KV-cache prefix (`prefix_kv`) attached to a frozen base model, eliminating 20k–100k repeated system-prompt tokens on every request.
+- **`DistillRecipe`** transfers behavior from a larger teacher model (e.g. `Qwen/Qwen3-32B`) into a smaller student (`Qwen/Qwen3-4B`) using token-level probability distributions instead of hard text labels.
+- **`CartridgeRecipe`** compresses a large static corpus (API docs, internal runbooks, repository manuals) into a small trainable KV-cache prefix (`adapters.PrefixKV`) attached to a frozen base model, eliminating 20k–100k repeated system-prompt tokens on every request.
 
-## On-policy distillation (`distill`)
+## On-policy distillation (`DistillRecipe`)
 
-Offline SFT on teacher outputs teaches the student what the teacher says on *teacher* prefixes, which drifts as soon as the student generates its own tokens. On-policy distillation (`mode: "on_policy"`) samples from the **student**, scores those exact sequences with the **teacher's** top-`k` logprobs, and minimizes KL divergence where the student actually goes.
+Offline SFT on teacher outputs teaches the student what the teacher says on *teacher* prefixes, which drifts as soon as the student generates its own tokens. On-policy distillation (`mode="on_policy"`) samples from the **student**, scores those exact sequences with the **teacher's** top-`k` logprobs, and minimizes KL divergence where the student actually goes.
 
 ### What data you need
 
 - **Only prompts:** You do not need gold answers — 1,000–5,000 representative production prompts in `input.messages` ([trajectories](/docs/training/trajectories/)) are enough.
 - **A teacher artifact:** Any base model (`Qwen/Qwen3-32B`) or a larger fine-tuned `.grad` [artifact](/docs/training/endpoints/) you trained earlier.
 
-### Train with the managed recipe
+### Train with `DistillRecipe`
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad
+from grad import Grad, adapters, losses, optim
+from grad.recipes import DistillRecipe
 
 client = Grad()
 
-run = client.runs.create(
-    dataset="support-prompts",
-    name="support-4b-distilled",
-    recipe="distill",
-    base="Qwen/Qwen3-4B",
-    adapter="lora",
-    compute="gpu",
+recipe = DistillRecipe(
+    model="Qwen/Qwen3-4B",
     teacher="Qwen/Qwen3-32B",
+    adapter=adapters.LoRA(rank=32),
     mode="on_policy",
-    loss={"kind": "topk_kl_distill", "top_k": 32},
-    optimizer={"kind": "adamw", "lr": 1e-4},
+    loss=losses.TopKKLDistill(top_k=32),
+    optimizer=optim.AdamW(lr=1e-4),
     merge_adapter=True,
-).wait()
+)
 
-print(run.artifact_id, run.eval_report)
+run = client.runs.create(dataset="support-prompts", name="support-4b-distilled", recipe=recipe).wait()
+
+print(run.artifact.id, run.eval_report)
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad } from "@gradiated/grad";
+import { Grad, adapters, losses, optim, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
 
@@ -55,19 +54,19 @@ const run = await grad.runs
   .create({
     dataset: "support-prompts",
     name: "support-4b-distilled",
-    recipe: "distill",
-    base: "Qwen/Qwen3-4B",
-    adapter: "lora",
-    compute: "gpu",
-    teacher: "Qwen/Qwen3-32B",
-    mode: "on_policy",
-    loss: { kind: "topk_kl_distill", topK: 32 },
-    optimizer: { kind: "adamw", lr: 1e-4 },
-    mergeAdapter: true,
+    recipe: recipes.distill({
+      model: "Qwen/Qwen3-4B",
+      teacher: "Qwen/Qwen3-32B",
+      adapter: adapters.lora({ rank: 32 }),
+      mode: "on_policy",
+      loss: losses.topKKLDistill({ topK: 32 }),
+      optimizer: optim.adamW({ lr: 1e-4 }),
+      mergeAdapter: true,
+    }),
   })
   .wait();
 
-console.log(run.artifactId, run.evalReport);
+console.log(run.artifact.id, run.evalReport);
 ```
 
   </DocsCodeTab>
@@ -78,10 +77,11 @@ console.log(run.artifactId, run.evalReport);
 dataset: support-prompts
 name: support-4b-distilled
 recipe: distill
-base: Qwen/Qwen3-4B
-adapter: lora
-compute: gpu
+model: Qwen/Qwen3-4B
 teacher: Qwen/Qwen3-32B
+adapter:
+  kind: lora
+  rank: 32
 mode: on_policy
 loss:
   kind: topk_kl_distill
@@ -99,48 +99,45 @@ grad train -f distill-4b.yaml --wait
   </DocsCodeTab>
 </DocsCodeTabs>
 
-### Custom distillation divergences (custom loop)
+### Custom distillation divergences (`CustomLoss` + `gather_indices`)
 
-For custom schedules such as Jensen-Shannon divergence, reverse KL, or multi-teacher ensembles, fetch `top_k` opaque `TensorRef`s from the teacher and pass `gather_indices` to `forward_backward_custom` so only `(T_resp, 32)` logprobs cross the wire:
+For custom divergences such as Jensen-Shannon divergence (GKD) or Skew KL (DistiLLM), fetch `top_k` opaque `TensorRef`s from the teacher and pass `gather_indices=t_refs` to `trainer.forward_backward(...)`. Only `(T_resp, 32)` student logprobs cross the wire, and `out.teacher_topk_logprobs` is automatically batch-fetched in a single RPC:
 
 ```python
 import torch
-from grad import Grad, ModelSpec
+from grad import Grad, adapters, losses, optim
+
+class JSDLoss(losses.CustomLoss):
+    outputs = ("topk_logprobs",)
+
+    def __init__(self, beta: float = 0.5):
+        self.beta = beta
+
+    def compute(self, datums, out) -> torch.Tensor:
+        terms = []
+        for slp, tlp in zip(out.topk_logprobs, out.teacher_topk_logprobs):
+            pt, ps = torch.softmax(tlp, dim=-1), torch.softmax(slp, dim=-1)
+            m = self.beta * pt + (1.0 - self.beta) * ps
+            kl_t = (pt * (torch.log(pt + 1e-9) - torch.log(m + 1e-9))).sum(-1)
+            kl_s = (ps * (torch.log(ps + 1e-9) - torch.log(m + 1e-9))).sum(-1)
+            terms.append((self.beta * kl_t + (1.0 - self.beta) * kl_s).mean())
+        return torch.stack(terms).mean()
 
 client = Grad()
 teacher = client.artifacts.get("Qwen/Qwen3-32B")
 
-def jsd_loss(datums, out):
-    losses = []
-    for slp, d in zip(out["topk_logprobs"], datums):
-        tlp = client.tensors.fetch(d.targets.teacher_topk)["logprobs"]
-        pt, ps = torch.softmax(tlp, dim=-1), torch.softmax(slp, dim=-1)
-        m = 0.5 * (pt + ps)
-        jsd = 0.5 * (pt * (torch.log(pt + 1e-9) - torch.log(m + 1e-9))).sum(-1)
-        jsd = jsd + 0.5 * (ps * (torch.log(ps + 1e-9) - torch.log(m + 1e-9))).sum(-1)
-        losses.append(jsd.mean())
-    return torch.stack(losses).mean()
-
-with client.trainers.create(
-    ModelSpec(base="Qwen/Qwen3-4B", adapter="lora", train_mode="lora"),
-    compute="gpu",
-) as trainer:
+with client.trainers.create(model="Qwen/Qwen3-4B", adapter=adapters.LoRA(rank=32)) as trainer:
     rollouts = [g[0] for g in trainer.snapshot().sample(prompt_inputs, n=1, max_new_tokens=256)]
     t_refs = teacher.score_logprobs(
         [r.input["tokens"] for r in rollouts],
-        [r.output["response_tokens"] for r in rollouts],
+        response_tokens=[r.output["response_tokens"] for r in rollouts],
         top_k=32,
-    )["topk_refs"]
+    ).topk_refs
 
     datums = [r.to_datum(teacher_topk=ref) for r, ref in zip(rollouts, t_refs)]
 
-    trainer.forward_backward_custom(
-        datums=datums,
-        outputs=["topk_logprobs"],
-        gather_indices=t_refs,
-        loss_fn=jsd_loss,
-    ).result()
-    trainer.optim_step(lr=1e-4).result()
+    trainer.forward_backward(datums, loss=JSDLoss(beta=0.5), gather_indices=t_refs).result()
+    trainer.optim_step(optim.AdamW(lr=1e-4)).result()
 ```
 
 ### Self-Distillation Fine-Tuning (SDFT)
@@ -150,78 +147,72 @@ Want continual learning from golden demonstrations without hosting a larger teac
 ```python
 teacher = client.artifacts.get("Qwen/Qwen3-8B")  # frozen base model, no extra deployment
 
-with client.trainers.create(
-    ModelSpec(base="Qwen/Qwen3-8B", adapter="lora", train_mode="lora", params={"rank": 64}),
-    compute="gpu",
-) as trainer:
+with client.trainers.create(model="Qwen/Qwen3-8B", adapter=adapters.LoRA(rank=64)) as trainer:
     for batch in demo_batches:
         # Student generates on-policy seeing ONLY the question
         rollouts = [g[0] for g in trainer.snapshot().sample(batch.question_inputs, n=1, max_new_tokens=512)]
 
         # Teacher scores the student's exact tokens while conditioning on (question + golden_demo)
         t_refs = teacher.score_logprobs(
-            prefix_tokens=batch.demo_prefix_tokens,
+            batch.demo_prefix_tokens,
             response_tokens=[r.output["response_tokens"] for r in rollouts],
             top_k=20,
-        )["topk_refs"]
+        ).topk_refs
 
         datums = [r.to_datum(teacher_topk=ref) for r, ref in zip(rollouts, t_refs)]
-        trainer.forward_backward(datums, loss={"kind": "topk_kl_distill"}).result()
-        trainer.optim_step(lr=2e-5).result()
+        trainer.forward_backward(datums, loss=losses.TopKKLDistill()).result()
+        trainer.optim_step(optim.AdamW(lr=2e-5)).result()
 ```
 
 <DocsCallout label="Picking the right distillation pattern" tone="tip">
-Use **`distill`** to shrink a larger teacher (32B → 4B) on unlabeled prompts. Use **SDFT** to learn new skills from demonstrations while preserving prior capabilities. Use **LoRA prompt distillation** (`distill` + `context_ref`) for one merged prompt-free checkpoint, or **`cartridge` (`prefix_kv`)** to swap many per-tenant contexts on one shared frozen base model.
+Use **`DistillRecipe`** to shrink a larger teacher (32B → 4B) on unlabeled prompts. Use **SDFT** to learn new skills from demonstrations while preserving prior capabilities. Use **LoRA prompt distillation** (`DistillRecipe` + `context_ref`) for one merged prompt-free checkpoint, or **`CartridgeRecipe` (`adapters.PrefixKV`)** to swap many per-tenant contexts on one shared frozen base model.
 </DocsCallout>
 
-## Context Cartridges (`cartridge`)
+## Context Cartridges (`CartridgeRecipe`)
 
-If every request prepends the same 30k–100k tokens of documentation, API specs, or compliance rules, a Cartridge compresses that context into a small trainable KV-cache prefix (`adapter: "prefix_kv"`, typically 128–1,024 virtual tokens). The base model weights stay frozen; only the prefix KV tensors are trained so the student without the long prompt matches the teacher *with* the long prompt.
+If every request prepends the same 30k–100k tokens of documentation, API specs, or compliance rules, a Cartridge compresses that context into a small trainable KV-cache prefix (`adapters.PrefixKV`, typically 128–1,024 virtual tokens). The base model weights stay frozen; only the prefix KV tensors are trained so the student without the long prompt matches the teacher *with* the long prompt.
 
 ### Train a Cartridge
 
 ```python
-from grad import Grad
+from grad import Grad, adapters, losses, optim
+from grad.recipes import CartridgeRecipe
 
 client = Grad()
 
-run = client.runs.create(
-    dataset="api-docs-qa-prompts",
-    name="api-docs-cartridge",
-    recipe="cartridge",
-    base="Qwen/Qwen3-8B",
-    adapter={"kind": "prefix_kv", "num_tokens": 256},
-    compute="gpu",
-    context_ref="s3://my-bucket/api-docs-bundle.md",
+recipe = CartridgeRecipe(
+    model="Qwen/Qwen3-8B",
     teacher="Qwen/Qwen3-8B",
-    loss={"kind": "topk_kl_distill", "top_k": 20},
-    optimizer={"kind": "adamw", "lr": 2e-2},
-).wait()
+    context_ref="s3://my-bucket/api-docs-bundle.md",
+    adapter=adapters.PrefixKV(num_tokens=256),
+    loss=losses.TopKKLDistill(top_k=20),
+    optimizer=optim.AdamW(lr=2e-2),
+)
 
-print(run.artifact_id, run.eval_report)
+run = client.runs.create(dataset="api-docs-qa-prompts", name="api-docs-cartridge", recipe=recipe).wait()
+
+print(run.artifact.id, run.eval_report)
 ```
 
 ### Prompt distillation into LoRA weights
 
-If you want to internalize a long system prompt into standard LoRA weights (and optionally merge them with `merge_adapter=True`) instead of maintaining a separate `prefix_kv` Cartridge, run `recipe="distill"` with `context_ref` and `adapter="lora"`:
+If you want to internalize a long system prompt into standard LoRA weights (and optionally merge them with `merge_adapter=True`) instead of maintaining a separate `PrefixKV` Cartridge, pass `context_ref` to `DistillRecipe` with `adapters.LoRA`:
 
 ```python
-run = client.runs.create(
-    dataset="api-docs-qa-prompts",
-    name="api-docs-prompt-distilled",
-    recipe="distill",
-    base="Qwen/Qwen3-8B",
-    adapter="lora",
-    compute="gpu",
+recipe = DistillRecipe(
+    model="Qwen/Qwen3-8B",
     teacher="Qwen/Qwen3-8B",
     context_ref="s3://my-bucket/api-docs-bundle.md",
+    adapter=adapters.LoRA(rank=32),
     mode="on_policy",
-    loss={"kind": "topk_kl_distill", "top_k": 32},
+    loss=losses.TopKKLDistill(top_k=32),
     merge_adapter=True,
-).wait()
+)
+
+run = client.runs.create(dataset="api-docs-qa-prompts", name="api-docs-prompt-distilled", recipe=recipe).wait()
 ```
 
-Choose **`cartridge` (`prefix_kv`)** when you serve many per-tenant or per-repository contexts against one shared frozen base model; choose **prompt distillation (`distill` + `lora`)** when you want one merged checkpoint with zero prefix-KV overhead.
+Choose **`CartridgeRecipe` (`adapters.PrefixKV`)** when you serve many per-tenant or per-repository contexts against one shared frozen base model; choose **prompt distillation (`DistillRecipe` + `adapters.LoRA`)** when you want one merged checkpoint with zero prefix-KV overhead.
 
 ### Deploy and serve
 
@@ -233,8 +224,8 @@ endpoint = run.deploy()
 
 | Parameter | Guidance |
 | --- | --- |
-| `adapter.num_tokens` | `128`–`256` for 10k–30k token manuals; `512`–`1024` for 100k+ token corpora. |
-| `optimizer.lr` | Prefix KV parameters need a much higher learning rate (`1e-2`–`2e-2`) than LoRA adapters. |
+| `adapters.PrefixKV(num_tokens=...)` | `128`–`256` for 10k–30k token manuals; `512`–`1024` for 100k+ token corpora. |
+| `optim.AdamW(lr=...)` | Prefix KV parameters need a much higher learning rate (`1e-2`–`2e-2`) than LoRA adapters. |
 | `eval_report` | Compare KL divergence and task QA accuracy against the full-context teacher to pick the smallest `num_tokens` that holds quality. |
 
 <DocsNext>

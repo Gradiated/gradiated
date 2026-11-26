@@ -2,7 +2,7 @@
 
 <DocsLead>Train a small model to score how good another model's answers are.</DocsLead>
 
-When unit tests or syntax checks aren't enough to grade an answer — or calling a frontier `Judge` on every request is too slow or expensive — train your own verifier [`Artifact`](/docs/training/artifacts/) with **`RewardModelRecipe`**. You can use the same verifier in three places:
+When unit tests or syntax checks aren't enough to grade an answer (or calling a frontier `Judge` on every request is too slow or expensive), train your own verifier [`Artifact`](/docs/training/artifacts/) with **`RewardModelRecipe`**. You can use the same verifier in three places:
 
 - Inside a [`Judge`](/docs/training/rubrics/) to score a [`Dataset`](/docs/training/trajectories/) or grade [`GRPORecipe`](/docs/training/recipes/rl-agents/) runs.
 - Inside a `strategies.Cascade` [`Endpoint`](/docs/training/endpoints/) so easy requests stay on a fast 8B model and low-scoring answers automatically fall back to a frontier model.
@@ -73,7 +73,7 @@ grad train --dataset sql-preferences --name sql-verifier --recipe reward-model -
 
 ### Key parameters
 
-- **`model`:** start with a fast 4B–8B model (`"qwen/qwen3-8b"`) — reward models only score an output in a single forward pass, so an 8B verifier runs in milliseconds.
+- **`model`:** start with a fast 4B–8B model (`"qwen/qwen3-8b"`). Reward models only score an output in a single forward pass, so an 8B verifier runs in milliseconds.
 - **`adapter`:** `adapters.LoRA(rank=32)` works well for 500–5,000 preference pairs.
 - **`optim.AdamW(lr=...)`:** start around `1e-4` for LoRA reward models.
 - **`split`:** `splits.BySession(eval_fraction=0.10)` keeps paired examples and multi-turn conversations together so eval accuracy isn't inflated.
@@ -117,7 +117,7 @@ client.endpoints.create(
 ## When to train a reward model vs. other graders
 
 - **Use a [`Scorer`](/docs/training/rubrics/) (code check)** first whenever correctness can be checked in Python (JSON schema, SQL parser, unit tests). It's instant and free.
-- **Use a frontier [`Judge`](/docs/training/rubrics/)** (`"{{SONNET_MODEL}}"`) while prototyping — no training data needed, just a prompt.
+- **Use a frontier [`Judge`](/docs/training/rubrics/)** (`"{{SONNET_MODEL}}"`) while prototyping, with no training data needed (just a prompt).
 - **Train a reward model (`RewardModelRecipe`)** once you have 500–2,000 graded pairs and want fast, cheap scoring at scale (for RL training or live `Cascade` fallback checks).
 
 ## Want more control?

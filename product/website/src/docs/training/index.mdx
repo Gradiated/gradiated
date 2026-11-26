@@ -61,7 +61,7 @@ grad deploy support-router@latest --canary 0.10
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Already sending inference requests through Gradiated with the `x-gradiated-task` header? Skip `import` — your dataset is populated automatically, so you go straight to training and deploying.
+Already sending inference requests through Gradiated with the `x-gradiated-task` header? Skip `import`: your dataset is populated automatically, so you go straight to training and deploying.
 
 <DocsTerminal
   title="Live training & canary readout"
@@ -70,7 +70,7 @@ Already sending inference requests through Gradiated with the `x-gradiated-task`
 
 ```text
 ✓ Dataset support-prod: 4,820 trajectories (3 models, 0 schema errors)
-✓ Split: 4,097 train / 723 eval (grouped by session_id — 0 leakage)
+✓ Split: 4,097 train / 723 eval (grouped by session_id, 0 leakage)
 ✓ Trained qwen/qwen3-0.6b router in 42s (~1.1M train tokens)
 
   Eval report (vs. {{OPUS_MODEL}} fallback, 95% bootstrap CI):

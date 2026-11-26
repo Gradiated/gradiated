@@ -2,7 +2,7 @@
 
 <DocsLead>Train your own fast decision model and call it directly through the SystemOne / TypeSafe SDK.</DocsLead>
 
-A **decision model** takes a `state` (text, JSON, or a chat transcript) and answers one or more named `questions` in a single request — returning choices, probabilities, and scores instead of free-form text.
+A **decision model** takes a `state` (text, JSON, or a chat transcript) and answers one or more named `questions` in a single request, returning choices, probabilities, and scores instead of free-form text.
 
 Use **`DecisionModelRecipe`** when you already use [`gradiated/linden-1`](/docs/systemone-sdk/) (or Jev) through the TypeSafe SDK and want a faster, more accurate model trained on your own traffic. Once deployed, your trained model drops straight into `TypeSafeClient` by changing only the `model` name.
 
@@ -10,9 +10,9 @@ Use **`DecisionModelRecipe`** when you already use [`gradiated/linden-1`](/docs/
 
 Every decision model supports the three [SystemOne](/docs/systemone-sdk/) question types, and can answer multiple questions in a single call:
 
-- **`Choice`** — pick one category from a fixed list (`billing`, `technical`, `other`). Returns the chosen option, probabilities for every option, and a `confidence` score.
-- **`Noul`** — a yes/no probability from `0` to `1` (`"Does this need immediate attention?"`). Apply your own threshold in code.
-- **`Score`** — an ordered rating across criteria (`["Can wait", "Needs attention today", "Needs immediate attention"]`), so confusing the two extremes costs more than mixing up neighboring levels.
+- **`Choice`:** pick one category from a fixed list (`billing`, `technical`, `other`). Returns the chosen option, probabilities for every option, and a `confidence` score.
+- **`Noul`:** a yes/no probability from `0` to `1` (`"Does this need immediate attention?"`). Apply your own threshold in code.
+- **`Score`:** an ordered rating across criteria (`["Can wait", "Needs attention today", "Needs immediate attention"]`), so confusing the two extremes costs more than mixing up neighboring levels.
 
 ## What data you need
 
@@ -69,8 +69,8 @@ dataset.push([
 
 Choose your base `model`:
 
-- **`"gradiated/linden-1"`** *(default)* — best starting point when you want to specialize `linden-1` on your own questions and state format.
-- **`"qwen/qwen3-0.6b"`** — smallest general open model if you want to train a lightweight decision model from scratch.
+- **`"gradiated/linden-1"`** *(default)*: best starting point when you want to specialize `linden-1` on your own questions and state format.
+- **`"qwen/qwen3-0.6b"`**: smallest general open model if you want to train a lightweight decision model from scratch.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -144,7 +144,7 @@ grad deploy ticket-triage@latest
 
 ### When to use a decision model vs. a router vs. SFT
 
-- **Use a decision model (`DecisionModelRecipe`)** when your app needs structured judgments — picking a category (`Choice`), returning a yes/no probability (`Noul`), or rating on a scale (`Score`) — and calling it through the [SystemOne SDK](/docs/systemone-sdk/).
+- **Use a decision model (`DecisionModelRecipe`)** when your app needs structured judgments (picking a category with `Choice`, returning a yes/no probability with `Noul`, or rating on a scale with `Score`) and calling it through the [SystemOne SDK](/docs/systemone-sdk/).
 - **Use a [Model router](/docs/training/recipes/router/)** when the decision is specifically *which LLM should answer this prompt* to save money within a quality budget.
 - **Use [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/)** when the model needs to generate free-form text, JSON, SQL, or code edits.
 
@@ -160,7 +160,7 @@ Check `run.eval_report` before shipping:
 
 - **Check each option separately, not just overall accuracy:** if 95% of your tickets are `"other"` and 5% are `"billing"`, a broken model that always picks `"other"` still scores 95% overall. Look at the per-option numbers in `run.eval_report` to make sure rare options (like escalations or safety flags) are actually caught rather than missed.
 - **Look at which mistakes happen (`confusion_matrix`):** for ordered `score` questions (`0 / 1 / 2`), mixing up neighbors (`0` vs `1`) is normal. If the model frequently confuses `0` with `2`, add more examples of those edge cases.
-- **Check if confidence scores are honest (`ece`):** this measures how closely the model's confidence matches reality — when it says 80% confident, it should be right around 80% of the time. Aim for under `0.05` so confidence checks in your app code behave predictably.
+- **Check if confidence scores are honest (`ece`):** this measures how closely the model's confidence matches reality (when it says 80% confident, it should be right around 80% of the time). Aim for under `0.05` so confidence checks in your app code behave predictably.
 
 ## Deploy and call from the TypeSafe SDK
 

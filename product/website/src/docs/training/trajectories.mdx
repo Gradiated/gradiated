@@ -280,7 +280,7 @@ Every trajectory needs an `input` (usually `input.messages`). Beyond that, inclu
 
 | If you are training... | Also include |
 | --- | --- |
-| **Model router (`RouterRecipe`)** | `input.messages` — plus optional `metadata.model`, `scores`, and `metrics.cost_usd` (or pass a `Judge` and `models=` to score and compare automatically) |
+| **Model router (`RouterRecipe`)** | `input.messages`, plus optional `metadata.model`, `scores`, and `metrics.cost_usd` (or pass a `Judge` and `models=` to score and compare automatically) |
 | **Fine-tune (`SFTRecipe`) or decision model (`DecisionModelRecipe`)** | `expected_output` (the gold response or target label) |
 | **Preference alignment (`DPORecipe`)** | Paired records sharing a `group_id` with `role="chosen"` and `role="rejected"` |
 | **Multi-turn conversations** | `session_id` so turns from the same conversation stay together across train and eval splits |

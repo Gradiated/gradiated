@@ -18,7 +18,7 @@ Each model's `properties.supported_uses` lists what it can be used for. Only mod
 
 Post-training (managed [recipes](/docs/training/recipes/) and [custom loops](/docs/training/custom-loops/)) follows the same token-metered model as inference:
 
-- **Training & sampling tokens:** billed per million tokens processed across `forward_backward`, `sample`, and `score_logprobs` — never per GPU hour or idle time.
+- **Training & sampling tokens:** billed per million tokens processed across `forward_backward`, `sample`, and `score_logprobs`, never per GPU hour or idle time.
 - **Weight storage:** billed for saved `.grad` artifacts and `save_state` checkpoints stored in your workspace.
 
 Run `grad train --dry-run` or `client.runs.plan()` before starting a managed run to preview `estimated_tokens` and `estimated_cost_usd` at `$0`.

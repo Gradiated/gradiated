@@ -12,13 +12,13 @@ pip install "grad-sdk[torch]"
 
 ## Mental model
 
-- **`Trainer`** owns mutable weights and optimizer state on the server. Open it in a `with client.trainers.create(model=..., adapter=...) as trainer:` block so the remote trainer session closes cleanly on exit or error. Training is billed strictly **per million tokens processed** (forward/backward and sampling) plus storage for saved weights and checkpoints — never idle GPU time.
+- **`Trainer`** owns mutable weights and optimizer state on the server. Open it in a `with client.trainers.create(model=..., adapter=...) as trainer:` block so the remote trainer session closes cleanly on exit or error. Training is billed strictly **per million tokens processed** (forward/backward and sampling) plus storage for saved weights and checkpoints, never idle GPU time.
 - **`trainer.snapshot()`** returns an immutable, ephemeral [**`Artifact`**](/docs/training/artifacts/) pointing at the current weights. Call `sample()`, `score_logprobs()`, `infer_batch()`, or `embed()` on it while training continues.
 - **`trainer.export(name=...)`** writes a durable `.grad` [**`Artifact`**](/docs/training/artifacts/) ready to deploy on an [**`Endpoint`**](/docs/training/endpoints/).
 
 ## Universal 1:1 token alignment
 
-Most training APIs force you to shift `input[:-1]` against `targets[1:]` and pad prompts manually — a single off-by-one mistake silently trains on the wrong tokens. In `grad`, every per-token array on a `Record` or `Trajectory` (`loss_mask`, `sampling_logprobs`, `ref_logprobs`, `advantages`, and `out.logprobs`) has the **exact same length `T` as `tokens`**:
+Most training APIs force you to shift `input[:-1]` against `targets[1:]` and pad prompts manually, so a single off-by-one mistake silently trains on the wrong tokens. In `grad`, every per-token array on a `Record` or `Trajectory` (`loss_mask`, `sampling_logprobs`, `ref_logprobs`, `advantages`, and `out.logprobs`) has the **exact same length `T` as `tokens`**:
 
 <DocsTokenAlignment />
 
@@ -32,7 +32,7 @@ Queue `forward_backward()` and `optim_step()` before calling `.result()` so forw
 
 ### Chat templates and assistant-only masking
 
-Pass `Record(messages=..., tools=...)` directly to `trainer.forward_backward()` — the trainer renders its model's exact chat template and attaches assistant-only `loss_mask` (`0.0` on system, user, and tool turns; `1.0` on assistant turns) automatically on the server:
+Pass `Record(messages=..., tools=...)` directly to `trainer.forward_backward()`. The trainer renders its model's exact chat template and attaches assistant-only `loss_mask` (`0.0` on system, user, and tool turns; `1.0` on assistant turns) automatically on the server:
 
 ```python
 from grad import Record
@@ -88,14 +88,14 @@ with client.trainers.create(
 ```
 
 <DocsCallout label="Built-in RL numerics diagnostics" tone="tip">
-On every `losses.GRPO`, `losses.CISPO`, or `losses.ImportanceSampling` step, `fb.result().metrics` reports `kl_sample_train` and `sample_train_max_diff` — comparing the sampler's exact `sampling_logprobs` against the trainer's recomputed logprobs so you spot off-policy staleness or tokenizer mismatches immediately.
+On every `losses.GRPO`, `losses.CISPO`, or `losses.ImportanceSampling` step, `fb.result().metrics` reports `kl_sample_train` and `sample_train_max_diff`, comparing the sampler's exact `sampling_logprobs` against the trainer's recomputed logprobs so you spot off-policy staleness or tokenizer mismatches immediately.
 </DocsCallout>
 
 Passing an empty `batch` list (when every group in a batch has identical rewards) is a safe no-op.
 
 ## Example 2: Custom objectives via `losses.CustomLoss`
 
-You do not need a separate API method or a server-side enum to test a new objective. Subclass `losses.CustomLoss` (declaring which `outputs` you need and implementing `compute(self, records, out)`), and pass it to the **exact same `trainer.forward_backward(records, loss=...)`** — or inject it into any `Recipe`!
+You do not need a separate API method or a server-side enum to test a new objective. Subclass `losses.CustomLoss` (declaring which `outputs` you need and implementing `compute(self, records, out)`), and pass it to the **exact same `trainer.forward_backward(records, loss=...)`**, or inject it into any `Recipe`.
 
 Under the hood, `Trainer` fetches only the declared differentiable outputs from `/forward`, pre-populates aligned PyTorch views (`out.masks` with `mask[0] == 0.0`, `out.sampling_logprobs`, `out.ref_logprobs`, `out.advantages`, `out.turn_ids`, and auto-batched `out.teacher_topk_logprobs`), runs `compute()` locally, and sends exact gradients back to `/backward-surrogate`. No untrusted user code runs on GPU workers, and gradients match native PyTorch `.backward()` bit-for-bit.
 
@@ -140,7 +140,7 @@ with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32
 
 ### Compact top-k distillation with `gather_indices`
 
-Never pull full 152k-vocabulary logits over the wire for custom distillation. Ask the teacher for `top_k=32` opaque `TensorRef`s and declare `outputs = ("topk_logprobs",)` on your `CustomLoss` — passing `gather_indices=t_refs` returns only the matching `(T_resp, 32)` student logprobs and auto-batch-fetches `out.teacher_topk_logprobs` in a single RPC (for arbitrary intermediate layer `TensorRef`s, use `client.tensors.fetch_batch(refs)`):
+Never pull full 152k-vocabulary logits over the wire for custom distillation. Ask the teacher for `top_k=32` `TensorRef`s and declare `outputs = ("topk_logprobs",)` on your `CustomLoss`. Passing `gather_indices=t_refs` returns only the matching `(T_resp, 32)` student logprobs and auto-batch-fetches `out.teacher_topk_logprobs` in a single RPC (for arbitrary intermediate layer `TensorRef`s, use `client.tensors.fetch_batch(refs)`):
 
 ```python
 teacher = client.models.get("qwen/qwen3-32b")
@@ -225,7 +225,7 @@ async def train_async(batches):
 
 ### Multimodal (VLM and audio) inputs
 
-Attach image or audio `MediaRef`s directly on a `Record` — the trainer handles model-specific vision/audio preprocessing and special token expansion on the server so you never need a client-side image processor:
+Attach image or audio `MediaRef`s directly on a `Record`. The trainer handles model-specific vision/audio preprocessing and special token expansion on the server so you never need a client-side image processor:
 
 ```python
 from grad import MediaRef, Record

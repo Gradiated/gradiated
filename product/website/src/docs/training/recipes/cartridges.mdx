@@ -6,17 +6,17 @@ If every request sends the same 30k–100k tokens of runbooks, product docs, or 
 
 ## How a Cartridge works
 
-A Cartridge shrinks a long static document into a tiny **precomputed memory** (a small KV cache) that plugs into a frozen base model:
+A Cartridge shrinks a long system prompt or large block of background context into a tiny **precomputed memory** (a small KV cache) that plugs into your model:
 
-1. **`context`** is the static document you want to compress (`Context.from_file(...)`, `Context.from_uri("s3://...")`, or `Context.from_text(...)`).
-2. **`dataset`** is 500–2,000 real questions or tasks about that document (`input.messages` — no labeled answers needed).
-3. **`num_tokens`** is how small to compress it (for example, `256` virtual tokens standing in for a 50,000-token manual, stored as `adapters.PrefixKV(num_tokens=256)` while the base model weights stay untouched).
+1. **`context`** is the text you want the model to know without resending it every time: your entire system prompt, instructions and examples, or large chunks of docs and runbooks (`Context.from_text(...)`, `Context.from_file(...)`, or `Context.from_uri("s3://...")`).
+2. **`dataset`** is 500–2,000 real questions or tasks that depend on that context (`input.messages`, with no labeled answers needed).
+3. **`num_tokens`** is how small to compress that context (for example, `256` virtual tokens standing in for a 50,000-token prompt). Generally `256` works fine, and you can experiment with increasing it for very large contexts.
 
-During training, the model reads `context` + each question to see what it *would* answer with the full doc, and trains the Cartridge to give the same answer **without** sending `context` in the prompt. In production, one base model can swap different Cartridges per customer or repo on every request.
+During training, the model reads `context` + each question to see what it *would* answer with the full text, and trains the Cartridge to give the same answer **without** sending `context` in the prompt.
 
 ## Train a Cartridge (`CartridgeRecipe`)
 
-`CartridgeRecipe` defaults `teacher=model` (override `teacher=` only if you want to distill from a larger model) and trains an `adapters.PrefixKV(num_tokens=...)` prefix automatically:
+Pass your model, the `context` you want to compress, and a dataset of example prompts (you can also pass `teacher=` if you want to copy a larger model at the same time):
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -96,7 +96,7 @@ grad train -f cartridge-docs.yaml --wait
 
 ## Deploy and serve
 
-Cartridges export as standard `.grad` artifacts (`prefix_kv.safetensors` + `base_model_ref`) and deploy onto any [`Endpoint`](/docs/training/endpoints/) identically to a LoRA adapter. Requests hit the endpoint with only the user question — no giant system prompt required:
+Cartridges export as standard `.grad` artifacts (`prefix_kv.safetensors` + `base_model_ref`) and deploy onto any [`Endpoint`](/docs/training/endpoints/) identically to a LoRA adapter. Requests hit the endpoint with only the user question, with no giant system prompt required:
 
 ```python
 endpoint = run.deploy()
@@ -104,19 +104,20 @@ endpoint = run.deploy()
 
 ### Key parameters
 
-- **`context`:** the static document(s) you want to compress (`Context.from_file(...)`, `Context.from_uri("s3://...")`, or `Context.from_text(...)`).
-- **`num_tokens`:** how big the compressed Cartridge is — start with `128`–`256` for 10k–30k token manuals, or `512`–`1024` for 100k+ token docs. Compare answer accuracy in `eval_report` against the full-context model to pick the smallest size that holds quality.
-- **`optim.AdamW(lr=...)`:** prefix KV tensors need a much higher learning rate (`1e-2`–`2e-2`) than LoRA adapters.
+- **`context`:** the text you want the model to know without resending it every time (your entire system prompt, instructions and examples, or large chunks of docs and runbooks via `Context.from_text(...)`, `Context.from_file(...)`, or `Context.from_uri("s3://...")`).
+- **`num_tokens`:** how small to compress that context. Generally `256` works fine, and you can experiment with increasing it (for example, `512` or `1024`) for very large contexts. Compare answer accuracy in `eval_report` against the full-context model to check quality.
+- **`teacher`:** optional. Defaults to the same model as `model=`, or pass a larger model if you also want to distill from a stronger teacher.
+- **`optim.AdamW(lr=...)`:** Cartridges need a higher learning rate (`1e-2` to `2e-2`) than LoRA adapters.
 
-## When to use Cartridges vs. prompt distillation vs. RAG
+## When to use Cartridges vs. distillation vs. RAG
 
-- **Use `CartridgeRecipe`** when you serve many per-customer, per-tenant, or per-repo manuals against one shared base model and want to swap them per request without resending the full prompt.
-- **Use prompt distillation (`DistillRecipe` + `context=`)** when you only have **one** global system prompt and want its knowledge baked straight into a fine-tuned model (see below).
-- **Use RAG ([Embeddings](/docs/training/recipes/embeddings/))** when your knowledge base changes every minute or is millions of documents — Cartridges are best for static 10k–100k token docs that change daily or weekly.
+- **Use `CartridgeRecipe`** whenever you have a long system prompt, instructions, or large chunk of reference docs you don't want to resend on every request.
+- **Use [Model distillation](/docs/training/recipes/distillation/) (`DistillRecipe`)** when you want a smaller model to imitate a bigger teacher model overall (you can also pass `context=` to bake a prompt straight into a LoRA fine-tune).
+- **Use RAG ([Embeddings](/docs/training/recipes/embeddings/))** when your knowledge base changes every minute or has millions of documents. Cartridges work best for 10k to 100k tokens of context that stay mostly stable.
 
-### Baking one static prompt into LoRA instead
+### Baking context into a LoRA fine-tune instead
 
-If you only have **one** static prompt and want a single fine-tuned checkpoint with no prefix-KV tensors at serving time, pass `context=` to [`DistillRecipe`](/docs/training/recipes/distillation/):
+If you prefer a regular LoRA fine-tune instead of a Cartridge, pass `context=` to [`DistillRecipe`](/docs/training/recipes/distillation/):
 
 ```python
 from grad import Context, adapters, losses

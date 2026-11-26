@@ -2,18 +2,18 @@
 
 <DocsLead>Custom PyTorch losses and specialized training patterns built on `Trainer` and `losses.CustomLoss`.</DocsLead>
 
-Start with the [Recipe guides](/docs/training/recipes/) whenever a built-in recipe fits your task. Use the patterns on this page — together with [Custom loops](/docs/training/custom-loops/) and the 50 executable [Paper reproductions](/papers/) — when you need custom PyTorch loss math, async off-policy RL, or specialized model heads.
+Start with the [Recipe guides](/docs/training/recipes/) whenever a built-in recipe fits your task. Use the patterns on this page (together with [Custom loops](/docs/training/custom-loops/) and the 50 executable [Paper reproductions](/papers/)) when you need custom PyTorch loss math, async off-policy RL, or specialized model heads.
 
 ## RL algorithm cookbook
 
-All policy-gradient variants share the exact same `Environment.rollout_groups()` and `trainer.forward_backward(batch, loss=...)` loop — only the `AdvantageEstimator` or `Loss` changes:
+All policy-gradient variants share the exact same `Environment.rollout_groups()` and `trainer.forward_backward(batch, loss=...)` loop; only the `AdvantageEstimator` or `Loss` changes:
 
 | Method | When to use it | How to run it |
 | --- | --- | --- |
 | **GRPO** | Default synchronous RL against verifiable rubrics. | `grad.with_advantages(groups, advantage=advantages.GroupStd())` + `losses.GRPO(clip_low=0.2, clip_high=0.2)` |
 | **Dr. GRPO** | Remove std-division and length bias in reasoning RL. | `grad.with_advantages(groups, advantage=advantages.GroupMean())` + constant-denominator `CustomLoss` |
 | **DAPO** | Long reasoning or multi-turn coding where standard clipping collapses entropy. | `losses.GRPO(clip_low=0.2, clip_high=0.28)` + `skip_zero_var=True` + length penalty in `Rubric` |
-| **CISPO** | Async rollout pools where container workers finish 1–4 weight versions behind the trainer. | `losses.CISPO(clip_low=0.2, clip_high=0.28)` — stable under off-policy lag |
+| **CISPO** | Async rollout pools where container workers finish 1–4 weight versions behind the trainer. | `losses.CISPO(clip_low=0.2, clip_high=0.28)` (stable under off-policy lag) |
 | **PPO + Critic** | Dense per-token value baselines with GAE when group sampling is too expensive. | Attach `heads={"v": heads.Linear(dim=1, token_level=True)}` + `PPOGAELoss(CustomLoss)` |
 | **RLOO** | Small group sizes (`group_size=4`) where std-normalization is noisy. | `grad.with_advantages(groups, advantage=advantages.RLOO())` + `losses.ImportanceSampling(kl_beta=0.02)` |
 | **REINFORCE++** | Global batch stability with per-token KL shaping against a frozen reference. | Score `ref.score_logprobs(trajs).aligned_logprobs`, whiten active tokens, attach via `with_targets()` |
@@ -172,7 +172,7 @@ with client.trainers.create(model="qwen/qwen3-4b", adapter=adapters.LoRA(rank=32
 
 ### Self-Distillation Fine-Tuning (SDFT)
 
-In SDFT, the **same base model** acts as teacher when shown the question *plus* a golden demonstration in context, while the student sees only the question — enabling continual learning without catastrophic forgetting:
+In SDFT, the **same base model** acts as teacher when shown the question *plus* a golden demonstration in context, while the student sees only the question. That lets you teach new skills without the model forgetting what it already knows:
 
 ```python
 teacher = client.models.get("qwen/qwen3-8b")  # frozen base model, no extra deployment

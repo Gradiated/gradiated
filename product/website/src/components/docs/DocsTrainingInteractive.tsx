@@ -5,7 +5,7 @@ import type { ReactElement, ReactNode } from "react";
 import { OPUS_MODEL, SONNET_MODEL } from "../../docs/models";
 
 /* ---------------------------------------------------------------------------
-   Engineering callout — one hairline left trace + uppercase mono label.
+   Engineering callout: one hairline left trace + uppercase mono label.
    No filled alert banners; respects the site's visual restraint.
    --------------------------------------------------------------------------- */
 
@@ -25,7 +25,7 @@ export const DocsCallout = ({
 );
 
 /* ---------------------------------------------------------------------------
-   Terminal output preview — shows real CLI stdout alongside the command so
+   Terminal output preview: shows real CLI stdout alongside the command so
    the docs feel tangible before the reader even installs the CLI.
    --------------------------------------------------------------------------- */
 
@@ -528,7 +528,7 @@ export const DocsTokenAlignment = (): ReactElement => {
         </div>
         <p className="gr-doc-inspector-detail">
           {tok.idx === 0
-            ? "Index 0 has no preceding context, so loss_mask[0] and logprobs[0] are always 0.0 — zero off-by-one slicing."
+            ? "Index 0 has no preceding context, so loss_mask[0] and logprobs[0] are always 0.0 (zero off-by-one slicing)."
             : tok.lossMask > 0
               ? `Index ${tok.idx} predicts "${tok.text}" given tokens[0..${tok.idx - 1}]. Gradient applies because loss_mask[${tok.idx}] = 1.0.`
               : `Index ${tok.idx} is a ${tok.role} observation token appended with loss_mask[${tok.idx}] = 0.0, so it stays in KV context without contributing to policy loss.`}
@@ -655,7 +655,7 @@ const ENV_STAGES = [
     step: "01",
     name: "setup(task, rollout_id)",
     where: "Your CPU / Docker host",
-    mask: "—",
+    mask: "None",
     detail:
       "Starts an isolated Docker Compose stack (or leases a warm-pool slot and resets Postgres from a template DB in ~50 ms). Returns a handle holding API/DB URLs.",
   },
@@ -684,7 +684,7 @@ const ENV_STAGES = [
     where: "Guaranteed cleanup",
     mask: "Returns Trajectory",
     detail:
-      "Always executes in a finally block — even on exceptions or timeout_s expiry — so containers, volumes, and warm-pool slots never leak across thousands of rollouts.",
+      "Always executes in a finally block, even on exceptions or timeout_s expiry, so containers, volumes, and warm-pool slots never leak across thousands of rollouts.",
   },
 ];
 

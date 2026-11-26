@@ -57,10 +57,10 @@ When an agent changes live state (writing to Postgres, calling an internal API, 
 
 <DocsEnvLifecycle />
 
-1. `setup(task, rollout_id)` — start or borrow an isolated sandbox and seed its initial state.
-2. `step(handle, action)` — run the agent's tool call against `handle` and return `Observation(text=..., done=...)`.
-3. `evaluate(handle, trajectory)` — score the run **while containers are still up** so `StatefulScorer` checks can query Postgres, Redis, or your API.
-4. `teardown(handle)` — stop containers or reset the database. `rollout_groups()` always runs `teardown` in a `finally:` block, even on a timeout or crash.
+1. **`setup(task, rollout_id)`:** start or borrow an isolated sandbox and seed its initial state.
+2. **`step(handle, action)`:** run the agent's tool call against `handle` and return `Observation(text=..., done=...)`.
+3. **`evaluate(handle, trajectory)`:** score the run **while containers are still up** so `StatefulScorer` checks can query Postgres, Redis, or your API.
+4. **`teardown(handle)`:** stop containers or reset the database. `rollout_groups()` always runs `teardown` in a `finally:` block, even on a timeout or crash.
 
 ```python
 import subprocess
@@ -117,7 +117,7 @@ class AppComposeEnv(Environment[ComposeHandle]):
 ```
 
 <DocsCallout label="Tool outputs stay read-only" tone="tip">
-Just return plain text from `step()` with `Observation(text=...)`. Gradiated feeds it back to the model as context for the next turn while automatically excluding it from training updates — no local tokenizer or manual masking needed.
+Just return plain text from `step()` with `Observation(text=...)`. Gradiated feeds it back to the model as context for the next turn while automatically excluding it from training updates, with no local tokenizer or manual masking needed.
 </DocsCallout>
 
 ### Faster resets with a warm pool

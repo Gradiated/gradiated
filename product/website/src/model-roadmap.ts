@@ -27,7 +27,6 @@ export const roadmapEntries: readonly RoadmapEntry[] = [
   {
     id: "task-routing",
     category: "Model router",
-    name: "Linden-2",
     status: "In progress",
     description:
       "Builds on Linden-1 to choose a model for each request. Send routine work to open models and reserve frontier calls for work that needs them.",

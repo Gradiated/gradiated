@@ -102,32 +102,33 @@ Used inside [custom loops](/docs/training/custom-loops/). For any `model_input.t
 }
 ```
 
-## Typed SDK interfaces (`grad.*`)
+## Typed SDK entities & interfaces (`grad.*`)
 
-Every recipe and trainer composes **frozen `@dataclass` value specs** (pure configuration) with **extensible Protocols / base classes** (swappable algorithms):
+The SDK passes strict domain entities (`Dataset`, `Model`, `Artifact`, `Endpoint`, `Secret`, `Pool`) rather than raw strings, alongside **value specs** (pure configuration) and **extensible base classes** (swappable algorithms):
 
 | Category | Kind | Classes |
 | --- | --- | --- |
+| **Domain Entities** | First-class resource handles & value refs | `Dataset` (`client.datasets.get/create`, `.push()`, `.import_file()`, `.filter()`, `.add_source()`), `Model("...")` / `client.models.get(...)`, `Artifact(Model)` (`run.artifact`, `client.artifacts.get(...)`), `Endpoint` (`client.endpoints.get/create`), `Secret` (`client.secrets.get(...)`), `Pool` (`client.pools.get(...)`) |
 | **Adapters** | `@dataclass(frozen=True)` | `adapters.FrozenHead`, `adapters.LoRA`, `adapters.DoRA`, `adapters.QLoRA`, `adapters.PrefixKV`, `adapters.LoReFT`, `adapters.Eagle3Draft`, `adapters.PartialUnfreeze`, `adapters.Full` |
 | **Heads** | `@dataclass(frozen=True)` | `heads.Linear(dim, token_level=False, trainable=True)` |
 | **Optimizers** | `@dataclass(frozen=True)` | `optim.AdamW`, `optim.Muon`, `optim.SGD`, `optim.ParamGroup`, `optim.WeightAnchor` |
 | **Losses** | Extensible `Loss` interface | Built-in GPU kernels (`losses.CrossEntropy`, `losses.BCEWithLogits`, `losses.OrdinalBCE`, `losses.DPO`, `losses.ImportanceSampling`, `losses.GRPO`, `losses.CISPO`, `losses.ReverseKLDistill`, `losses.TopKKLDistill`, `losses.InfoNCE`, `losses.BCESparsePositions`) or user `losses.CustomLoss` subclasses — all accepted by `trainer.forward_backward(datums, loss=...)` |
-| **Solvers & Splitters** | Extensible interfaces | `solvers.DualHeadKernelLBFGS`, `solvers.MeanDiffSteering`, `splits.BySession`, `splits.ByGroup`, `splits.Random` (or custom subclasses / callables) |
+| **Solvers, Splitters & Filters** | Extensible interfaces | `solvers.DualHeadKernelLBFGS`, `solvers.MeanDiffSteering`, `splits.BySession`, `splits.ByGroup`, `splits.Random`, `filters.MinScore` (applied via `dataset.filter(...)`) |
 | **Rubrics** | Typed scorers | `Rubric`, `Scorer`, `StatefulScorer`, `GroupScorer`, `WebhookRubric` |
 | **Recipes & Pipelines** | Subclassable `Recipe` + Composite `Pipeline` | `RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`, `Pipeline`, `Stage` |
-| **Endpoint Strategies** | `@dataclass(frozen=True)` | `strategies.Direct`, `strategies.SLALagrangian`, `strategies.ConfidenceFallback`, `strategies.SyntaxFallback`, `strategies.Cascade`, `strategies.BestOfN`, `strategies.MajorityVote`, `strategies.BudgetForcing` |
+| **Endpoint Strategies** | Extensible `Strategy` base class | `strategies.Direct`, `strategies.SLALagrangian`, `strategies.ConfidenceFallback`, `strategies.SyntaxFallback`, `strategies.Cascade`, `strategies.BestOfN`, `strategies.MajorityVote`, `strategies.BudgetForcing` (configurable or subclassable) |
 
-- `client.trainers.create(model=..., adapter=..., heads=..., pool=...)` accepts any base model ID or trained `Artifact` uniformly via `model=`.
+- `Artifact` subclasses `Model`, so `model=` on any `Recipe`, `Pipeline`, `Trainer`, or `Strategy` accepts either a pure `Model("Qwen/Qwen3-8B")` ref, a live `client.models.get(...)` handle, or a trained `Artifact`.
 - `client.trainers.resume(ckpt)` restores both weights and optimizer moments from a `trainer.save_state()` checkpoint.
 
-## `Artifact` (`.grad`) & `Endpoint` (`grad.endpoint/1`)
+## `Model`, `Artifact` (`.grad`) & `Endpoint` (`grad.endpoint/1`)
 
-- An **`Artifact`** is always **one** immutable model (`name@version`, base model ID, or ephemeral `trainer.snapshot()`), containing `manifest.json`, runtime weight files, and `eval_report.json`.
-- `Artifact.sample()` returns 1:1 token-aligned `Trajectory` rollouts and accepts `n`, `temperature`, `top_p`, `max_new_tokens`, `stop` *(string or token-ID sequences)*, `seed`, `response_format` (`ResponseFormat.json_schema(...)`), `resume_from` *(optional `prompts=None` when resuming)*, and `append_env_tokens`. Use `artifact.openai_client()` to drive an existing OpenAI-SDK agent against a live snapshot while recording aligned trajectories automatically.
-- `Artifact.score_logprobs()` returns a typed `ScoreResult` (`.response_logprobs`, `.aligned_logprobs`, `.topk_refs`, `.candidate_logprobs`, `.layer_refs`) for full sequences, `Trajectory` objects, or `(prefix_tokens, response_tokens)` pairs.
-- `Artifact.infer()` / `Artifact.infer_batch()` accept `ModelInput` or `Trajectory` lists and return typed `InferResult` objects (`.logits`, `.heads`).
-- `Artifact.tokenize()` renders chat templates server-side (`messages`, `tools`, `media`, optional `return_loss_mask=True`); `Artifact.to_datum(...)` wraps tokenization directly into a `Datum`.
-- An **`Endpoint`** is a mutable production slot over **one or more** artifacts retrieved via `client.endpoints.get(slug)` or returned by `client.endpoints.create(...)` / `run.deploy()`. See [Artifacts and endpoints](/docs/training/endpoints/).
+- A **`Model`** (`Model("Qwen/Qwen3-8B")` pure value ref or `client.models.get("Qwen/Qwen3-8B")` live handle) represents an immutable base or catalog model; an **`Artifact(Model)`** (`name@version` or ephemeral `trainer.snapshot()`) subclasses `Model` and adds `manifest.json`, trained runtime weights, `eval_report.json`, and `.deploy()`.
+- `Model.sample()` / `Artifact.sample()` returns 1:1 token-aligned `Trajectory` rollouts and accepts `n`, `temperature`, `top_p`, `max_new_tokens`, `stop` *(string or token-ID sequences)*, `seed`, `response_format` (`ResponseFormat.json_schema(...)`), `resume_from` *(optional `prompts=None` when resuming)*, and `append_env_tokens`. Use `artifact.openai_client()` to drive an existing OpenAI-SDK agent against a live snapshot while recording aligned trajectories automatically.
+- `Model.score_logprobs()` / `Artifact.score_logprobs()` returns a typed `ScoreResult` (`.response_logprobs`, `.aligned_logprobs`, `.topk_refs`, `.candidate_logprobs`, `.layer_refs`) for full sequences, `Trajectory` objects, or `(prefix_tokens, response_tokens)` pairs.
+- `Model.infer()` / `Artifact.infer_batch()` accept `ModelInput` or `Trajectory` lists and return typed `InferResult` objects (`.logits`, `.heads`).
+- `Model.tokenize()` renders chat templates server-side (`messages`, `tools`, `media`, optional `return_loss_mask=True`); `Model.to_datum(...)` wraps tokenization directly into a `Datum`.
+- An **`Endpoint`** is a mutable production slot over **one or more** artifacts retrieved via `client.endpoints.get(slug)` or returned by `client.endpoints.create(...)` / `artifact.deploy()` / `run.deploy()`. See [Artifacts and endpoints](/docs/training/endpoints/).
 
 <DocsNext>
   <a href="/docs/api-reference/">

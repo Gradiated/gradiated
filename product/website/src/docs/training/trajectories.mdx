@@ -11,7 +11,7 @@ Populate a dataset in any of four ways:
 
 ## Push trajectories from code
 
-If your labeled examples or production logs already live in your own database, push typed `Trajectory` records directly into a dataset with `trajectories.push`.
+A `Dataset` is a first-class handle returned by `client.datasets.create(...)` or `client.datasets.get(...)`. If your labeled examples or production logs already live in your own database, push typed `Trajectory` records directly onto the dataset with `dataset.push(...)`:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -20,18 +20,16 @@ If your labeled examples or production logs already live in your own database, p
 from grad import Grad, Trajectory, TrajectoryInput
 
 client = Grad()
+dataset = client.datasets.create("diff-merge-gold")
 
-client.trajectories.push(
-    dataset="diff-merge-gold",
-    trajectories=[
-        Trajectory(
-            session_id="pr_481",
-            input=TrajectoryInput(messages=[{"role": "user", "content": prompt}]),
-            expected_output={"content": gold_merged_code},
-            scores={"tests_passed": 1.0},
-        ),
-    ],
-)
+dataset.push([
+    Trajectory(
+        session_id="pr_481",
+        input=TrajectoryInput(messages=[{"role": "user", "content": prompt}]),
+        expected_output={"content": gold_merged_code},
+        scores={"tests_passed": 1.0},
+    ),
+])
 ```
 
   </DocsCodeTab>
@@ -41,25 +39,24 @@ client.trajectories.push(
 import { Grad } from "@gradiated/grad";
 
 const grad = new Grad();
+const dataset = await grad.datasets.create("diff-merge-gold");
 
-await grad.trajectories.push({
-  dataset: "diff-merge-gold",
-  trajectories: [
-    {
-      sessionId: "pr_481",
-      input: { messages: [{ role: "user", content: prompt }] },
-      expectedOutput: { content: goldMergedCode },
-      scores: { tests_passed: 1.0 },
-    },
-  ],
-});
+await dataset.push([
+  {
+    sessionId: "pr_481",
+    input: { messages: [{ role: "user", content: prompt }] },
+    expectedOutput: { content: goldMergedCode },
+    scores: { tests_passed: 1.0 },
+  },
+]);
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="Go">
 
 ```go
-_ = client.Trajectories.Push(ctx, "diff-merge-gold", []grad.Trajectory{{
+dataset, _ := client.Datasets.Create(ctx, "diff-merge-gold")
+_ = dataset.Push(ctx, []grad.Trajectory{{
 	SessionID:      "pr_481",
 	Input:          grad.TrajectoryInput{Messages: []grad.Message{{Role: "user", Content: prompt}}},
 	ExpectedOutput: map[string]any{"content": goldMergedCode},
@@ -90,7 +87,7 @@ curl https://api.gradiated.com/v1/trajectories \
 
 ## Import from files
 
-Stream Parquet or JSONL exports into a named dataset. Gradiated auto-detects the source schema (`grad.trajectory/1`, OTLP, Langfuse, Braintrust, etc.) and normalizes messages, tool calls, token counts, costs, and evaluation scores — pass `--format` only when you want to override auto-detection.
+Stream Parquet or JSONL exports into a `Dataset`. Gradiated auto-detects the source schema (`grad.trajectory/1`, OTLP, Langfuse, Braintrust, etc.) and normalizes messages, tool calls, token counts, costs, and evaluation scores — pass `--format` only when you want to override auto-detection.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -99,11 +96,9 @@ Stream Parquet or JSONL exports into a named dataset. Gradiated auto-detects the
 from grad import Grad
 
 client = Grad()
+dataset = client.datasets.create("support-prod")
 
-job = client.trajectories.import_file(
-    "./traces.parquet",
-    dataset="support-prod",
-).wait()
+job = dataset.import_file("./traces.parquet").wait()
 
 print(job.imported_count, job.dropped_count, job.detected_scores)
 ```
@@ -115,12 +110,9 @@ print(job.imported_count, job.dropped_count, job.detected_scores)
 import { Grad } from "@gradiated/grad";
 
 const grad = new Grad();
+const dataset = await grad.datasets.create("support-prod");
 
-const job = await grad.trajectories
-  .importFile("./traces.parquet", {
-    dataset: "support-prod",
-  })
-  .wait();
+const job = await dataset.importFile("./traces.parquet").wait();
 
 console.log(job.importedCount, job.droppedCount, job.detectedScores);
 ```
@@ -129,9 +121,8 @@ console.log(job.importedCount, job.droppedCount, job.detectedScores);
   <DocsCodeTab label="Go">
 
 ```go
-job, _ := client.Trajectories.ImportFile(ctx, "./traces.parquet", grad.ImportOpts{
-	Dataset: "support-prod",
-}).Wait(ctx)
+dataset, _ := client.Datasets.Create(ctx, "support-prod")
+job, _ := dataset.ImportFile(ctx, "./traces.parquet").Wait(ctx)
 fmt.Println(job.ImportedCount, job.DetectedScores)
 ```
 
@@ -160,9 +151,23 @@ curl https://api.gradiated.com/v1/trajectories/imports \
 
 The import result lists how many trajectories were parsed, how many were dropped, and every `scores` key detected in the file so you can check target coverage before training.
 
+## Filter and slice datasets
+
+Filter a `Dataset` with composable `filters.*` specs before passing it to a training run or `Pipeline` stage — `dataset.filter(...)` returns a reusable `Dataset` view so filtering stays separate from your `Recipe` hyperparameters:
+
+```python
+from grad import Grad, filters
+
+client = Grad()
+dataset = client.datasets.get("diff-merge-prod")
+
+passing = dataset.filter(filters.MinScore(tests_passed=1.0))
+print(passing.count())
+```
+
 ## Sync from observability providers
 
-Register a source to pull new traces and feedback scores incrementally on a cron schedule. Store provider keys once as a **named workspace secret** (`grad secrets set langfuse-prod`, Console UI, or Kubernetes Secret in self-hosted mode) so credentials work identically in Cloud and self-hosted deployments and are never written into datasets or `.grad` artifacts.
+Attach a source to a `Dataset` to pull new traces and feedback scores incrementally on a cron schedule. Store provider keys once as a **named workspace `Secret`** (`grad secrets set langfuse-prod`, Console UI, or Kubernetes Secret in self-hosted mode) and pass the `Secret` handle from `client.secrets.get(...)` — never a raw string or plaintext key — so credentials work identically in Cloud and self-hosted deployments and are never written into datasets or `.grad` artifacts.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -171,17 +176,18 @@ Register a source to pull new traces and feedback scores incrementally on a cron
 from grad import Grad, sources
 
 client = Grad()
+dataset = client.datasets.get("support-prod")
+secret = client.secrets.get("langfuse-prod")
 
-source = client.sources.create(
-    dataset="support-prod",
+source = dataset.add_source(
     provider=sources.Langfuse(
         host="https://cloud.langfuse.com",
-        secret="langfuse-prod",
+        secret=secret,
     ),
     schedule="*/15 * * * *",
 )
 
-client.sources.sync(source.id)
+source.sync()
 ```
 
   </DocsCodeTab>
@@ -191,29 +197,32 @@ client.sources.sync(source.id)
 import { Grad, sources } from "@gradiated/grad";
 
 const grad = new Grad();
+const dataset = await grad.datasets.get("support-prod");
+const secret = await grad.secrets.get("langfuse-prod");
 
-const source = await grad.sources.create({
-  dataset: "support-prod",
+const source = await dataset.addSource({
   provider: sources.langfuse({
     host: "https://cloud.langfuse.com",
-    secret: "langfuse-prod",
+    secret,
   }),
   schedule: "*/15 * * * *",
 });
 
-await grad.sources.sync(source.id);
+await source.sync();
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="Go">
 
 ```go
-source, _ := client.Sources.Create(ctx, grad.SourceParams{
-	Dataset:  "support-prod",
-	Provider: grad.LangfuseSource{Host: "https://cloud.langfuse.com", Secret: "langfuse-prod"},
+dataset, _ := client.Datasets.Get(ctx, "support-prod")
+secret, _ := client.Secrets.Get(ctx, "langfuse-prod")
+
+source, _ := dataset.AddSource(ctx, grad.SourceParams{
+	Provider: grad.LangfuseSource{Host: "https://cloud.langfuse.com", Secret: secret},
 	Schedule: "*/15 * * * *",
 })
-_ = client.Sources.Sync(ctx, source.ID)
+_ = source.Sync(ctx)
 ```
 
   </DocsCodeTab>
@@ -240,7 +249,7 @@ grad sources sync src_01J9X
 | Provider | `--format` / `provider` | File imports | Incremental sync |
 | --- | --- | --- | --- |
 | Gradiated Native | `gradiated` | JSONL, `.jsonl.zst` | Automatic / S3 cursor |
-| Native schema | `grad_trajectories` | JSONL, Parquet | `trajectories.push()` |
+| Native schema | `grad_trajectories` | JSONL, Parquet | `dataset.push()` |
 | OpenTelemetry / OpenInference | `otel` | OTLP JSONL, Parquet | OTLP collector |
 | PostHog | `posthog` | Batch Parquet, CSV, JSON | HogQL API |
 | Langfuse | `langfuse` | S3 Parquet, JSONL, CSV | Traces + Scores API |

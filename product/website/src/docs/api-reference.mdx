@@ -24,10 +24,11 @@ Authorization: Bearer grad_...
 
 See the [SystemOne SDK guide](/docs/systemone-sdk/) for linden-1 examples and supported parameters.
 
-## Trajectories and sync
+## Datasets, trajectories, and sync
 
 | Method | Path | Purpose |
 | --- | --- | --- |
+| `POST` / `GET` | `/v1/datasets` / `/v1/datasets/{name}` | Create, list, or inspect `Dataset` resources. |
 | `POST` | `/v1/trajectories` | Push `grad.trajectory/1` records into a dataset. |
 | `POST` / `GET` | `/v1/trajectories/imports` / `/v1/trajectories/imports/{id}` | Stream Parquet or JSONL files from supported trace providers and inspect import status. |
 | `POST` / `GET` / `PATCH` / `DELETE` | `/v1/trajectories/sources` | Configure scheduled incremental pull sync from an observability provider. |

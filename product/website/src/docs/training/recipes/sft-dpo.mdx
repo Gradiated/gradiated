@@ -9,7 +9,7 @@ Use `SFTRecipe` when you have verified examples of the exact output you want (fa
 ### For SFT
 
 - **Minimum volume:** 300â€“1,000 clean `(input, expected_output)` [trajectories](/docs/training/trajectories/) for narrow format or code-edit tasks; 2,000+ for broader tasks.
-- **Data quality beats volume:** Filter out low-scoring or unverified traces with `filters.MinScore(...)` rather than training on raw logs.
+- **Data quality beats volume:** Filter out low-scoring or unverified traces on the `Dataset` (`dataset.filter(filters.MinScore(...))`) rather than training on raw logs.
 
 ```json
 {
@@ -57,22 +57,24 @@ Train a LoRA adapter, filter to verified passing examples, split by `session_id`
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, adapters, filters, optim, splits
+from grad import Grad, Model, adapters, filters, optim, splits
 from grad.recipes import SFTRecipe
 
 client = Grad()
+dataset = client.datasets.get("diff-merge-prod").filter(
+    filters.MinScore(tests_passed=1.0),
+)
 
 sft_recipe = SFTRecipe(
-    model="Qwen/Qwen3-8B",
+    model=Model("Qwen/Qwen3-8B"),
     adapter=adapters.LoRA(rank=32),
     optimizer=optim.AdamW(lr=2e-4),
     split=splits.BySession(eval_fraction=0.10),
-    filter=filters.MinScore(tests_passed=1.0),
     merge_adapter=True,
 )
 
 sft = client.runs.create(
-    dataset="diff-merge-prod",
+    dataset=dataset,
     name="fast-diff-merge",
     recipe=sft_recipe,
 ).wait(
@@ -86,20 +88,22 @@ print(sft.artifact.id)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, adapters, filters, optim, recipes, splits } from "@gradiated/grad";
+import { Grad, Model, adapters, filters, optim, recipes, splits } from "@gradiated/grad";
 
 const grad = new Grad();
+const dataset = (await grad.datasets.get("diff-merge-prod")).filter(
+  filters.minScore({ tests_passed: 1.0 }),
+);
 
 const sft = await grad.runs
   .create({
-    dataset: "diff-merge-prod",
+    dataset,
     name: "fast-diff-merge",
     recipe: recipes.sft({
-      model: "Qwen/Qwen3-8B",
+      model: new Model("Qwen/Qwen3-8B"),
       adapter: adapters.lora({ rank: 32 }),
       optimizer: optim.adamW({ lr: 2e-4 }),
       split: splits.bySession({ evalFraction: 0.1 }),
-      filter: filters.minScore({ tests_passed: 1.0 }),
       mergeAdapter: true,
     }),
   })
@@ -113,7 +117,11 @@ console.log(sft.artifact.id);
 
 ```yaml
 # sft-diff-merge.yaml
-dataset: diff-merge-prod
+dataset:
+  name: diff-merge-prod
+  filter:
+    min_score:
+      tests_passed: 1.0
 name: fast-diff-merge
 recipe: sft
 model: Qwen/Qwen3-8B
@@ -126,9 +134,6 @@ optimizer:
 split:
   strategy: by_session
   eval_fraction: 0.10
-filter:
-  min_score:
-    tests_passed: 1.0
 merge_adapter: true
 ```
 
@@ -150,8 +155,10 @@ Pass `sft.artifact` directly as `model=` to warm-start from the SFT checkpoint â
 from grad import adapters, losses, optim
 from grad.recipes import DPORecipe
 
+prefs = client.datasets.get("diff-merge-preferences")
+
 dpo = client.runs.create(
-    dataset="diff-merge-preferences",
+    dataset=prefs,
     name="fast-diff-merge",
     recipe=DPORecipe(
         model=sft.artifact,
@@ -169,24 +176,26 @@ print(dpo.artifact.id, dpo.eval_report)
   <DocsCodeTab label="Declarative Pipeline">
 
 ```python
-from grad import Pipeline, Stage, adapters, filters, losses, optim, splits
+from grad import Model, Pipeline, Stage, adapters, filters, losses, optim, splits
 from grad.recipes import DPORecipe, SFTRecipe
 
+sft_ds = client.datasets.get("diff-merge-prod").filter(filters.MinScore(tests_passed=1.0))
+prefs_ds = client.datasets.get("diff-merge-preferences")
+
 pipe = Pipeline(
-    model="Qwen/Qwen3-8B",
+    model=Model("Qwen/Qwen3-8B"),
     name="fast-diff-merge",
     stages=[
         Stage(
-            dataset="diff-merge-prod",
+            dataset=sft_ds,
             recipe=SFTRecipe(
                 adapter=adapters.LoRA(rank=32),
                 optimizer=optim.AdamW(lr=2e-4),
                 split=splits.BySession(0.10),
-                filter=filters.MinScore(tests_passed=1.0),
             ),
         ),
         Stage(
-            dataset="diff-merge-preferences",
+            dataset=prefs_ds,
             recipe=DPORecipe(
                 adapter=adapters.LoRA(rank=32),
                 loss=losses.DPO(beta=0.1),
@@ -220,17 +229,18 @@ For structured JSON, SQL, or code-editing [endpoints](/docs/training/endpoints/)
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, strategies
+from grad import Grad, Model, strategies
 
 client = Grad()
+capture = client.datasets.get("diff-merge-prod")
 
 endpoint = client.endpoints.create(
     slug="fast-diff-merge",
     artifact=dpo.artifact,
-    capture_dataset="diff-merge-prod",
+    capture_dataset=capture,
     strategy=strategies.SyntaxFallback(
         validator="typescript_ast",
-        fallback="Qwen/Qwen3-32B",
+        fallback=Model("Qwen/Qwen3-32B"),
     ),
 )
 
@@ -247,17 +257,18 @@ client.feedback.record(
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, strategies } from "@gradiated/grad";
+import { Grad, Model, strategies } from "@gradiated/grad";
 
 const grad = new Grad();
+const capture = await grad.datasets.get("diff-merge-prod");
 
 const endpoint = await grad.endpoints.create({
   slug: "fast-diff-merge",
   artifact: dpo.artifact,
-  captureDataset: "diff-merge-prod",
+  captureDataset: capture,
   strategy: strategies.syntaxFallback({
     validator: "typescript_ast",
-    fallback: "Qwen/Qwen3-32B",
+    fallback: new Model("Qwen/Qwen3-32B"),
   }),
 });
 

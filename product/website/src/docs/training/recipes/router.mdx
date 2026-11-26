@@ -34,20 +34,21 @@ Start with `RouterRecipe` and its default `solvers.DualHeadKernelLBFGS` solver, 
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, calibration, solvers, splits
+from grad import Grad, Model, calibration, solvers, splits
 from grad.recipes import RouterRecipe
 
 client = Grad()
+dataset = client.datasets.get("support-traces")
 
 recipe = RouterRecipe(
-    model="BAAI/bge-small-en-v1.5",
+    model=Model("BAAI/bge-small-en-v1.5"),
     solver=solvers.DualHeadKernelLBFGS(l2=0.1),
     score_key="task_success",
     split=splits.BySession(eval_fraction=0.15),
     calibration=calibration.SLA(max_quality_drop=0.02),
 )
 
-run = client.runs.create(dataset="support-traces", name="support-router", recipe=recipe).wait()
+run = client.runs.create(dataset=dataset, name="support-router", recipe=recipe).wait()
 
 print(run.artifact.id)
 print(run.eval_report["pareto_summary"])
@@ -57,12 +58,13 @@ print(run.eval_report["pareto_summary"])
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, calibration, recipes, solvers, splits } from "@gradiated/grad";
+import { Grad, Model, calibration, recipes, solvers, splits } from "@gradiated/grad";
 
 const grad = new Grad();
+const dataset = await grad.datasets.get("support-traces");
 
 const recipe = recipes.router({
-  model: "BAAI/bge-small-en-v1.5",
+  model: new Model("BAAI/bge-small-en-v1.5"),
   solver: solvers.dualHeadKernelLBFGS({ l2: 0.1 }),
   scoreKey: "task_success",
   split: splits.bySession({ evalFraction: 0.15 }),
@@ -70,7 +72,7 @@ const recipe = recipes.router({
 });
 
 const run = await grad.runs
-  .create({ dataset: "support-traces", name: "support-router", recipe })
+  .create({ dataset, name: "support-router", recipe })
   .wait();
 
 console.log(run.artifact.id, run.evalReport.paretoSummary);
@@ -80,11 +82,13 @@ console.log(run.artifact.id, run.evalReport.paretoSummary);
   <DocsCodeTab label="Go">
 
 ```go
+dataset, _ := client.Datasets.Get(ctx, "support-traces")
+
 run, _ := client.Runs.Create(ctx, grad.RunParams{
-	Dataset: "support-traces",
+	Dataset: dataset,
 	Name:    "support-router",
 	Recipe: grad.RouterRecipe{
-		Model:       "BAAI/bge-small-en-v1.5",
+		Model:       grad.Model("BAAI/bge-small-en-v1.5"),
 		Solver:      grad.DualHeadKernelLBFGS{L2: 0.1},
 		ScoreKey:    "task_success",
 		Split:       grad.BySessionSplit{EvalFraction: 0.15},
@@ -109,7 +113,7 @@ grad deploy support-router@latest --canary 0.10
 
 | Component | Default | What it controls |
 | --- | --- | --- |
-| `model` | `"BAAI/bge-small-en-v1.5"` | Frozen text encoder (`"Qwen/Qwen3-0.6B"` for complex code or long context). |
+| `model` | `Model("BAAI/bge-small-en-v1.5")` | Frozen text encoder (`Model("Qwen/Qwen3-0.6B")` for complex code or long context). |
 | `solver` | `solvers.DualHeadKernelLBFGS()` | `DualHeadKernelLBFGS` (fast, calibrated on small data), `LightGBM` (tabular-heavy inputs), or a custom `Solver` subclass. |
 | `score_key` | Auto-detected | Key inside `trajectory.scores` treated as task success. |
 | `split` | `splits.BySession(0.15)` | Splits whole conversations so turns from one session never leak across train and eval. |
@@ -152,16 +156,17 @@ The trained router artifact already records its candidate models and default pri
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, strategies
+from grad import Grad, Model, strategies
 
 client = Grad()
+capture = client.datasets.get("support-traces")
 
 router = client.endpoints.create(
     slug="support-router",
     artifact=run.artifact,
-    capture_dataset="support-traces",
+    capture_dataset=capture,
     strategy=strategies.SLALagrangian(
-        fallback="claude-opus-4-7",
+        fallback=Model("claude-opus-4-7"),
         max_quality_drop=0.02,
         hard_stop_drop=0.05,
         fallback_probe_rate=0.10,
@@ -182,16 +187,17 @@ client.feedback.record(
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, strategies } from "@gradiated/grad";
+import { Grad, Model, strategies } from "@gradiated/grad";
 
 const grad = new Grad();
+const capture = await grad.datasets.get("support-traces");
 
 const router = await grad.endpoints.create({
   slug: "support-router",
   artifact: run.artifact,
-  captureDataset: "support-traces",
+  captureDataset: capture,
   strategy: strategies.slaLagrangian({
-    fallback: "claude-opus-4-7",
+    fallback: new Model("claude-opus-4-7"),
     maxQualityDrop: 0.02,
     hardStopDrop: 0.05,
     fallbackProbeRate: 0.1,

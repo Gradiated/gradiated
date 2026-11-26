@@ -30,9 +30,9 @@ Every trained `.grad` artifact carries its model type, source dataset, and defau
   <DocsCodeTab label="Python">
 
 ```python
-# Deploy straight from a completed run or any pinned artifact
+# Deploy straight from a completed run or any pinned Artifact
 endpoint = run.deploy(canary=0.10)
-# Or: endpoint = client.endpoints.deploy("support-router@2026-11-26-1", canary=0.10)
+# Or: endpoint = client.artifacts.get("support-router@2026-11-26-1").deploy(canary=0.10)
 ```
 
   </DocsCodeTab>
@@ -40,7 +40,7 @@ endpoint = run.deploy(canary=0.10)
 
 ```ts
 const endpoint = await run.deploy({ canary: 0.1 });
-// Or: const endpoint = await grad.endpoints.deploy("support-router@2026-11-26-1", { canary: 0.1 });
+// Or: const endpoint = await (await grad.artifacts.get("support-router@2026-11-26-1")).deploy({ canary: 0.1 });
 ```
 
   </DocsCodeTab>
@@ -48,7 +48,7 @@ const endpoint = await run.deploy({ canary: 0.1 });
 
 ```go
 endpoint, _ := run.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
-// Or: endpoint, _ := client.Endpoints.Deploy(ctx, "support-router@2026-11-26-1", grad.DeployOpts{Canary: 0.10})
+// Or: art, _ := client.Artifacts.Get(ctx, "support-router@2026-11-26-1"); endpoint, _ := art.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
 ```
 
   </DocsCodeTab>
@@ -68,22 +68,24 @@ grad deploy support-router@2026-11-26-1 --active
   </DocsCodeTab>
 </DocsCodeTabs>
 
-When you want explicit control over fallback models, SLA bounds, or multi-artifact strategies, pass a typed `strategies.*` dataclass to `client.endpoints.create()`:
+When you want explicit control over fallback models, SLA bounds, or multi-artifact orchestration, pass first-class `Artifact`, `Dataset`, `Model`, and extensible `Strategy` objects to `client.endpoints.create()`:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, strategies
+from grad import Grad, Model, strategies
 
 client = Grad()
+artifact = client.artifacts.get("support-router@2026-11-25-1")
+capture = client.datasets.get("support-prod")
 
 router = client.endpoints.create(
     slug="support-router",
-    artifact="support-router@2026-11-25-1",
-    capture_dataset="support-prod",
+    artifact=artifact,
+    capture_dataset=capture,
     strategy=strategies.SLALagrangian(
-        fallback="claude-opus-4-7",
+        fallback=Model("claude-opus-4-7"),
         max_quality_drop=0.02,
     ),
 )
@@ -96,16 +98,18 @@ reply = call_your_llm(decision.model, messages, tools)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, strategies } from "@gradiated/grad";
+import { Grad, Model, strategies } from "@gradiated/grad";
 
 const grad = new Grad();
+const artifact = await grad.artifacts.get("support-router@2026-11-25-1");
+const capture = await grad.datasets.get("support-prod");
 
 const router = await grad.endpoints.create({
   slug: "support-router",
-  artifact: "support-router@2026-11-25-1",
-  captureDataset: "support-prod",
+  artifact,
+  captureDataset: capture,
   strategy: strategies.slaLagrangian({
-    fallback: "claude-opus-4-7",
+    fallback: new Model("claude-opus-4-7"),
     maxQualityDrop: 0.02,
   }),
 });
@@ -118,12 +122,15 @@ const reply = await callYourLLM(decision.model, messages, tools);
   <DocsCodeTab label="Go">
 
 ```go
+artifact, _ := client.Artifacts.Get(ctx, "support-router@2026-11-25-1")
+capture, _ := client.Datasets.Get(ctx, "support-prod")
+
 router, _ := client.Endpoints.Create(ctx, grad.EndpointParams{
 	Slug:           "support-router",
-	Artifact:       "support-router@2026-11-25-1",
-	CaptureDataset: "support-prod",
+	Artifact:       artifact,
+	CaptureDataset: capture,
 	Strategy: grad.SLALagrangianStrategy{
-		Fallback:       "claude-opus-4-7",
+		Fallback:       grad.Model("claude-opus-4-7"),
 		MaxQualityDrop: 0.02,
 	},
 })
@@ -296,31 +303,34 @@ Canary    support-router@2026-11-26-1  (10% traffic ·  2,044 req/hr · p50 5.9m
 
 ## Serving strategies
 
-Endpoints support single-artifact and multi-artifact strategies via typed `strategies.*` dataclasses. Select a strategy to inspect its request path and guardrail:
+Endpoints support single-artifact and multi-artifact orchestration via extensible `Strategy` classes (`strategies.*`) — configure a built-in strategy or subclass `Strategy` to customize selection and fallback hooks. Select a strategy to inspect its request path and guardrail:
 
 <DocsEndpointDiagram />
 
-| Strategy dataclass | Artifacts | Behavior | Guide |
+| Strategy class | Artifacts | Behavior | Guide |
 | --- | --- | --- | --- |
 | `strategies.Direct()` | 1 | Pass-through inference on the active artifact. | [Distillation & Cartridges](/docs/training/recipes/distillation/) |
 | `strategies.SLALagrangian(...)` | 1 | Calibrated lower-confidence-bound routing with fallback probes (`10%`), online primal-dual `λ`, and a hard-stop circuit breaker. | [Model router](/docs/training/recipes/router/) |
 | `strategies.ConfidenceFallback(...)` | 1 | Temperature- or conformal-calibrated softmax threshold with automatic fallback label or model. | [Classifiers & decisions](/docs/training/recipes/classifier/) |
-| `strategies.SyntaxFallback(...)` | 1–2 | Validates JSON schema or AST on generated output and retries on a fallback artifact if invalid. | [Fine-tuning (SFT & DPO)](/docs/training/recipes/sft-dpo/) |
-| `strategies.Cascade(...)` | 2–3 | Runs a fast draft artifact, scores it with a [verifier](/docs/training/recipes/reward-models/), and escalates to a frontier artifact only below threshold. | [RL for agents](/docs/training/recipes/rl-agents/) |
+| `strategies.SyntaxFallback(...)` | 1–2 | Validates JSON schema or AST on generated output and retries on a fallback `Model` or `Artifact` if invalid. | [Fine-tuning (SFT & DPO)](/docs/training/recipes/sft-dpo/) |
+| `strategies.Cascade(...)` | 2–3 | Runs a fast draft artifact, scores it with a [verifier](/docs/training/recipes/reward-models/) `Artifact`, and escalates to a frontier `Model` only below threshold. | [RL for agents](/docs/training/recipes/rl-agents/) |
 | `strategies.BestOfN(...)` / `MajorityVote(...)` | 1–2 | Samples `N` completions and picks the majority answer or highest verifier-scored candidate. | [Reward models & verifiers](/docs/training/recipes/reward-models/) |
 | `strategies.BudgetForcing(...)` | 1 | Enforces thinking-token budgets or continuation prompts at test time. | [Custom loops](/docs/training/custom-loops/) |
 
 ### Multi-artifact example: cascade
 
 ```python
-from grad import strategies
+from grad import Model, strategies
+
+sql_agent = client.artifacts.get("sql-8b@v3")
+verifier = client.artifacts.get("sql-verifier@v2")
 
 client.endpoints.create(
     slug="sql-assistant",
-    artifact="sql-8b@v3",
+    artifact=sql_agent,
     strategy=strategies.Cascade(
-        verifier="sql-verifier@v2",
-        frontier="Qwen/Qwen3-32B",
+        verifier=verifier,
+        frontier=Model("Qwen/Qwen3-32B"),
         threshold=0.75,
     ),
 )

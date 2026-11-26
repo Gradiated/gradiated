@@ -20,7 +20,7 @@ Use `(chosen, rejected)` [trajectories](/docs/training/trajectories/) sharing a 
 import torch
 import torch.nn.functional as F
 import grad
-from grad import Grad, adapters, heads, losses, optim
+from grad import Grad, Model, adapters, heads, losses, optim
 
 class BradleyTerryLoss(losses.CustomLoss):
     outputs = ("heads",)
@@ -35,7 +35,7 @@ class BradleyTerryLoss(losses.CustomLoss):
 client = Grad()
 
 with client.trainers.create(
-    model="Qwen/Qwen3-8B",
+    model=Model("Qwen/Qwen3-8B"),
     adapter=adapters.LoRA(rank=32),
     heads={"rm": heads.Linear(dim=1)},
 ) as trainer:
@@ -61,7 +61,7 @@ scores = [
 Attach a `token_level=True` head and label only the end-of-step token positions using the built-in `losses.BCESparsePositions` loss:
 
 ```python
-from grad import Datum, DatumTargets, Grad, ModelInput, adapters, heads, losses, optim
+from grad import Datum, DatumTargets, Grad, Model, ModelInput, adapters, heads, losses, optim
 
 client = Grad()
 
@@ -76,7 +76,7 @@ datums = [
 ]
 
 with client.trainers.create(
-    model="Qwen/Qwen3-8B",
+    model=Model("Qwen/Qwen3-8B"),
     adapter=adapters.LoRA(rank=32),
     heads={"prm": heads.Linear(dim=1, token_level=True)},
 ) as trainer:
@@ -96,9 +96,11 @@ Deploy the trained verifier with `strategies.MajorityVote` for higher accuracy a
 ```python
 from grad import strategies
 
+judge = client.artifacts.get("policy-judge@2026-11-25-1")
+
 client.endpoints.create(
     slug="policy-judge",
-    artifact="policy-judge@2026-11-25-1",
+    artifact=judge,
     strategy=strategies.MajorityVote(n_samples=5),
 )
 ```
@@ -108,15 +110,19 @@ client.endpoints.create(
 Pass any trained reward model or verifier artifact into a `strategies.Cascade` [endpoint](/docs/training/endpoints/) so easy requests stay on a fast 8B model while low-scoring outputs escalate automatically:
 
 ```python
-from grad import strategies
+from grad import Model, strategies
+
+agent = client.artifacts.get("sql-agent@2026-11-25-2")
+verifier = client.artifacts.get("sql-verifier@2026-11-25-1")
+capture = client.datasets.get("sql-agent-prod")
 
 client.endpoints.create(
     slug="sql-agent",
-    artifact="sql-agent@2026-11-25-2",
-    capture_dataset="sql-agent-prod",
+    artifact=agent,
+    capture_dataset=capture,
     strategy=strategies.Cascade(
-        verifier="sql-verifier@2026-11-25-1",
-        frontier="Qwen/Qwen3-32B",
+        verifier=verifier,
+        frontier=Model("Qwen/Qwen3-32B"),
         threshold=0.75,
     ),
 )

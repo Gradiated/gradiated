@@ -28,13 +28,16 @@ from grad import Grad, WebhookRubric, adapters, losses, optim
 from grad.recipes import GRPORecipe
 
 client = Grad()
+dataset = client.datasets.get("sql-benchmark-tasks")
+sft_art = client.artifacts.get("sql-agent@sft-v1")
+webhook_secret = client.secrets.get("eval-webhook-token")
 
 recipe = GRPORecipe(
-    model="sql-agent@sft-v1",
+    model=sft_art,
     adapter=adapters.LoRA(rank=32),
     rubric=WebhookRubric(
         url="https://eval.internal.example/grade-sql",
-        secret="eval-webhook-token",
+        secret=webhook_secret,
     ),
     group_size=8,
     max_new_tokens=512,
@@ -42,7 +45,7 @@ recipe = GRPORecipe(
     optimizer=optim.AdamW(lr=2e-5),
 )
 
-run = client.runs.create(dataset="sql-benchmark-tasks", name="sql-agent", recipe=recipe).wait(
+run = client.runs.create(dataset=dataset, name="sql-agent", recipe=recipe).wait(
     on_metric=lambda m: print(f"step={m.step} reward={m.eval_metrics.get('mean_reward', 0):.3f}"),
 )
 
@@ -58,9 +61,10 @@ import grad
 from grad import Grad, adapters, losses, optim
 
 client = Grad()
+sft_art = client.artifacts.get("support-agent@sft-v1")
 
 with client.trainers.create(
-    model="support-agent@sft-v1",
+    model=sft_art,
     adapter=adapters.LoRA(rank=32),
 ) as trainer:
     for step, task_batch in enumerate(task_batches):
@@ -253,15 +257,19 @@ Use `stop` (strings or token IDs) to halt generation cleanly at tool-call bounda
 RL-tuned 4B–8B agents often match a frontier model on 80–90% of requests. Pair the trained artifact with a [trained verifier](/docs/training/recipes/reward-models/) in a `strategies.Cascade` [endpoint](/docs/training/endpoints/) so hard tasks still escalate cleanly:
 
 ```python
-from grad import strategies
+from grad import Model, strategies
+
+agent = client.artifacts.get("sql-agent@2026-11-25-2")
+verifier = client.artifacts.get("sql-verifier@v1")
+capture = client.datasets.get("sql-agent-prod")
 
 client.endpoints.create(
     slug="sql-agent",
-    artifact="sql-agent@2026-11-25-2",
-    capture_dataset="sql-agent-prod",
+    artifact=agent,
+    capture_dataset=capture,
     strategy=strategies.Cascade(
-        verifier="sql-verifier@v1",
-        frontier="Qwen/Qwen3-32B",
+        verifier=verifier,
+        frontier=Model("Qwen/Qwen3-32B"),
         threshold=0.75,
     ),
 )

@@ -30,7 +30,7 @@ rubric = Rubric([
 | **`StatefulScorer`** | `(traj: Trajectory, handle: Handle) -> float` | Checks that inspect live Postgres rows, Redis keys, API responses, or files before teardown. |
 | **`GroupScorer`** | `(group: list[Trajectory]) -> list[float]` | Comparing all `G` rollouts for the same prompt side by side (comparative judges, pairwise win rates). |
 
-To reuse scores already attached to imported production traces, pass `Scorer.from_score("task_success", weight=1.0)`. For managed `GRPORecipe` runs graded by an HTTP endpoint, pass `WebhookRubric(url="...", secret="eval-webhook-token")`.
+To reuse scores already attached to imported production traces, pass `Scorer.from_score("task_success", weight=1.0)`. For managed `GRPORecipe` runs graded by an HTTP endpoint, pass `WebhookRubric(url="...", secret=client.secrets.get("eval-webhook-token"))`.
 
 ## Stateful environments (Docker Compose and seed scripts)
 
@@ -134,7 +134,7 @@ Because `snap.openai_client()` uses the server's chat renderer and preserves the
 
 ## Running rollouts
 
-Run `env.rollout_groups()` against any `Artifact`: a base model for offline evals, or `trainer.snapshot()` inside an online RL loop.
+Run `env.rollout_groups()` against any `Model` or `Artifact`: a base model (`client.models.get(...)`) for offline evals, or `trainer.snapshot()` inside an online RL loop.
 
 ```python
 groups = env.rollout_groups(

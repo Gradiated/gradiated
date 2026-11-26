@@ -35,7 +35,7 @@ Queue `forward_backward()` and `optim_step()` before calling `.result()` so forw
 For multi-turn chat or tool-use SFT, let the server render the model's exact chat template and attach `loss_mask` (`0.0` on system, user, and tool turns; `1.0` on assistant turns) in one call via `base.to_datum()`:
 
 ```python
-base = client.artifacts.get("Qwen/Qwen3-8B")
+base = client.models.get("Qwen/Qwen3-8B")
 
 datum = base.to_datum(
     messages=[
@@ -53,12 +53,12 @@ This loop runs rollouts in a [stateful environment](/docs/training/environments/
 
 ```python
 import grad
-from grad import Grad, adapters, losses, optim
+from grad import Grad, Model, adapters, losses, optim
 
 client = Grad()
 
 with client.trainers.create(
-    model="Qwen/Qwen3-8B",
+    model=Model("Qwen/Qwen3-8B"),
     adapter=adapters.LoRA(rank=32),
 ) as trainer:
     for step, task_batch in enumerate(batches):
@@ -123,7 +123,7 @@ class SimPOLoss(losses.CustomLoss):
         return torch.stack(terms).mean()
 
 client = Grad()
-base = client.artifacts.get("Qwen/Qwen3-8B")
+base = client.models.get("Qwen/Qwen3-8B")
 
 preference_pairs = [
     base.to_datum(
@@ -144,7 +144,7 @@ preference_pairs = [
     ),
 ]
 
-with client.trainers.create(model="Qwen/Qwen3-8B", adapter=adapters.LoRA(rank=32)) as trainer:
+with client.trainers.create(model=base, adapter=adapters.LoRA(rank=32)) as trainer:
     fb = trainer.forward_backward(preference_pairs, loss=SimPOLoss(beta=2.0, gamma=0.5))
     trainer.optim_step(optim.AdamW(lr=5e-5)).result()
     print(fb.result().loss)
@@ -155,7 +155,7 @@ with client.trainers.create(model="Qwen/Qwen3-8B", adapter=adapters.LoRA(rank=32
 Never pull full 152k-vocabulary logits over the wire for custom distillation. Ask the teacher for `top_k=32` opaque `TensorRef`s and declare `outputs = ("topk_logprobs",)` on your `CustomLoss` — passing `gather_indices=t_refs` returns only the matching `(T_resp, 32)` student logprobs and auto-batch-fetches `out.teacher_topk_logprobs` in a single RPC (for arbitrary intermediate layer `TensorRef`s, use `client.tensors.fetch_batch(refs)`):
 
 ```python
-teacher = client.artifacts.get("Qwen/Qwen3-32B")
+teacher = client.models.get("Qwen/Qwen3-32B")
 
 t_refs = teacher.score_logprobs(
     prefixes,
@@ -186,7 +186,8 @@ with client.trainers.resume(ckpt) as resumed:
     ...
 
 # Or start a fresh stage from exported weights (fresh optimizer):
-with client.trainers.create(model="code-agent@sft-v1", adapter=adapters.LoRA(rank=32)) as grpo_trainer:
+sft_art = client.artifacts.get("code-agent@sft-v1")
+with client.trainers.create(model=sft_art, adapter=adapters.LoRA(rank=32)) as grpo_trainer:
     ...
 ```
 
@@ -216,11 +217,11 @@ When driving hundreds of concurrent tool-calling or browser rollouts in `asyncio
 ```python
 import asyncio
 import grad
-from grad import AsyncGrad, adapters, losses, optim
+from grad import AsyncGrad, Model, adapters, losses, optim
 
 async def train_async(batches):
     async with AsyncGrad() as client:
-        async with client.trainers.create(model="Qwen/Qwen3-8B", adapter=adapters.LoRA(rank=32)) as trainer:
+        async with client.trainers.create(model=Model("Qwen/Qwen3-8B"), adapter=adapters.LoRA(rank=32)) as trainer:
             for task_batch in batches:
                 snap = await trainer.snapshot()
                 groups = await asyncio.gather(
@@ -261,8 +262,10 @@ vlm_datum = base.to_datum(
 ```python
 from grad import Grad, adapters, heads, optim
 
+stage1 = client.artifacts.get("reward-model@stage1")
+
 with client.trainers.create(
-    model="reward-model@stage1",
+    model=stage1,
     adapter=adapters.FrozenHead(),
     heads={
         "attrs": heads.Linear(dim=5, trainable=False),
@@ -273,13 +276,16 @@ with client.trainers.create(
     trainer.optim_step(
         optim.AdamW(
             param_groups=[optim.ParamGroup(match="extra_heads.gate", lr=5e-3)],
-            weight_anchor=optim.WeightAnchor(artifact="reward-model@stage1", strength=0.01),
+            weight_anchor=optim.WeightAnchor(artifact=stage1, strength=0.01),
         )
     ).result()
 
+coder = client.artifacts.get("coder@v4")
+reasoner = client.artifacts.get("reasoner@v2")
+
 merged = client.artifacts.merge(
     name="assistant-merged",
-    artifacts=["coder@v4", "reasoner@v2"],
+    artifacts=[coder, reasoner],
     weights=[0.6, 0.4],
     method="ties",
     density=0.5,
@@ -288,13 +294,13 @@ merged = client.artifacts.merge(
 
 ## Closed-form and convex fits (`fit_batch`)
 
-Routers, linear probes, and representation steering vectors do not need SGD. Extract cached embeddings once with `Artifact.embed()` and solve in a single `fit_batch()` call with a typed `Solver`:
+Routers, linear probes, and representation steering vectors do not need SGD. Extract cached embeddings once with `Model.embed()` and solve in a single `fit_batch()` call with a typed `Solver`:
 
 ```python
 from grad import Datum, DatumTargets, Grad, ModelInput, adapters, solvers
 
 client = Grad()
-encoder = client.artifacts.get("BAAI/bge-small-en-v1.5")
+encoder = client.models.get("BAAI/bge-small-en-v1.5")
 
 embeddings = encoder.embed(inputs, pool="mean").embeddings
 embedding_datums = [
@@ -306,7 +312,7 @@ embedding_datums = [
     for emb, label, model_id in zip(embeddings, labels, model_ids)
 ]
 
-with client.trainers.create(model="BAAI/bge-small-en-v1.5", adapter=adapters.FrozenHead()) as trainer:
+with client.trainers.create(model=encoder, adapter=adapters.FrozenHead()) as trainer:
     trainer.fit_batch(embedding_datums, solver=solvers.DualHeadKernelLBFGS(l2=0.1))
     router_artifact = trainer.export(name="support-router")
 ```

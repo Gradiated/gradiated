@@ -10,9 +10,10 @@ from grad import Grad
 from grad.recipes import RouterRecipe
 
 client = Grad()
-client.trajectories.import_file("./support_traces.jsonl", dataset="support-prod").wait()
+dataset = client.datasets.create("support-prod")
+dataset.import_file("./support_traces.jsonl").wait()
 
-run = client.runs.create(dataset="support-prod", name="support-router", recipe=RouterRecipe()).wait()
+run = client.runs.create(dataset=dataset, name="support-router", recipe=RouterRecipe()).wait()
 endpoint = run.deploy(canary=0.10)
 ```
 
@@ -23,10 +24,11 @@ endpoint = run.deploy(canary=0.10)
 import { Grad, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
-await grad.trajectories.importFile("./support_traces.jsonl", { dataset: "support-prod" }).wait();
+const dataset = await grad.datasets.create("support-prod");
+await dataset.importFile("./support_traces.jsonl").wait();
 
 const run = await grad.runs
-  .create({ dataset: "support-prod", name: "support-router", recipe: recipes.router() })
+  .create({ dataset, name: "support-router", recipe: recipes.router() })
   .wait();
 const endpoint = await run.deploy({ canary: 0.1 });
 ```
@@ -36,10 +38,11 @@ const endpoint = await run.deploy({ canary: 0.1 });
 
 ```go
 client := grad.NewClient()
-client.Trajectories.ImportFile(ctx, "./support_traces.jsonl", grad.ImportOpts{Dataset: "support-prod"}).Wait(ctx)
+dataset, _ := client.Datasets.Create(ctx, "support-prod")
+dataset.ImportFile(ctx, "./support_traces.jsonl").Wait(ctx)
 
 run, _ := client.Runs.Create(ctx, grad.RunParams{
-	Dataset: "support-prod",
+	Dataset: dataset,
 	Name:    "support-router",
 	Recipe:  grad.RouterRecipe{},
 }).Wait(ctx)
@@ -292,10 +295,10 @@ Read https://gradiated.com/docs/training/recipes/router.md and integrate a Gradi
 
 ```text
 Read https://gradiated.com/docs/training/recipes/sft-dpo.md and set up a fine-tuning pipeline for our task:
-1. Export verified passing examples into a Gradiated dataset (`input.messages`, `expected_output`, `session_id`, and `scores`).
-2. Configure an `SFTRecipe` (or `Pipeline` chaining SFT -> DPO) with `splits.BySession()` and `filters.MinScore(...)`.
+1. Export verified passing examples into a Gradiated `Dataset` (`input.messages`, `expected_output`, `session_id`, and `scores`).
+2. Filter the dataset with `dataset.filter(filters.MinScore(...))` and configure an `SFTRecipe` (or `Pipeline` chaining SFT -> DPO) with `Model(...)` and `splits.BySession()`.
 3. Validate with `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json` before starting training.
-4. Deploy with `strategies.SyntaxFallback(...)` and wire `feedback.record()` so human fixes are captured as `expected_output`.
+4. Deploy with `strategies.SyntaxFallback(fallback=Model(...))` and wire `feedback.record()` so human fixes are captured as `expected_output`.
 ```
 
   </DocsCodeTab>
@@ -305,8 +308,8 @@ Read https://gradiated.com/docs/training/recipes/sft-dpo.md and set up a fine-tu
 Read https://gradiated.com/docs/training/environments.md and https://gradiated.com/docs/training/recipes/rl-agents.md:
 1. Subclass `grad.Environment` around our existing `docker-compose.yml` and seed script (`setup`, `step` returning `Observation(text=...)`, `evaluate` before `teardown`, and guaranteed `teardown`).
 2. Write a `Rubric` with deterministic `StatefulScorer` assertions against the live container state.
-3. Run a 2-task smoke test against a base `Artifact` (`max_concurrency=2`) to verify `loss_mask` masks tool outputs and containers clean up cleanly.
-4. Wire a GRPO / async CISPO loop using `with client.trainers.create(model=..., adapter=adapters.LoRA(rank=32)) as trainer:`.
+3. Run a 2-task smoke test against a base `Model` (`client.models.get(...)`, `max_concurrency=2`) to verify `loss_mask` masks tool outputs and containers clean up cleanly.
+4. Wire a GRPO / async CISPO loop using `with client.trainers.create(model=Model(...), adapter=adapters.LoRA(rank=32)) as trainer:`.
 ```
 
   </DocsCodeTab>

@@ -13,28 +13,26 @@ Use `ClassifierRecipe` whenever your model outputs a discrete label or ordered l
 from grad import Grad, Trajectory, TrajectoryInput
 
 client = Grad()
+dataset = client.datasets.create("coding-effort")
 
-client.trajectories.push(
-    dataset="coding-effort",
-    trajectories=[
-        Trajectory(
-            session_id="issue_104",
-            input=TrajectoryInput(
-                messages=[{"role": "user", "content": "Rename foo to bar in utils.ts"}],
-                features={"file_count": 1, "diff_lines": 4},
-            ),
-            expected_output={"label": "low"},
+dataset.push([
+    Trajectory(
+        session_id="issue_104",
+        input=TrajectoryInput(
+            messages=[{"role": "user", "content": "Rename foo to bar in utils.ts"}],
+            features={"file_count": 1, "diff_lines": 4},
         ),
-        Trajectory(
-            session_id="issue_105",
-            input=TrajectoryInput(
-                messages=[{"role": "user", "content": "Refactor auth middleware for multi-tenant OAuth"}],
-                features={"file_count": 14, "diff_lines": 420},
-            ),
-            expected_output={"label": "high"},
+        expected_output={"label": "low"},
+    ),
+    Trajectory(
+        session_id="issue_105",
+        input=TrajectoryInput(
+            messages=[{"role": "user", "content": "Refactor auth middleware for multi-tenant OAuth"}],
+            features={"file_count": 14, "diff_lines": 420},
         ),
-    ],
-)
+        expected_output={"label": "high"},
+    ),
+])
 ```
 
 ## Train the classifier
@@ -49,20 +47,21 @@ Choose the `losses.*` class that matches your label structure:
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, calibration, losses, splits
+from grad import Grad, Model, calibration, losses, splits
 from grad.recipes import ClassifierRecipe
 
 client = Grad()
+dataset = client.datasets.get("coding-effort")
 
 recipe = ClassifierRecipe(
-    model="BAAI/bge-small-en-v1.5",
+    model=Model("BAAI/bge-small-en-v1.5"),
     labels=["low", "medium", "high"],
     loss=losses.OrdinalBCE(),
     calibration=calibration.Temperature(),
     split=splits.BySession(eval_fraction=0.15),
 )
 
-run = client.runs.create(dataset="coding-effort", name="coding-effort", recipe=recipe).wait()
+run = client.runs.create(dataset=dataset, name="coding-effort", recipe=recipe).wait()
 
 print(run.artifact.id)
 print(run.eval_report)
@@ -72,12 +71,13 @@ print(run.eval_report)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, calibration, losses, recipes, splits } from "@gradiated/grad";
+import { Grad, Model, calibration, losses, recipes, splits } from "@gradiated/grad";
 
 const grad = new Grad();
+const dataset = await grad.datasets.get("coding-effort");
 
 const recipe = recipes.classifier({
-  model: "BAAI/bge-small-en-v1.5",
+  model: new Model("BAAI/bge-small-en-v1.5"),
   labels: ["low", "medium", "high"],
   loss: losses.ordinalBCE(),
   calibration: calibration.temperature(),
@@ -85,7 +85,7 @@ const recipe = recipes.classifier({
 });
 
 const run = await grad.runs
-  .create({ dataset: "coding-effort", name: "coding-effort", recipe })
+  .create({ dataset, name: "coding-effort", recipe })
   .wait();
 
 console.log(run.artifact.id, run.evalReport);
@@ -95,11 +95,13 @@ console.log(run.artifact.id, run.evalReport);
   <DocsCodeTab label="Go">
 
 ```go
+dataset, _ := client.Datasets.Get(ctx, "coding-effort")
+
 run, _ := client.Runs.Create(ctx, grad.RunParams{
-	Dataset: "coding-effort",
+	Dataset: dataset,
 	Name:    "coding-effort",
 	Recipe: grad.ClassifierRecipe{
-		Model:       "BAAI/bge-small-en-v1.5",
+		Model:       grad.Model("BAAI/bge-small-en-v1.5"),
 		Labels:      []string{"low", "medium", "high"},
 		Loss:        grad.OrdinalBCELoss{},
 		Calibration: grad.TemperatureCalibration{},
@@ -146,11 +148,12 @@ Attach the artifact to an [endpoint](/docs/training/endpoints/) using `strategie
 from grad import Grad, strategies
 
 client = Grad()
+capture = client.datasets.get("coding-effort")
 
 endpoint = client.endpoints.create(
     slug="coding-effort",
     artifact=run.artifact,
-    capture_dataset="coding-effort",
+    capture_dataset=capture,
     strategy=strategies.ConfidenceFallback(
         labels=["low", "medium", "high"],
         min_conf=0.75,
@@ -175,11 +178,12 @@ if not tests_passed:
 import { Grad, strategies } from "@gradiated/grad";
 
 const grad = new Grad();
+const capture = await grad.datasets.get("coding-effort");
 
 const endpoint = await grad.endpoints.create({
   slug: "coding-effort",
   artifact: run.artifact,
-  captureDataset: "coding-effort",
+  captureDataset: capture,
   strategy: strategies.confidenceFallback({
     labels: ["low", "medium", "high"],
     minConf: 0.75,
@@ -246,7 +250,7 @@ import torch
 from grad import Grad, losses
 
 client = Grad()
-base = client.artifacts.get("Qwen/Qwen3-8B")
+base = client.models.get("Qwen/Qwen3-8B")
 
 # Score a dynamic per-request choice set in one forward pass
 choice_ids = [base.tokenize(c)[-1] for c in ["A", "B", "C"]]

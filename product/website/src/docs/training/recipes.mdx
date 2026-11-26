@@ -32,13 +32,14 @@ from grad import Grad
 from grad.recipes import RouterRecipe
 
 client = Grad()
+dataset = client.datasets.get("support-prod")
 
 # Optional pre-flight check before starting training ($0)
-plan = client.runs.plan(dataset="support-prod", name="support-router", recipe=RouterRecipe())
+plan = client.runs.plan(dataset=dataset, name="support-router", recipe=RouterRecipe())
 print(plan.resolved_recipe, plan.warnings, plan.estimated_tokens, plan.estimated_cost_usd)
 
 run = client.runs.create(
-    dataset="support-prod",
+    dataset=dataset,
     name="support-router",
     recipe=RouterRecipe(),
 ).wait(
@@ -56,16 +57,17 @@ print(run.eval_report)
 import { Grad, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
+const dataset = await grad.datasets.get("support-prod");
 
 const plan = await grad.runs.plan({
-  dataset: "support-prod",
+  dataset,
   name: "support-router",
   recipe: recipes.router(),
 });
 console.log(plan.resolvedRecipe, plan.warnings, plan.estimatedTokens, plan.estimatedCostUsd);
 
 const run = await grad.runs
-  .create({ dataset: "support-prod", name: "support-router", recipe: recipes.router() })
+  .create({ dataset, name: "support-router", recipe: recipes.router() })
   .wait({
     onMetric: (m) => console.log(`step=${m.step} loss=${m.loss.toFixed(4)}`),
   });
@@ -77,15 +79,17 @@ console.log(run.artifact.id, run.evalReport);
   <DocsCodeTab label="Go">
 
 ```go
+dataset, _ := client.Datasets.Get(ctx, "support-prod")
+
 plan, _ := client.Runs.Plan(ctx, grad.RunParams{
-	Dataset: "support-prod",
+	Dataset: dataset,
 	Name:    "support-router",
 	Recipe:  grad.RouterRecipe{},
 })
 fmt.Println(plan.ResolvedRecipe, plan.Warnings, plan.EstimatedTokens, plan.EstimatedCostUSD)
 
 run, _ := client.Runs.Create(ctx, grad.RunParams{
-	Dataset: "support-prod",
+	Dataset: dataset,
 	Name:    "support-router",
 	Recipe:  grad.RouterRecipe{},
 }).Wait(ctx)
@@ -145,67 +149,71 @@ grad runs inspect run_01J9X --yaml > recipe.yaml
 
 ## Compose and customize recipes
 
-Every component is a typed dataclass (`adapters.*`, `optim.*`, `calibration.*`) or an extensible interface (`losses.*`, `solvers.*`, `splits.*`, `Rubric`). Omit any argument to keep its default — or swap in your own subclass or Python callable when you want custom behavior without rewriting the loop.
+Every component is a typed value spec (`Model`, `adapters.*`, `optim.*`, `calibration.*`), a first-class resource handle (`Dataset`, `Artifact`, `Secret`), or an extensible interface (`losses.*`, `solvers.*`, `splits.*`, `Rubric`). Filter data directly on `Dataset` via `dataset.filter(...)`, and omit any recipe argument to keep its default — or swap in your own subclass when you want custom behavior without rewriting the loop.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Router">
 
 ```python
-from grad import Grad, calibration, solvers, splits
+from grad import Grad, Model, calibration, solvers, splits
 from grad.recipes import RouterRecipe
 
 client = Grad()
+dataset = client.datasets.get("support-prod")
 
 recipe = RouterRecipe(
-    model="BAAI/bge-small-en-v1.5",
+    model=Model("BAAI/bge-small-en-v1.5"),
     solver=solvers.DualHeadKernelLBFGS(l2=0.1),
     score_key="task_success",
     split=splits.BySession(eval_fraction=0.15),
     calibration=calibration.SLA(max_quality_drop=0.02),
 )
 
-run = client.runs.create(dataset="support-prod", name="support-router", recipe=recipe).wait()
+run = client.runs.create(dataset=dataset, name="support-router", recipe=recipe).wait()
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="Classifier">
 
 ```python
-from grad import Grad, calibration, losses, splits
+from grad import Grad, Model, calibration, losses, splits
 from grad.recipes import ClassifierRecipe
 
 client = Grad()
+dataset = client.datasets.get("coding-effort-labels")
 
 recipe = ClassifierRecipe(
-    model="BAAI/bge-small-en-v1.5",
+    model=Model("BAAI/bge-small-en-v1.5"),
     labels=["low", "medium", "high"],
     loss=losses.OrdinalBCE(),
     calibration=calibration.Temperature(),
     split=splits.BySession(eval_fraction=0.10),
 )
 
-run = client.runs.create(dataset="coding-effort-labels", name="coding-effort", recipe=recipe).wait()
+run = client.runs.create(dataset=dataset, name="coding-effort", recipe=recipe).wait()
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="SFT">
 
 ```python
-from grad import Grad, adapters, filters, optim, splits
+from grad import Grad, Model, adapters, filters, optim, splits
 from grad.recipes import SFTRecipe
 
 client = Grad()
+dataset = client.datasets.get("diff-merge-prod").filter(
+    filters.MinScore(tests_passed=1.0),
+)
 
 recipe = SFTRecipe(
-    model="Qwen/Qwen3-8B",
+    model=Model("Qwen/Qwen3-8B"),
     adapter=adapters.LoRA(rank=32),
     optimizer=optim.AdamW(lr=2e-4),
     split=splits.BySession(eval_fraction=0.10),
-    filter=filters.MinScore(tests_passed=1.0),
     merge_adapter=True,
 )
 
-run = client.runs.create(dataset="diff-merge-prod", name="fast-diff-merge", recipe=recipe).wait()
+run = client.runs.create(dataset=dataset, name="fast-diff-merge", recipe=recipe).wait()
 ```
 
   </DocsCodeTab>
@@ -216,15 +224,17 @@ from grad import Grad, adapters, losses, optim
 from grad.recipes import DPORecipe
 
 client = Grad()
+dataset = client.datasets.get("support-preferences")
+sft_art = client.artifacts.get("support-responder@sft-v1")
 
 recipe = DPORecipe(
-    model="support-responder@sft-v1",
+    model=sft_art,
     adapter=adapters.LoRA(rank=32),
     loss=losses.DPO(beta=0.1),
     optimizer=optim.AdamW(lr=5e-5),
 )
 
-run = client.runs.create(dataset="support-preferences", name="support-responder", recipe=recipe).wait()
+run = client.runs.create(dataset=dataset, name="support-responder", recipe=recipe).wait()
 ```
 
   </DocsCodeTab>
@@ -235,62 +245,67 @@ from grad import Grad, WebhookRubric, adapters, losses, optim
 from grad.recipes import GRPORecipe
 
 client = Grad()
+dataset = client.datasets.get("diff-merge-tasks")
+sft_art = client.artifacts.get("fast-diff-merge@sft-v1")
+webhook_secret = client.secrets.get("grader-webhook-token")
 
 recipe = GRPORecipe(
-    model="fast-diff-merge@sft-v1",
+    model=sft_art,
     adapter=adapters.LoRA(rank=32),
     rubric=WebhookRubric(
         url="https://ci.internal.example/grade-diff",
-        secret="grader-webhook-token",
+        secret=webhook_secret,
     ),
     group_size=8,
     loss=losses.GRPO(clip_low=0.2, clip_high=0.28),
     optimizer=optim.AdamW(lr=2e-5),
 )
 
-run = client.runs.create(dataset="diff-merge-tasks", name="fast-diff-merge", recipe=recipe).wait()
+run = client.runs.create(dataset=dataset, name="fast-diff-merge", recipe=recipe).wait()
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="Distill">
 
 ```python
-from grad import Grad, adapters, losses, optim
+from grad import Grad, Model, adapters, losses, optim
 from grad.recipes import DistillRecipe
 
 client = Grad()
+dataset = client.datasets.get("support-prompts")
 
 recipe = DistillRecipe(
-    model="Qwen/Qwen3-4B",
-    teacher="Qwen/Qwen3-32B",
+    model=Model("Qwen/Qwen3-4B"),
+    teacher=Model("Qwen/Qwen3-32B"),
     adapter=adapters.LoRA(rank=32),
     mode="on_policy",
     loss=losses.TopKKLDistill(top_k=32),
     optimizer=optim.AdamW(lr=1e-4),
 )
 
-run = client.runs.create(dataset="support-prompts", name="support-fast-distill", recipe=recipe).wait()
+run = client.runs.create(dataset=dataset, name="support-fast-distill", recipe=recipe).wait()
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="Cartridge">
 
 ```python
-from grad import Grad, adapters, losses, optim
+from grad import Grad, Model, adapters, losses, optim
 from grad.recipes import CartridgeRecipe
 
 client = Grad()
+dataset = client.datasets.get("api-docs-corpus")
 
 recipe = CartridgeRecipe(
-    model="Qwen/Qwen3-8B",
-    teacher="Qwen/Qwen3-8B",
+    model=Model("Qwen/Qwen3-8B"),
+    teacher=Model("Qwen/Qwen3-8B"),
     context_ref="s3://my-bucket/api-docs-bundle.md",
     adapter=adapters.PrefixKV(num_tokens=256),
     loss=losses.TopKKLDistill(top_k=20),
     optimizer=optim.AdamW(lr=2e-2),
 )
 
-run = client.runs.create(dataset="api-docs-corpus", name="docs-cartridge", recipe=recipe).wait()
+run = client.runs.create(dataset=dataset, name="docs-cartridge", recipe=recipe).wait()
 ```
 
   </DocsCodeTab>
@@ -303,7 +318,7 @@ Because every recipe accepts any `Loss` (built-in or `losses.CustomLoss`), any `
 ```python
 # Swap built-in losses.DPO() for your own SimPOLoss subclass inside DPORecipe:
 recipe = DPORecipe(
-    model="Qwen/Qwen3-8B",
+    model=Model("Qwen/Qwen3-8B"),
     adapter=adapters.LoRA(rank=32),
     loss=SimPOLoss(beta=2.0, gamma=0.5),
     optimizer=optim.AdamW(lr=3e-5),
@@ -316,7 +331,11 @@ Every recipe composed of built-in specs serializes 1:1 to a flat YAML file (`rec
 
 ```yaml
 # recipe.yaml
-dataset: diff-merge-prod
+dataset:
+  name: diff-merge-prod
+  filter:
+    min_score:
+      tests_passed: 1.0
 name: fast-diff-merge
 recipe: sft
 model: Qwen/Qwen3-8B
@@ -329,9 +348,6 @@ optimizer:
 split:
   strategy: by_session
   eval_fraction: 0.10
-filter:
-  min_score:
-    tests_passed: 1.0
 merge_adapter: true
 ```
 
@@ -342,30 +358,33 @@ grad train -f recipe.yaml --wait
 
 ## Multi-stage pipelines (`SFT → DPO` / `SFT → GRPO`)
 
-Every `Recipe` transforms an input `Artifact` into a new immutable `Artifact` (`model=` accepts either a base model ID or a trained `Artifact`). You can chain stages imperatively when you want to inspect metrics in between, or compose them into a single server-side `Pipeline`:
+Every `Recipe` transforms an input `Model` (a catalog `Model(...)` ref or a trained `Artifact`) into a new immutable `Artifact`. You can chain stages imperatively when you want to inspect metrics in between, or compose them into a single server-side `Pipeline`:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Declarative Pipeline">
 
 ```python
-from grad import Grad, Pipeline, Stage, WebhookRubric, adapters, optim
+from grad import Grad, Model, Pipeline, Stage, WebhookRubric, adapters, optim
 from grad.recipes import GRPORecipe, SFTRecipe
 
 client = Grad()
+gold_ds = client.datasets.get("diff-merge-gold")
+tasks_ds = client.datasets.get("diff-merge-tasks")
+webhook_secret = client.secrets.get("grader-webhook-token")
 
 pipe = Pipeline(
-    model="Qwen/Qwen3-8B",
+    model=Model("Qwen/Qwen3-8B"),
     name="fast-diff-merge",
     stages=[
         Stage(
-            dataset="diff-merge-gold",
+            dataset=gold_ds,
             recipe=SFTRecipe(adapter=adapters.LoRA(rank=32), optimizer=optim.AdamW(lr=2e-4)),
         ),
         Stage(
-            dataset="diff-merge-tasks",
+            dataset=tasks_ds,
             recipe=GRPORecipe(
                 adapter=adapters.LoRA(rank=32),
-                rubric=WebhookRubric(url="https://ci.internal.example/grade-diff", secret="grader-webhook-token"),
+                rubric=WebhookRubric(url="https://ci.internal.example/grade-diff", secret=webhook_secret),
                 optimizer=optim.AdamW(lr=2e-5),
             ),
         ),
@@ -380,19 +399,23 @@ run = client.runs.create(pipe).wait()  # stage 1 artifact flows directly into st
   <DocsCodeTab label="Imperative (inspect between stages)">
 
 ```python
+gold_ds = client.datasets.get("diff-merge-gold")
+tasks_ds = client.datasets.get("diff-merge-tasks")
+webhook_secret = client.secrets.get("grader-webhook-token")
+
 sft = client.runs.create(
-    dataset="diff-merge-gold",
+    dataset=gold_ds,
     name="fast-diff-merge",
-    recipe=SFTRecipe(model="Qwen/Qwen3-8B", adapter=adapters.LoRA(rank=32)),
+    recipe=SFTRecipe(model=Model("Qwen/Qwen3-8B"), adapter=adapters.LoRA(rank=32)),
 ).wait()
 
 # Inspect sft.eval_report, then pass sft.artifact directly as `model=`
 rl = client.runs.create(
-    dataset="diff-merge-tasks",
+    dataset=tasks_ds,
     name="fast-diff-merge",
     recipe=GRPORecipe(
         model=sft.artifact,
-        rubric=WebhookRubric(url="https://ci.internal.example/grade-diff", secret="grader-webhook-token"),
+        rubric=WebhookRubric(url="https://ci.internal.example/grade-diff", secret=webhook_secret),
     ),
 ).wait()
 ```

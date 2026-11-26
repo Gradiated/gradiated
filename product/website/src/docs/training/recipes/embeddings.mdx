@@ -19,7 +19,7 @@ Train a mean-pooled encoder with `losses.InfoNCE`, then extract normalized embed
 from grad import Datum, Grad, ModelInput, adapters, losses, optim
 
 client = Grad()
-base = client.artifacts.get("BAAI/bge-small-en-v1.5")
+base = client.models.get("BAAI/bge-small-en-v1.5")
 
 datums = [
     Datum(ModelInput(tokens=base.tokenize("how to rotate api keys")), group_id="q0", role="anchor"),
@@ -28,7 +28,7 @@ datums = [
 ]
 
 with client.trainers.create(
-    model="BAAI/bge-small-en-v1.5",
+    model=base,
     adapter=adapters.Full(),
     pool="mean",
 ) as trainer:
@@ -94,7 +94,7 @@ Pair `(query, document)` sequences into a cross-encoder with a relevance head (`
 import torch
 import torch.nn.functional as F
 import grad
-from grad import Grad, adapters, heads, losses, optim
+from grad import Grad, Model, adapters, heads, losses, optim
 
 class ListNetRerankLoss(losses.CustomLoss):
     outputs = ("heads",)
@@ -110,7 +110,7 @@ class ListNetRerankLoss(losses.CustomLoss):
 client = Grad()
 
 with client.trainers.create(
-    model="BAAI/bge-reranker-base",
+    model=Model("BAAI/bge-reranker-base"),
     adapter=adapters.Full(),
     heads={"rel": heads.Linear(dim=1)},
 ) as trainer:

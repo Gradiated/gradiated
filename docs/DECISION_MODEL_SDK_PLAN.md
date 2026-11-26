@@ -26,8 +26,8 @@ Every concept in `grad` maps to one clear, non-overlapping noun:
 | :--- | :--- | :--- | :--- | :--- |
 | **1** | **`Trajectory`** *(in a **`Dataset`**)* | Data | Universal model-agnostic data unit covering production traces (PostHog/Langfuse/Braintrust/Gradiated), supervised `(input → expected_output)`, multimodal `media[]`, and multi-turn RL rollouts (w/ atomic `.append_env_tokens()` and `.to_datum()`). | `import`, `sync`, `split`, `append_env_tokens()`, `to_datum()` *(custom loops)* |
 | **2** | **`Environment` + `Rubric`** | Task & Scoring | Optional stateful harness (Docker Compose stacks, seed scripts, MCP tools, sandboxes, counterfactual replay) with explicit `setup / step / evaluate(handle, traj) / teardown` lifecycle + composable scoring (pointwise `RewardFunc`, groupwise comparative rubrics, `ExistingScoreReward`). | `setup()`, `step()`, `evaluate()`, `teardown()`, `rollout_groups()` |
-| **3** | **`Trainer`** *(composed by **`Recipe`**)* | Weight Mutation | Remote CPU/GPU engine that learns weights — either via managed `Recipe` runs (`router`, `classifier`, `sft`, `dpo`, `grpo`, `distill`, `cartridge`) or interactive custom training loops (`fit_batch`, `forward_backward`, `forward_backward_custom` over `forward`+`backward_surrogate`, `optim_step`, `save_state`, `snapshot()`, `export()`). | `runs.create()`, `fit_batch()`, `forward_backward()`, `forward_backward_custom()`, `optim_step()`, `snapshot()`, `export()` |
-| **4** | **`Artifact`** *(a `.grad` bundle or base model)* | **ALWAYS 1 immutable model** | One concrete, versioned, callable model (`support-router@2026-11-25-1`, `Qwen/Qwen3-32B`, or ephemeral `trainer.snapshot()`). Owns weights + tokenizer + runtime hooks (steering/grammar) + offline `EvalReport` + lineage. | `infer()`, `infer_batch()`, `sample()`, `score_logprobs()`, `embed()`, `tokenize()`, `merge()` |
+| **3** | **`Trainer`** *(composed by **`Recipe`** / **`Pipeline`**)* | Weight Mutation | Remote engine that learns weights (metered per million tokens processed + weight storage) — either via composable `Recipe` / `Pipeline` runs (`RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`) or interactive custom training loops (`fit_batch`, `forward_backward` accepting both built-in `Loss` and `CustomLoss` subclasses over `forward`+`backward_surrogate`, `optim_step`, `save_state`, `trainers.resume`, `snapshot()`, `export()`). | `runs.create()`, `fit_batch()`, `forward_backward()`, `optim_step()`, `snapshot()`, `export()` |
+| **4** | **`Artifact(Model)`** *(a `.grad` bundle)* | **ALWAYS 1 immutable model** | Subclasses `Model` (`Model("Qwen/Qwen3-32B")` pure ref or `client.models.get(...)` live handle). One concrete, versioned, callable model (`support-router@2026-11-25-1` or ephemeral `trainer.snapshot()`). Owns weights + tokenizer + runtime hooks (steering/grammar) + offline `EvalReport` + lineage + `.deploy()`. | `infer()`, `infer_batch()`, `sample()`, `score_logprobs()`, `embed()`, `tokenize()`, `deploy()`, `merge()` |
 | **5** | **`Endpoint`** *(live production slot)* | **1 OR MANY `Artifact`s** | Named production serving alias (`POST /v1/endpoints/{name}/infer` + `POST /v1/feedback`). Owns traffic splits (`active`, `canary`, `shadow`), online safety/calibration (`SLAPolicy`, confidence/syntax fallbacks), multi-model / test-time strategies (`Cascade`, `BestOfN`, `MajorityVote`, `BudgetForcing`), and automatic `Trajectory` logging. | `infer()`, `feedback()`, `promote()`, `canary()`, `shadow()`, `status()` |
 
 > **30-second mental model:** Import or sync **`Trajectories`** into a **`Dataset`**. Define a **`Rubric`** (and optional stateful **`Environment`**). Run a **`Recipe`** on a **`Trainer`** to produce an immutable **`Artifact`**. Shadow, canary, or promote 1 or more **`Artifact`s** onto a live **`Endpoint`**, call `endpoint.infer()` + `endpoint.feedback()`, and live **`Trajectories`** flow right back in for the next train.
@@ -254,23 +254,23 @@ Unifies base models (`Qwen/Qwen3-32B`), pinned versions (`support-router@v12`), 
 #### Managed Training Runs
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| `POST` | `/v1/runs` | Enqueue a managed recipe run (`202 Accepted` + `run_id`; explicit `recipe`: `router \| classifier \| sft \| dpo \| grpo \| distill \| cartridge` with smart defaults and flat typed top-level config: `base`, `adapter`, `init_from`, `loss`, `optimizer`, `split`, `filter`, `calibration`, `teacher`, `rubric`). SDK exposes `.wait(on_metric=...)` and `.deploy(canary=...)`; CLI exposes `--dry-run`, `--json`, `grad runs inspect <id> --yaml`, and `grad train -f recipe.yaml`. |
-| `POST` | `/v1/runs/plan` | Zero-cost pre-flight dry run (`--dry-run` / `client.runs.plan(...)`): validates dataset coverage, surfaces data warnings, returns resolved `recipe_spec` + estimated compute/cost before launching GPU jobs |
-| `GET` | `/v1/runs/{run_id}` | Status, progress, `compute` (`cpu`/`gpu`), resolved `recipe_spec`, `eval_report`, produced `artifact_id` |
+| `POST` | `/v1/runs` | Enqueue a managed `Recipe` or multi-stage `Pipeline` run (`202 Accepted` + `run_id`). SDK accepts strict entities (`Dataset`, `Model`/`Artifact`, `Secret`) and typed composable classes (`SFTRecipe`, `adapters.LoRA`, `losses.*`, `optim.AdamW`, `splits.BySession`, `calibration.*`, `Rubric`); dataset filtering lives on `Dataset.filter(...)`. SDK exposes `.wait(on_metric=...)` and `.deploy(canary=...)`; CLI exposes `--dry-run`, `--json`, `grad runs inspect <id> --yaml`, and `grad train -f recipe.yaml`. |
+| `POST` | `/v1/runs/plan` | Zero-cost pre-flight dry run (`--dry-run` / `client.runs.plan(...)`): validates dataset coverage, surfaces data warnings, returns resolved `recipe_spec` + estimated training tokens and cost before launching jobs |
+| `GET` | `/v1/runs/{run_id}` | Status, progress, resolved `recipe_spec`, `eval_report`, produced `artifact_id` |
 | `GET` | `/v1/runs/{run_id}/metrics` | Structured step-by-step telemetry stream (`step`, `loss`, `grad_norm`, `lr`, `eval_metrics`, `tokens_per_sec`) — SSE or paginated JSON |
 | `POST` | `/v1/runs/{run_id}/cancel` | Cancel active training job |
 
 #### Interactive Compute Trainers (Custom Loops)
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
-| `POST` | `/v1/trainers` | Allocate a `Trainer` pinning `model_spec` (`backbone`, open plugin strings for `adapter`/`train_mode`/`pool`: `frozen_head`, `lora`, `prefix_kv`, `loreft`, `qat_int4`, `partial_unfreeze`, `full`, `eagle3_draft`, `heads` with per-head `{ dim, token_level?, trainable? }`, `init_from`, `restore_optimizer?`) + `compute` (`cpu`/`gpu`) |
-| `POST` | `/v1/trainers/{tid}/fit-batch` | Closed-form / convex / calibration fit over embeddings, `TensorRef`s, or raw token `Datum`s (`dual_head_kernel_lbfgs`, `ridge`, `lightgbm`, `mean_diff_steering`, `awq`, `wanda`, `gptq`) |
-| `POST` | `/v1/trainers/{tid}/forward-backward` | Iterative step: grouped/paired variable-length `Datum[]` (graceful no-op on empty 0-variance batch) + built-in `loss` (`cross_entropy`, `bce_logits`, `l2_logistic`, `dpo`, `importance_sampling`, `grpo`, `cispo`, `reverse_kl_distill`, `topk_kl_distill`, `infonce`, `bce_sparse_positions`) → pipelined async future (`op_id`); RL losses automatically report `kl_sample_train` and `sample_train_max_diff` in step metrics |
+| `POST` | `/v1/trainers` | Allocate a `Trainer` pinning `model` (`Model` ref or trained `Artifact`), `adapter` (`adapters.FrozenHead`, `adapters.LoRA`, `adapters.DoRA`, `adapters.PrefixKV`, `adapters.LoReFT`, `adapters.PartialUnfreeze`, `adapters.Full`, `adapters.Eagle3Draft`), optional `heads` (`heads.Linear(dim, token_level, trainable)`), optional `pool`, or resume state via `client.trainers.resume(ckpt)` |
+| `POST` | `/v1/trainers/{tid}/fit-batch` | Closed-form / convex / calibration fit over embeddings, `TensorRef`s, or raw token `Datum`s (`solvers.DualHeadKernelLBFGS`, `solvers.MeanDiffSteering`, etc.) |
+| `POST` | `/v1/trainers/{tid}/forward-backward` | Iterative step: grouped/paired variable-length `Datum[]` (graceful no-op on empty 0-variance batch) + any `Loss` (built-in GPU kernels or client-side `losses.CustomLoss` subclass routed via `/forward` + `/backward-surrogate`) → pipelined async future (`op_id`); RL losses automatically report `kl_sample_train` and `sample_train_max_diff` in step metrics |
 | `POST` | `/v1/trainers/{tid}/forward` | Forward pass with explicit `outputs[]` (`logprobs \| topk_logprobs \| logits \| embeddings \| heads \| layers`), optional `gather_indices` (`TensorRef`s for top-K distillation OR inline candidate token IDs for dynamic-choice decision models — never pulls 152K-vocab logits!), `return_layers`, and `retain_graph: bool` (`false` for eval/calibration to avoid GPU graph leaks) |
-| `POST` | `/v1/trainers/{tid}/backward-surrogate` | Bit-exact surrogate backward accepting client-computed `dLoss/dOut` (`dLogprobs`, `dTopkLogprobs`, `dLogits`, `dEmb`, `dHeads`, or `dHidden[layer]`) — zero untrusted code on GPU workers. Wrapped by SDK façade helper `trainer.forward_backward_custom(datums, outputs, loss_fn, ...)` so callers never hand-write leaf-tensor detachment or gradient packing. |
-| `POST` | `/v1/trainers/{tid}/optim-step` | Apply optimizer step (`adamw`, `muon`, `sgd`, dynamic per-step `lr` & `param_groups`, grad clip, optional `weight_anchor: { artifact_id, strength, fisher_ref? }` for EWC/L2-SP continual learning) |
+| `POST` | `/v1/trainers/{tid}/backward-surrogate` | Bit-exact surrogate backward accepting client-computed `dLoss/dOut` (`dLogprobs`, `dTopkLogprobs`, `dLogits`, `dEmb`, `dHeads`, or `dHidden[layer]`) — zero untrusted code on GPU workers. Dispatched automatically when passing a `losses.CustomLoss` subclass to `trainer.forward_backward(datums, loss=...)`. |
+| `POST` | `/v1/trainers/{tid}/optim-step` | Apply optimizer step (`optim.AdamW`, `optim.Muon`, `optim.SGD`, dynamic per-step `lr` & `optim.ParamGroup`, grad clip, optional `optim.WeightAnchor(artifact=..., strength=...)` for EWC/L2-SP continual learning) |
 | `POST` | `/v1/trainers/{tid}/snapshot` | Hot-snapshot current weights into an ephemeral callable `Artifact` handle (`artifact_id`, `weight_version`) for sync/async RL rollouts & live evals |
-| `POST` | `/v1/trainers/{tid}/save-state` | Checkpoint trainer + optimizer state for pause/resume (`init_from=ckpt.id, restore_optimizer=True`) or weights-only multi-stage chaining (`init_from=artifact_id`, default `restore_optimizer=False`) |
+| `POST` | `/v1/trainers/{tid}/save-state` | Checkpoint trainer + optimizer state for `client.trainers.resume(ckpt)` (stage chaining passes an `Artifact` as `model=` with a fresh optimizer) |
 | `POST` | `/v1/trainers/{tid}/export` | Freeze `(ModelSpec + weights + EvalReport + lineage)` into an immutable `.grad` `Artifact` (optional `merge_adapter: true`) |
 | `DELETE` | `/v1/trainers/{tid}` | Release GPU/CPU trainer lease |
 
@@ -391,19 +391,20 @@ import { Grad } from "@gradiated/grad";
 const grad = new Grad({ apiKey: process.env.GRADIATED_API_KEY });
 
 // 1. Model Router Endpoint (candidate models & pricing inferred from trained artifact manifest)
-const decision = await grad.router("support-agent-router").route({ messages, tools });
+const router = grad.endpoints.get("support-agent-router");
+const decision = await router.route({ messages, tools });
 const reply = await callLLM(decision.model, messages, tools);
 await grad.feedback.record({ inferenceId: decision.inferenceId, score: 1.0, metrics: { cost_usd: 0.0009 } });
 
 // 2. Effort-Level Detector Endpoint
-const effort = await grad.endpoint("coding-effort").infer<{ messages: Msg[] }, { label: "low" | "medium" | "high" }>({
-  input: { messages },
-});
+const effort = await grad.endpoints
+  .get("coding-effort")
+  .infer<{ label: "low" | "medium" | "high" }>({ messages });
 
 // 3. Diff-Merge Generative Endpoint (with gold expectedOutput correction feedback!)
-const merged = await grad.endpoint("fast-diff-merge").infer<{ original: string; snippet: string }, { merged_code: string }>({
-  input: { original, snippet },
-});
+const merged = await grad.endpoints
+  .get("fast-diff-merge")
+  .infer<{ merged_code: string }>({ payload: { original, snippet } });
 await grad.feedback.record({
   inferenceId: merged.inferenceId,
   score: testsPassed ? 1.0 : 0.0,

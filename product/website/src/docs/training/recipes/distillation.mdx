@@ -22,14 +22,15 @@ Offline SFT on teacher outputs teaches the student what the teacher says on *tea
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, adapters, losses, optim
+from grad import Grad, Model, adapters, losses, optim
 from grad.recipes import DistillRecipe
 
 client = Grad()
+dataset = client.datasets.get("support-prompts")
 
 recipe = DistillRecipe(
-    model="Qwen/Qwen3-4B",
-    teacher="Qwen/Qwen3-32B",
+    model=Model("Qwen/Qwen3-4B"),
+    teacher=Model("Qwen/Qwen3-32B"),
     adapter=adapters.LoRA(rank=32),
     mode="on_policy",
     loss=losses.TopKKLDistill(top_k=32),
@@ -37,7 +38,7 @@ recipe = DistillRecipe(
     merge_adapter=True,
 )
 
-run = client.runs.create(dataset="support-prompts", name="support-4b-distilled", recipe=recipe).wait()
+run = client.runs.create(dataset=dataset, name="support-4b-distilled", recipe=recipe).wait()
 
 print(run.artifact.id, run.eval_report)
 ```
@@ -46,17 +47,18 @@ print(run.artifact.id, run.eval_report)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, adapters, losses, optim, recipes } from "@gradiated/grad";
+import { Grad, Model, adapters, losses, optim, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
+const dataset = await grad.datasets.get("support-prompts");
 
 const run = await grad.runs
   .create({
-    dataset: "support-prompts",
+    dataset,
     name: "support-4b-distilled",
     recipe: recipes.distill({
-      model: "Qwen/Qwen3-4B",
-      teacher: "Qwen/Qwen3-32B",
+      model: new Model("Qwen/Qwen3-4B"),
+      teacher: new Model("Qwen/Qwen3-32B"),
       adapter: adapters.lora({ rank: 32 }),
       mode: "on_policy",
       loss: losses.topKKLDistill({ topK: 32 }),
@@ -105,7 +107,7 @@ For custom divergences such as Jensen-Shannon divergence (GKD) or Skew KL (Disti
 
 ```python
 import torch
-from grad import Grad, adapters, losses, optim
+from grad import Grad, Model, adapters, losses, optim
 
 class JSDLoss(losses.CustomLoss):
     outputs = ("topk_logprobs",)
@@ -124,9 +126,9 @@ class JSDLoss(losses.CustomLoss):
         return torch.stack(terms).mean()
 
 client = Grad()
-teacher = client.artifacts.get("Qwen/Qwen3-32B")
+teacher = client.models.get("Qwen/Qwen3-32B")
 
-with client.trainers.create(model="Qwen/Qwen3-4B", adapter=adapters.LoRA(rank=32)) as trainer:
+with client.trainers.create(model=Model("Qwen/Qwen3-4B"), adapter=adapters.LoRA(rank=32)) as trainer:
     rollouts = [g[0] for g in trainer.snapshot().sample(prompt_inputs, n=1, max_new_tokens=256)]
     t_refs = teacher.score_logprobs(
         [r.input["tokens"] for r in rollouts],
@@ -145,9 +147,9 @@ with client.trainers.create(model="Qwen/Qwen3-4B", adapter=adapters.LoRA(rank=32
 Want continual learning from golden demonstrations without hosting a larger teacher model or suffering SFT catastrophic forgetting? In SDFT, the **same base model** acts as teacher when shown the question *plus* a golden demo in context, while the student sees only the question. Because `score_logprobs` accepts split `(prefix_tokens, response_tokens)` and `to_datum()` aligns `response_offset` automatically, the full loop is 15 lines:
 
 ```python
-teacher = client.artifacts.get("Qwen/Qwen3-8B")  # frozen base model, no extra deployment
+teacher = client.models.get("Qwen/Qwen3-8B")  # frozen base model, no extra deployment
 
-with client.trainers.create(model="Qwen/Qwen3-8B", adapter=adapters.LoRA(rank=64)) as trainer:
+with client.trainers.create(model=teacher, adapter=adapters.LoRA(rank=64)) as trainer:
     for batch in demo_batches:
         # Student generates on-policy seeing ONLY the question
         rollouts = [g[0] for g in trainer.snapshot().sample(batch.question_inputs, n=1, max_new_tokens=512)]
@@ -175,21 +177,22 @@ If every request prepends the same 30k–100k tokens of documentation, API specs
 ### Train a Cartridge
 
 ```python
-from grad import Grad, adapters, losses, optim
+from grad import Grad, Model, adapters, losses, optim
 from grad.recipes import CartridgeRecipe
 
 client = Grad()
+dataset = client.datasets.get("api-docs-qa-prompts")
 
 recipe = CartridgeRecipe(
-    model="Qwen/Qwen3-8B",
-    teacher="Qwen/Qwen3-8B",
+    model=Model("Qwen/Qwen3-8B"),
+    teacher=Model("Qwen/Qwen3-8B"),
     context_ref="s3://my-bucket/api-docs-bundle.md",
     adapter=adapters.PrefixKV(num_tokens=256),
     loss=losses.TopKKLDistill(top_k=20),
     optimizer=optim.AdamW(lr=2e-2),
 )
 
-run = client.runs.create(dataset="api-docs-qa-prompts", name="api-docs-cartridge", recipe=recipe).wait()
+run = client.runs.create(dataset=dataset, name="api-docs-cartridge", recipe=recipe).wait()
 
 print(run.artifact.id, run.eval_report)
 ```
@@ -200,8 +203,8 @@ If you want to internalize a long system prompt into standard LoRA weights (and 
 
 ```python
 recipe = DistillRecipe(
-    model="Qwen/Qwen3-8B",
-    teacher="Qwen/Qwen3-8B",
+    model=Model("Qwen/Qwen3-8B"),
+    teacher=Model("Qwen/Qwen3-8B"),
     context_ref="s3://my-bucket/api-docs-bundle.md",
     adapter=adapters.LoRA(rank=32),
     mode="on_policy",
@@ -209,7 +212,7 @@ recipe = DistillRecipe(
     merge_adapter=True,
 )
 
-run = client.runs.create(dataset="api-docs-qa-prompts", name="api-docs-prompt-distilled", recipe=recipe).wait()
+run = client.runs.create(dataset=dataset, name="api-docs-prompt-distilled", recipe=recipe).wait()
 ```
 
 Choose **`CartridgeRecipe` (`adapters.PrefixKV`)** when you serve many per-tenant or per-repository contexts against one shared frozen base model; choose **prompt distillation (`DistillRecipe` + `adapters.LoRA`)** when you want one merged checkpoint with zero prefix-KV overhead.

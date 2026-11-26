@@ -160,7 +160,7 @@ class JSDLoss(losses.CustomLoss):
 client = Grad()
 teacher = client.models.get("qwen/qwen3-32b")
 
-with client.trainers.create(model="qwen/qwen3-4b", adapter=adapters.LoRA(rank=32)) as trainer:
+with client.trainers.create(model="qwen/qwen3-4b", adapter=adapters.LoRA(rank=8)) as trainer:
     rollouts = [g[0] for g in trainer.snapshot().sample(prompt_inputs, n=1, max_new_tokens=256)]
     t_refs = teacher.score_logprobs(rollouts, top_k=32).topk_refs
 
@@ -177,7 +177,7 @@ In SDFT, the **same base model** acts as teacher when shown the question *plus* 
 ```python
 teacher = client.models.get("qwen/qwen3-8b")  # frozen base model, no extra deployment
 
-with client.trainers.create(model=teacher, adapter=adapters.LoRA(rank=64)) as trainer:
+with client.trainers.create(model=teacher, adapter=adapters.LoRA(rank=16)) as trainer:
     for demo_batch in demo_batches:
         rollouts = [g[0] for g in trainer.snapshot().sample(demo_batch.question_inputs, n=1, max_new_tokens=512)]
         t_refs = teacher.score_logprobs(
@@ -215,7 +215,7 @@ class BradleyTerryLoss(losses.CustomLoss):
 client = Grad()
 with client.trainers.create(
     model="qwen/qwen3-8b",
-    adapter=adapters.LoRA(rank=32),
+    adapter=adapters.LoRA(rank=8),
     heads={"rm": heads.Linear(dim=1)},
 ) as trainer:
     for batch in pair_batches:
@@ -243,7 +243,7 @@ records = [
 
 with client.trainers.create(
     model="qwen/qwen3-8b",
-    adapter=adapters.LoRA(rank=32),
+    adapter=adapters.LoRA(rank=8),
     heads={"prm": heads.Linear(dim=1, token_level=True)},
 ) as trainer:
     m = trainer.forward_backward(records, loss=losses.BCESparsePositions(head="prm")).result()

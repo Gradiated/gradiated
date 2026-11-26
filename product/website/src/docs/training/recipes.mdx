@@ -132,7 +132,7 @@ Before spending anything, run `--dry-run` (or `client.runs.plan()`) to check you
 ```text
 Dataset   diff-merge-prod (1,420 trajectories -> 1,184 after min_score filter)
 Split     BySession: 1,065 train / 119 eval (0 overlapping sessions)
-Model     qwen/qwen3-8b · LoRA(rank=32)
+Model     qwen/qwen3-8b · LoRA(rank=8)
 Optimizer AdamW(lr=2.0e-4, schedule=cosine)
 Estimate  ~3.8M train tokens (~$1.52) · warnings: 0
 ```
@@ -212,7 +212,7 @@ dataset = client.datasets.get("diff-merge-prod").score(judge).wait().filter(
 
 recipe = SFTRecipe(
     model="qwen/qwen3-8b",
-    adapter=adapters.LoRA(rank=32),
+    adapter=adapters.LoRA(rank=8),
     optimizer=optim.AdamW(lr=2e-4),
     split=splits.BySession(eval_fraction=0.10),
 )
@@ -233,7 +233,7 @@ sft_art = client.artifacts.get("support-responder@sft-v1")
 
 recipe = DPORecipe(
     model=sft_art,
-    adapter=adapters.LoRA(rank=32),
+    adapter=adapters.LoRA(rank=8),
     loss=losses.DPO(beta=0.1),
     optimizer=optim.AdamW(lr=5e-5),
 )
@@ -254,7 +254,7 @@ sft_art = client.artifacts.get("fast-diff-merge@sft-v1")
 
 recipe = GRPORecipe(
     model=sft_art,
-    adapter=adapters.LoRA(rank=32),
+    adapter=adapters.LoRA(rank=8),
     rubric=Rubric([
         Scorer("valid_ts", weight=0.4, fn=validators.TypeScriptAST()),
         Judge(
@@ -283,7 +283,7 @@ dataset = client.datasets.get("support-prompts")
 recipe = DistillRecipe(
     model="qwen/qwen3-4b",
     teacher="qwen/qwen3-32b",
-    adapter=adapters.LoRA(rank=32),
+    adapter=adapters.LoRA(rank=8),
     rollout=OnPolicy(max_new_tokens=512),
     loss=losses.TopKKLDistill(top_k=32),
     optimizer=optim.AdamW(lr=1e-4),
@@ -324,7 +324,7 @@ You don't need to write a full training loop just to try a different loss functi
 # Swap built-in losses.DPO() for your own SimPOLoss subclass inside DPORecipe:
 recipe = DPORecipe(
     model="qwen/qwen3-8b",
-    adapter=adapters.LoRA(rank=32),
+    adapter=adapters.LoRA(rank=8),
     loss=SimPOLoss(beta=2.0, gamma=0.5),
     optimizer=optim.AdamW(lr=3e-5),
 )
@@ -346,7 +346,7 @@ recipe: sft
 model: qwen/qwen3-8b
 adapter:
   kind: lora
-  rank: 32
+  rank: 8
 optimizer:
   kind: adamw
   lr: 2e-4
@@ -390,12 +390,12 @@ run = (
     client.runs.create(
         dataset=gold_ds,
         name="fast-diff-merge",
-        recipe=SFTRecipe(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32), optimizer=optim.AdamW(lr=2e-4)),
+        recipe=SFTRecipe(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=8), optimizer=optim.AdamW(lr=2e-4)),
     )
     .then(
         dataset=tasks_ds,
         recipe=GRPORecipe(
-            adapter=adapters.LoRA(rank=32),
+            adapter=adapters.LoRA(rank=8),
             rubric=merge_rubric,
             optimizer=optim.AdamW(lr=2e-5),
         ),
@@ -415,7 +415,7 @@ tasks_ds = client.datasets.get("diff-merge-tasks")
 sft = client.runs.create(
     dataset=gold_ds,
     name="fast-diff-merge",
-    recipe=SFTRecipe(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32)),
+    recipe=SFTRecipe(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=8)),
 )
 
 rl = client.runs.create(

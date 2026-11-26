@@ -306,7 +306,7 @@ Read https://gradiated.com/docs/training/environments.md and https://gradiated.c
 1. Subclass `grad.Environment` around our existing `docker-compose.yml` and seed script (`setup`, `step` returning `Observation(text=...)`, `evaluate` before `teardown`, and guaranteed `teardown`).
 2. Write a `Rubric` with deterministic `StatefulScorer` assertions against the live container state.
 3. Run a 2-task smoke test against a base `Model` (`client.models.get(...)`, `max_concurrency=2`) to verify `loss_mask` masks tool outputs and containers clean up cleanly.
-4. Wire a GRPO / async CISPO loop using `with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32)) as trainer:`.
+4. Wire a GRPO / async CISPO loop using `with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=8)) as trainer:`.
 ```
 
   </DocsCodeTab>

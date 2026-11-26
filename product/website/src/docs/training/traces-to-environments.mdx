@@ -168,7 +168,7 @@ print(f"Kept {len(verified_tasks)}/{len(raw_tasks)} verified tasks")
 client = Grad()
 with client.trainers.create(
     model="qwen/qwen3-8b",
-    adapter=adapters.LoRA(rank=32),
+    adapter=adapters.LoRA(rank=8),
 ) as trainer:
     for batch in chunked(verified_tasks, size=8):
         groups = env.rollout_groups(

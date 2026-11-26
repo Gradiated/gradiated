@@ -58,8 +58,8 @@ scored = dataset.score(judge).wait()
 good = scored.filter(lambda t: t.scores["resolved"] >= 0.8)
 ```
 
-<DocsCallout label="Cutting judge costs at scale" tone="tip">
-Start with a frontier `Model` in `Judge` to get working quickly. Once you have 1,000+ graded pairs, train a fast 8B [reward model](/docs/training/recipes/reward-models/) with `RewardModelRecipe` and pass that [`Artifact`](/docs/training/artifacts/) into `Judge(name="resolved", model=verifier_artifact)`.
+<DocsCallout label="When to train a reward model instead" tone="tip">
+A frontier or open model `Judge` with a clear rubric is the right default for most teams. If you need to strongly encode custom preferences from examples or score outputs in milliseconds, train a dedicated verifier with [`RewardModelRecipe`](/docs/training/recipes/reward-models/) and pass that [`Artifact`](/docs/training/artifacts/) straight into `Judge(name="resolved", model=verifier_artifact)`.
 </DocsCallout>
 
 ## Grading live state inside an `Environment`

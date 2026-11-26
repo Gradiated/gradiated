@@ -2,15 +2,39 @@
 
 <DocsLead>Train a small model to score how good another model's answers are.</DocsLead>
 
-When unit tests or syntax checks aren't enough to grade an answer (or calling a frontier `Judge` on every request is too slow or expensive), train your own verifier [`Artifact`](/docs/training/artifacts/) with **`RewardModelRecipe`**. You can use the same verifier in three places:
+## When to train a reward model
+
+Most teams do not need to train a reward model. Pick the simplest grader that fits your task:
+
+- **Use a [`Scorer`](/docs/training/rubrics/) (code check)** first whenever correctness can be checked deterministically in code (JSON schema, SQL parser, unit tests). It's instant and free.
+- **Use a [`Judge`](/docs/training/rubrics/) with a frontier or open model and a rubric** as your default for everything else. For most tasks, a prompted judge with clear criteria is the best route: it needs no training data and is easy to update as your requirements change.
+- **Train a reward model (`RewardModelRecipe`)** when you want to strongly encode specific taste or domain-specific reward behavior from preference pairs, or when you need millisecond scoring inside a live `Cascade` or `BestOfN` endpoint.
+
+Before training a reward model, try a prompted [`Judge`](/docs/training/rubrics/) with a [`Rubric`](/docs/training/rubrics/) first:
+
+```python
+from grad import Judge, Rubric, Scorer, validators
+
+rubric = Rubric([
+    Scorer("valid_sql", weight=0.3, fn=validators.SQL()),
+    Judge(
+        name="accurate_query",
+        model="{{SONNET_MODEL}}",
+        prompt="Verify the SQL answers the user's question accurately without hallucinated columns.",
+        weight=0.7,
+    ),
+])
+```
+
+If a prompted judge is still missing subtle preferences you can demonstrate with examples, train a dedicated reward model with **`RewardModelRecipe`**. You can use the trained [`Artifact`](/docs/training/artifacts/) in three places:
 
 - Inside a [`Judge`](/docs/training/rubrics/) to score a [`Dataset`](/docs/training/trajectories/) or grade [`GRPORecipe`](/docs/training/recipes/rl-agents/) runs.
-- Inside a `strategies.Cascade` [`Endpoint`](/docs/training/endpoints/) so easy requests stay on a fast 8B model and low-scoring answers automatically fall back to a frontier model.
+- Inside a `strategies.Cascade` [`Endpoint`](/docs/training/endpoints/) so easy requests stay on a fast 8B model and low-scoring answers automatically fall back to a larger model.
 - With `strategies.BestOfN` or `strategies.MajorityVote` to pick the best of several candidate answers.
 
 ## What data you need
 
-- **Minimum volume:** 500–2,000 `(chosen, rejected)` pairs in a [`Dataset`](/docs/training/trajectories/) (same format as [Preference tuning (DPO)](/docs/training/recipes/dpo/), sharing a `group_id` with `role: "chosen"` and `role: "rejected"`).
+- **Minimum volume:** 500 to 2,000 `(chosen, rejected)` pairs in a [`Dataset`](/docs/training/trajectories/) (same format as [Preference tuning (DPO)](/docs/training/recipes/dpo/), sharing a `group_id` with `role: "chosen"` and `role: "rejected"`).
 
 ## Train with `RewardModelRecipe`
 
@@ -26,7 +50,7 @@ pairs_ds = client.datasets.get("sql-preferences")
 
 recipe = RewardModelRecipe(
     model="qwen/qwen3-8b",
-    adapter=adapters.LoRA(rank=32),
+    adapter=adapters.LoRA(rank=8),
     optimizer=optim.AdamW(lr=1e-4),
     split=splits.BySession(eval_fraction=0.10),
 )
@@ -51,7 +75,7 @@ const run = await grad.runs
     name: "sql-verifier",
     recipe: recipes.rewardModel({
       model: "qwen/qwen3-8b",
-      adapter: adapters.lora({ rank: 32 }),
+      adapter: adapters.lora({ rank: 8 }),
       optimizer: optim.adamW({ lr: 1e-4 }),
       split: splits.bySession({ evalFraction: 0.1 }),
     }),
@@ -73,16 +97,16 @@ grad train --dataset sql-preferences --name sql-verifier --recipe reward-model -
 
 ### Key parameters
 
-- **`model`:** start with a fast 4B–8B model (`"qwen/qwen3-8b"`). Reward models only score an output in a single forward pass, so an 8B verifier runs in milliseconds.
-- **`adapter`:** `adapters.LoRA(rank=32)` works well for 500–5,000 preference pairs.
+- **`model`:** start with a fast 4B to 8B model (`"qwen/qwen3-8b"`). Reward models only score an output in a single forward pass, so an 8B model runs in milliseconds.
+- **`adapter`:** `adapters.LoRA(rank=8)` (rank `4` or `8` works well for most preference datasets).
 - **`optim.AdamW(lr=...)`:** start around `1e-4` for LoRA reward models.
 - **`split`:** `splits.BySession(eval_fraction=0.10)` keeps paired examples and multi-turn conversations together so eval accuracy isn't inflated.
 
-## Use your verifier in `Judge` or production cascades
+## Use your reward model in `Judge` or production cascades
 
 ### 1. Plug straight into a `Judge` (for datasets or RL)
 
-Because `Artifact` subclasses `Model`, pass `run.artifact` directly to [`Judge`](/docs/training/rubrics/) with no prompt required:
+Pass `run.artifact` straight into [`Judge`](/docs/training/rubrics/) with no prompt required:
 
 ```python
 from grad import Judge
@@ -93,32 +117,23 @@ scored = client.datasets.get("sql-prod").score(sql_judge).wait()
 
 ### 2. Gate a production `Cascade` endpoint
 
-Pair a fast fine-tuned specialist with your verifier so only uncertain outputs escalate to a frontier model:
+Pair a fast fine-tuned model with your reward model. Each request first runs on the fast model, gets scored from `0` to `1` by your reward model, and only falls back to `"qwen/qwen3-32b"` when the score is below `0.75`:
 
 ```python
 from grad import strategies
 
 agent = client.artifacts.get("sql-agent@2026-11-25-2")
-verifier = run.artifact
-capture = client.datasets.get("sql-agent-prod")
 
 client.endpoints.create(
     slug="sql-agent",
     artifact=agent,
-    capture_dataset=capture,
     strategy=strategies.Cascade(
-        verifier=verifier,
+        verifier=run.artifact,
         frontier="qwen/qwen3-32b",
         threshold=0.75,
     ),
 )
 ```
-
-## When to train a reward model vs. other graders
-
-- **Use a [`Scorer`](/docs/training/rubrics/) (code check)** first whenever correctness can be checked in Python (JSON schema, SQL parser, unit tests). It's instant and free.
-- **Use a frontier [`Judge`](/docs/training/rubrics/)** (`"{{SONNET_MODEL}}"`) while prototyping, with no training data needed (just a prompt).
-- **Train a reward model (`RewardModelRecipe`)** once you have 500–2,000 graded pairs and want fast, cheap scoring at scale (for RL training or live `Cascade` fallback checks).
 
 ## Want more control?
 

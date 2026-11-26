@@ -2,7 +2,7 @@
 
 <DocsLead>Every training run saves a versioned `.grad` artifact with your trained weights and evaluation results.</DocsLead>
 
-An **`Artifact`** subclasses `Model` and always points to **one** fixed version of a trained model (`support-router@2026-11-26-1`). Keeping saved artifacts separate from live [`Endpoint`](/docs/training/endpoints/)s means you can test a new version offline and roll back production in one command without touching weights.
+An **`Artifact`** is a saved, versioned model produced by a training run (`support-router@2026-11-26-1`). Keeping saved artifacts separate from live [`Endpoint`](/docs/training/endpoints/)s means you can test a new version offline and roll back production in one command without touching weights.
 
 | | **Artifact** | **[Endpoint](/docs/training/endpoints/)** |
 | --- | --- | --- |
@@ -26,7 +26,7 @@ preds = art.infer_batch([Record(messages=m) for m in eval_messages])
 print(preds[0].logits)
 ```
 
-Because `Artifact` subclasses `Model`, you can pass any trained artifact anywhere a `Model` is expected:
+You can pass any trained `Artifact` anywhere a model name is accepted:
 
 - **Warm-start a next stage:** `DPORecipe(model=sft.artifact, ...)` or `GRPORecipe(model=sft.artifact, ...)`.
 - **Use as a verifier:** `Judge(name="sql_ok", model=verifier_artifact)` or `strategies.Cascade(verifier=verifier_artifact, ...)`.

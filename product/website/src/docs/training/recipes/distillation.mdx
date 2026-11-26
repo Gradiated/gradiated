@@ -24,7 +24,7 @@ dataset = client.datasets.get("support-prompts")
 recipe = DistillRecipe(
     model="qwen/qwen3-4b",
     teacher="qwen/qwen3-32b",
-    adapter=adapters.LoRA(rank=32),
+    adapter=adapters.LoRA(rank=8),
     rollout=OnPolicy(max_new_tokens=512),
     loss=losses.TopKKLDistill(top_k=32),
     optimizer=optim.AdamW(lr=1e-4),
@@ -51,7 +51,7 @@ const run = await grad.runs
     recipe: recipes.distill({
       model: "qwen/qwen3-4b",
       teacher: "qwen/qwen3-32b",
-      adapter: adapters.lora({ rank: 32 }),
+      adapter: adapters.lora({ rank: 8 }),
       rollout: recipes.onPolicy({ maxNewTokens: 512 }),
       loss: losses.topKKLDistill({ topK: 32 }),
       optimizer: optim.adamW({ lr: 1e-4 }),
@@ -74,7 +74,7 @@ model: qwen/qwen3-4b
 teacher: qwen/qwen3-32b
 adapter:
   kind: lora
-  rank: 32
+  rank: 8
 rollout:
   kind: on_policy
   max_new_tokens: 512

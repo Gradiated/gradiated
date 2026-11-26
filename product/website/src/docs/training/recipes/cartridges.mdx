@@ -127,7 +127,7 @@ recipe = DistillRecipe(
     model="qwen/qwen3-8b",
     teacher="qwen/qwen3-8b",
     context=Context.from_uri("s3://my-bucket/api-docs-bundle.md"),
-    adapter=adapters.LoRA(rank=32),
+    adapter=adapters.LoRA(rank=8),
     rollout=OnPolicy(max_new_tokens=512),
     loss=losses.TopKKLDistill(top_k=32),
 )

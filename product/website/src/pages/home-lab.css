@@ -67,9 +67,17 @@
      tablet widths. */
   width: auto;
   min-width: 0;
-  margin-inline-start: min(
-    750 * var(--px) - (var(--bleed-w, 100vw) - 100%) / 2,
-    100% - 22rem
+  margin-inline-start: calc(
+    min(750 * var(--px) - (var(--bleed-w, 100vw) - 100%) / 2, 100% - 22rem) -
+      var(--lab-nudge)
+  );
+  /* Below 1024px the rail folds to a strip and the desk's left-hand pieces
+     stop shrinking, which left a wide empty band before the copy; the copy
+     moves left into it, by up to 56px, easing back in toward tablet width. */
+  --lab-nudge: clamp(
+    0px,
+    min((1024px - 100vw) * 0.9, (100vw - 768px) * 1.2),
+    56px
   );
   /* Vertically centred in the first screen, so the space above the
      headline's capitals equals the space below the buttons at any window

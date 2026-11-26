@@ -71,6 +71,13 @@ grad train --dataset sql-preferences --name sql-verifier --recipe reward-model -
   </DocsCodeTab>
 </DocsCodeTabs>
 
+### Key parameters
+
+- **`model`:** start with a fast 4B–8B model (`Model("Qwen/Qwen3-8B")`) — reward models only score an output in a single forward pass, so an 8B verifier runs in milliseconds.
+- **`adapter`:** `adapters.LoRA(rank=32)` works well for 500–5,000 preference pairs.
+- **`optim.AdamW(lr=...)`:** start around `1e-4` for LoRA reward models.
+- **`split`:** `splits.BySession(eval_fraction=0.10)` keeps paired examples and multi-turn conversations together so eval accuracy isn't inflated.
+
 ## Use your verifier in `Judge` or production cascades
 
 ### 1. Plug straight into a `Judge` (for datasets or RL)

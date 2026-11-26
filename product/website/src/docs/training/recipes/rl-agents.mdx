@@ -91,6 +91,19 @@ console.log(run.artifact.id);
   </DocsCodeTab>
 </DocsCodeTabs>
 
+### When to use RL vs. SFT vs. DPO
+
+- **Use [SFT](/docs/training/recipes/sft/)** first if the model doesn't reliably produce valid JSON, SQL, or tool calls yet — RL works much better once formatting is solid.
+- **Use [DPO](/docs/training/recipes/dpo/)** when you already have offline `(chosen, rejected)` pairs and don't need the model to explore new solutions.
+- **Use RL (`GRPORecipe`)** when you can grade answers automatically (with code checks, tests, or a `Judge`) and want the model to keep improving beyond your existing examples.
+
+### Key parameters
+
+- **`group_size`:** how many candidate answers the model tries per prompt (`8` is a good default; larger groups give cleaner learning signal at higher token cost).
+- **`max_new_tokens`:** cap on each generated attempt — set it high enough for the model to finish its answer without wasting tokens on runaway loops.
+- **`losses.GRPO(clip_low=0.2, clip_high=0.28, kl_beta=0.01)`:** controls how aggressively weights can move per step; raise `kl_beta` (e.g. `0.05`) if outputs start drifting away from your starting model's style.
+- **`optim.AdamW(lr=...)`:** keep the learning rate low (`1e-5`–`3e-5`) so training stays stable.
+
 ## Practical tips before scaling up
 
 1. **Start with SFT if formatting is shaky:** if the base model outputs broken JSON or tool calls on more than 30% of tries, run a short [SFT](/docs/training/recipes/sft/) job on 200–500 good examples first, then pass `model=sft.artifact`.

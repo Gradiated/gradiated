@@ -132,11 +132,17 @@ grad train -f sft-diff-merge.yaml --wait
 
 If your logs already include a deterministic score (like `tests_passed` from CI), skip `dataset.score(judge)` and filter directly: `dataset.filter(lambda t: t.scores.get("tests_passed") == 1.0)`.
 
-### When to use what
+### When to use SFT vs. DPO vs. distillation
 
-- **`adapters.LoRA(rank=16..32)`** *(default)* — best starting point for almost every task. Trains fast, works well on 300–5,000 examples, and exports a small adapter so multiple fine-tuned models can run on the same base weights in production.
-  - Pass `merge_on_export=True` only if you want a standalone merged checkpoint to download or host on its own.
+- **Use SFT (`SFTRecipe`)** when you have verified examples of the exact outputs you want (or high-scoring production answers filtered with a `Judge`).
+- **Follow with [DPO (`DPORecipe`)](/docs/training/recipes/dpo/)** when the model already follows your format but keeps making specific mistakes you can contrast as `(chosen, rejected)` pairs.
+- **Use [Distillation (`DistillRecipe`)](/docs/training/recipes/distillation/)** when you don't have gold answers yet — just prompts and a larger teacher model you want a small model to imitate.
+
+### Key parameters
+
+- **`adapters.LoRA(rank=16..32)`** *(default)* — best starting point for almost every task. Trains fast, works well on 300–5,000 examples, and exports a small adapter so multiple fine-tuned models can run on the same base weights in production. Pass `merge_on_export=True` only if you want a standalone merged checkpoint to download or host on its own.
 - **`adapters.Full()`** — trains every weight in the model. Only worth it once you have 10,000+ examples and LoRA stops improving (see [LoRA Without Regret](https://thinkingmachines.ai/blog/lora/) for a deeper look at when LoRA matches full fine-tuning).
+- **`optim.AdamW(lr=...)`** — start around `2e-4` for LoRA SFT (use `1e-5`–`3e-5` if doing full fine-tuning).
 - **`splits.BySession(eval_fraction=0.10)`** — keeps all turns from the same conversation together so eval scores aren't inflated by leakage.
 
 ## Deploy with a syntax fallback

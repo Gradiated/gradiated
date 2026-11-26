@@ -93,6 +93,13 @@ grad train -f distill-4b.yaml --wait
   </DocsCodeTab>
 </DocsCodeTabs>
 
+### Key parameters
+
+- **`teacher`:** the stronger model you want to copy — any catalog `Model` (like `Model("Qwen/Qwen3-32B")`) or a larger `.grad` [`Artifact`](/docs/training/artifacts/) you already fine-tuned.
+- **`rollout=OnPolicy(max_new_tokens=512)`:** generates answers from the student and grades them with the teacher so the student learns where it actually makes mistakes. Switch to `OffPolicy()` only if you already have fixed teacher completions you want to train on directly.
+- **`losses.TopKKLDistill(top_k=32)`:** matches the teacher's top 32 next-token probabilities at every step (`top_k=16..32` captures almost all the signal cleanly).
+- **`optim.AdamW(lr=...)`:** start around `1e-4` for LoRA distillation.
+
 ## When to use distillation vs. SFT vs. Cartridges
 
 - **`DistillRecipe`** — you have a strong, slow model (like a 32B or frontier model) and want a small 4B–8B model to match it on your prompts, with no labeled answers required.

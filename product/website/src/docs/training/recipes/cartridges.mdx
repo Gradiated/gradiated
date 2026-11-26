@@ -104,15 +104,19 @@ endpoint = run.deploy()
 
 ### Key parameters
 
-| Component | Guidance |
-| --- | --- |
-| `num_tokens` | Compressed KV-cache size (`128`–`256` for 10k–30k token manuals; `512`–`1024` for 100k+ token corpora). Uses `adapters.PrefixKV(num_tokens=...)` under the hood. |
-| `optim.AdamW(lr=...)` | Prefix KV tensors need a much higher learning rate (`1e-2`–`2e-2`) than LoRA adapters. |
-| `eval_report` | Compare answer accuracy against the full-context model so you can pick the smallest `num_tokens` that still gets the same answers right. |
+- **`context`:** the static document(s) you want to compress (`Context.from_file(...)`, `Context.from_uri("s3://...")`, or `Context.from_text(...)`).
+- **`num_tokens`:** how big the compressed Cartridge is — start with `128`–`256` for 10k–30k token manuals, or `512`–`1024` for 100k+ token docs. Compare answer accuracy in `eval_report` against the full-context model to pick the smallest size that holds quality.
+- **`optim.AdamW(lr=...)`:** prefix KV tensors need a much higher learning rate (`1e-2`–`2e-2`) than LoRA adapters.
 
-## Cartridge (`PrefixKV`) vs. prompt distillation into LoRA
+## When to use Cartridges vs. prompt distillation vs. RAG
 
-If you only have **one** static prompt and want a single merged checkpoint with zero prefix-KV tensors at serving time, pass `context=` to [`DistillRecipe`](/docs/training/recipes/distillation/) with `adapters.LoRA(..., merge_on_export=True)`:
+- **Use `CartridgeRecipe`** when you serve many per-customer, per-tenant, or per-repo manuals against one shared base model and want to swap them per request without resending the full prompt.
+- **Use prompt distillation (`DistillRecipe` + `context=`)** when you only have **one** global system prompt and want its knowledge baked straight into a fine-tuned model (see below).
+- **Use RAG ([Embeddings](/docs/training/recipes/embeddings/))** when your knowledge base changes every minute or is millions of documents — Cartridges are best for static 10k–100k token docs that change daily or weekly.
+
+### Baking one static prompt into LoRA instead
+
+If you only have **one** static prompt and want a single fine-tuned checkpoint with no prefix-KV tensors at serving time, pass `context=` to [`DistillRecipe`](/docs/training/recipes/distillation/):
 
 ```python
 from grad import Context, Model, adapters, losses
@@ -122,7 +126,7 @@ recipe = DistillRecipe(
     model=Model("Qwen/Qwen3-8B"),
     teacher=Model("Qwen/Qwen3-8B"),
     context=Context.from_uri("s3://my-bucket/api-docs-bundle.md"),
-    adapter=adapters.LoRA(rank=32, merge_on_export=True),
+    adapter=adapters.LoRA(rank=32),
     rollout=OnPolicy(max_new_tokens=512),
     loss=losses.TopKKLDistill(top_k=32),
 )
@@ -130,9 +134,9 @@ recipe = DistillRecipe(
 run = client.runs.create(dataset=dataset, name="api-docs-prompt-distilled", recipe=recipe).wait()
 ```
 
-<DocsCallout label="When to pick CartridgeRecipe vs. LoRA prompt distillation" tone="tip">
-Choose **`CartridgeRecipe` (`adapters.PrefixKV`)** when you serve many per-tenant, per-customer, or per-repository contexts against one shared frozen base model. Choose **prompt distillation (`DistillRecipe` + `adapters.LoRA`)** when you have one global system prompt and want a single merged model.
-</DocsCallout>
+## Want more control?
+
+Need custom distillation losses or multi-document prefix initialization? See [Custom loops](/docs/training/custom-loops/) and [Advanced objectives](/docs/training/advanced-objectives/).
 
 <DocsNext>
   <a href="/docs/training/recipes/reward-models/">

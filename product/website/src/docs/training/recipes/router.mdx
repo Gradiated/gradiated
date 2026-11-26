@@ -109,15 +109,20 @@ grad deploy support-router@latest --canary 0.10
   </DocsCodeTab>
 </DocsCodeTabs>
 
-### When to customize what
+### When to use a router vs. fine-tuning vs. distillation
 
-Start with the defaults above and override options only when you need them:
+- **Start with a router (`RouterRecipe`)** when a cheap model already handles most of your requests well and you only need a frontier model for the hard ones. It's the fastest way to cut LLM spend without training a new generator.
+- **Use [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) or [distillation](/docs/training/recipes/distillation/)** when no cheap model is good enough on its own yet and you want to teach a small model to handle the task directly.
+- **Combine them** once you have a fine-tuned 8B model by putting it alongside a frontier model in your router.
 
-- **Already have scores in your logs?** Pass `score="task_success"` (or `score=lambda t: t.scores["task_success"]`) instead of a `Judge` so you don't pay to re-score.
-- **Already logged multiple models?** You can omit `models=` and Gradiated will train across the models already present in `metadata.model`.
-- **Custom pricing?** Include `metrics.cost_usd` in your dataset (or pass a `pricing=` map) if your rates differ from standard model pricing.
-- **Need a different router backbone?** `RouterRecipe` defaults to `Model("Qwen/Qwen3-0.6B")`. You can pass a different `model=` (or switch to a fast frozen-encoder fit in [Custom loops](/docs/training/custom-loops/)) if you have strict CPU latency constraints.
-- **Multi-turn conversations?** `splits.BySession(eval_fraction=0.15)` is on by default so turns from the same `session_id` never leak between training and evaluation.
+### Key parameters
+
+- **`models`:** the list of candidate models to route between. If your dataset only contains logs from one model, Gradiated replays your prompts against the others automatically. If your logs already include multiple models in `metadata.model`, you can leave `models` out.
+- **`score`:** how quality is measured — pass a [`Judge`](/docs/training/rubrics/) with a prompt if your logs don't have scores yet, or pass an existing score name (`"task_success"`) or function (`lambda t: ...`).
+- **`max_quality_drop`:** how much quality drop vs. your best model you're willing to trade for cost savings (default `0.02`, or 2%).
+- **`model`:** the router backbone (`Model("Qwen/Qwen3-0.6B")` by default). Swap in a different model or a lightweight frozen-encoder fit in [Custom loops](/docs/training/custom-loops/) if you have strict CPU latency limits.
+- **`split`:** defaults to `splits.BySession(eval_fraction=0.15)` so turns from the same conversation never leak between training and evaluation.
+- **Custom pricing:** Gradiated uses built-in model pricing automatically; include `metrics.cost_usd` in your dataset (or pass `pricing=`) only if you have negotiated or self-hosted rates.
 
 ## Read the evaluation report
 

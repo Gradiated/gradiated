@@ -494,9 +494,18 @@ estimate: { gpu: "1x H100", minutes: 18, approx_usd: 1.40 }
    ```
 3. **Coding-agent handoff:** Every `/papers/<slug>/` page exposes **Copy Markdown** and **Copy prompt** so a researcher can drop the paper reproduction straight into Claude Code or Codex and adapt it to their own dataset.
 
-### 9.3 Launch Slate & Day-0 Paper Drops
+### 9.3 Launch Slate, 50-Paper Smell Audit & Day-0 Paper Drops
 
-Every page reports **measured** Gradiated runs (wall-clock time, USD cost, learning curve, and eval delta) clearly distinguished from **paper-reported** numbers. Initial flagship templates (all verified in our 60-paper primitive suite): `routellm` *(CPU, 5s, $0 GPU)*, `sdft`, `dapo`, `gspo`, `cartridges`, `simpo`, `search-r1`, and `math-shepherd` — followed by rapid same-day reproductions as notable new papers land on arXiv.
+Every page reports **measured** Gradiated runs (wall-clock time, USD cost, learning curve, and eval delta) clearly distinguished from **paper-reported** numbers. All **50 flagship post-training papers** (`grpo`, `dapo`, `dr-grpo`, `gspo`, `cispo`, `rloo`, `reinforce-plus-plus`, `vapo`, `dpo`, `simpo`, `orpo`, `kto`, `ipo`, `online-dpo`, `spin`, `sdft`, `cartridges`, `gkd`, `minillm`, `distillm`, `llmlingua-2`, `math-shepherd`, `prime`, `armorm`, `genrm`, `vineppo`, `safe-rlhf`, `search-r1`, `score`, `absolute-zero`, `archer`, `toolformer`, `spiral`, `routellm`, `s1`, `eagle-3`, `medusa`, `repe`, `kimi-k1-5`, `dora`, `lora-plus`, `loreft`, `ties-merging`, `rmu`, `npo`, `matryoshka-colbert`, `bge-m3`, `setfit`, `sayself`, `vlm-grpo`) are published at `/papers/<slug>/` and verified end-to-end in PyTorch (`50/50 PASS`).
+
+Implementing all 50 papers surfaced **7 concrete API smells** that were resolved with **0 new primitives** (1 small server-side loss option + 6 pure-SDK helpers):
+1. **Server-side multi-horizon head CE (`cross_entropy` `heads: { name: { shift, weight } }`):** eliminates transferring `(B, L, 152k)` vocab logits over HTTP for Medusa and DeepSeek-V3 MTP heads.
+2. **`grad.group_datums(groups, rewards=..., norm="std"|"mean"|"rloo"|"none", skip_zero_var=True, ref_logprobs=...)`:** collapses 8–10 lines of repeated `pstdev`/`fmean`/`ref_iter` plumbing across 13 RL papers into 1 line.
+3. **Pre-tensorized `forward_backward_custom` target views + `grad.masked_mean()`:** auto-populates `out["masks"]` *(with `mask[0] == 0.0` enforced)*, `out["sampling_logprobs"]`, `out["ref_logprobs"]`, `out["advantages"]`, and `out["turn_ids"]`.
+4. **`grad.by_group(datums, out)`:** replaces fragile positional `range(0, len, 2/3)` slicing with shuffle-safe `group_id` + `role` grouping (`chosen`/`rejected`, `anchor`/`positive`/`negative`).
+5. **Batched `TensorRef` fetching:** `forward_backward_custom(..., gather_indices=refs)` auto-batch-fetches `out["teacher_topk_logprobs"]` in 1 RPC (`GKD`, `DistiLLM`), and `client.tensors.fetch_batch(refs)` batches arbitrary layer activation refs (`RMU`).
+6. **`Artifact.to_datum(messages=..., media=...)` & `Trajectory.slice_prefix(end_idx)`:** removes `tokenize`→`Datum` dict-unpacking boilerplate and manual prefix slicing (`VinePPO`).
+7. **Ergonomic `Trajectory` / `resume_from` defaults:** `Artifact.sample(resume_from=...)` no longer requires redundant `prompts`, and `Artifact.infer_batch()` accepts `Trajectory` lists directly.
 
 ---
 

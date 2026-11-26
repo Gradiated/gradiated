@@ -64,20 +64,48 @@ const useCopyState = () => {
 };
 
 /* ---------------------------------------------------------------------------
-   /papers/ — Index hub
+   /papers/ — 50-Paper Reproducible Tutorials Hub
    --------------------------------------------------------------------------- */
 
 export const PapersIndexPage = (): ReactElement => {
   const [category, setCategory] = useState<PaperCategory | "All">("All");
+  const [modeFilter, setModeFilter] = useState<
+    "All" | "Managed recipe" | "Custom loop"
+  >("All");
+  const [query, setQuery] = useState("");
   const { copiedKey, copy } = useCopyState();
 
-  const visible = useMemo(
-    () =>
-      category === "All"
-        ? papers
-        : papers.filter((p) => p.category === category),
-    [category],
-  );
+  const categoryCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const p of papers) {
+      counts.set(p.category, (counts.get(p.category) ?? 0) + 1);
+    }
+    return counts;
+  }, []);
+
+  const medianLoc = useMemo(() => {
+    const sorted = [...papers.map((p) => p.linesOfCode)].sort((a, b) => a - b);
+    return sorted[Math.floor(sorted.length / 2)] ?? 30;
+  }, []);
+
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return papers.filter((p) => {
+      if (category !== "All" && p.category !== category) return false;
+      if (modeFilter !== "All" && p.mode !== modeFilter) return false;
+      if (!q) return true;
+      return (
+        p.title.toLowerCase().includes(q) ||
+        p.shortTitle.toLowerCase().includes(q) ||
+        p.slug.toLowerCase().includes(q) ||
+        p.authors.toLowerCase().includes(q) ||
+        p.arxivId.toLowerCase().includes(q) ||
+        p.oneLiner.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q) ||
+        p.primitives.some((pr) => pr.label.toLowerCase().includes(q))
+      );
+    });
+  }, [category, modeFilter, query]);
 
   return (
     <Substrate>
@@ -88,13 +116,16 @@ export const PapersIndexPage = (): ReactElement => {
           <div className="gr-papers-wrap">
             <header className="gr-papers-head">
               <div className="gr-papers-kicker">
-                Reproducible templates · Public datasets
+                {papers.length} reproducible tutorials · Public datasets ·
+                Median {medianLoc} lines of grad
               </div>
               <h1 className="gr-papers-title">Paper reproductions</h1>
               <p className="gr-papers-lede">
-                Reproduce landmark post-training papers in one click or one CLI
-                command on pinned public datasets — then swap in your own data.
-                No cluster scripts, no 1,000-line forks.
+                Interactive, walkthrough-first implementations of{" "}
+                {papers.length} landmark post-training papers. Every tutorial
+                breaks down why the paper mattered, walks through the core math
+                step by step, and launches on public data in one click or one
+                CLI command.
               </p>
 
               <div className="gr-papers-cli-bar">
@@ -122,12 +153,55 @@ export const PapersIndexPage = (): ReactElement => {
               </div>
             </header>
 
+            <div className="gr-papers-toolbar">
+              <input
+                aria-label="Search papers by title, method, arXiv ID, or primitive"
+                className="gr-papers-search"
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search 50 papers (e.g. GRPO, SimPO, SDFT, Cartridges, 2503.14476)…"
+                type="search"
+                value={query}
+              />
+
+              <div
+                aria-label="Filter by implementation mode"
+                className="gr-doc-seg"
+                role="tablist"
+              >
+                {(["All", "Managed recipe", "Custom loop"] as const).map(
+                  (m) => (
+                    <button
+                      key={m}
+                      aria-selected={modeFilter === m}
+                      className="gr-doc-seg-btn"
+                      data-active={modeFilter === m ? "true" : undefined}
+                      onClick={() => setModeFilter(m)}
+                      role="tab"
+                      type="button"
+                    >
+                      {m}
+                    </button>
+                  ),
+                )}
+              </div>
+            </div>
+
             <div
               aria-label="Filter papers by category"
               className="gr-papers-filters"
               role="tablist"
             >
-              {(["All", ...paperCategories] as const).map((item) => (
+              <button
+                aria-selected={category === "All"}
+                className="gr-papers-filter"
+                data-active={category === "All" ? "true" : undefined}
+                onClick={() => setCategory("All")}
+                role="tab"
+                type="button"
+              >
+                All ({papers.length})
+              </button>
+              {paperCategories.map((item) => (
                 <button
                   key={item}
                   aria-selected={category === item}
@@ -137,90 +211,107 @@ export const PapersIndexPage = (): ReactElement => {
                   role="tab"
                   type="button"
                 >
-                  {item}
+                  {item} ({categoryCounts.get(item) ?? 0})
                 </button>
               ))}
             </div>
 
-            <div className="gr-papers-grid">
-              {visible.map((paper) => {
-                const defaultModel = paper.models[0];
-                const defaultDataset = paper.datasets[0];
-                const quickCmd = `grad run papers/${paper.slug} --wait`;
-                const launchHref = consoleLaunchUrl(
-                  paper.slug,
-                  defaultModel.id,
-                  defaultDataset.id,
-                );
+            {visible.length === 0 ? (
+              <div className="gr-papers-empty">
+                <p>No papers match &ldquo;{query}&rdquo;.</p>
+                <button
+                  className="gr-papers-btn-secondary"
+                  onClick={() => {
+                    setCategory("All");
+                    setModeFilter("All");
+                    setQuery("");
+                  }}
+                  type="button"
+                >
+                  Reset filters
+                </button>
+              </div>
+            ) : (
+              <div className="gr-papers-grid">
+                {visible.map((paper) => {
+                  const defaultModel = paper.models[0];
+                  const defaultDataset = paper.datasets[0];
+                  const quickCmd = `grad run papers/${paper.slug} --wait`;
+                  const launchHref = consoleLaunchUrl(
+                    paper.slug,
+                    defaultModel.id,
+                    defaultDataset.id,
+                  );
 
-                return (
-                  <article key={paper.slug} className="gr-paper-card">
-                    <div className="gr-paper-card-meta">
-                      <span className="gr-paper-cat">{paper.category}</span>
-                      <span className="gr-paper-arxiv">
-                        arXiv:{paper.arxivId} · {paper.year}
-                      </span>
-                    </div>
-
-                    <h2 className="gr-paper-card-title">
-                      <Link to={`/papers/${paper.slug}/`}>{paper.title}</Link>
-                    </h2>
-
-                    <p className="gr-paper-card-desc">{paper.oneLiner}</p>
-
-                    <div className="gr-paper-specs">
-                      <div>
-                        <span className="gr-paper-spec-k">Footprint</span>
-                        <span className="gr-paper-spec-v">
-                          {paper.linesOfCode} lines of grad
+                  return (
+                    <article key={paper.slug} className="gr-paper-card">
+                      <div className="gr-paper-card-meta">
+                        <span className="gr-paper-cat">{paper.category}</span>
+                        <span className="gr-paper-arxiv">
+                          arXiv:{paper.arxivId} · {paper.year}
                         </span>
                       </div>
-                      <div>
-                        <span className="gr-paper-spec-k">Compute</span>
-                        <span className="gr-paper-spec-v">
-                          {defaultModel.compute} · {defaultModel.duration}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="gr-paper-spec-k">Est. cost</span>
-                        <span className="gr-paper-spec-v">
-                          {defaultModel.estCost}
-                        </span>
-                      </div>
-                    </div>
 
-                    <div className="gr-paper-card-cmd">
-                      <code>$ {quickCmd}</code>
-                      <button
-                        aria-label={`Copy CLI command for ${paper.shortTitle}`}
-                        className="gr-paper-cmd-copy"
-                        onClick={() => copy(paper.slug, quickCmd)}
-                        type="button"
-                      >
-                        {copiedKey === paper.slug ? "Copied" : "Copy"}
-                      </button>
-                    </div>
+                      <h2 className="gr-paper-card-title">
+                        <Link to={`/papers/${paper.slug}/`}>{paper.title}</Link>
+                      </h2>
 
-                    <div className="gr-paper-card-actions">
-                      <a
-                        className="gr-papers-btn-primary"
-                        href={launchHref}
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        Run on Gradiated →
-                      </a>
-                      <Link
-                        className="gr-papers-btn-secondary"
-                        to={`/papers/${paper.slug}/`}
-                      >
-                        Inspect recipe
-                      </Link>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+                      <p className="gr-paper-card-desc">{paper.oneLiner}</p>
+
+                      <div className="gr-paper-specs">
+                        <div>
+                          <span className="gr-paper-spec-k">Footprint</span>
+                          <span className="gr-paper-spec-v">
+                            {paper.linesOfCode} lines · {paper.smoothness.rating}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="gr-paper-spec-k">Compute</span>
+                          <span className="gr-paper-spec-v">
+                            {defaultModel.compute} · {defaultModel.duration}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="gr-paper-spec-k">Est. cost</span>
+                          <span className="gr-paper-spec-v">
+                            {defaultModel.estCost}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="gr-paper-card-cmd">
+                        <code>$ {quickCmd}</code>
+                        <button
+                          aria-label={`Copy CLI command for ${paper.shortTitle}`}
+                          className="gr-paper-cmd-copy"
+                          onClick={() => copy(paper.slug, quickCmd)}
+                          type="button"
+                        >
+                          {copiedKey === paper.slug ? "Copied" : "Copy"}
+                        </button>
+                      </div>
+
+                      <div className="gr-paper-card-actions">
+                        <a
+                          className="gr-papers-btn-primary"
+                          href={launchHref}
+                          rel="noreferrer"
+                          target="_blank"
+                        >
+                          Run on Gradiated →
+                        </a>
+                        <Link
+                          className="gr-papers-btn-secondary"
+                          to={`/papers/${paper.slug}/`}
+                        >
+                          Read tutorial
+                        </Link>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
 
             <section className="gr-papers-author-strip">
               <div>
@@ -257,7 +348,7 @@ export const PapersIndexPage = (): ReactElement => {
 };
 
 /* ---------------------------------------------------------------------------
-   /papers/<slug>/ — One-click launch + implementation guide
+   /papers/<slug>/ — Engaging Walkthrough Tutorial + One-Click Launch
    --------------------------------------------------------------------------- */
 
 export const PaperDetailPage = ({
@@ -278,7 +369,16 @@ export const PaperDetailPage = ({
   const launchHref = consoleLaunchUrl(paper.slug, modelId, datasetId);
   const cliCmd = cliCommandFor(paper.slug, modelId, datasetId);
   const initCmd = `grad init papers/${paper.slug}`;
-  const others = papers.filter((p) => p.slug !== paper.slug);
+
+  const related = useMemo(() => {
+    const sameCategory = papers.filter(
+      (p) => p.slug !== paper.slug && p.category === paper.category,
+    );
+    const others = papers.filter(
+      (p) => p.slug !== paper.slug && p.category !== paper.category,
+    );
+    return [...sameCategory, ...others].slice(0, 3);
+  }, [paper.category, paper.slug]);
 
   return (
     <Substrate>
@@ -288,7 +388,7 @@ export const PaperDetailPage = ({
         <Module className="gr-module--top" index={0}>
           <article className="gr-papers-wrap gr-papers-detail">
             <nav aria-label="Breadcrumb" className="gr-paper-crumb">
-              <Link to="/papers/">← All paper reproductions</Link>
+              <Link to="/papers/">← All {papers.length} paper reproductions</Link>
               <span>·</span>
               <span>{paper.category}</span>
               <span>·</span>
@@ -409,15 +509,48 @@ export const PaperDetailPage = ({
               </div>
             </section>
 
-            {/* Why this fits grad + Primitives used */}
+            {/* The Story & Core Insight */}
             <section className="gr-paper-section">
-              <h2>Why it is {paper.linesOfCode} lines in grad</h2>
+              <h2>The problem this paper solved</h2>
+              <p className="gr-paper-copy">{paper.story}</p>
+
+              <aside className="gr-doc-callout gr-doc-callout--tip">
+                <div className="gr-doc-callout-label">Core idea</div>
+                <div className="gr-doc-callout-body">
+                  <p>{paper.insight}</p>
+                </div>
+              </aside>
+            </section>
+
+            {/* Step-by-Step Walkthrough */}
+            <section className="gr-paper-section">
+              <h2>How it works in grad (step by step)</h2>
               <p className="gr-paper-copy">{paper.whyGrad}</p>
-              <ul className="gr-paper-bullets">
-                {paper.keyIdeas.map((idea) => (
-                  <li key={idea}>{idea}</li>
+
+              <ol className="gr-paper-steps">
+                {paper.walkthrough.map((step, index) => (
+                  <li key={step.title} className="gr-paper-step">
+                    <div className="gr-paper-step-head">
+                      <span className="gr-paper-step-num">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <strong>{step.title}</strong>
+                      <code className="gr-paper-step-call">
+                        {step.gradCall}
+                      </code>
+                    </div>
+                    <p>{step.explanation}</p>
+                  </li>
                 ))}
-              </ul>
+              </ol>
+
+              <div className="gr-paper-smoothness">
+                <span className="gr-paper-smooth-badge">
+                  Implementation smoothness · {paper.smoothness.rating}
+                </span>
+                <p>{paper.smoothness.verdict}</p>
+              </div>
+
               <div className="gr-doc-chips">
                 {paper.primitives.map((prim) => (
                   <Link
@@ -498,6 +631,16 @@ export const PaperDetailPage = ({
               </div>
             </section>
 
+            {/* Practitioner Pitfalls */}
+            <section className="gr-paper-section">
+              <h2>Practitioner notes &amp; pitfalls</h2>
+              <ul className="gr-paper-bullets">
+                {paper.gotchas.map((tip) => (
+                  <li key={tip}>{tip}</li>
+                ))}
+              </ul>
+            </section>
+
             {/* Benchmarks & Reference Targets */}
             <section className="gr-paper-section">
               <h2>Reference targets &amp; template setup</h2>
@@ -550,11 +693,11 @@ export const PaperDetailPage = ({
               </div>
             </section>
 
-            {/* More Paper Reproductions */}
+            {/* Related Paper Reproductions */}
             <section className="gr-paper-section">
-              <h2>More paper reproductions</h2>
+              <h2>Related paper reproductions</h2>
               <div className="gr-paper-more">
-                {others.map((other) => (
+                {related.map((other) => (
                   <Link
                     key={other.slug}
                     className="gr-paper-more-link"

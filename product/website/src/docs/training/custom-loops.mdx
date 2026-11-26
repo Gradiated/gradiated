@@ -32,29 +32,27 @@ Queue `forward_backward()` and `optim_step()` before calling `.result()` so the 
 
 ### Chat templates and assistant-only masking
 
-For multi-turn chat or tool-use SFT, let the server render the model's exact chat template and return `loss_mask` (`0.0` on system, user, and tool turns; `1.0` on assistant turns):
+For multi-turn chat or tool-use SFT, let the server render the model's exact chat template and return `loss_mask` (`0.0` on system, user, and tool turns; `1.0` on assistant turns) — or call `base.to_datum()` as a one-line shorthand:
 
 ```python
 base = client.artifacts.get("Qwen/Qwen3-8B")
 
-encoded = base.tokenize(
+datum = base.to_datum(
     messages=[
         {"role": "system", "content": "You are a concise SQL assistant."},
         {"role": "user", "content": "Count active users from yesterday."},
         {"role": "assistant", "content": "SELECT count(*) FROM users WHERE active_at >= current_date - 1;"},
     ],
     tools=tool_schemas,
-    return_loss_mask=True,
 )
-datum = Datum(ModelInput(tokens=encoded["tokens"]), DatumTargets(loss_mask=encoded["loss_mask"]))
 ```
 
 ## Example 1: Multi-turn GRPO loop
 
-This loop runs rollouts in a [stateful environment](/docs/training/environments/), normalizes rewards per prompt group, skips zero-variance groups, updates LoRA weights with GRPO, and exports a merged artifact. See the [RL for agents guide](/docs/training/recipes/rl-agents/) for swapping in DAPO, async CISPO, or sequence-level GSPO.
+This loop runs rollouts in a [stateful environment](/docs/training/environments/), normalizes rewards per prompt group via `grad.group_datums()` (skipping zero-variance groups automatically), updates LoRA weights with GRPO, and exports a merged artifact. See the [RL for agents guide](/docs/training/recipes/rl-agents/) for swapping in DAPO, Dr. GRPO (`norm="mean"`), RLOO (`norm="rloo"`), async CISPO, or sequence-level GSPO.
 
 ```python
-import statistics
+import grad
 from grad import Grad, ModelSpec
 
 client = Grad()
@@ -74,16 +72,8 @@ with client.trainers.create(
             max_concurrency=8,
         )
 
-        datums = []
-        for group in groups:
-            rewards = [t.scores["reward"] for t in group]
-            sd = statistics.pstdev(rewards)
-            if sd < 1e-6:
-                continue
-
-            mean = statistics.fmean(rewards)
-            for traj, r in zip(group, rewards):
-                datums.append(traj.to_datum(advantage=(r - mean) / (sd + 1e-6)))
+        # Group-normalize rewards and skip zero-variance groups (norm="std" | "mean" | "rloo")
+        datums = grad.group_datums(groups, norm="std", skip_zero_var=True)
 
         # Queue both calls before waiting to pipeline GPU execution across one RTT.
         fb = trainer.forward_backward(
@@ -108,32 +98,33 @@ Passing an empty `datums` list (when every group in a batch has identical reward
 
 ## Example 2: Custom loss with `forward_backward_custom`
 
-You do not need to wait for a server-side loss enum to test a new objective. `trainer.forward_backward_custom()` requests differentiable outputs from `/forward`, evaluates your PyTorch loss locally on the client, and sends exact gradients back to `/backward-surrogate`. No untrusted user code runs on GPU workers, and gradients match native PyTorch `.backward()` bit-for-bit.
+You do not need to wait for a server-side loss enum to test a new objective. `trainer.forward_backward_custom()` requests differentiable outputs from `/forward`, pre-populates aligned PyTorch tensors (`out["masks"]` with `mask[0] == 0.0`, `out["sampling_logprobs"]`, `out["ref_logprobs"]`, `out["advantages"]`, `out["turn_ids"]`, and auto-batched `out["teacher_topk_logprobs"]` when `gather_indices` is set), evaluates your loss locally, and sends exact gradients back to `/backward-surrogate`. No untrusted user code runs on GPU workers, and gradients match native PyTorch `.backward()` bit-for-bit.
 
-Here is reference-free SimPO:
+Here is shuffle-safe, reference-free SimPO using `grad.by_group()` and `grad.masked_mean()`:
 
 ```python
 import torch
 import torch.nn.functional as F
-from grad import Datum, DatumTargets, Grad, ModelInput, ModelSpec
+import grad
+from grad import Grad, ModelSpec
 
 client = Grad()
 base = client.artifacts.get("Qwen/Qwen3-8B")
 
-prompt_toks = base.tokenize("Explain tail latency in one sentence.")
-chosen_toks = base.tokenize("Tail latency is the response time of the slowest few percent of requests.")
-rejected_toks = base.tokenize("Latency is when computers wait a long time for packets to arrive.")
-
 preference_pairs = [
-    Datum(
-        ModelInput(tokens=prompt_toks + chosen_toks),
-        DatumTargets(loss_mask=[0.0] * len(prompt_toks) + [1.0] * len(chosen_toks)),
+    base.to_datum(
+        messages=[
+            {"role": "user", "content": "Explain tail latency in one sentence."},
+            {"role": "assistant", "content": "Tail latency is the response time of the slowest few percent of requests."},
+        ],
         group_id="p0",
         role="chosen",
     ),
-    Datum(
-        ModelInput(tokens=prompt_toks + rejected_toks),
-        DatumTargets(loss_mask=[0.0] * len(prompt_toks) + [1.0] * len(rejected_toks)),
+    base.to_datum(
+        messages=[
+            {"role": "user", "content": "Explain tail latency in one sentence."},
+            {"role": "assistant", "content": "Latency is when computers wait a long time for packets to arrive."},
+        ],
         group_id="p0",
         role="rejected",
     ),
@@ -141,12 +132,10 @@ preference_pairs = [
 
 def simpo_loss(datums, out, beta=2.0, gamma=0.5):
     losses = []
-    for i in range(0, len(datums), 2):
-        mc = torch.tensor(datums[i].targets.loss_mask)
-        mr = torch.tensor(datums[i + 1].targets.loss_mask)
-        avg_chosen = (out["logprobs"][i] * mc).sum() / mc.sum().clamp(min=1.0)
-        avg_rejected = (out["logprobs"][i + 1] * mr).sum() / mr.sum().clamp(min=1.0)
-        losses.append(-F.logsigmoid(beta * (avg_chosen - avg_rejected) - gamma))
+    for g in grad.by_group(datums, out):
+        c, r = g["chosen"], g["rejected"]
+        margin = grad.masked_mean(c.logprobs, c.mask) - grad.masked_mean(r.logprobs, r.mask)
+        losses.append(-F.logsigmoid(beta * margin - gamma))
     return torch.stack(losses).mean()
 
 with client.trainers.create(
@@ -164,7 +153,7 @@ with client.trainers.create(
 
 ### Compact top-k distillation with `gather_indices`
 
-Never pull full 152k-vocabulary logits over the wire for custom distillation. Ask the teacher for `top_k=32` opaque `TensorRef`s and pass them as `gather_indices` so the student returns only the matching `(T_resp, 32)` logprobs. Inside your loss function, fetch any `TensorRef` payload with `client.tensors.fetch(ref)` (see the full JSD example in the [Distillation guide](/docs/training/recipes/distillation/)):
+Never pull full 152k-vocabulary logits over the wire for custom distillation. Ask the teacher for `top_k=32` opaque `TensorRef`s and pass them as `gather_indices` so the student returns only the matching `(T_resp, 32)` logprobs while `forward_backward_custom()` batch-fetches `out["teacher_topk_logprobs"]` in a single RPC (or use `client.tensors.fetch_batch(refs)` for arbitrary intermediate layer `TensorRef`s):
 
 ```python
 teacher = client.artifacts.get("Qwen/Qwen3-32B")
@@ -360,7 +349,7 @@ with client.trainers.create(
 
 | `loss.kind` | Use it for |
 | --- | --- |
-| `cross_entropy` | Next-token SFT respecting `loss_mask`. |
+| `cross_entropy` | Next-token SFT respecting `loss_mask`; optionally pass `heads: { name: { shift, weight } }` for server-side Medusa / multi-token prediction heads without sending vocab logits over HTTP. |
 | `bce_logits` | Binary or multi-label head classification. |
 | `l2_logistic` | Regularized logistic heads. |
 | `dpo` | Paired preference optimization (`group_id` + `chosen` / `rejected`). |

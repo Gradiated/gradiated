@@ -14,6 +14,7 @@ export const roadmapEntries: readonly RoadmapEntry[] = [
   {
     id: "linden-1",
     category: "Decision model",
+    name: "linden-1",
     description:
       "An open-weight decision model for tasks like ticket triage. It returns choices, probabilities, or scores from text or structured data.",
     release: {
@@ -58,6 +59,7 @@ export const roadmapEntries: readonly RoadmapEntry[] = [
   {
     id: "diff-merging",
     category: "Diff merging",
+    status: "In progress",
     description:
       "Reconcile conflicting edits and surface the decisions that still need a human.",
   },

@@ -164,7 +164,7 @@ export const ModelRoadmap = (): ReactElement => {
                               className={voted ? undefined : "gr-roadmap-up"}
                               name={voted ? "check" : "caret-right"}
                             />
-                            {voted ? "Upvoted" : "Upvote"}
+                            {voted ? "Voted" : "Vote"}
                           </button>
                         )}
                         {canSuggestName(entry) && (
@@ -176,7 +176,7 @@ export const ModelRoadmap = (): ReactElement => {
                             type="button"
                           >
                             <PixelIcon name="lightbulb" />
-                            Suggest a name
+                            Name it
                           </button>
                         )}
                       </div>

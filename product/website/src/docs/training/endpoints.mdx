@@ -316,7 +316,7 @@ Endpoints support single-artifact and multi-artifact orchestration via extensibl
 
 | Strategy class | Artifacts | Behavior | Guide |
 | --- | --- | --- | --- |
-| `strategies.Direct()` | 1 | Pass-through inference on the active artifact. | [Distillation & Cartridges](/docs/training/recipes/distillation/) |
+| `strategies.Direct()` | 1 | Pass-through inference on the active artifact. | [Model distillation](/docs/training/recipes/distillation/) |
 | `strategies.SLALagrangian(...)` | 1 | Calibrated lower-confidence-bound routing with fallback probes (`10%`), online primal-dual `λ`, and a hard-stop circuit breaker. | [Model router](/docs/training/recipes/router/) |
 | `strategies.ConfidenceFallback(...)` | 1 | Temperature- or conformal-calibrated softmax threshold with automatic fallback label or model. | [Classifiers & decisions](/docs/training/recipes/classifier/) |
 | `strategies.SyntaxFallback(...)` | 1–2 | Validates JSON schema or AST on generated output and retries on a fallback `Model` or `Artifact` if invalid. | [Fine-tuning (SFT & DPO)](/docs/training/recipes/sft-dpo/) |

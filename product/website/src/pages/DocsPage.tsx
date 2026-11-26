@@ -51,6 +51,7 @@ import DocsTrainingTracesToEnvironments from "../docs/training/traces-to-environ
 import DocsTrainingOverview from "../docs/training/index.mdx";
 import DocsTrainingRecipes from "../docs/training/recipes.mdx";
 import DocsTrainingSelfHosting from "../docs/training/self-hosting.mdx";
+import DocsRecipeCartridges from "../docs/training/recipes/cartridges.mdx";
 import DocsRecipeClassifier from "../docs/training/recipes/classifier.mdx";
 import DocsRecipeDistillation from "../docs/training/recipes/distillation.mdx";
 import DocsRecipeEmbeddings from "../docs/training/recipes/embeddings.mdx";
@@ -183,9 +184,14 @@ export const documents = {
     Component: DocsRecipeRlAgents,
   },
   "recipe-distillation": {
-    title: "Distillation and Cartridges",
+    title: "Model distillation",
     path: "/docs/training/recipes/distillation/",
     Component: DocsRecipeDistillation,
+  },
+  "recipe-cartridges": {
+    title: "Context Cartridges",
+    path: "/docs/training/recipes/cartridges/",
+    Component: DocsRecipeCartridges,
   },
   "recipe-reward-models": {
     title: "Reward models and verifiers",
@@ -247,6 +253,7 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
       "recipe-sft-dpo",
       "recipe-rl-agents",
       "recipe-distillation",
+      "recipe-cartridges",
       "recipe-reward-models",
       "recipe-embeddings",
     ],

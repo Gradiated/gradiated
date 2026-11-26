@@ -1,22 +1,15 @@
-# Distillation and Cartridges
+# Model distillation
 
-<DocsLead>Shrink a slow teacher model into a fast student with on-policy distillation, or compress long static context into a KV-cache Cartridge you pay to encode once.</DocsLead>
+<DocsLead>Shrink a slow teacher model into a fast student with on-policy top-k KL distillation, custom divergences, or Self-Distillation Fine-Tuning (SDFT).</DocsLead>
 
-Both recipes reduce serving cost and latency without sacrificing task quality, in two different ways:
+Offline SFT on teacher outputs teaches the student what the teacher says on *teacher* prefixes, which drifts as soon as the student generates its own tokens. **`DistillRecipe`** with on-policy rollouts (`rollout=OnPolicy(...)`) samples from the **student**, scores those exact sequences with the **teacher's** top-`k` logprobs, and minimizes KL divergence where the student actually goes.
 
-- **`DistillRecipe`** transfers behavior from a larger teacher model (e.g. `Qwen/Qwen3-32B`) into a smaller student (`Qwen/Qwen3-4B`) using token-level probability distributions instead of hard text labels.
-- **`CartridgeRecipe`** compresses a large static corpus (API docs, internal runbooks, repository manuals) into a small trainable KV-cache prefix (`adapters.PrefixKV`) attached to a frozen base model, eliminating 20k–100k repeated system-prompt tokens on every request.
-
-## On-policy distillation (`DistillRecipe`)
-
-Offline SFT on teacher outputs teaches the student what the teacher says on *teacher* prefixes, which drifts as soon as the student generates its own tokens. On-policy distillation (`rollout=OnPolicy(...)`) samples from the **student**, scores those exact sequences with the **teacher's** top-`k` logprobs, and minimizes KL divergence where the student actually goes.
-
-### What data you need
+## What data you need
 
 - **Only prompts:** You do not need gold answers — 1,000–5,000 representative production prompts in `input.messages` ([trajectories](/docs/training/trajectories/)) are enough.
 - **A teacher model:** Any catalog `Model` (`Model("Qwen/Qwen3-32B")`) or a larger fine-tuned `.grad` [`Artifact`](/docs/training/endpoints/) you trained earlier.
 
-### Train with `DistillRecipe`
+## Train with `DistillRecipe`
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -101,7 +94,7 @@ grad train -f distill-4b.yaml --wait
   </DocsCodeTab>
 </DocsCodeTabs>
 
-### Custom distillation divergences (`CustomLoss` + `gather_indices`)
+## Custom distillation divergences (`CustomLoss` + `gather_indices`)
 
 For custom divergences such as Jensen-Shannon divergence (GKD) or Skew KL (DistiLLM), fetch `top_k` opaque `TensorRef`s from the teacher and pass `gather_indices=t_refs` to `trainer.forward_backward(...)`. Only `(T_resp, 32)` student logprobs cross the wire, and `out.teacher_topk_logprobs` is automatically batch-fetched in a single RPC:
 
@@ -138,7 +131,7 @@ with client.trainers.create(model=Model("Qwen/Qwen3-4B"), adapter=adapters.LoRA(
     trainer.optim_step(optim.AdamW(lr=1e-4)).result()
 ```
 
-### Self-Distillation Fine-Tuning (SDFT)
+## Self-Distillation Fine-Tuning (SDFT)
 
 Want continual learning from golden demonstrations without hosting a larger teacher model or suffering SFT catastrophic forgetting? In SDFT, the **same base model** acts as teacher when shown the question *plus* a golden demo in context, while the student sees only the question. Because `score_logprobs` accepts split `(prefix_tokens, response_tokens)` and `with_targets()` aligns `response_offset` automatically, the full loop is 15 lines:
 
@@ -162,77 +155,25 @@ with client.trainers.create(model=teacher, adapter=adapters.LoRA(rank=64)) as tr
         trainer.optim_step(optim.AdamW(lr=2e-5)).result()
 ```
 
-<DocsCallout label="Picking the right distillation pattern" tone="tip">
-Use **`DistillRecipe`** to shrink a larger teacher (32B → 4B) on unlabeled prompts. Use **SDFT** to learn new skills from demonstrations while preserving prior capabilities. Use **LoRA prompt distillation** (`DistillRecipe` + `context=Context.from_uri(...)`) for one merged prompt-free checkpoint, or **`CartridgeRecipe` (`adapters.PrefixKV`)** to swap many per-tenant contexts on one shared frozen base model.
+<DocsCallout label="Compressing a long static system prompt instead?" tone="tip">
+To eliminate 30k–100k repeated tokens of documentation or per-tenant context on every request, see the dedicated [Context Cartridges (`CartridgeRecipe`)](/docs/training/recipes/cartridges/) guide.
 </DocsCallout>
 
-## Context Cartridges (`CartridgeRecipe`)
+## Deploy and serve
 
-If every request prepends the same 30k–100k tokens of documentation, API specs, or compliance rules, a Cartridge compresses that context into a small trainable KV-cache prefix (`adapters.PrefixKV`, typically 128–1,024 virtual tokens). The base model weights stay frozen; only the prefix KV tensors are trained so the student without the long prompt matches the teacher *with* the long prompt.
-
-### Train a Cartridge
+Distilled checkpoints export as standard `.grad` artifacts and deploy onto any [`Endpoint`](/docs/training/endpoints/) with `strategies.Direct()` (or `strategies.Cascade` paired with a verifier):
 
 ```python
-from grad import Context, Grad, Model, adapters, losses, optim
-from grad.recipes import CartridgeRecipe
-
-client = Grad()
-dataset = client.datasets.get("api-docs-qa-prompts")
-
-recipe = CartridgeRecipe(
-    model=Model("Qwen/Qwen3-8B"),
-    teacher=Model("Qwen/Qwen3-8B"),
-    context=Context.from_uri("s3://my-bucket/api-docs-bundle.md"),
-    adapter=adapters.PrefixKV(num_tokens=256),
-    loss=losses.TopKKLDistill(top_k=20),
-    optimizer=optim.AdamW(lr=2e-2),
-)
-
-run = client.runs.create(dataset=dataset, name="api-docs-cartridge", recipe=recipe).wait()
-
-print(run.artifact.id, run.eval_report)
+endpoint = run.deploy(canary=0.10)
 ```
-
-### Prompt distillation into LoRA weights
-
-If you want to internalize a long system prompt into standard LoRA weights (and optionally merge them with `merge_on_export=True`) instead of maintaining a separate `PrefixKV` Cartridge, pass `context=` (`Context.from_uri`, `Context.from_file`, or `Context.from_text`) to `DistillRecipe` with `adapters.LoRA`:
-
-```python
-recipe = DistillRecipe(
-    model=Model("Qwen/Qwen3-8B"),
-    teacher=Model("Qwen/Qwen3-8B"),
-    context=Context.from_uri("s3://my-bucket/api-docs-bundle.md"),
-    adapter=adapters.LoRA(rank=32, merge_on_export=True),
-    rollout=OnPolicy(max_new_tokens=512),
-    loss=losses.TopKKLDistill(top_k=32),
-)
-
-run = client.runs.create(dataset=dataset, name="api-docs-prompt-distilled", recipe=recipe).wait()
-```
-
-Choose **`CartridgeRecipe` (`adapters.PrefixKV`)** when you serve many per-tenant or per-repository contexts against one shared frozen base model; choose **prompt distillation (`DistillRecipe` + `adapters.LoRA`)** when you want one merged checkpoint with zero prefix-KV overhead.
-
-### Deploy and serve
-
-Cartridges export as standard `.grad` artifacts (`prefix_kv.safetensors` + `base_model_ref`) and deploy onto any `Endpoint` identically to a LoRA adapter. Requests hit the endpoint with only the user question — no giant system prompt required:
-
-```python
-endpoint = run.deploy()
-```
-
-| Parameter | Guidance |
-| --- | --- |
-| `adapters.PrefixKV(num_tokens=...)` | `128`–`256` for 10k–30k token manuals; `512`–`1024` for 100k+ token corpora. |
-| `optim.AdamW(lr=...)` | Prefix KV parameters need a much higher learning rate (`1e-2`–`2e-2`) than LoRA adapters. |
-| `eval_report` | Compare KL divergence and task QA accuracy against the full-context teacher to pick the smallest `num_tokens` that holds quality. |
 
 <DocsNext>
-  <a href="/docs/training/recipes/reward-models/">
+  <a href="/docs/training/recipes/cartridges/">
     <small>Next guide</small>
-    <strong>Reward models and verifiers</strong>
+    <strong>Context Cartridges</strong>
   </a>
-  <a href="/docs/training/endpoints/">
-    <small>Deploy</small>
-    <strong>Artifacts and endpoints</strong>
+  <a href="/docs/training/recipes/reward-models/">
+    <small>Verifiers</small>
+    <strong>Reward models and verifiers</strong>
   </a>
 </DocsNext>

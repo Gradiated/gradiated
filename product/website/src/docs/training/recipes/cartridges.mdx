@@ -1,0 +1,144 @@
+# Context Cartridges
+
+<DocsLead>Compress 30k–100k tokens of repeated system prompts, API documentation, or repository manuals into a compact trainable KV-cache prefix you pay to encode once and hot-swap per tenant.</DocsLead>
+
+When every request prepends the same long static corpus (internal runbooks, compliance rules, product docs, or codebase manuals), re-processing that context on every turn inflates prefill latency and cost. **`CartridgeRecipe`** freezes the base model and trains a small virtual KV-cache prefix (`adapters.PrefixKV`, typically 128–1,024 tokens) so the model without the long prompt matches the model *with* the long prompt.
+
+## What data you need
+
+- **Static corpus (`Context`):** Pass your bundle via `Context.from_uri("s3://...")`, `Context.from_file("./api-docs.md")`, or `Context.from_text(...)`.
+- **QA / task prompts (`Dataset`):** 500–2,000 representative questions or tasks grounded in that corpus in `input.messages` ([trajectories](/docs/training/trajectories/)) — no gold answers required.
+
+## Train a Cartridge (`CartridgeRecipe`)
+
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Context, Grad, Model, adapters, losses, optim
+from grad.recipes import CartridgeRecipe
+
+client = Grad()
+dataset = client.datasets.get("api-docs-qa-prompts")
+
+recipe = CartridgeRecipe(
+    model=Model("Qwen/Qwen3-8B"),
+    teacher=Model("Qwen/Qwen3-8B"),
+    context=Context.from_uri("s3://my-bucket/api-docs-bundle.md"),
+    adapter=adapters.PrefixKV(num_tokens=256),
+    loss=losses.TopKKLDistill(top_k=20),
+    optimizer=optim.AdamW(lr=2e-2),
+)
+
+run = client.runs.create(dataset=dataset, name="api-docs-cartridge", recipe=recipe).wait()
+
+print(run.artifact.id, run.eval_report)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Context, Grad, Model, adapters, losses, optim, recipes } from "@gradiated/grad";
+
+const grad = new Grad();
+const dataset = await grad.datasets.get("api-docs-qa-prompts");
+
+const run = await grad.runs
+  .create({
+    dataset,
+    name: "api-docs-cartridge",
+    recipe: recipes.cartridge({
+      model: new Model("Qwen/Qwen3-8B"),
+      teacher: new Model("Qwen/Qwen3-8B"),
+      context: Context.fromUri("s3://my-bucket/api-docs-bundle.md"),
+      adapter: adapters.prefixKV({ numTokens: 256 }),
+      loss: losses.topKKLDistill({ topK: 20 }),
+      optimizer: optim.adamW({ lr: 2e-2 }),
+    }),
+  })
+  .wait();
+
+console.log(run.artifact.id, run.evalReport);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI (YAML)">
+
+```yaml
+# cartridge-docs.yaml
+dataset: api-docs-qa-prompts
+name: api-docs-cartridge
+recipe: cartridge
+model: Qwen/Qwen3-8B
+teacher: Qwen/Qwen3-8B
+context:
+  uri: s3://my-bucket/api-docs-bundle.md
+adapter:
+  kind: prefix_kv
+  num_tokens: 256
+loss:
+  kind: topk_kl_distill
+  top_k: 20
+optimizer:
+  kind: adamw
+  lr: 2e-2
+```
+
+```bash
+grad train -f cartridge-docs.yaml --wait
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## Deploy and serve
+
+Cartridges export as standard `.grad` artifacts (`prefix_kv.safetensors` + `base_model_ref`) and deploy onto any [`Endpoint`](/docs/training/endpoints/) identically to a LoRA adapter. Requests hit the endpoint with only the user question — no giant system prompt required:
+
+```python
+endpoint = run.deploy()
+```
+
+### Key parameters
+
+| Component | Guidance |
+| --- | --- |
+| `adapters.PrefixKV(num_tokens=...)` | `128`–`256` for 10k–30k token manuals; `512`–`1024` for 100k+ token corpora. |
+| `optim.AdamW(lr=...)` | Prefix KV tensors need a much higher learning rate (`1e-2`–`2e-2`) than LoRA adapters. |
+| `eval_report` | Compare KL divergence and task QA accuracy against the full-context teacher to pick the smallest `num_tokens` that holds quality. |
+
+## Cartridge (`PrefixKV`) vs. prompt distillation into LoRA
+
+If you only have **one** static prompt and want a single merged checkpoint with zero prefix-KV tensors at serving time, pass `context=` to [`DistillRecipe`](/docs/training/recipes/distillation/) with `adapters.LoRA(..., merge_on_export=True)`:
+
+```python
+from grad import Context, Model, adapters, losses
+from grad.recipes import DistillRecipe, OnPolicy
+
+recipe = DistillRecipe(
+    model=Model("Qwen/Qwen3-8B"),
+    teacher=Model("Qwen/Qwen3-8B"),
+    context=Context.from_uri("s3://my-bucket/api-docs-bundle.md"),
+    adapter=adapters.LoRA(rank=32, merge_on_export=True),
+    rollout=OnPolicy(max_new_tokens=512),
+    loss=losses.TopKKLDistill(top_k=32),
+)
+
+run = client.runs.create(dataset=dataset, name="api-docs-prompt-distilled", recipe=recipe).wait()
+```
+
+<DocsCallout label="When to pick CartridgeRecipe vs. LoRA prompt distillation" tone="tip">
+Choose **`CartridgeRecipe` (`adapters.PrefixKV`)** when you serve many per-tenant, per-customer, or per-repository contexts against one shared frozen base model. Choose **prompt distillation (`DistillRecipe` + `adapters.LoRA`)** when you have one global system prompt and want a single merged model.
+</DocsCallout>
+
+<DocsNext>
+  <a href="/docs/training/recipes/reward-models/">
+    <small>Next guide</small>
+    <strong>Reward models and verifiers</strong>
+  </a>
+  <a href="/docs/training/recipes/distillation/">
+    <small>Related</small>
+    <strong>Model distillation</strong>
+  </a>
+</DocsNext>

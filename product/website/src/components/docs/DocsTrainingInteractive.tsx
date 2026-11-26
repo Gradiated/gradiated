@@ -324,7 +324,7 @@ run = client.runs.create(
     profile: "adapters.PrefixKV (frozen base)",
     typicalWin: "Pay to encode docs once; swap per tenant",
     dataNeeded: "Static docs corpus (Context) + QA prompts",
-    href: "/docs/training/recipes/distillation/",
+    href: "/docs/training/recipes/cartridges/",
     snippet: `dataset = client.datasets.get("api-docs-qa")
 run = client.runs.create(
     dataset=dataset,

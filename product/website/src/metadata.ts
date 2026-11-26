@@ -249,9 +249,14 @@ const pageMetadata: Record<string, PageMetadataContent> = {
       "Train reasoning and tool-use agents with GRPO, DAPO, CISPO, RLOO, and GSPO against rubrics and Docker Compose environments.",
   },
   "/docs/training/recipes/distillation/": {
-    title: "Distillation and Cartridges guide",
+    title: "Model distillation guide",
     description:
-      "Distill larger teacher models into fast students with on-policy top-k KL, or compress static context into KV-cache Cartridges.",
+      "Distill larger teacher models into fast students with on-policy top-k KL, custom divergences, and Self-Distillation Fine-Tuning (SDFT).",
+  },
+  "/docs/training/recipes/cartridges/": {
+    title: "Context Cartridges guide",
+    description:
+      "Compress 30k–100k token static corpora and repeated system prompts into hot-swappable KV-cache Cartridges with CartridgeRecipe.",
   },
   "/docs/training/recipes/reward-models/": {
     title: "Reward models and verifiers guide",

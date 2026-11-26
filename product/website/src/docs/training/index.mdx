@@ -313,7 +313,7 @@ Read https://gradiated.com/docs/training/environments.md and https://gradiated.c
   <DocsCodeTab label="Distill / Cartridge">
 
 ```text
-Read https://gradiated.com/docs/training/recipes/distillation.md:
+Read https://gradiated.com/docs/training/recipes/distillation.md (or https://gradiated.com/docs/training/recipes/cartridges.md):
 1. Identify our high-volume frontier prompts or repeated long system prompts.
 2. Configure `DistillRecipe` (32B teacher -> 4B/8B student) or `CartridgeRecipe` (`adapters.PrefixKV` over our static context).
 3. Validate with `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json`, run training, compare `eval_report` against the baseline, and deploy with `--shadow` first.

@@ -15,8 +15,8 @@ Every **recipe** (`RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, 
 | `SFTRecipe` | [Fine-tuning and preferences](/docs/training/recipes/sft-dpo/) | `input` + `expected_output` (or filtered high-score `output`) |
 | `DPORecipe` | [Fine-tuning and preferences](/docs/training/recipes/sft-dpo/) | Paired `group_id` trajectories with `role: chosen \| rejected` |
 | `GRPORecipe` | [RL for agents (GRPO)](/docs/training/recipes/rl-agents/) | Prompts + a `Rubric` (`Judge` / `validators.*`) or stateful `Environment` |
-| `DistillRecipe` | [Distillation and Cartridges](/docs/training/recipes/distillation/) | Prompts or traces + `teacher` artifact |
-| `CartridgeRecipe` | [Distillation and Cartridges](/docs/training/recipes/distillation/) | Static context corpus + QA prompts (`adapters.PrefixKV`) |
+| `DistillRecipe` | [Model distillation](/docs/training/recipes/distillation/) | Prompts or traces + `teacher` model |
+| `CartridgeRecipe` | [Context Cartridges](/docs/training/recipes/cartridges/) | Static context corpus (`Context`) + QA prompts (`adapters.PrefixKV`) |
 
 For specialized training patterns built on these same primitives, see [Reward models and verifiers](/docs/training/recipes/reward-models/) and [Embeddings and rerankers](/docs/training/recipes/embeddings/).
 

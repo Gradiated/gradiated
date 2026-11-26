@@ -6,8 +6,33 @@ General-purpose embedding models often miss internal acronyms, product names, an
 
 ## What data you need
 
-- **Minimum volume:** 1,000–5,000 query groups in a [`Dataset`](/docs/training/trajectories/) sharing a `group_id` with `role: "anchor"` (the query), `role: "positive"` (the right document), and one or more `role: "negative"` (wrong documents that look similar).
-- **Use near-miss negatives:** random wrong documents are too easy to tell apart; pull close-but-wrong results from your current search or RAG pipeline.
+Each training example is a `Triplet` with three parts:
+
+- **`query`:** what a user (or agent) searched for.
+- **`positive`:** the doc or code snippet that actually answers the query.
+- **`negatives`:** one or more wrong docs that look similar to the right one, so the model learns to rank the right doc above them.
+
+Aim for **1,000–5,000 triplets** in a [`Dataset`](/docs/training/trajectories/). Push them directly with `Triplet`:
+
+```python
+from grad import Grad, Triplet
+
+client = Grad()
+dataset = client.datasets.create("docs-retrieval-triplets")
+
+dataset.push([
+    Triplet(
+        query="how do I rotate my api key?",
+        positive="To rotate an existing API key, open Settings > API Keys and click Regenerate.",
+        negatives=[
+            "To create your first API key, open Settings > API Keys and click New Key.",
+            "API keys are scoped to a single workspace and can be revoked at any time.",
+        ],
+    ),
+])
+```
+
+**Why wrong docs should be close misses:** if the query is *"rotate my api key"* and the negative is *"Pricing FAQ"*, any base model already knows those are unrelated and learns almost nothing. Pulling close-but-wrong results from your current search or RAG pipeline (like *"create an API key"* when the user asked to *rotate* one) teaches the model the exact distinctions it currently gets wrong. If you only have `(query, positive)` pairs to start, you can omit `negatives` and `EmbeddingRecipe` will use other docs in the same batch as negatives, though adding real close-miss negatives improves ranking quality further.
 
 ## Train with `EmbeddingRecipe`
 
@@ -82,7 +107,7 @@ grad deploy docs-embedder@latest
 - **`model`:** start with a compact encoder like `"baai/bge-small-en-v1.5"` (sub-10 ms inference). Move to a larger encoder only if retrieval quality plateaus on long code or technical text.
 - **`adapter=adapters.Full()`:** because embedding encoders are small (~33M–300M parameters), training all weights is fast and usually beats LoRA.
 - **`pool=pooling.Mean()`:** averages token vectors into one vector per document (the standard choice for dense search).
-- **`losses.InfoNCE(temp=0.05)`:** pulls matching `(anchor, positive)` pairs together and pushes near-miss `negative` docs apart; lower `temp` (`0.03`–`0.05`) sharpens rankings when negatives are close.
+- **`losses.InfoNCE(temp=0.05)`:** pulls matching `(query, positive)` pairs together and pushes `negatives` apart; lower `temp` (`0.03`–`0.05`) sharpens rankings when wrong docs are very similar to the right one.
 - **`optim.AdamW(lr=...)`:** keep the learning rate low (`1e-5`–`3e-5`) for full encoder fine-tuning.
 
 ## Embed offline or deploy

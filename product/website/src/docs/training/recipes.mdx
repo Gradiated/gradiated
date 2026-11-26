@@ -18,7 +18,7 @@ A **recipe** is a Python class that wires up a common training workflow (`Router
 | `DistillRecipe` | [Model distillation](/docs/training/recipes/distillation/) | Prompts or traces + `teacher` model |
 | `CartridgeRecipe` | [Context Cartridges](/docs/training/recipes/cartridges/) | Static corpus (`Context`) + QA prompts (`num_tokens`) |
 | `RewardModelRecipe` | [Reward models](/docs/training/recipes/reward-models/) | Paired `group_id` trajectories with `role: chosen \| rejected` |
-| `EmbeddingRecipe` | [Embeddings](/docs/training/recipes/embeddings/) | Query groups with `role: anchor \| positive \| negative` |
+| `EmbeddingRecipe` | [Embeddings](/docs/training/recipes/embeddings/) | `Triplet` examples (`query`, `positive` doc, optional `negatives`) |
 
 ## Start with recipe defaults
 

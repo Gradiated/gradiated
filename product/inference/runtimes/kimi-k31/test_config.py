@@ -73,8 +73,8 @@ class Configuration(unittest.TestCase):
             self.assertNotIn(unsafe, backend)
 
     def test_yetalabs_abliterated_model_id_selects_pinned_open_checkpoint_and_tuned_profile(self):
-        settings, backend, router = config.commands({**self.environment, 'MODEL_ID': config.ABLITERATED_MODEL_ID})
-        self.assertEqual(settings['model_id'], 'yetalabs/kimi-k3.1-pro-abliterated')
+        settings, backend, router = config.commands({**self.environment, 'MODEL_ID': config.CYBER_MODEL_ID})
+        self.assertEqual(settings['model_id'], 'kimi-k3.1-pro-cyber')
         self.assertEqual(settings['model'], 'yetalabs/Kimi-K3.1-Pro-abliterated')
         self.assertEqual(settings['revision'], '0911ef0765f49d26dfa25bb0d071f29463f8000b')
         self.assertEqual(settings['served_model_name'], 'yetalabs/Kimi-K3.1-Pro-abliterated')
@@ -102,6 +102,7 @@ class Configuration(unittest.TestCase):
                       {'NVIDIA_VISIBLE_DEVICES': ','.join(['GPU-a'] * 8)},
                       {'TENSOR_PARALLEL_SIZE': '2'}, {'LORA_ENABLED': 'true'},
                       {'MODEL_ID': 'unknown/model'},
+                      {'MODEL_ID': 'yetalabs/kimi-k3.1-pro-abliterated'},
                       {'WARMUP_PORT': '18084'}, {'RUNTIME_PORT': '65532'},
                       {'MAX_QUEUED_REQUESTS': '4'}, {'GRADIATED_RUNTIME_ROOT': 'relative'}]:
             with self.subTest(delta=delta), self.assertRaises(ValueError):

@@ -9,8 +9,9 @@ import {
 import { createGlm53ModelConfiguration } from "./glm-5-3.js";
 import { createKev9bModelConfiguration } from "./kev-9b.js";
 import {
+  createKimiK31ProCyberModelConfiguration,
   createKimiK31ProModelConfiguration,
-  createYetalabsKimiK31ProAbliteratedModelConfiguration,
+  yetalabsKimiK31ProAbliteratedModelId,
 } from "./kimi-k31-pro.js";
 import { createJeevesModelConfiguration } from "./posthog-jeeves.js";
 import { createJevk5ModelConfiguration } from "./posthog-jevk5.js";
@@ -23,7 +24,7 @@ export const catalogModels = [
   createDealignGlm53FlashModelConfiguration(),
   createKev9bModelConfiguration(),
   createKimiK31ProModelConfiguration(),
-  createYetalabsKimiK31ProAbliteratedModelConfiguration(),
+  createKimiK31ProCyberModelConfiguration(),
   createGlm53ModelConfiguration(),
   // Organization-owned: never in MODEL_CATALOG, listed only to their owner.
   createJeevesModelConfiguration(),
@@ -34,6 +35,12 @@ export const legacyModels = [
   {
     ...createDealignGlm53FlashModelConfiguration(),
     id: "dealignai/glm-5.3-flash-uncensored-nvfp4",
+    status: "retired" as const,
+  },
+  {
+    ...createKimiK31ProCyberModelConfiguration(),
+    id: yetalabsKimiK31ProAbliteratedModelId,
+    aliases: [],
     status: "retired" as const,
   },
   createDeepseekV41FlashModelConfiguration(),

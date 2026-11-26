@@ -5,6 +5,7 @@ export const kimiK31ProModelId = "moonshotai/kimi-k3.1-pro";
 export const kimiK31ProArtifactModelPath = "moonshotai/Kimi-K3.1-Pro";
 export const kimiK31ProTokenizerRevision =
   "d9e99b0792a5e93b78ea9bea62a68167e36ddd9e";
+export const kimiK31ProCyberModelId = "kimi-k3.1-pro-cyber";
 export const yetalabsKimiK31ProAbliteratedModelId =
   "yetalabs/kimi-k3.1-pro-abliterated";
 export const yetalabsKimiK31ProAbliteratedArtifactModelPath =
@@ -89,13 +90,22 @@ export const createKimiK31ProModelConfiguration = () =>
     },
   }) satisfies CatalogModelInput;
 
-export const createYetalabsKimiK31ProAbliteratedModelConfiguration = () => {
+export const createKimiK31ProCyberModelConfiguration = () => {
   const base = createKimiK31ProModelConfiguration();
 
   return {
     ...base,
-    id: yetalabsKimiK31ProAbliteratedModelId,
-    name: modelDisplayName(yetalabsKimiK31ProAbliteratedModelId),
+    id: kimiK31ProCyberModelId,
+    // Support NanoGPT's abliterated/ablated/uncensored model IDs as aliases.
+    aliases: [
+      yetalabsKimiK31ProAbliteratedModelId,
+      "yetalabs/kimi-k3.1-pro-ablated",
+      "yetalabs/kimi-k3.1-pro-uncensored",
+      "kimi-k3.1-pro-abliterated",
+      "kimi-k3.1-pro-ablated",
+      "kimi-k3.1-pro-uncensored",
+    ],
+    name: modelDisplayName(kimiK31ProCyberModelId),
     status: "available",
     type: "chat",
     // OpenRouter does not serve YetaLabs' weights; stock Kimi K3.1 Pro is a different model.

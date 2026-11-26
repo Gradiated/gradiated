@@ -16,7 +16,7 @@ The checkpoint is `moonshotai/Kimi-K3.1-Pro` at
 `d9e99b0792a5e93b78ea9bea62a68167e36ddd9e` by default, or
 `yetalabs/Kimi-K3.1-Pro-abliterated` at
 `0911ef0765f49d26dfa25bb0d071f29463f8000b` when `MODEL_ID` is set to
-`yetalabs/kimi-k3.1-pro-abliterated`. Both checkpoints are native
+`kimi-k3.1-pro-cyber`. Both checkpoints are native
 compressed-tensors MXFP4 with MXFP8 expert activations. The launcher selects
 the `flashinfer_mxfp4` runner with `--flashinfer-mxfp4-moe-precision default`,
 which dispatches to the Blackwell TRT-LLM MXFP4 kernel with MXFP8 activations.
@@ -41,8 +41,8 @@ pinned manifest and archive provenance. The draft has no host Hugging Face cache
 dependency; archive disk accounting covers it and cache eviction cannot remove it.
 Both parsers are `kimi_k3`; `OMP_NUM_THREADS` and `MAX_JOBS` are eight.
 
-When `MODEL_ID=yetalabs/kimi-k3.1-pro-abliterated`, the launcher selects the
-Nebius 8xB300-qualified 16-slot profile (`ABLITERATED_ACTIVE_REQUESTS = 16`):
+When `MODEL_ID=kimi-k3.1-pro-cyber`, the launcher selects the
+Nebius 8xB300-qualified 16-slot profile (`CYBER_ACTIVE_REQUESTS = 16`):
 TP8 + EP8 + DCP8, 88% static device memory, a 1.5 KDA-to-KV memory ratio with
 INT8 Mamba radix checkpoints (`--enable-int8-mamba-checkpoint`; active decode
 state stays FP32; 297 active FP32 Mamba slots, 594 cached INT8 Mamba checkpoints,

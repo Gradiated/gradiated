@@ -223,6 +223,10 @@ it("offers Kimi with exact OpenRouter capacity and its reasoning contract", () =
   expect(
     model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
   ).toBe("moonshotai/kimi-k3.1-pro");
+  expect(model && "tokenizer" in model ? model.tokenizer : undefined).toEqual({
+    path: "moonshotai/Kimi-K3.1-Pro",
+    revision: "d9e99b0792a5e93b78ea9bea62a68167e36ddd9e",
+  });
   expect(model?.properties).toMatchObject({
     hugging_face_id: "moonshotai/Kimi-K3.1-Pro",
     quantization: "mxfp4",
@@ -251,6 +255,10 @@ it("offers YetaLabs' Kimi K3.1 Pro Cyber without OpenRouter fallback", () => {
   expect(
     model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
   ).toBeNull();
+  expect(model && "tokenizer" in model ? model.tokenizer : undefined).toEqual({
+    path: "yetalabs/Kimi-K3.1-Pro-abliterated",
+    revision: "0911ef0765f49d26dfa25bb0d071f29463f8000b",
+  });
   expect(model?.properties).toMatchObject({
     hugging_face_id: "yetalabs/Kimi-K3.1-Pro-abliterated",
     quantization: "mxfp4",

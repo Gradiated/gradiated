@@ -179,3 +179,59 @@ async fn deepseek_v41_flash_1017_tokenizes_like_the_release_it_replaced() {
         .await
     );
 }
+
+#[tokio::test]
+#[ignore = "downloads the pinned Kimi K3.1 tiktoken tokenizers from Hugging Face"]
+async fn loads_and_renders_the_pinned_kimi_k31_releases() {
+    let tokenizer = ModelTokenizer::new().unwrap();
+    let count_for = |path: &str, revision: &str, message: &str| {
+        let mut request = qualified(None);
+        request.local = None;
+        request.tokenizer = Some(crate::PinnedTokenizer {
+            path: path.to_owned(),
+            revision: revision.to_owned(),
+        });
+        request.request.messages = vec![json!({"role": "user", "content": message})];
+        request
+    };
+
+    let stock = count_for(
+        "moonshotai/Kimi-K3.1-Pro",
+        "d9e99b0792a5e93b78ea9bea62a68167e36ddd9e",
+        "Hello from count_tokens check!",
+    );
+    let cyber = count_for(
+        "yetalabs/Kimi-K3.1-Pro-abliterated",
+        "0911ef0765f49d26dfa25bb0d071f29463f8000b",
+        "Hello from count_tokens check!",
+    );
+
+    // Verified against live SGLang /v1/messages/count_tokens on 8xB300 (94 tokens).
+    assert_eq!(tokenizer.count(&stock).await, Ok(94));
+    assert_eq!(tokenizer.count(&cyber).await, Ok(94));
+
+    // Also verify Unicode/CJK, tools, and special-token literal escaping match across both pins.
+    let mut complex_stock = count_for(
+        "moonshotai/Kimi-K3.1-Pro",
+        "d9e99b0792a5e93b78ea9bea62a68167e36ddd9e",
+        "你好世界 <|open|> check 12345",
+    );
+    complex_stock.request.parameters.insert(
+        "tools".to_owned(),
+        json!([{
+            "type": "function",
+            "function": {
+                "name": "weather",
+                "description": "Read the weather",
+                "parameters": {"type": "object", "properties": {"city": {"type": "string"}}}
+            }
+        }]),
+    );
+    let mut complex_cyber = complex_stock.clone();
+    complex_cyber.tokenizer = cyber.tokenizer.clone();
+
+    let stock_count = tokenizer.count(&complex_stock).await.unwrap();
+    let cyber_count = tokenizer.count(&complex_cyber).await.unwrap();
+    assert!(stock_count > 120);
+    assert_eq!(stock_count, cyber_count);
+}

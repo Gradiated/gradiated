@@ -3,10 +3,14 @@ import type { CatalogModelInput } from "../service.js";
 
 export const kimiK31ProModelId = "moonshotai/kimi-k3.1-pro";
 export const kimiK31ProArtifactModelPath = "moonshotai/Kimi-K3.1-Pro";
+export const kimiK31ProTokenizerRevision =
+  "d9e99b0792a5e93b78ea9bea62a68167e36ddd9e";
 export const yetalabsKimiK31ProAbliteratedModelId =
   "yetalabs/kimi-k3.1-pro-abliterated";
 export const yetalabsKimiK31ProAbliteratedArtifactModelPath =
   "yetalabs/Kimi-K3.1-Pro-abliterated";
+export const yetalabsKimiK31ProAbliteratedTokenizerRevision =
+  "0911ef0765f49d26dfa25bb0d071f29463f8000b";
 
 export const createKimiK31ProModelConfiguration = () =>
   ({
@@ -15,6 +19,11 @@ export const createKimiK31ProModelConfiguration = () =>
     status: "available",
     type: "chat",
     openrouterModelId: kimiK31ProModelId,
+    // Counts tokens in-gateway even when no local deployment supplies one.
+    tokenizer: {
+      path: kimiK31ProArtifactModelPath,
+      revision: kimiK31ProTokenizerRevision,
+    },
     properties: {
       description:
         "Moonshot AI's Kimi K3.1 Pro with MXFP4 routed experts, reasoning and tool use.",
@@ -91,6 +100,10 @@ export const createYetalabsKimiK31ProAbliteratedModelConfiguration = () => {
     type: "chat",
     // OpenRouter does not serve YetaLabs' weights; stock Kimi K3.1 Pro is a different model.
     openrouterModelId: null,
+    tokenizer: {
+      path: yetalabsKimiK31ProAbliteratedArtifactModelPath,
+      revision: yetalabsKimiK31ProAbliteratedTokenizerRevision,
+    },
     properties: {
       ...base.properties,
       description:

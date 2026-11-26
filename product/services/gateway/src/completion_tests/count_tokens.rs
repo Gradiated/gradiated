@@ -1,32 +1,18 @@
 use async_trait::async_trait;
+use axum::http::StatusCode;
 use chrono::{DateTime, Utc};
-use serde_json::{json, Value};
+use serde_json::json;
 
 use super::{super::*, support::*};
-use crate::{GatewayModelDeployment, RuntimeCompletion, RuntimeFailure};
+use crate::{
+    tokenizer::test_support::Hub, GatewayModelDeployment, PinnedTokenizer, RuntimeCompletion,
+    RuntimeFailure,
+};
 
-struct CountingRuntime {
-    expected_model_path: &'static str,
-    expected: Value,
-    hang: bool,
-}
+struct NeverCalledRuntime;
 
 #[async_trait]
-impl ModelRuntime for CountingRuntime {
-    async fn count_tokens(
-        &self,
-        deployment: &GatewayModelDeployment,
-        request: Value,
-    ) -> Result<u64, RuntimeFailure> {
-        assert_eq!(deployment.release.model_path, self.expected_model_path);
-        assert_eq!(request, self.expected);
-        if self.hang {
-            std::future::pending::<()>().await;
-        }
-
-        Ok(89)
-    }
-
+impl ModelRuntime for NeverCalledRuntime {
     async fn complete(
         &self,
         _: &GatewayModelDeployment,
@@ -34,75 +20,77 @@ impl ModelRuntime for CountingRuntime {
         _: u64,
         _: DateTime<Utc>,
     ) -> Result<RuntimeCompletion, RuntimeFailure> {
-        panic!("counting must not generate tokens")
+        panic!("counting must not call the model runtime")
     }
-}
-
-fn kimi(hang: bool) -> (Harness, Value) {
-    kimi_variant("moonshotai/kimi-k3.1-pro", "moonshotai/Kimi-K3.1-Pro", hang)
-}
-
-fn kimi_variant(model_id: &str, model_path: &'static str, hang: bool) -> (Harness, Value) {
-    let mut request = qualified_request(1);
-    let local = request.local.as_mut().unwrap();
-    local.deployment.release.model_path = model_path.to_owned();
-    local.deployments[0] = local.deployment.clone();
-    local.release_digest = local.deployment.served_release_digest().unwrap();
-    let mut harness = Harness::new(request, []);
-    let body = json!({
-        "model": model_id,
-        "system": "Be brief",
-        "messages": [{"role": "user", "content": "Hello"}],
-        "thinking": {"type": "enabled", "budget_tokens": 1024},
-        "tools": [{"name": "weather", "input_schema": {"type": "object"}}]
-    });
-    harness.service.runtime = Arc::new(CountingRuntime {
-        expected_model_path: model_path,
-        expected: body.clone(),
-        hang,
-    });
-
-    (harness, body)
 }
 
 #[tokio::test]
-async fn kimi_counts_with_its_runtime_without_loading_hf_json_or_admitting_a_generation() {
-    for (model_id, model_path) in [
-        ("moonshotai/kimi-k3.1-pro", "moonshotai/Kimi-K3.1-Pro"),
-        (
-            "yetalabs/kimi-k3.1-pro-abliterated",
-            "yetalabs/Kimi-K3.1-Pro-abliterated",
-        ),
-    ] {
-        let (harness, body) = kimi_variant(model_id, model_path, false);
+async fn kimi_counts_in_gateway_with_pinned_tokenizer_when_no_local_deployment_exists() {
+    let hub = Hub::answering(StatusCode::NOT_FOUND).await;
+    let revision = "d9e99b0792a5e93b78ea9bea62a68167e36ddd9e";
+    hub.cache_kimi_release("moonshotai/Kimi-K3.1-Pro", revision);
 
-        assert_eq!(
-            harness.service.count_tokens(&harness.request, &body).await,
-            Ok(89)
-        );
-        assert!(harness.journal.steps().is_empty());
-    }
-}
+    let mut request = qualified_request(1);
+    request.local = None;
+    request.external = Some(crate::ExternalModel::direct("moonshotai/kimi-k3.1-pro"));
+    request.tokenizer = Some(PinnedTokenizer {
+        path: "moonshotai/Kimi-K3.1-Pro".to_owned(),
+        revision: revision.to_owned(),
+    });
+    request.request.model = "moonshotai/kimi-k3.1-pro".to_owned();
+    request.request.messages = vec![
+        json!({"role": "system", "content": "Be brief"}),
+        json!({"role": "user", "content": "Hello"}),
+    ];
 
-#[tokio::test(start_paused = true)]
-async fn kimi_counting_has_a_bounded_deadline() {
-    let (harness, body) = kimi(true);
-
-    assert_eq!(
-        harness.service.count_tokens(&harness.request, &body).await,
-        Err(GatewayError::RuntimeUnavailable)
+    let mut harness = Harness::new(request, []);
+    harness.service = CompletionService::new(
+        harness.state.clone(),
+        Arc::new(NeverCalledRuntime),
+        hub.tokenizer.clone(),
+        Arc::new(GatewayConfig::for_tests()),
     );
+
+    let count = harness
+        .service
+        .count_tokens(&harness.request)
+        .await
+        .unwrap();
+    assert!(count > 0);
+    assert_eq!(hub.requests(), 0);
     assert!(harness.journal.steps().is_empty());
 }
 
 #[tokio::test]
-async fn kimi_counting_does_not_dispatch_to_an_unhealthy_replica() {
-    let (harness, body) = kimi(false);
-    let harness = harness
-        .local_status(|status| status.received_at = Utc::now() - chrono::TimeDelta::minutes(1));
+async fn kimi_cyber_counts_in_gateway_even_without_healthy_replicas() {
+    let hub = Hub::answering(StatusCode::NOT_FOUND).await;
+    let revision = "0911ef0765f49d26dfa25bb0d071f29463f8000b";
+    hub.cache_kimi_release("yetalabs/Kimi-K3.1-Pro-abliterated", revision);
 
-    assert_eq!(
-        harness.service.count_tokens(&harness.request, &body).await,
-        Err(GatewayError::RuntimeUnavailable)
+    let mut request = qualified_request(1);
+    let local = request.local.as_mut().unwrap();
+    local.deployment.release.model_path = "yetalabs/Kimi-K3.1-Pro-abliterated".to_owned();
+    local.deployment.release.tokenizer_path = "yetalabs/Kimi-K3.1-Pro-abliterated".to_owned();
+    local.deployment.release.tokenizer_revision = revision.to_owned();
+    local.deployments[0] = local.deployment.clone();
+    local.release_digest = local.deployment.served_release_digest().unwrap();
+
+    let mut harness = Harness::new(request, []).local_status(|status| {
+        status.received_at = Utc::now() - chrono::TimeDelta::minutes(1);
+    });
+    harness.service = CompletionService::new(
+        harness.state.clone(),
+        Arc::new(NeverCalledRuntime),
+        hub.tokenizer.clone(),
+        Arc::new(GatewayConfig::for_tests()),
     );
+
+    let count = harness
+        .service
+        .count_tokens(&harness.request)
+        .await
+        .unwrap();
+    assert!(count > 0);
+    assert_eq!(hub.requests(), 0);
+    assert!(harness.journal.steps().is_empty());
 }

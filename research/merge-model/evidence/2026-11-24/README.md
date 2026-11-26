@@ -280,3 +280,20 @@ Following the overnight campaign, we tested how close we could push DuckDB resol
   - Trained 1-epoch `LocGit-14B` generator (`9,908` strictly pre-cutoff rows `< 1595239541`, `MAX_LEN=3072`) + `K=16` sampling + 1-epoch `r=64` `LocGit-14B` verifier (`v30`) on `merge14b-base`.
   - **New best single-pass greedy `14B` generator:** **`702/1,000` (70.2%)** (`+2.10 pp` vs `7B`, `95% CI [-1.53, +5.98]`, `+72/−51`; beating hunk-only `14B` `693` and repo-ctx `14B` `698`, within 0.9 pp of `GPT-6.2-Sol` in a single greedy pass; `pass@16 = 810/1,000`, `5-View oracle = 874/1,000`).
   - **Local `14B` ceiling confirmed:** Standalone `LocGit-14B + v30` (`α=2.0`) reached `711/1,000` (matching `GPT-6.2-Sol`), `5-View + v30` (`α=1.0`) reached `719/1,000` (`+3.80 pp`, `95% CI [+0.97, +6.70]`), and ensembling `v22 + v30` on `5-View` stayed at `727/1,000` — confirming **`Arm 22` (`728/1,000` exact / `786/1,000` ws-insensitive, 5-fold CV `725/1,000`) is the true local `14B` ceiling**, and the remaining `+3.3 pp` exact / `+4.0 pp` ws-insensitive gain up to `761` exact / `826` ws / `881` semantic requires frontier-scale reasoning over the Localized Full-Git Context Pack.
+
+### Arm 31 & Arm 32 — Looped (Recurrent-Depth) Models & Loop-Depth Scaling (`Ouro-2.6B`, `Nanbeige4.2-3B`, `SenseNova-Loop-9B`)
+
+To test whether recurrent-depth ("looped") transformers in the 2.6B–9B parameter range benefit from increasing loop depth on merge-conflict resolution — and whether test-time loop extrapolation beyond the trained loop count gives free accuracy gains — we LoRA fine-tuned three open-weight looped models on strictly non-DuckDB pooled merges (`pooled-train.jsonl.gz`) and evaluated exact conflict-matched loop-depth sweeps on frozen DuckDB (`N=250` stratified `idx 0, 4, ..., 996` and matched `N=63` `idx 0, 16, ..., 992`):
+
+- **`ByteDance/Ouro-2.6B` (2.6B, trained at `T=4` on 2,400 pooled merges):**
+  - Matched `N=250`: `T=1`: `6/250` (`2.4%` exact / `2.8%` ws, `175` malformed) → `T=2`: `79/250` (`31.6%` exact / `35.2%` ws) → `T=3`: **`115/250` (`46.0%` exact / `55.6%` ws)**.
+  - Matched `N=63` (exact same conflicts; dense baselines: `7B` `46/63` = `73.0%`, `14B` `47/63` = `74.6%` exact / `81.0%` ws):
+    - `T=1`: `1/63` (`1.6%`) → `T=2`: `23/63` (`36.5%` / `39.7%` ws) → **`T=3`: `35/63` (`55.6%` exact / `68.3%` ws — peak)** → `T=4` *(trained)*: `32/63` (`50.8%` / `61.9%` ws) → `T=6` *(+2 extrap.)*: `31/63` (`49.2%` / `57.1%` ws) → `T=8` *(+4 extrap.)*: `27/63` (`42.9%` / `49.2%` ws).
+- **`sensenova/SenseNova-Loop-9B` (Qwen3.5-9B looped layers `4..28`, trained at `L=2` on 4,000 pooled merges):**
+  - Matched `N=250`: `L=1`: `90/250` (`36.0%` exact / `42.0%` ws) → **`L=2`: `137/250` (`54.8%` exact / `64.4%` ws, `+18.8 pp` exact / `+22.4 pp` ws)**.
+  - Matched `N=63`: `L=1`: `24/63` (`38.1%` / `44.4%` ws) → **`L=2` *(trained)*: `38/63` (`60.3%` exact / `69.8%` ws — peak)** → `L=3` *(+1 extrap.)*: `37/63` (`58.7%` / `65.1%` ws).
+- **`Nanbeige/Nanbeige4.2-3B` (3B non-emb, trained at `L=2` on 4,000 pooled merges):** `L=1` collapsed to `0/1,000` (`0.0%`), while `L=2` reached `47/436` (`10.8%` exact / `16.3%` ws; raw-prompt SFT under-converged at loss `0.27` vs `0.035–0.045` for `Ouro`/`SenseNova` without its native chat/thinking template).
+- **Takeaways on looped models:**
+  1. **Looping up to trained depth drives huge gains** (`+54 pp` on `Ouro-2.6B` `T=1→3`; `+22 pp` on `SenseNova-Loop-9B` `L=1→2`), confirming the recurrent passes genuinely perform multi-step diff reasoning.
+  2. **Test-time loop extrapolation beyond trained depth does not yield free gains:** both models peak at or just below their trained depth (`T=3–4` for `Ouro-2.6B`, `L=2` for `SenseNova-Loop-9B`) and decay when forced to loop further (`T=6, 8` and `L=3`).
+  3. **Production recommendation:** While `Ouro-2.6B` (`68.3%` ws on 2.4k examples) and `SenseNova-Loop-9B` (`69.8%` ws on 4k examples) show impressive parameter efficiency, dense code-pretrained **`Qwen2.5-Coder-7B/14B` + Repo-Aware Verifier** remains significantly more accurate (`72.8%` exact / `78.6%` ws on full 1,000 DuckDB) and 10–25× faster to serve due to native FP8/vLLM/SGLang kernel support.

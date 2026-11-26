@@ -1144,3 +1144,14 @@
     margin-block-start: 1.25rem;
   }
 }
+
+/* "Latest from the lab" is three posters, a triptych: on the homepage it
+   holds three across down to tablet width, the posters shrinking, rather
+   than taking the Library's two-column step at 80rem (which leaves the
+   third card alone on a row). */
+@media (min-width: 40rem) and (max-width: 79.99rem) {
+  .gr-root .gr-news.gr-library-grid .gr-story-row[data-uniform] {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    column-gap: clamp(1rem, 4vw, 3rem);
+  }
+}

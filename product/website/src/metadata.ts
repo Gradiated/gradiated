@@ -2,6 +2,7 @@ import { jobs } from "./careers";
 import { handbookPages } from "./handbook";
 import { models } from "./models";
 import { articles, authorOf } from "./articles";
+import { ogImageFor } from "./og-pages";
 import { team } from "./team";
 
 export const siteOrigin = "https://gradiated.com";
@@ -219,7 +220,10 @@ const metadataDetailsFor = (
   pathname: string,
 ): Pick<PageMetadata, "image" | "kind" | "publishedAt"> => {
   if (pathname.startsWith("/docs/")) {
-    return { image: defaultImage, kind: "documentation" };
+    return {
+      image: ogImageFor(pathname) ?? defaultImage,
+      kind: "documentation",
+    };
   }
   if (pathname !== "/careers/" && pathname.startsWith("/careers/")) {
     return {
@@ -229,7 +233,7 @@ const metadataDetailsFor = (
     };
   }
   if (pathname === "/") return { image: "/brand/og-home.jpg", kind: "website" };
-  return { image: defaultImage, kind: "website" };
+  return { image: ogImageFor(pathname) ?? defaultImage, kind: "website" };
 };
 
 export const getPageMetadata = (pathname: string): PageMetadata => {
@@ -239,7 +243,7 @@ export const getPageMetadata = (pathname: string): PageMetadata => {
     return {
       title: article.title,
       description: article.description ?? article.title,
-      image: article.image,
+      image: ogImageFor(normalizedPath) ?? article.image,
       publishedAt: article.publishedAt,
       updatedAt: article.updatedAt,
       author: article.author,

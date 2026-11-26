@@ -95,7 +95,7 @@ unavailable. The endpoint throttles per function instance, so add a Vercel
 Firewall rule on `/api/model-name-suggestions` for rate limiting across instances
 if enabling public submissions at scale.
 
-Roadmap upvotes post to the same channel as "User upvoted *Model*" with a table
+Roadmap upvotes post to the same channel as "User upvoted _Model_" with a table
 of every model's total. Totals are kept in the project's Upstash Redis (Vercel
 Storage), read from `KV_REST_API_URL`/`KV_REST_API_TOKEN` or the
 `UPSTASH_REDIS_REST_*` names. Without a store, votes post without the table.

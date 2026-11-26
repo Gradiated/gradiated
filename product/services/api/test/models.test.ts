@@ -120,13 +120,18 @@ describe("model catalog route", () => {
     expect(response.status).toBe(200);
   });
 
-  it("hides the legacy Dealign ID while it remains available for cutover", async () => {
-    const renamed = "dealignai/glm-5.3-flash-uncensored";
+  it("hides legacy Dealign IDs while they remain available for cutover", async () => {
+    const renamed = "glm-5.3-flash-cyber";
     const app = createTestApp({
       services: {
         catalogBilling: {
           listModels: async () => [
             { ...modelRecord, id: renamed },
+            {
+              ...modelRecord,
+              id: "dealignai/glm-5.3-flash-uncensored",
+              status: "available",
+            },
             {
               ...modelRecord,
               id: "dealignai/glm-5.3-flash-uncensored-nvfp4",

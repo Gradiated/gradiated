@@ -90,8 +90,8 @@ export const MODEL_CATALOG = [
     },
   },
   {
-    id: "dealignai/glm-5.3-flash-uncensored",
-    displayName: "GLM-5.3 Flash Uncensored",
+    id: "glm-5.3-flash-cyber",
+    displayName: "GLM 5.3 Flash Cyber",
     icon: "/model-providers/zai.svg",
     supportedUses: ["judge", "comparison", "serving"],
   },
@@ -262,7 +262,13 @@ export const MODEL_CATALOG = [
 const LEGACY_MODEL_CATALOG = [
   {
     id: "dealignai/glm-5.3-flash-uncensored-nvfp4",
-    displayName: "GLM-5.3 Flash Uncensored",
+    displayName: "GLM 5.3 Flash Cyber",
+    icon: "/model-providers/zai.svg",
+    supportedUses: ["judge", "comparison", "serving"],
+  },
+  {
+    id: "dealignai/glm-5.3-flash-uncensored",
+    displayName: "GLM 5.3 Flash Cyber",
     icon: "/model-providers/zai.svg",
     supportedUses: ["judge", "comparison", "serving"],
   },

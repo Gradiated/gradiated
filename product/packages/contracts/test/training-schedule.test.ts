@@ -68,13 +68,18 @@ it("preserves saved Dealign judge IDs while offering the renamed model", async (
   const { EvaluationJudgeSchema } = await import("../src/training.js");
   const { modelSupportedUses, modelDisplayName } =
     await import("../src/model-catalog.js");
-  const legacy = "dealignai/glm-5.3-flash-uncensored-nvfp4";
-  const renamed = "dealignai/glm-5.3-flash-uncensored";
+  const legacyIds = [
+    "dealignai/glm-5.3-flash-uncensored-nvfp4",
+    "dealignai/glm-5.3-flash-uncensored",
+  ];
+  const renamed = "glm-5.3-flash-cyber";
 
-  expect(EvaluationJudgeSchema.parse(legacy)).toBe(legacy);
   expect(EvaluationJudgeSchema.parse(renamed)).toBe(renamed);
-  expect(modelSupportedUses(legacy)).toContain("comparison");
-  expect(modelDisplayName(legacy)).toBe("GLM-5.3 Flash Uncensored");
   expect(COMPARISON_MODELS.map(({ id }) => id)).toContain(renamed);
-  expect(COMPARISON_MODELS.map(({ id }) => id)).not.toContain(legacy);
+  for (const legacy of legacyIds) {
+    expect(EvaluationJudgeSchema.parse(legacy)).toBe(legacy);
+    expect(modelSupportedUses(legacy)).toContain("comparison");
+    expect(modelDisplayName(legacy)).toBe("GLM 5.3 Flash Cyber");
+    expect(COMPARISON_MODELS.map(({ id }) => id)).not.toContain(legacy);
+  }
 });

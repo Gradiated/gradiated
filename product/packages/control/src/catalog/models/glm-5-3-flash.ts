@@ -3,6 +3,9 @@ import type { CatalogModelInput } from "../service.js";
 
 export const glm53FlashModelId = "z-ai/glm-5.3-flash";
 export const glm53FlashArtifactModelPath = "zai-org/GLM-5.3-Flash";
+export const glm53FlashCyberModelId = "glm-5.3-flash-cyber";
+export const dealignGlm53FlashUncensoredModelId =
+  "dealignai/glm-5.3-flash-uncensored";
 
 export const createGlm53FlashModelConfiguration = () =>
   ({
@@ -83,14 +86,18 @@ export const createGlm53FlashModelConfiguration = () =>
     },
   }) satisfies CatalogModelInput;
 
-export const createDealignGlm53FlashModelConfiguration = () => {
+export const createGlm53FlashCyberModelConfiguration = () => {
   const base = createGlm53FlashModelConfiguration();
-  const id = "dealignai/glm-5.3-flash-uncensored";
 
   return {
     ...base,
-    id,
-    name: modelDisplayName(id),
+    id: glm53FlashCyberModelId,
+    aliases: [
+      dealignGlm53FlashUncensoredModelId,
+      "dealignai/glm-5.3-flash-cyber",
+      "glm-5.3-flash-uncensored",
+    ],
+    name: modelDisplayName(glm53FlashCyberModelId),
     status: "available",
     type: "chat",
     // OpenRouter does not serve Dealign's weights; standard GLM is a different model.
@@ -98,7 +105,7 @@ export const createDealignGlm53FlashModelConfiguration = () => {
     properties: {
       ...base.properties,
       description:
-        "Dealign's weight-modified GLM-5.3 Flash with NVFP4 routed experts and retained reasoning and tool use",
+        "Dealign's GLM 5.3 Flash Cyber (NVFP4) with retained reasoning and tool use",
       released_at: "2026-08-29T00:00:00.000Z",
       hugging_face_id: "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
       quantization: "nvfp4",

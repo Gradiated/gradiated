@@ -28,7 +28,7 @@ afterEach(() => {
 });
 
 test("only unnamed models accept suggestions", async () => {
-  for (const id of ["task-routing", "linden-1", "carat", "unknown"]) {
+  for (const id of ["linden-1", "unknown"]) {
     expect((await submit(id, "Example name")).status).toBe(400);
   }
 
@@ -113,9 +113,9 @@ const vote = (modelId: string, value: unknown = "up") =>
 test("upvotes post the model name, without totals when no store is set", async () => {
   expect((await vote("task-routing")).status).toBe(204);
   const body = JSON.parse(deliver.mock.calls[0][1].body);
-  expect(body.text).toBe("User upvoted Linden-2");
+  expect(body.text).toBe("User upvoted Model router");
   expect(body.blocks).toHaveLength(1);
-  expect(body.blocks[0].text.text).toBe("User upvoted *Linden-2*");
+  expect(body.blocks[0].text.text).toBe("User upvoted *Model router*");
 });
 
 test("rejects upvotes on released models and unknown vote values", async () => {

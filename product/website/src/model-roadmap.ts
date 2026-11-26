@@ -12,17 +12,9 @@ export type RoadmapEntry = {
 
 export const roadmapEntries: readonly RoadmapEntry[] = [
   {
-    id: "task-routing",
-    category: "Model router",
-    name: "Linden-2",
-    status: "In progress",
-    description:
-      "Builds on Linden-1 to choose a model for each request. Send routine work to open models and reserve frontier calls for work that needs them.",
-  },
-  {
     id: "linden-1",
-    category: "Model router",
-    name: "Linden-1",
+    category: "Decision model",
+    name: "linden-1",
     description:
       "An open-weight decision model for tasks like ticket triage. It returns choices, probabilities, or scores from text or structured data.",
     release: {
@@ -34,24 +26,11 @@ export const roadmapEntries: readonly RoadmapEntry[] = [
     },
   },
   {
-    id: "carat",
-    category: "Inference engine",
-    name: "Carat",
+    id: "task-routing",
+    category: "Model router",
+    status: "In progress",
     description:
-      "A C++ and CUDA engine for Gemma 4 on NVIDIA Hopper GPUs. In our benchmark it delivered 67% more output tokens per second than SGLang.",
-    release: {
-      date: "2026-10-07",
-      links: [
-        { label: "Source", href: "https://github.com/Gradiated/carat" },
-        { label: "Benchmark", href: "/library/gemma-inference-engine/" },
-      ],
-    },
-  },
-  {
-    id: "security-review",
-    category: "Security review",
-    description:
-      "Flag likely vulnerabilities in first-party diffs and point reviewers to the code that needs attention.",
+      "Builds on Linden-1 to choose a model for each request. Send routine work to open models and reserve frontier calls for work that needs them.",
   },
   {
     id: "code-review",
@@ -60,10 +39,16 @@ export const roadmapEntries: readonly RoadmapEntry[] = [
       "Review pull requests for regressions, missed edge cases, and gaps in test coverage.",
   },
   {
-    id: "diff-merging",
-    category: "Diff merging",
+    id: "browser-automation",
+    category: "Browser automation",
     description:
-      "Reconcile conflicting edits and surface the decisions that still need a human.",
+      "Navigate web apps, interact with page elements, and complete multi-step browser workflows reliably.",
+  },
+  {
+    id: "test-selection",
+    category: "Test selection",
+    description:
+      "Pick the minimal set of tests likely to catch regressions for a given diff.",
   },
   {
     id: "context-compaction",
@@ -72,22 +57,11 @@ export const roadmapEntries: readonly RoadmapEntry[] = [
       "Compress long agent sessions while preserving decisions, constraints, and unfinished work.",
   },
   {
-    id: "ci-triage",
-    category: "CI failure triage",
+    id: "diff-merging",
+    category: "Diff merging",
+    status: "In progress",
     description:
-      "Find the first meaningful failure in noisy CI logs and distinguish flakes from likely regressions.",
-  },
-  {
-    id: "error-triage",
-    category: "Production error triage",
-    description:
-      "Group related errors and use traces, stack frames, and release context to suggest where to look first.",
-  },
-  {
-    id: "product-analytics",
-    category: "Product analytics queries",
-    description:
-      "Turn questions about funnels, retention, and feature adoption into queries against your event schema.",
+      "Reconcile conflicting edits and surface the decisions that still need a human.",
   },
 ];
 

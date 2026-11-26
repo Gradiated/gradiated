@@ -99,7 +99,7 @@ test("posts the day's upvotes and suggestions, then clears what it sent", async 
   const table: string = slack.blocks[1].text.text;
   expect(table).toMatch(/Model\s+Today\s+Total/);
   expect(table).toMatch(/Code review\s+\+2\s+5/);
-  expect(table).toMatch(/Linden-2\s+\+1\s+1/);
+  expect(table).toMatch(/Model router\s+\+1\s+1/);
   const list: string = slack.blocks[2].text.text;
   expect(list.indexOf("Juniper")).toBeLessThan(list.indexOf("Sentinel"));
   expect(list).toContain("Juniper &lt;b&gt;");

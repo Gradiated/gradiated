@@ -81,7 +81,7 @@ export const ModelRoadmap = (): ReactElement => {
     if (sending.current.has(entry.id)) return;
     const current = readRoadmap();
     const voted = !current.votes[entry.id];
-    const title = entry.name ?? entry.category;
+    const title = entry.category;
 
     if (!update(entry.id, { voted })) {
       setFeedback("This browser could not save your vote.");
@@ -145,14 +145,14 @@ export const ModelRoadmap = (): ReactElement => {
             <tbody>
               {roadmapEntries.map((entry) => {
                 const voted = Boolean(roadmap.votes[entry.id]);
-                const title = entry.name ?? entry.category;
+                const title = entry.category;
 
                 return (
                   <tr key={entry.id}>
                     <th scope="row">
                       <span className="gr-roadmap-name">{title}</span>
                       <span className="gr-roadmap-meta">
-                        {entry.name ? entry.category : "Model"}
+                        {entry.name ?? "Model"}
                       </span>
                     </th>
                     <td>

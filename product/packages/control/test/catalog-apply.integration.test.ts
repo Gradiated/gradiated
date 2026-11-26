@@ -214,20 +214,31 @@ describe("catalog apply", () => {
     expect(stored).toMatchObject({ name: kev!.name, status: kev!.status });
   });
 
-  it("retires the previous Dealign ID after the requested model qualifies", async () => {
+  it("retires the previous Dealign IDs after the requested model qualifies", async () => {
     const catalog = createCatalogService(testDatabase.database);
-    const legacy = legacyModels[0]!;
-    await catalog.upsertModel({ ...legacy, status: "unavailable" });
+    const retiredDealign = legacyModels.filter((model) =>
+      model.id.startsWith("dealignai/glm-5.3-flash-uncensored"),
+    );
+    for (const legacy of retiredDealign) {
+      await catalog.upsertModel({ ...legacy, status: "unavailable" });
+    }
 
     await applyCatalog(testDatabase.database);
 
     const listed = await catalog.listModels();
-    expect(listed.map((model) => model.id)).not.toContain(legacy.id);
+    for (const legacy of retiredDealign) {
+      expect(listed.map((model) => model.id)).not.toContain(legacy.id);
+    }
     expect(listed).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: "dealignai/glm-5.3-flash-uncensored",
-          name: "GLM-5.3 Flash Uncensored",
+          id: "glm-5.3-flash-cyber",
+          name: "GLM 5.3 Flash Cyber",
+          aliases: [
+            "dealignai/glm-5.3-flash-uncensored",
+            "dealignai/glm-5.3-flash-cyber",
+            "glm-5.3-flash-uncensored",
+          ],
           status: "available",
         }),
       ]),

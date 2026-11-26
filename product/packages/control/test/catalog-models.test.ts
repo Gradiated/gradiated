@@ -92,6 +92,10 @@ describe("model configurations", () => {
     },
     "deepseek/deepseek-v4.1-flash": { input: [300, 7], output: [1_200, 1_200] },
     "z-ai/glm-5.3-flash": { input: [150, 30], output: [500, 500] },
+    "glm-5.3-flash-cyber": {
+      input: [150, 15],
+      output: [450, 450],
+    },
     "dealignai/glm-5.3-flash-uncensored": {
       input: [150, 15],
       output: [450, 450],
@@ -144,6 +148,7 @@ describe("model configurations", () => {
       "deepseek/deepseek-v4.1-flash-1017": "deepseek/deepseek-v4.1-flash-1017",
       "deepseek/deepseek-v4.1-flash": "deepseek/deepseek-v4.1-flash",
       "z-ai/glm-5.3-flash": "z-ai/glm-5.3-flash",
+      "glm-5.3-flash-cyber": null,
       "dealignai/glm-5.3-flash-uncensored": null,
       "dealignai/glm-5.3-flash-uncensored-nvfp4": null,
       "jaredpalmer/kev-9b": undefined,
@@ -316,15 +321,26 @@ it("retires original DeepSeek Flash and keeps 1017 as an explicit selection", ()
 });
 
 it("identifies Dealign weights separately from the stock training base", () => {
-  const model = catalogModels.find(
+  const model = catalogModels.find((item) => item.id === "glm-5.3-flash-cyber");
+  const retired = legacyModels.find(
     (item) => item.id === "dealignai/glm-5.3-flash-uncensored",
   );
 
   expect(model?.status).toBe("available");
+  expect(model?.name).toBe("GLM 5.3 Flash Cyber");
+  expect(model && "aliases" in model ? model.aliases : undefined).toEqual([
+    "dealignai/glm-5.3-flash-uncensored",
+    "dealignai/glm-5.3-flash-cyber",
+    "glm-5.3-flash-uncensored",
+  ]);
   expect(model?.properties).toMatchObject({
     hugging_face_id: "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
     quantization: "nvfp4",
   });
+  expect(retired?.status).toBe("retired");
+  expect(retired && "aliases" in retired ? retired.aliases : undefined).toEqual(
+    [],
+  );
 });
 
 it("serves text-only linden-1 with no external provider or training capability", () => {

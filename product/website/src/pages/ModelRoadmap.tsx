@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
 import { Arrow, Band, Module, PixelIcon } from "../components/design";
 import { ModelNameSuggestion } from "../components/ModelNameSuggestion";
@@ -32,6 +32,8 @@ export const ModelRoadmap = (): ReactElement => {
   const [roadmap, setRoadmap] = useState(emptyState);
   const [feedback, setFeedback] = useState("");
   const [suggestion, setSuggestion] = useState<RoadmapEntry>();
+  // Models with a vote still on its way, so a second click waits for it.
+  const sending = useRef(new Set<string>());
 
   useEffect(() => {
     setRoadmap(readRoadmap());
@@ -56,38 +58,55 @@ export const ModelRoadmap = (): ReactElement => {
     return true;
   };
 
+  // Applies one model's change to the latest saved state, so votes that
+  // finish in any order never overwrite each other.
+  const update = (
+    id: RoadmapEntry["id"],
+    change: { voted?: boolean; counted?: boolean },
+  ) => {
+    const latest = readRoadmap();
+    return save({
+      votes:
+        change.voted === undefined
+          ? latest.votes
+          : { ...latest.votes, [id]: change.voted },
+      counted:
+        change.counted === undefined
+          ? latest.counted
+          : { ...latest.counted, [id]: change.counted },
+    });
+  };
+
   const toggleVote = async (entry: RoadmapEntry) => {
+    if (sending.current.has(entry.id)) return;
     const current = readRoadmap();
     const voted = !current.votes[entry.id];
     const title = entry.name ?? entry.category;
-    const next = { ...current, votes: { ...current.votes, [entry.id]: voted } };
 
-    if (!voted || current.counted?.[entry.id]) {
-      setFeedback(
-        save(next)
-          ? `${voted ? "Vote saved" : "Vote removed"} for ${title}.`
-          : "This browser could not save your vote.",
-      );
-      return;
-    }
-
-    if (!save(next)) {
+    if (!update(entry.id, { voted })) {
       setFeedback("This browser could not save your vote.");
       return;
     }
+    if (!voted || current.counted?.[entry.id]) {
+      setFeedback(`${voted ? "Vote saved" : "Vote removed"} for ${title}.`);
+      return;
+    }
+
+    sending.current.add(entry.id);
     const sent = await fetch("/api/model-name-suggestions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ modelId: entry.id, vote: "up" }),
     })
       .then((response) => response.status === 204)
-      .catch(() => false);
+      .catch(() => false)
+      .finally(() => sending.current.delete(entry.id));
 
     if (sent) {
-      save({ ...next, counted: { ...next.counted, [entry.id]: true } });
+      update(entry.id, { counted: true });
       setFeedback(`Vote saved for ${title}.`);
     } else {
-      save(current);
+      update(entry.id, { voted: false });
       setFeedback("We couldn’t record your vote. Please try again later.");
     }
   };

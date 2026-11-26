@@ -260,6 +260,11 @@ it("offers YetaLabs' Kimi K3.1 Pro Cyber without OpenRouter fallback and aliases
   expect(model?.name).toBe("Kimi K3.1 Pro Cyber");
   expect(model && "aliases" in model ? model.aliases : undefined).toEqual([
     "yetalabs/kimi-k3.1-pro-abliterated",
+    "yetalabs/kimi-k3.1-pro-ablated",
+    "yetalabs/kimi-k3.1-pro-uncensored",
+    "kimi-k3.1-pro-abliterated",
+    "kimi-k3.1-pro-ablated",
+    "kimi-k3.1-pro-uncensored",
   ]);
   expect(retired?.status).toBe("retired");
   expect(

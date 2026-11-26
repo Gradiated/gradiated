@@ -96,8 +96,15 @@ export const createKimiK31ProCyberModelConfiguration = () => {
   return {
     ...base,
     id: kimiK31ProCyberModelId,
-    // NanoGPT routes its abliterated Kimi K3.1 Pro traffic under this alias.
-    aliases: [yetalabsKimiK31ProAbliteratedModelId],
+    // Support NanoGPT's abliterated/ablated/uncensored model IDs as aliases.
+    aliases: [
+      yetalabsKimiK31ProAbliteratedModelId,
+      "yetalabs/kimi-k3.1-pro-ablated",
+      "yetalabs/kimi-k3.1-pro-uncensored",
+      "kimi-k3.1-pro-abliterated",
+      "kimi-k3.1-pro-ablated",
+      "kimi-k3.1-pro-uncensored",
+    ],
     name: modelDisplayName(kimiK31ProCyberModelId),
     status: "available",
     type: "chat",

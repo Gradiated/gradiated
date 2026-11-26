@@ -368,8 +368,8 @@ const Desk = ({
     </Piece>
 
     {/* A turning double helix, below the map and the math excerpt and to
-        the right of the Thesis stack, half off the frame's edge. */}
-    <Piece className="gr-lab-dna" h={250} i={14} w={196} x={1352} y={1185}>
+        the right of the Thesis stack, a little off the frame's edge. */}
+    <Piece className="gr-lab-dna" h={250} i={14} w={196} x={1290} y={1185}>
       <DnaHelix />
     </Piece>
 

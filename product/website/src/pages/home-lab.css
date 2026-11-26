@@ -925,6 +925,31 @@
   gap: calc(0.5 * var(--u));
 }
 
+/* Status: released green, in progress amber, roadmap the neutral badge. */
+.gr-roadmap-status[data-status="released"] {
+  --status: #1f7a47;
+
+  color: var(--status);
+  background: color-mix(in srgb, var(--status) 9%, transparent);
+  border-color: color-mix(in srgb, var(--status) 45%, transparent);
+}
+
+.gr-roadmap-status[data-status="active"] {
+  --status: #a65a0b;
+
+  color: var(--status);
+  background: color-mix(in srgb, #e8931f 13%, transparent);
+  border-color: color-mix(in srgb, #e8931f 55%, transparent);
+}
+
+[data-theme="dark"] .gr-roadmap-status[data-status="released"] {
+  --status: #5fcf8e;
+}
+
+[data-theme="dark"] .gr-roadmap-status[data-status="active"] {
+  --status: #f2b85a;
+}
+
 .gr-roadmap-copy {
   color: color-mix(in srgb, var(--color-text) 80%, transparent);
 }
@@ -934,16 +959,34 @@
   vertical-align: middle;
 }
 
+/* Every action button at one height, icon or not. */
+.gr-roadmap-actions .gr-button {
+  min-height: 2.375rem;
+}
+
+.gr-roadmap-actions .gr-pixel-icon {
+  --pixel: 1px;
+}
+
+/* The upvote's plus turns a quarter on hover. */
+.gr-roadmap-plus {
+  transition: rotate 0.5s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+.gr-button:is(:hover, :focus-visible) .gr-roadmap-plus {
+  rotate: 90deg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-roadmap-plus {
+    transition: none;
+  }
+}
+
 .gr-roadmap-actions {
   display: flex;
   flex-wrap: wrap;
   gap: calc(0.4 * var(--u));
-}
-
-.gr-root .gr-roadmap-note {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 0.8125rem;
 }
 
 /* 768–1200px: the buttons sit under the description instead of in a column. */

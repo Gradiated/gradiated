@@ -3,6 +3,15 @@ import {
   MODEL_NAME_SUGGESTION_MAX_LENGTH,
   roadmapEntries,
 } from "../src/model-roadmap.js";
+import type { RoadmapEntry } from "../src/model-roadmap.js";
+import {
+  hasStore,
+  KEYS,
+  modelName,
+  postToSlack,
+  runInStore,
+  slackWebhook,
+} from "./_roadmap.js";
 
 const bodyLimit = 4_096;
 const rateWindowMs = 60_000;
@@ -54,26 +63,59 @@ const readSubmission = async (request: Request): Promise<unknown> => {
   }
 };
 
-const slackWebhook = (): URL | undefined => {
-  const webhook = URL.parse(process.env.MODEL_NAME_SLACK_WEBHOOK_URL ?? "");
-  if (
-    webhook?.origin === "https://hooks.slack.com" &&
-    /^\/services\/[A-Za-z0-9]+\/[A-Za-z0-9]+\/[A-Za-z0-9_-]+$/.test(
-      webhook.pathname,
-    ) &&
-    !webhook.username &&
-    !webhook.password &&
-    !webhook.search &&
-    !webhook.hash
-  ) {
-    return webhook;
-  }
-
-  return undefined;
-};
-
 const fail = (error: string, status: number): Response =>
   Response.json({ error }, { status });
+
+// Saved for the daily summary (api/roadmap-digest.ts); suggestions are also
+// kept for good.
+const store = (entry: RoadmapEntry, suggestion: string | undefined) =>
+  suggestion === undefined
+    ? runInStore([
+        ["HINCRBY", KEYS.totals, entry.id, "1"],
+        ["HINCRBY", KEYS.pendingVotes, entry.id, "1"],
+      ])
+    : (() => {
+        const record = JSON.stringify({
+          modelId: entry.id,
+          suggestion,
+          at: new Date().toISOString(),
+        });
+        return runInStore([
+          ["LPUSH", KEYS.suggestions, record],
+          ["LPUSH", KEYS.pendingSuggestions, record],
+        ]);
+      })();
+
+// Without a store there is no summary, so it goes to Slack straight away.
+const postNow = (entry: RoadmapEntry, suggestion: string | undefined) =>
+  postToSlack(
+    suggestion === undefined
+      ? {
+          text: `User upvoted ${modelName(entry.id)}`,
+          blocks: [
+            {
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: `User upvoted *${modelName(entry.id)}*`,
+              },
+            },
+          ],
+        }
+      : {
+          text: `Model name suggestion for ${entry.category}`,
+          blocks: [
+            {
+              type: "section",
+              text: {
+                type: "plain_text",
+                text: `Model name suggestion for ${entry.category}`,
+              },
+            },
+            { type: "section", text: { type: "plain_text", text: suggestion } },
+          ],
+        },
+  );
 
 export const POST = async (request: Request): Promise<Response> => {
   if (request.method !== "POST")
@@ -91,71 +133,47 @@ export const POST = async (request: Request): Promise<Response> => {
   }
 
   const input = await readSubmission(request);
-  if (
-    !input ||
-    typeof input !== "object" ||
-    !("modelId" in input) ||
-    !("suggestion" in input)
-  ) {
+  if (!input || typeof input !== "object" || !("modelId" in input)) {
     return fail("Invalid suggestion", 400);
   }
 
   const entry = roadmapEntries.find(
     (candidate) => candidate.id === input.modelId,
   );
-  const suggestion =
-    typeof input.suggestion === "string" ? input.suggestion.trim() : "";
-  if (
-    !entry ||
-    !canSuggestName(entry) ||
-    !suggestion ||
-    suggestion.length > MODEL_NAME_SUGGESTION_MAX_LENGTH
-  ) {
-    return fail("Invalid suggestion", 400);
+  if (!entry) return fail("Invalid suggestion", 400);
+
+  const isVote = "vote" in input;
+  let suggestion = "";
+  if (isVote) {
+    if (input.vote !== "up" || entry.release) return fail("Invalid vote", 400);
+  } else {
+    suggestion =
+      "suggestion" in input && typeof input.suggestion === "string"
+        ? input.suggestion.trim()
+        : "";
+    if (
+      !canSuggestName(entry) ||
+      !suggestion ||
+      suggestion.length > MODEL_NAME_SUGGESTION_MAX_LENGTH
+    ) {
+      return fail("Invalid suggestion", 400);
+    }
   }
 
-  const webhook = slackWebhook();
-  if (!webhook) return fail("Suggestions are temporarily unavailable", 503);
+  if (!hasStore() && !slackWebhook())
+    return fail("Suggestions are temporarily unavailable", 503);
 
   const client = process.env.VERCEL
     ? (request.headers.get("x-vercel-forwarded-for") ?? "unknown")
     : "local";
   if (!acceptRequest(client)) return fail("Too many suggestions", 429);
 
-  try {
-    const response = await fetch(webhook, {
-      method: "POST",
-      redirect: "error",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text: `Model name suggestion for ${entry.category}`,
-        unfurl_links: false,
-        unfurl_media: false,
-        blocks: [
-          {
-            type: "section",
-            text: {
-              type: "plain_text",
-              text: `Model name suggestion for ${entry.category}`,
-            },
-          },
-          {
-            type: "section",
-            text: { type: "plain_text", text: suggestion },
-          },
-        ],
-      }),
-      signal: AbortSignal.timeout(5_000),
-    });
-
-    if (response.ok && (await response.text()).trim() === "ok") {
-      return new Response(null, { status: 204 });
-    }
-
-    console.error("Model name webhook rejected delivery", response.status);
-  } catch {
-    console.error("Model name webhook delivery failed");
-  }
+  const text = isVote ? undefined : suggestion;
+  if (hasStore() && (await store(entry, text)))
+    return new Response(null, { status: 204 });
+  // No store, or it failed: post straight away so nothing is lost.
+  if (hasStore()) console.error("Roadmap store rejected the write");
+  if (await postNow(entry, text)) return new Response(null, { status: 204 });
 
   return fail("Could not deliver the suggestion", 502);
 };

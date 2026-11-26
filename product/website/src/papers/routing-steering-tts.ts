@@ -17,7 +17,7 @@ export const routingSteeringTtsPapers: PaperGuide[] = [
     insight:
       "Embed prompts once with a frozen encoder, fit a calibrated win-rate model (dual-head kernel + L2-logistic) predicting P(weak matches strong | prompt), pick the cost-quality Lagrangian threshold lambda on a held-out split, and enforce it online with 10% unbiased fallback probes.",
     whyGrad:
-      "grad's managed router recipe fits the calibrated CPU solver in ~6 seconds for $0 GPU cost, reports 95% bootstrap confidence intervals, and deploys straight into an sla_lagrangian Endpoint with a hard-stop circuit breaker.",
+      "grad's managed router recipe fits the calibrated CPU solver in ~6 seconds at $0 training token cost, reports 95% bootstrap confidence intervals, and deploys straight into an sla_lagrangian Endpoint with a hard-stop circuit breaker.",
     smoothness: {
       rating: "Effortless",
       verdict:
@@ -37,8 +37,8 @@ export const routingSteeringTtsPapers: PaperGuide[] = [
     mode: "Managed recipe",
     entrypoint: "recipe.yaml",
     models: [
-      { id: "BAAI/bge-small-en-v1.5", label: "BAAI/bge-small-en-v1.5 (CPU, <10ms)", compute: "CPU", duration: "~6 sec", estCost: "$0.00 GPU" },
-      { id: "Qwen/Qwen3-0.6B", label: "Qwen/Qwen3-0.6B (GPU, long context)", compute: "1x L4 / H100", duration: "~3 min", estCost: "~$0.25" },
+      { id: "BAAI/bge-small-en-v1.5", label: "BAAI/bge-small-en-v1.5 (CPU, <10ms)", estTokens: "~0.8M embed tokens", duration: "~6 sec", estCost: "$0.00 train tokens" },
+      { id: "Qwen/Qwen3-0.6B", label: "Qwen/Qwen3-0.6B (GPU, long context)", estTokens: "~1.0M tokens", duration: "~3 min", estCost: "~$0.25" },
     ],
     datasets: [
       { id: "hf://lmsys/chatbot_arena_conversations", label: "Chatbot Arena Conversations", source: "Hugging Face (public)", examples: "33,000 human preference battles" },
@@ -73,7 +73,7 @@ entrypoint: recipe.yaml`,
 Dataset   hf://lmsys/chatbot_arena_conversations (28,050 train / 4,950 eval · public)
 Model     BAAI/bge-small-en-v1.5 (frozen) + dual_head_kernel_lbfgs
 Guardrail sla_lagrangian · target quality drop <= 2.0% · 10% fallback probes
-Estimate  CPU · ~6 sec · $0.00 GPU · warnings: 0`,
+Estimate  CPU · ~6 sec · $0.00 train tokens · warnings: 0`,
     benchmarks: [
       { benchmark: "Cost reduction at >=95% strong quality", paperReported: "2x–3.66x lower API spend on MT-Bench, MMLU, and GSM8K", templateSetup: "Chatbot Arena · BAAI/bge-small-en-v1.5 · 6s CPU fit" },
     ],
@@ -120,8 +120,8 @@ Estimate  CPU · ~6 sec · $0.00 GPU · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (paper scale)", compute: "4x H100", duration: "~24 min", estCost: "~$5.60" },
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (fast reproduction)", compute: "1x H100", duration: "~12 min", estCost: "~$0.95" },
+      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (paper scale)", estTokens: "~4.7M tokens", duration: "~24 min", estCost: "~$5.60" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (fast reproduction)", estTokens: "~2.4M tokens", duration: "~12 min", estCost: "~$0.95" },
     ],
     datasets: [
       { id: "hf://simplescaling/s1K-1.1", label: "s1K-1.1 Curated Traces", source: "Hugging Face (public)", examples: "1,000 curated reasoning traces" },
@@ -173,7 +173,7 @@ entrypoint: train.py`,
     dryRunOutput: `Template  papers/s1 (arXiv:2501.19393)
 Dataset   hf://simplescaling/s1K-1.1 (1,000 curated traces · public)
 Model     Qwen/Qwen3-8B · SFT (5 epochs) + budget_forcing Endpoint
-Estimate  1x H100 · ~12 min · ~$0.95 · warnings: 0`,
+Estimate  ~2.4M tokens · ~12 min · ~$0.95 · warnings: 0`,
     benchmarks: [
       { benchmark: "AIME24 & MATH500", paperReported: "56.7% AIME24 & 93.0% MATH500 on s1-32B with budget forcing", templateSetup: "s1K-1.1 · 5 epochs SFT · n_waits=2" },
     ],
@@ -220,8 +220,8 @@ Estimate  1x H100 · ~12 min · ~$0.95 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (highest speedup ROI)", compute: "4x H100", duration: "~55 min", estCost: "~$12.80" },
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (fast reproduction)", compute: "1x H100", duration: "~24 min", estCost: "~$1.90" },
+      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (highest speedup ROI)", estTokens: "~10.7M tokens", duration: "~55 min", estCost: "~$12.80" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (fast reproduction)", estTokens: "~4.7M tokens", duration: "~24 min", estCost: "~$1.90" },
     ],
     datasets: [
       { id: "hf://Aeala/ShareGPT_Vicuna_unfiltered", label: "ShareGPT Conversations", source: "Hugging Face (public)", examples: "68,000 dialogues" },
@@ -275,7 +275,7 @@ entrypoint: train.py`,
 Dataset   hf://Aeala/ShareGPT_Vicuna_unfiltered (public chat slices)
 Model     Qwen/Qwen3-8B (frozen) + eagle3_draft (layers=[2,18,34], rollout_steps=4)
 Loss      topk_kl_distill (top_k=32) · AdamW lr=3.0e-4
-Estimate  1x H100 · ~24 min · ~$1.90 · warnings: 0`,
+Estimate  ~4.7M tokens · ~24 min · ~$1.90 · warnings: 0`,
     benchmarks: [
       { benchmark: "Lossless decoding speedup", paperReported: "3.0x–6.5x speedup over vanilla decoding (+1.4x over EAGLE-2)", templateSetup: "Qwen/Qwen3-8B · fusion_layers=[2,18,34] · rollout_steps=4" },
     ],
@@ -322,7 +322,7 @@ Estimate  1x H100 · ~24 min · ~$1.90 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~28 min", estCost: "~$2.25" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~5.6M tokens", duration: "~28 min", estCost: "~$2.25" },
     ],
     datasets: [
       { id: "hf://Aeala/ShareGPT_Vicuna_unfiltered", label: "ShareGPT Conversations", source: "Hugging Face (public)", examples: "60,000 dialogues" },
@@ -365,7 +365,7 @@ entrypoint: train.py`,
 Dataset   hf://Aeala/ShareGPT_Vicuna_unfiltered (public dialogues)
 Model     Qwen/Qwen3-8B (frozen) + 3 token_level heads (k1, k2, k3)
 Loss      built-in cross_entropy(heads={k1..k3, shift=2..4, decay=0.8^k})
-Estimate  1x H100 · ~28 min · ~$2.25 · warnings: 0`,
+Estimate  ~5.6M tokens · ~28 min · ~$2.25 · warnings: 0`,
     benchmarks: [
       { benchmark: "Lossless decoding speedup", paperReported: "2.2x–2.8x speedup on Vicuna-7B/13B/33B with zero separate draft model", templateSetup: "Qwen/Qwen3-8B frozen trunk · K=3 heads · decay=0.8" },
     ],
@@ -412,7 +412,7 @@ Estimate  1x H100 · ~28 min · ~$2.25 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~2 min", estCost: "~$0.15" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~350K tokens", duration: "~2 min", estCost: "~$0.15" },
     ],
     datasets: [
       { id: "hf://truthfulqa/truthful_qa", label: "TruthfulQA Honesty Pairs", source: "Hugging Face (public)", examples: "128 contrastive pairs + 817 eval" },
@@ -462,7 +462,7 @@ entrypoint: train.py`,
 Dataset   hf://truthfulqa/truthful_qa (128 contrastive pairs · public)
 Model     Qwen/Qwen3-8B (frozen) · layers=[14,16,18,20] · alpha=1.25
 Solver    mean_diff_steering (zero-gradient closed-form)
-Estimate  1x H100 · ~2 min · ~$0.15 · warnings: 0`,
+Estimate  ~350K tokens · ~2 min · ~$0.15 · warnings: 0`,
     benchmarks: [
       { benchmark: "TruthfulQA MC1 lift", paperReported: "+10–18 pts truthfulness lift with zero weight updates", templateSetup: "Qwen/Qwen3-8B · 128 pairs · alpha=1.25" },
     ],
@@ -509,7 +509,7 @@ Estimate  1x H100 · ~2 min · ~$0.15 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~44 min", estCost: "~$3.50" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~8.8M tokens", duration: "~44 min", estCost: "~$3.50" },
     ],
     datasets: [
       { id: "hf://BytedTsinghua-SIA/DAPO-Math-17k", label: "DAPO-Math-17k", source: "Hugging Face (public)", examples: "17,000 math prompts" },
@@ -575,7 +575,7 @@ entrypoint: train.py`,
 Dataset   hf://BytedTsinghua-SIA/DAPO-Math-17k (17,000 math prompts · public)
 Model     Qwen/Qwen3-8B · partial rollout chunks=2048 (max 16k)
 Loss      cispo (kl_beta=0.01) + ramped group length penalty
-Estimate  1x H100 · ~44 min · ~$3.50 · warnings: 0`,
+Estimate  ~8.8M tokens · ~44 min · ~$3.50 · warnings: 0`,
     benchmarks: [
       { benchmark: "Long-CoT RL efficiency & accuracy", paperReported: "Matches o1 on AIME/MATH while cutting response length 40%+ via length rewards", templateSetup: "DAPO-Math-17k · chunk=2048 · CISPO + partial rollout replay" },
     ],

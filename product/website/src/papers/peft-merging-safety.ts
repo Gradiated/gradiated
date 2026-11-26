@@ -37,8 +37,8 @@ export const peftMergingSafetyPapers: PaperGuide[] = [
     mode: "Managed recipe",
     entrypoint: "recipe.yaml",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~24 min", estCost: "~$1.85" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", compute: "1x H100", duration: "~12 min", estCost: "~$0.90" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~4.6M tokens", duration: "~24 min", estCost: "~$1.85" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~3.6M tokens", duration: "~12 min", estCost: "~$0.90" },
     ],
     datasets: [
       { id: "hf://zwhe99/commonsense_170k", label: "Commonsense170K", source: "Hugging Face (public)", examples: "170,420 reasoning pairs" },
@@ -77,7 +77,7 @@ entrypoint: recipe.yaml`,
 Dataset   hf://zwhe99/commonsense_170k (161,899 train / 8,521 eval · public)
 Model     Qwen/Qwen3-8B · adapter=dora (rank=32, alpha=64) · merge_adapter=true
 Loss      cross_entropy · AdamW lr=2.0e-4
-Estimate  1x H100 · ~24 min · ~$1.85 · warnings: 0`,
+Estimate  ~4.6M tokens · ~24 min · ~$1.85 · warnings: 0`,
     benchmarks: [
       { benchmark: "Commonsense Reasoning (8 tasks)", paperReported: "+1.0% to +3.7% over LoRA across LLaMA-7B/8B with zero inference overhead", templateSetup: "Commonsense170K · DoRA rank 32" },
     ],
@@ -124,7 +124,7 @@ Estimate  1x H100 · ~24 min · ~$1.85 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~14 min", estCost: "~$1.10" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.8M tokens", duration: "~14 min", estCost: "~$1.10" },
     ],
     datasets: [
       { id: "hf://tatsu-lab/alpaca", label: "Alpaca Instruction Tuning", source: "Hugging Face (public)", examples: "52,002 instruction pairs" },
@@ -169,7 +169,7 @@ entrypoint: train.py`,
 Dataset   hf://tatsu-lab/alpaca (52,002 train · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=16) · param_groups 16x ratio
 Loss      cross_entropy · AdamW lora_A=5e-5, lora_B=8e-4
-Estimate  1x H100 · ~14 min · ~$1.10 · warnings: 0`,
+Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
     benchmarks: [
       { benchmark: "Convergence speed & accuracy", paperReported: "Up to 2x faster convergence & +1–2% accuracy on MNLI/FLAN-v2 at identical FLOPs", templateSetup: "Alpaca · Qwen/Qwen3-8B · lambda=16" },
     ],
@@ -216,7 +216,7 @@ Estimate  1x H100 · ~14 min · ~$1.10 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~15 min", estCost: "~$1.15" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.9M tokens", duration: "~15 min", estCost: "~$1.15" },
     ],
     datasets: [
       { id: "hf://zwhe99/commonsense_170k", label: "Commonsense170K", source: "Hugging Face (public)", examples: "170,420 reasoning pairs" },
@@ -258,7 +258,7 @@ entrypoint: train.py`,
 Dataset   hf://zwhe99/commonsense_170k (170,420 train · public)
 Model     Qwen/Qwen3-8B · adapter=loreft (5 layers, rank=4, 0.028% params)
 Loss      cross_entropy · AdamW lr=4.0e-3
-Estimate  1x H100 · ~15 min · ~$1.15 · warnings: 0`,
+Estimate  ~2.9M tokens · ~15 min · ~$1.15 · warnings: 0`,
     benchmarks: [
       { benchmark: "Commonsense Reasoning", paperReported: "Beats LoRA and DoRA with 15x–65x fewer trainable parameters", templateSetup: "Qwen/Qwen3-8B · 5 layers · rank=4 · p7+s7" },
     ],
@@ -305,7 +305,7 @@ Estimate  1x H100 · ~15 min · ~$1.15 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (2 specialists)", compute: "CPU merge + eval", duration: "~6 min", estCost: "~$0.45" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (2 specialists)", estTokens: "0 train tokens (eval only)", duration: "~6 min", estCost: "~$0.45" },
     ],
     datasets: [
       { id: "hf://openai/gsm8k", label: "GSM8K + HumanEval Multi-Skill Eval", source: "Hugging Face (public)", examples: "1,319 math + 164 code eval probes" },
@@ -352,7 +352,7 @@ entrypoint: train.py`,
     dryRunOutput: `Template  papers/ties-merging (arXiv:2306.01708)
 Dataset   hf://openai/gsm8k + hf://bigcode/humanevalpack (eval · public)
 Model     Qwen/Qwen3-8B · 2 specialists -> TIES density sweep (0.2/0.4/0.6)
-Merge     client.artifacts.merge(method="ties") · $0 training GPU
+Merge     client.artifacts.merge(method="ties") · 0 training tokens
 Estimate  CPU merge + eval · ~6 min · ~$0.45 · warnings: 0`,
     benchmarks: [
       { benchmark: "Multi-task merging gain", paperReported: "+4.4% to +11.2% average accuracy over Task Arithmetic and simple averaging", templateSetup: "Qwen/Qwen3-8B · math + code · TIES density sweep" },
@@ -400,7 +400,7 @@ Estimate  CPU merge + eval · ~6 min · ~$0.45 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~9 min", estCost: "~$0.70" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~1.7M tokens", duration: "~9 min", estCost: "~$0.70" },
     ],
     datasets: [
       { id: "hf://cais/wmdp-corpora", label: "WMDP Bio/Cyber Forget + WikiText Retain", source: "Hugging Face (public)", examples: "Forget chunks + WikiText retain pairs" },
@@ -456,7 +456,7 @@ entrypoint: train.py`,
 Dataset   hf://cais/wmdp-corpora (forget + WikiText retain · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=16) · target_layer=7
 Loss      custom rmu_loss (forget MSE + 1200x retain MSE)
-Estimate  1x H100 · ~9 min · ~$0.70 · warnings: 0`,
+Estimate  ~1.7M tokens · ~9 min · ~$0.70 · warnings: 0`,
     benchmarks: [
       { benchmark: "WMDP-Bio / Cyber vs. MMLU", paperReported: "Drops WMDP-Bio 63.7% -> 31.0% while keeping MMLU within ~1% of base", templateSetup: "Qwen/Qwen3-8B · layer=7 · c=6.5 · alpha=1200" },
     ],
@@ -503,7 +503,7 @@ Estimate  1x H100 · ~9 min · ~$0.70 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~14 min", estCost: "~$1.10" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.8M tokens", duration: "~14 min", estCost: "~$1.10" },
     ],
     datasets: [
       { id: "hf://locuslab/TOFU", label: "TOFU Fictitious Unlearning (10% forget)", source: "Hugging Face (public)", examples: "400 forget / 3,600 retain QA" },
@@ -556,7 +556,7 @@ entrypoint: train.py`,
 Dataset   hf://locuslab/TOFU (400 forget / 3,600 retain · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=16) · weight_anchor=0.01
 Loss      custom npo_loss (beta=0.10) + retain NLL
-Estimate  1x H100 · ~14 min · ~$1.10 · warnings: 0`,
+Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
     benchmarks: [
       { benchmark: "TOFU 10% Forget Quality vs. Utility", paperReported: "Avoids catastrophic collapse of Gradient Ascent while cutting forget accuracy sharply", templateSetup: "TOFU 10% forget · Qwen/Qwen3-8B · beta=0.1" },
     ],

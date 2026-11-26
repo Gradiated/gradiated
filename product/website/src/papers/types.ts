@@ -11,7 +11,7 @@ export type PaperCategory =
 export type PaperModelOption = {
   id: string;
   label: string;
-  compute: string;
+  estTokens: string;
   duration: string;
   estCost: string;
 };

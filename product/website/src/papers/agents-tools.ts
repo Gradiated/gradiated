@@ -39,8 +39,8 @@ export const agentsToolsPapers: PaperGuide[] = [
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~42 min", estCost: "~$3.35" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", compute: "1x H100", duration: "~19 min", estCost: "~$1.50" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~8.4M tokens", duration: "~42 min", estCost: "~$3.35" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~6.0M tokens", duration: "~19 min", estCost: "~$1.50" },
     ],
     datasets: [
       { id: "hf://PeterJinGo/nq_hotpotqa_train", label: "NQ + HotpotQA Multi-Hop QA", source: "Hugging Face (public)", examples: "169,615 single & multi-hop QA pairs" },
@@ -111,7 +111,7 @@ entrypoint: train.py`,
 Dataset   hf://PeterJinGo/nq_hotpotqa_train (169,615 QA tasks · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · group_size=8 · max_turns=4
 Loss      grpo (clip=0.2, kl_beta=0.001) · retrieved <information> tokens auto-masked
-Estimate  1x H100 · ~42 min · ~$3.35 · warnings: 0`,
+Estimate  ~8.4M tokens · ~42 min · ~$3.35 · warnings: 0`,
     benchmarks: [
       { benchmark: "7-Dataset QA Average EM", paperReported: "+26% relative EM gain over single-shot RAG and IRCoT on Qwen2.5-7B", templateSetup: "Qwen/Qwen3-8B · group_size=8 · max_turns=4 · topk=3" },
     ],
@@ -158,7 +158,7 @@ Estimate  1x H100 · ~42 min · ~$3.35 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~38 min", estCost: "~$3.05" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~7.6M tokens", duration: "~38 min", estCost: "~$3.05" },
     ],
     datasets: [
       { id: "hf://hendrycks/competition_math", label: "MATH Competition Problems", source: "Hugging Face (public)", examples: "7,500 train / 5,000 test" },
@@ -223,7 +223,7 @@ entrypoint: train.py`,
 Dataset   hf://hendrycks/competition_math (7,500 train / 5,000 test · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · 2-turn self-correction
 Loss      custom per-turn KL (beta_t1=0.20, beta_t2=0.01) + progress bonus
-Estimate  1x H100 · ~38 min · ~$3.05 · warnings: 0`,
+Estimate  ~7.6M tokens · ~38 min · ~$3.05 · warnings: 0`,
     benchmarks: [
       { benchmark: "MATH intrinsic self-correction", paperReported: "+15.6% absolute self-correction gain on MATH without sandbagging", templateSetup: "Qwen/Qwen3-8B · beta_t1=0.20, beta_t2=0.01, alpha=2.0" },
     ],
@@ -270,8 +270,8 @@ Estimate  1x H100 · ~38 min · ~$3.05 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~45 min", estCost: "~$3.60" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", compute: "1x H100", duration: "~20 min", estCost: "~$1.60" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~9.0M tokens", duration: "~45 min", estCost: "~$3.60" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~6.4M tokens", duration: "~20 min", estCost: "~$1.60" },
     ],
     datasets: [
       { id: "synthetic://azr-zero-data", label: "Zero Human Data (Self-Generated Python Buffer)", source: "Generated online by policy + sandbox", examples: "0 static rows (infinite self-play)" },
@@ -336,7 +336,7 @@ entrypoint: train.py`,
 Dataset   synthetic://azr-zero-data (self-play Python buffer · 0 static rows)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · dual-role Proposer + Solver
 Loss      cispo with TRR++ per-role advantage normalization
-Estimate  1x H100 · ~45 min · ~$3.60 · warnings: 0`,
+Estimate  ~9.0M tokens · ~45 min · ~$3.60 · warnings: 0`,
     benchmarks: [
       { benchmark: "Coding + Math Average (Zero Human Data)", paperReported: "50.4% avg on Qwen2.5-7B-Coder, surpassing RLVR models trained on 50k+ human tasks", templateSetup: "Qwen/Qwen3-8B · 16 proposals x 8 solver rollouts · Python sandbox" },
     ],
@@ -383,7 +383,7 @@ Estimate  1x H100 · ~45 min · ~$3.60 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B Actor + 0.6B Critic", compute: "1x H100", duration: "~34 min", estCost: "~$2.70" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B Actor + 0.6B Critic", estTokens: "~10.8M tokens", duration: "~34 min", estCost: "~$2.70" },
     ],
     datasets: [
       { id: "hf://gradiated/archer-twenty-questions", label: "Twenty Questions & Interactive Tasks", source: "Hugging Face (public)", examples: "2,000 multi-turn episodes" },
@@ -453,7 +453,7 @@ entrypoint: train.py`,
 Dataset   hf://gradiated/archer-twenty-questions (2,000 multi-turn tasks · public)
 Model     Actor Qwen/Qwen3-4B + Critic Qwen/Qwen3-0.6B (heads: q, v)
 Loss      Critic expectile-IQL Bellman TD + Actor CISPO
-Estimate  1x H100 · ~34 min · ~$2.70 · warnings: 0`,
+Estimate  ~6.8M tokens · ~34 min · ~$2.70 · warnings: 0`,
     benchmarks: [
       { benchmark: "Multi-turn sample efficiency", paperReported: "~100x fewer environment steps than flat on-policy PPO on 20 Questions & WebShop", templateSetup: "Qwen/Qwen3-4B actor + 0.6B critic · replay=4,096" },
     ],
@@ -500,7 +500,7 @@ Estimate  1x H100 · ~34 min · ~$2.70 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~22 min", estCost: "~$1.75" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~4.4M tokens", duration: "~22 min", estCost: "~$1.75" },
     ],
     datasets: [
       { id: "hf://wikimedia/wikipedia", label: "Wikipedia Raw Text (subset)", source: "Hugging Face (public)", examples: "25,000 unlabeled passages" },
@@ -561,7 +561,7 @@ entrypoint: train.py`,
 Dataset   hf://wikimedia/wikipedia (4,000 unlabeled passages · public)
 Model     Qwen/Qwen3-8B · self-filtered tool SFT (tau_f=0.15)
 Loss      cross_entropy (tool return tokens masked to 0.0)
-Estimate  1x H100 · ~22 min · ~$1.75 · warnings: 0`,
+Estimate  ~4.4M tokens · ~22 min · ~$1.75 · warnings: 0`,
     benchmarks: [
       { benchmark: "Zero-shot arithmetic & QA", paperReported: "6.7B Toolformer beats 175B GPT-3 on ASDiv, SVAMP, and WebQS via self-learned APIs", templateSetup: "Wikipedia subset · Qwen/Qwen3-8B · tau_f=0.15" },
     ],
@@ -608,8 +608,8 @@ Estimate  1x H100 · ~22 min · ~$1.75 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~36 min", estCost: "~$2.85" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", compute: "1x H100", duration: "~16 min", estCost: "~$1.30" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~7.1M tokens", duration: "~36 min", estCost: "~$2.85" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~5.2M tokens", duration: "~16 min", estCost: "~$1.30" },
     ],
     datasets: [
       { id: "synthetic://spiral-zero-sum", label: "Zero-Sum Game Suite (Kuhn Poker / Tic-Tac-Toe)", source: "Deterministic Python game simulators", examples: "Unlimited self-play episodes" },
@@ -662,7 +662,7 @@ entrypoint: train.py`,
 Dataset   synthetic://spiral-zero-sum (Kuhn Poker + Tic-Tac-Toe self-play)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · RAE per-seat baselines
 Loss      cispo over both seats' masked trajectories
-Estimate  1x H100 · ~36 min · ~$2.85 · warnings: 0`,
+Estimate  ~7.1M tokens · ~36 min · ~$2.85 · warnings: 0`,
     benchmarks: [
       { benchmark: "Zero-shot transfer to MATH / GPQA", paperReported: "+8.6% math & +8.4% general reasoning gain purely from zero-sum game self-play", templateSetup: "Qwen/Qwen3-8B · 32 games/step · RAE baselines" },
     ],

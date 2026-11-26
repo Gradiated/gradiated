@@ -266,9 +266,9 @@ export const PapersIndexPage = (): ReactElement => {
                           </span>
                         </div>
                         <div>
-                          <span className="gr-paper-spec-k">Compute</span>
+                          <span className="gr-paper-spec-k">Est. tokens</span>
                           <span className="gr-paper-spec-v">
-                            {defaultModel.compute} · {defaultModel.duration}
+                            {defaultModel.estTokens} · {defaultModel.duration}
                           </span>
                         </div>
                         <div>
@@ -424,7 +424,7 @@ export const PaperDetailPage = ({
                   One-click reproduction · Pre-configured public data
                 </span>
                 <span className="gr-launch-estimate">
-                  {selectedModel.compute} · {selectedModel.duration} ·{" "}
+                  {selectedModel.estTokens} · {selectedModel.duration} ·{" "}
                   <strong>{selectedModel.estCost}</strong>
                 </span>
               </div>

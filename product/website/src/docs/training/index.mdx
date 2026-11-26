@@ -259,15 +259,15 @@ Start with a managed recipe and its built-in defaults. Drop down to custom loops
 
 Any managed run can export its full resolved defaults as YAML (`grad runs inspect <run_id> --yaml > recipe.yaml`), so moving from defaults to version-controlled config takes one command.
 
-<DocsCallout label="Rule of thumb" tone="tip">
-Start at the cheapest layer that proves value: a CPU router or classifier on existing traces takes seconds and often cuts frontier spend by 50%+. Move to GPU SFT, distillation, or RL once you have a measured baseline and a clean held-out eval.
+<DocsCallout label="Token-based training billing" tone="tip">
+Training is metered **per million tokens processed** (forward/backward and sampling) plus storage for saved `.grad` artifacts and checkpoints — never idle GPU hours. Start at the cheapest layer that proves value: a lightweight router or classifier runs in seconds, then move to SFT, distillation, or RL once you have a measured baseline.
 </DocsCallout>
 
 ## Using with coding agents
 
 Every docs page includes a **Copy** menu (**Copy page** as raw Markdown or **Copy prompt** for coding agents) in the top right, and every page is served as plain Markdown at `<url>.md`, indexed in [`/llms.txt`](/llms.txt) and `/llms-full.txt`.
 
-The CLI is designed for non-interactive agent loops: pass `--json` to any `grad` command for a single JSON envelope on stdout, and run `--dry-run --json` (or `client.runs.plan(...)`) to validate dataset coverage and estimate compute before spending GPU time.
+The CLI is designed for non-interactive agent loops: pass `--json` to any `grad` command for a single JSON envelope on stdout, and run `--dry-run --json` (or `client.runs.plan(...)`) to validate dataset coverage and estimate tokens and cost before starting a run.
 
 ### Starter prompts to paste into Claude Code, Codex, or Cursor
 

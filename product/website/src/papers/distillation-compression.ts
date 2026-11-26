@@ -38,9 +38,9 @@ export const distillationCompressionPapers: PaperGuide[] = [
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~18 min", estCost: "~$1.40" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", compute: "1x H100", duration: "~9 min", estCost: "~$0.70" },
-      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (LoRA rank 64)", compute: "4x H100", duration: "~38 min", estCost: "~$8.90" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~3.5M tokens", duration: "~18 min", estCost: "~$1.40" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~2.8M tokens", duration: "~9 min", estCost: "~$0.70" },
+      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (LoRA rank 64)", estTokens: "~7.4M tokens", duration: "~38 min", estCost: "~$8.90" },
     ],
     datasets: [
       { id: "hf://sciknoweval/chemistry-demo", label: "SciKnowEval Chemistry", source: "Hugging Face (public)", examples: "1,200 demos + held-out eval" },
@@ -93,7 +93,7 @@ entrypoint: train.py`,
 Dataset   hf://sciknoweval/chemistry-demo (1,200 train / 200 eval · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=64) · shared base teacher
 Loss      topk_kl_distill (top_k=20) · AdamW lr=2.0e-5
-Estimate  1x H100 · ~18 min · ~$1.40 · warnings: 0`,
+Estimate  ~3.5M tokens · ~18 min · ~$1.40 · warnings: 0`,
     benchmarks: [
       { benchmark: "Continual skill acquisition", paperReported: "Matches or exceeds SFT while preserving prior benchmark accuracy", templateSetup: "SciKnowEval Chemistry · LoRA rank 64 · top_k=20" },
     ],
@@ -140,8 +140,8 @@ Estimate  1x H100 · ~18 min · ~$1.40 · warnings: 0`,
     mode: "Managed recipe",
     entrypoint: "recipe.yaml",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~14 min", estCost: "~$1.10" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", compute: "1x H100", duration: "~7 min", estCost: "~$0.55" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.8M tokens", duration: "~14 min", estCost: "~$1.10" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~2.2M tokens", duration: "~7 min", estCost: "~$0.55" },
     ],
     datasets: [
       { id: "hf://hazyresearch/cartridges-longhealth", label: "LongHealth Clinical Corpus", source: "Hugging Face (public)", examples: "60k-token corpus + QA probes" },
@@ -182,7 +182,7 @@ entrypoint: recipe.yaml`,
 Dataset   hf://hazyresearch/cartridges-longhealth (corpus: 58,420 tokens · 640 QA prompts)
 Model     Qwen/Qwen3-8B (frozen) + prefix_kv (256 virtual tokens -> 228x KV compression)
 Loss      topk_kl_distill (top_k=20) · AdamW lr=2.0e-2
-Estimate  1x H100 · ~14 min · ~$1.10 · warnings: 0`,
+Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
     benchmarks: [
       { benchmark: "KV memory & throughput", paperReported: "38.6x smaller KV memory & up to 26.4x higher throughput vs. in-context prompting", templateSetup: "256 virtual prefix tokens compressing ~58k-token corpus" },
     ],
@@ -229,8 +229,8 @@ Estimate  1x H100 · ~14 min · ~$1.10 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B student <- 32B teacher", compute: "1x H100", duration: "~16 min", estCost: "~$1.30" },
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B student <- 32B teacher", compute: "1x H100", duration: "~24 min", estCost: "~$1.90" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B student <- 32B teacher", estTokens: "~5.2M tokens", duration: "~16 min", estCost: "~$1.30" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B student <- 32B teacher", estTokens: "~4.7M tokens", duration: "~24 min", estCost: "~$1.90" },
     ],
     datasets: [
       { id: "hf://HuggingFaceH4/no_robots", label: "No Robots Prompts", source: "Hugging Face (public)", examples: "9,500 diverse prompts" },
@@ -285,7 +285,7 @@ entrypoint: train.py`,
 Dataset   hf://HuggingFaceH4/no_robots (9,500 prompts · public)
 Model     Qwen/Qwen3-4B student <- Qwen/Qwen3-32B teacher
 Loss      custom jsd_loss (beta=0.5, top_k=32 gather_indices)
-Estimate  1x H100 · ~16 min · ~$1.30 · warnings: 0`,
+Estimate  ~3.2M tokens · ~16 min · ~$1.30 · warnings: 0`,
     benchmarks: [
       { benchmark: "Summarization & instruction following", paperReported: "Outperforms sequence-level KD & forward KL across T5/Gemma students", templateSetup: "No Robots prompts · 32B -> 4B · JSD beta=0.5" },
     ],
@@ -332,7 +332,7 @@ Estimate  1x H100 · ~16 min · ~$1.30 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B <- Qwen/Qwen3-32B", compute: "1x H100", duration: "~14 min", estCost: "~$1.10" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B <- Qwen/Qwen3-32B", estTokens: "~4.4M tokens", duration: "~14 min", estCost: "~$1.10" },
     ],
     datasets: [
       { id: "hf://HuggingFaceH4/no_robots", label: "No Robots Prompts", source: "Hugging Face (public)", examples: "9,500 prompts" },
@@ -373,7 +373,7 @@ entrypoint: train.py`,
 Dataset   hf://HuggingFaceH4/no_robots (9,500 prompts · public)
 Model     Qwen/Qwen3-4B <- Qwen/Qwen3-32B
 Loss      reverse_kl_distill (built-in)
-Estimate  1x H100 · ~14 min · ~$1.10 · warnings: 0`,
+Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
     benchmarks: [
       { benchmark: "Hallucination & Rouge-L", paperReported: "Consistently beats forward KD on GPT-2/OPT/LLaMA students with lower exposure bias", templateSetup: "No Robots · 32B -> 4B · reverse_kl_distill" },
     ],
@@ -420,7 +420,7 @@ Estimate  1x H100 · ~14 min · ~$1.10 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B <- Qwen/Qwen3-32B", compute: "1x H100", duration: "~10 min", estCost: "~$0.80" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B <- Qwen/Qwen3-32B", estTokens: "~3.2M tokens", duration: "~10 min", estCost: "~$0.80" },
     ],
     datasets: [
       { id: "hf://HuggingFaceH4/no_robots", label: "No Robots Prompts", source: "Hugging Face (public)", examples: "9,500 prompts" },
@@ -474,7 +474,7 @@ entrypoint: train.py`,
 Dataset   hf://HuggingFaceH4/no_robots (9,500 prompts · public)
 Model     Qwen/Qwen3-4B <- Qwen/Qwen3-32B (2x replay reuse)
 Loss      custom skew_kl_loss (alpha=0.1, top_k=32)
-Estimate  1x H100 · ~10 min · ~$0.80 · warnings: 0`,
+Estimate  ~2.0M tokens · ~10 min · ~$0.80 · warnings: 0`,
     benchmarks: [
       { benchmark: "Speed & quality vs. MiniLLM", paperReported: "Up to 4.3x faster training than on-policy reverse KL with higher Rouge-L", templateSetup: "No Robots · 32B -> 4B · skew alpha=0.1" },
     ],
@@ -521,8 +521,8 @@ Estimate  1x H100 · ~10 min · ~$0.80 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "FacebookAI/xlm-roberta-base", label: "XLM-RoBERTa Base (recommended, fast)", compute: "1x L4 / H100", duration: "~6 min", estCost: "~$0.40" },
-      { id: "BAAI/bge-small-en-v1.5", label: "BGE-Small-EN (ultra-fast CPU serving)", compute: "1x L4 / H100", duration: "~3 min", estCost: "~$0.20" },
+      { id: "FacebookAI/xlm-roberta-base", label: "XLM-RoBERTa Base (recommended, fast)", estTokens: "~1.6M tokens", duration: "~6 min", estCost: "~$0.40" },
+      { id: "BAAI/bge-small-en-v1.5", label: "BGE-Small-EN (ultra-fast CPU serving)", estTokens: "~800K tokens", duration: "~3 min", estCost: "~$0.20" },
     ],
     datasets: [
       { id: "hf://microsoft/MeetingBank-LLMCompressed", label: "MeetingBank LLM-Compressed", source: "Hugging Face (public)", examples: "Distilled token-level keep/drop labels" },
@@ -569,7 +569,7 @@ entrypoint: train.py`,
 Dataset   hf://microsoft/MeetingBank-LLMCompressed (public token-keep labels)
 Model     FacebookAI/xlm-roberta-base + token_level head 'keep'
 Loss      bce_sparse_positions (built-in)
-Estimate  1x H100 · ~6 min · ~$0.40 · warnings: 0`,
+Estimate  ~1.0M tokens · ~6 min · ~$0.40 · warnings: 0`,
     benchmarks: [
       { benchmark: "Compression ratio & latency", paperReported: "2x–5x prompt compression at 3–6x lower latency than perplexity compressors", templateSetup: "MeetingBank-LLMCompressed · XLM-RoBERTa · keep threshold 0.45" },
     ],

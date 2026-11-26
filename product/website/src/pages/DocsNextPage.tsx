@@ -388,7 +388,7 @@ const PageActions = ({
               "Guidelines:",
               "- Inspect my existing codebase first and match its language and conventions.",
               "- Read GRADIATED_API_KEY from the environment (or GRAD_BASE_URL for local mode); never hardcode secrets.",
-              "- For training runs, run a dry run (`--dry-run --json` or `runs.plan()`) before launching GPU compute.",
+              "- For training runs, run a dry run (`--dry-run --json` or `runs.plan()`) to check estimated tokens and cost before starting training.",
               "",
               "Documentation:",
               "",

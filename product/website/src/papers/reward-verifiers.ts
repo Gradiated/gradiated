@@ -37,8 +37,8 @@ export const rewardVerifiersPapers: PaperGuide[] = [
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~16 min", estCost: "~$1.30" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast verifier)", compute: "1x H100", duration: "~8 min", estCost: "~$0.65" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~3.2M tokens", duration: "~16 min", estCost: "~$1.30" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast verifier)", estTokens: "~2.6M tokens", duration: "~8 min", estCost: "~$0.65" },
     ],
     datasets: [
       { id: "hf://peiyi9979/Math-Shepherd", label: "Math-Shepherd Step Labels", source: "Hugging Face (public)", examples: "445k step-annotated trajectories" },
@@ -87,7 +87,7 @@ entrypoint: train.py`,
 Dataset   hf://peiyi9979/Math-Shepherd (step-level MC labels · public)
 Model     Qwen/Qwen3-8B · adapter=lora + token_level head 'prm'
 Loss      bce_sparse_positions (built-in)
-Estimate  1x H100 · ~16 min · ~$1.30 · warnings: 0`,
+Estimate  ~3.2M tokens · ~16 min · ~$1.30 · warnings: 0`,
     benchmarks: [
       { benchmark: "GSM8K / MATH Best-of-N", paperReported: "Boosts Mistral-7B from 77.9% -> 84.1% on GSM8K via PRM verification", templateSetup: "Math-Shepherd public labels · Qwen/Qwen3-8B · Best-of-8" },
     ],
@@ -114,7 +114,7 @@ Estimate  1x H100 · ~16 min · ~$1.30 · warnings: 0`,
     insight:
       "Run two Trainers side by side: an Implicit PRM updated online with BCE on sigmoid(beta * sum(log pi_prm - log pi_ref)) against binary outcome labels, and a Policy updated with dense per-token advantages combining outcome reward + the PRM's token-level log-ratios.",
     whyGrad:
-      "Opening two independent Trainers in one Python `with` block lets the online PRM and Policy co-evolve cleanly on separate GPU leases with 1:1 aligned per-token advantages.",
+      "Opening two independent Trainers in one Python `with` block lets the online PRM and Policy co-evolve cleanly with 1:1 aligned per-token advantages — billed per token processed, never idle GPU time.",
     smoothness: {
       rating: "Clean",
       verdict:
@@ -127,14 +127,14 @@ Estimate  1x H100 · ~16 min · ~$1.30 · warnings: 0`,
     ],
     gotchas: [
       "Keep PRM beta small (0.05) and clip per-token implicit rewards to [-2, 2] so outlier tokens don't hijack policy updates.",
-      "Using two Trainers doubles GPU lease cost; start with a smaller 4B PRM paired with an 8B policy.",
+      "Training two models doubles token spend per rollout; start with a compact 4B PRM paired with an 8B policy.",
     ],
     linesOfCode: 38,
     typicalBaselineLoc: "~2,200 LOC dual-trainer RL cluster",
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B policy + 4B PRM", compute: "2x H100", duration: "~32 min", estCost: "~$4.90" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B policy + 4B PRM", estTokens: "~12.2M tokens", duration: "~32 min", estCost: "~$4.90" },
     ],
     datasets: [
       { id: "hf://openai/gsm8k", label: "GSM8K Math", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
@@ -197,7 +197,7 @@ entrypoint: train.py`,
 Dataset   hf://openai/gsm8k (7,473 train / 1,319 test · public)
 Model     2x Trainers (Qwen/Qwen3-8B policy + online implicit PRM)
 Loss      online implicit_prm_loss + per-token grpo
-Estimate  2x H100 · ~32 min · ~$4.90 · warnings: 0`,
+Estimate  ~12.2M tokens · ~32 min · ~$4.90 · warnings: 0`,
     benchmarks: [
       { benchmark: "Sample efficiency on math/code", paperReported: "2.5x sample efficiency & +6.9% average gain over outcome-only RLOO", templateSetup: "GSM8K · dual LoRA trainers · beta=0.05" },
     ],
@@ -244,7 +244,7 @@ Estimate  2x H100 · ~32 min · ~$4.90 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~14 min", estCost: "~$1.10" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.8M tokens", duration: "~14 min", estCost: "~$1.10" },
     ],
     datasets: [
       { id: "hf://nvidia/HelpSteer2", label: "NVIDIA HelpSteer2 (5 attributes)", source: "Hugging Face (public)", examples: "21,362 multi-attribute ratings" },
@@ -306,7 +306,7 @@ entrypoint: train.py`,
 Dataset   hf://nvidia/HelpSteer2 (5 attributes) + UltraFeedback pairs
 Model     Qwen/Qwen3-8B · 2-stage frozen_head (attrs[frozen] + gate[trainable])
 Loss      Stage 1 MSE -> Stage 2 gated Bradley-Terry
-Estimate  1x H100 · ~14 min · ~$1.10 · warnings: 0`,
+Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
     benchmarks: [
       { benchmark: "RewardBench overall", paperReported: "90.4 overall with Llama-3-8B (top 8B reward model at release)", templateSetup: "HelpSteer2 + UltraFeedback · 2-stage frozen_head" },
     ],
@@ -353,8 +353,8 @@ Estimate  1x H100 · ~14 min · ~$1.10 · warnings: 0`,
     mode: "Managed recipe",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~12 min", estCost: "~$0.95" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast verifier)", compute: "1x H100", duration: "~6 min", estCost: "~$0.48" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.4M tokens", duration: "~12 min", estCost: "~$0.95" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast verifier)", estTokens: "~1.9M tokens", duration: "~6 min", estCost: "~$0.48" },
     ],
     datasets: [
       { id: "hf://openai/gsm8k", label: "GSM8K Critique Verifier Set", source: "Hugging Face (public)", examples: "Synthesized correct + faulty solutions" },
@@ -397,7 +397,7 @@ entrypoint: train.py`,
 Dataset   gsm8k-critique-verdicts (critique + Yes/No verdict pairs)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · majority_vote n=5
 Loss      cross_entropy (managed sft)
-Estimate  1x H100 · ~12 min · ~$0.95 · warnings: 0`,
+Estimate  ~2.4M tokens · ~12 min · ~$0.95 · warnings: 0`,
     benchmarks: [
       { benchmark: "GSM8K verification accuracy", paperReported: "+16–64% relative gain over discriminative scalar reward models with majority voting", templateSetup: "Qwen/Qwen3-8B SFT + majority_vote n=5" },
     ],
@@ -444,7 +444,7 @@ Estimate  1x H100 · ~12 min · ~$0.95 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~36 min", estCost: "~$2.85" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~7.1M tokens", duration: "~36 min", estCost: "~$2.85" },
     ],
     datasets: [
       { id: "hf://openai/gsm8k", label: "GSM8K Math", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
@@ -500,7 +500,7 @@ entrypoint: train.py`,
 Dataset   hf://openai/gsm8k (7,473 train / 1,319 test · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · K=4 MC branches/step
 Loss      grpo with Monte Carlo step advantages V(s_{t+1}) - V(s_t)
-Estimate  1x H100 · ~36 min · ~$2.85 · warnings: 0`,
+Estimate  ~7.1M tokens · ~36 min · ~$2.85 · warnings: 0`,
     benchmarks: [
       { benchmark: "MATH & GSM8K accuracy", paperReported: "Outperforms PPO and RLOO with 9x lower value estimation error", templateSetup: "GSM8K · Qwen/Qwen3-8B · K=4 branches per reasoning step" },
     ],
@@ -547,7 +547,7 @@ Estimate  1x H100 · ~36 min · ~$2.85 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~24 min", estCost: "~$1.90" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~4.7M tokens", duration: "~24 min", estCost: "~$1.90" },
     ],
     datasets: [
       { id: "hf://PKU-Alignment/PKU-SafeRLHF", label: "PKU-SafeRLHF", source: "Hugging Face (public)", examples: "83,417 helpfulness + safety prompts" },
@@ -601,7 +601,7 @@ entrypoint: train.py`,
 Dataset   hf://PKU-Alignment/PKU-SafeRLHF (public safety + helpfulness prompts)
 Model     Qwen/Qwen3-8B · dual reward/cost artifacts + online lambda
 Loss      grpo with Lagrangian utility R - lam * C
-Estimate  1x H100 · ~24 min · ~$1.90 · warnings: 0`,
+Estimate  ~4.7M tokens · ~24 min · ~$1.90 · warnings: 0`,
     benchmarks: [
       { benchmark: "Harmlessness + helpfulness Pareto", paperReported: "Reduces harmful responses from 53% -> <3% while improving helpfulness", templateSetup: "PKU-SafeRLHF · Qwen/Qwen3-8B · cost_limit=0.0" },
     ],

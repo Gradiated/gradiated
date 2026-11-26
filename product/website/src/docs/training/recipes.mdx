@@ -22,7 +22,7 @@ For specialized training patterns built on these same primitives, see [Reward mo
 
 ## Start with recipe defaults
 
-Every recipe ships with working defaults for base model, compute target, train/eval split, optimizer, and calibration. Pass your dataset, output name, and recipe — then run `--dry-run` (or `runs.plan()`) to verify data coverage before launching compute.
+Every recipe ships with working defaults for base model, train/eval split, optimizer, and calibration. Training is billed **per million tokens processed** plus storage for saved weights — never idle GPU time. Pass your dataset, output name, and recipe, then run `--dry-run` (or `runs.plan()`) to verify data coverage and estimated tokens before starting a run.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -32,9 +32,9 @@ from grad import Grad
 
 client = Grad()
 
-# Optional pre-flight check before launching compute
+# Optional pre-flight check before starting training ($0)
 plan = client.runs.plan(dataset="support-prod", name="support-router", recipe="router")
-print(plan.resolved_recipe, plan.warnings, plan.estimated_compute)
+print(plan.resolved_recipe, plan.warnings, plan.estimated_tokens, plan.estimated_cost_usd)
 
 run = client.runs.create(
     dataset="support-prod",
@@ -61,7 +61,7 @@ const plan = await grad.runs.plan({
   name: "support-router",
   recipe: "router",
 });
-console.log(plan.resolvedRecipe, plan.warnings);
+console.log(plan.resolvedRecipe, plan.warnings, plan.estimatedTokens, plan.estimatedCostUsd);
 
 const run = await grad.runs
   .create({ dataset: "support-prod", name: "support-router", recipe: "router" })
@@ -81,7 +81,7 @@ plan, _ := client.Runs.Plan(ctx, grad.RunParams{
 	Name:    "support-router",
 	Recipe:  "router",
 })
-fmt.Println(plan.ResolvedRecipe, plan.Warnings)
+fmt.Println(plan.ResolvedRecipe, plan.Warnings, plan.EstimatedTokens, plan.EstimatedCostUSD)
 
 run, _ := client.Runs.Create(ctx, grad.RunParams{
 	Dataset: "support-prod",
@@ -95,7 +95,7 @@ fmt.Println(run.ArtifactID, run.EvalReport)
   <DocsCodeTab label="CLI">
 
 ```bash
-# Preview the resolved defaults, dataset warnings, and estimated compute ($0)
+# Preview resolved defaults, dataset warnings, and estimated tokens/cost ($0)
 grad train --dataset support-prod --name support-router --recipe router --dry-run
 
 # Launch and stream progress
@@ -115,9 +115,9 @@ curl https://api.gradiated.com/v1/runs \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-### Preview with `--dry-run` before spending GPU time
+### Preview with `--dry-run` before training
 
-Every run supports a zero-cost pre-flight check (`--dry-run` or `client.runs.plan()`) that inspects dataset coverage, warns about missing scores or class imbalance, prints the resolved defaults, and estimates runtime before allocating compute:
+Every run supports a zero-cost pre-flight check (`--dry-run` or `client.runs.plan()`) that inspects dataset coverage, warns about missing scores or class imbalance, prints resolved defaults, and estimates total training tokens and cost:
 
 <DocsTerminal
   title="Pre-flight dry run ($0)"
@@ -129,7 +129,7 @@ Dataset   diff-merge-prod (1,420 trajectories -> 1,184 after min_score filter)
 Split     by_session: 1,065 train / 119 eval (0 overlapping sessions)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · merge_adapter=true
 Optimizer adamw · lr=2.0e-4 (calibrated for Qwen/Qwen3-8B LoRA) · cosine decay
-Estimate  ~6m on 1x H100 · warnings: 0
+Estimate  ~3.8M train tokens · ~6m · warnings: 0
 ```
 
 </DocsTerminal>

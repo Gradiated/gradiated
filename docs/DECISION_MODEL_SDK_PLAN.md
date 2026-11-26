@@ -479,7 +479,7 @@ public_dataset: "hf://sciknoweval/chemistry-demo"
 base_default: "Qwen/Qwen3-8B"
 compute: gpu
 entrypoint: train.py            # or recipe.yaml for managed recipes
-estimate: { gpu: "1x H100", minutes: 18, approx_usd: 1.40 }
+estimate: { tokens_millions: 4.5, minutes: 18, approx_usd: 1.40 }  # metered per-1M tokens + saved weight storage
 ```
 
 ### 9.2 Three Zero-Friction Launch Paths

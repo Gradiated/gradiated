@@ -12,7 +12,7 @@ pip install "grad-sdk[torch]"
 
 ## Mental model
 
-- **`Trainer`** owns mutable weights and optimizer state on the server. Open it in a `with client.trainers.create(...) as trainer:` block so the compute lease releases automatically on exit or error.
+- **`Trainer`** owns mutable weights and optimizer state on the server. Open it in a `with client.trainers.create(...) as trainer:` block so the remote trainer session closes cleanly on exit or error. Training is billed strictly **per million tokens processed** (forward/backward and sampling) plus storage for saved weights and checkpoints — never idle GPU time.
 - **`trainer.snapshot()`** returns an immutable, ephemeral [**`Artifact`**](/docs/training/endpoints/) pointing at the current weights. Call `sample()`, `score_logprobs()`, `infer_batch()`, or `embed()` on it while training continues.
 - **`trainer.export(name=...)`** writes a durable `.grad` **`Artifact`** ready to deploy on an [**`Endpoint`**](/docs/training/endpoints/).
 

@@ -37,8 +37,8 @@ export const preferenceAlignmentPapers: PaperGuide[] = [
     mode: "Managed recipe",
     entrypoint: "recipe.yaml",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~12 min", estCost: "~$0.95" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", compute: "1x H100", duration: "~6 min", estCost: "~$0.48" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.4M tokens", duration: "~12 min", estCost: "~$0.95" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~1.9M tokens", duration: "~6 min", estCost: "~$0.48" },
     ],
     datasets: [
       { id: "hf://HuggingFaceH4/ultrafeedback_binarized", label: "UltraFeedback Binarized", source: "Hugging Face (public)", examples: "61,135 preference pairs" },
@@ -72,7 +72,7 @@ entrypoint: recipe.yaml`,
 Dataset   hf://HuggingFaceH4/ultrafeedback_binarized (58,078 train / 3,057 eval pairs)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · merge_adapter=true
 Loss      dpo (beta=0.10) · AdamW lr=5.0e-5
-Estimate  1x H100 · ~12 min · ~$0.95 · warnings: 0`,
+Estimate  ~2.4M tokens · ~12 min · ~$0.95 · warnings: 0`,
     benchmarks: [
       { benchmark: "MT-Bench / AlpacaEval", paperReported: "Matches or exceeds PPO-based RLHF with far higher stability", templateSetup: "UltraFeedback Binarized · Qwen/Qwen3-8B · beta=0.1" },
     ],
@@ -119,8 +119,8 @@ Estimate  1x H100 · ~12 min · ~$0.95 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~8 min", estCost: "~$0.65" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", compute: "1x H100", duration: "~4 min", estCost: "~$0.35" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~1.6M tokens", duration: "~8 min", estCost: "~$0.65" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~1.4M tokens", duration: "~4 min", estCost: "~$0.35" },
     ],
     datasets: [
       { id: "hf://HuggingFaceH4/ultrafeedback_binarized", label: "UltraFeedback Binarized", source: "Hugging Face (public)", examples: "61,135 preference pairs" },
@@ -166,7 +166,7 @@ entrypoint: train.py`,
 Dataset   hf://HuggingFaceH4/ultrafeedback_binarized (61,135 pairs · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · reference-free
 Loss      custom simpo_loss (beta=2.0, gamma=0.5)
-Estimate  1x H100 · ~8 min · ~$0.65 · warnings: 0`,
+Estimate  ~1.6M tokens · ~8 min · ~$0.65 · warnings: 0`,
     benchmarks: [
       { benchmark: "AlpacaEval 2 LC Win Rate", paperReported: "+6.4 pts over DPO on Llama-3-8B without a reference model", templateSetup: "UltraFeedback · Qwen/Qwen3-8B · beta=2.0, gamma=0.5" },
     ],
@@ -213,8 +213,8 @@ Estimate  1x H100 · ~8 min · ~$0.65 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~9 min", estCost: "~$0.70" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", compute: "1x H100", duration: "~5 min", estCost: "~$0.40" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~1.7M tokens", duration: "~9 min", estCost: "~$0.70" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~1.6M tokens", duration: "~5 min", estCost: "~$0.40" },
     ],
     datasets: [
       { id: "hf://HuggingFaceH4/ultrafeedback_binarized", label: "UltraFeedback Binarized", source: "Hugging Face (public)", examples: "61,135 preference pairs" },
@@ -263,7 +263,7 @@ entrypoint: train.py`,
 Dataset   hf://HuggingFaceH4/ultrafeedback_binarized (61,135 pairs · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · single-stage SFT+preference
 Loss      custom orpo_loss (lam=0.10)
-Estimate  1x H100 · ~9 min · ~$0.70 · warnings: 0`,
+Estimate  ~1.7M tokens · ~9 min · ~$0.70 · warnings: 0`,
     benchmarks: [
       { benchmark: "AlpacaEval 2.0", paperReported: "Outperforms 2-stage SFT+DPO on Mistral-7B in a single training run", templateSetup: "UltraFeedback · Qwen/Qwen3-8B · lam=0.1" },
     ],
@@ -310,8 +310,8 @@ Estimate  1x H100 · ~9 min · ~$0.70 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~11 min", estCost: "~$0.88" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", compute: "1x H100", duration: "~6 min", estCost: "~$0.48" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.2M tokens", duration: "~11 min", estCost: "~$0.88" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~1.9M tokens", duration: "~6 min", estCost: "~$0.48" },
     ],
     datasets: [
       { id: "hf://trl-lib/kto-mix-14k", label: "KTO Mix 14k (unpaired)", source: "Hugging Face (public)", examples: "13,500 binary-labeled examples" },
@@ -360,7 +360,7 @@ entrypoint: train.py`,
 Dataset   hf://trl-lib/kto-mix-14k (13,500 unpaired examples · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32)
 Loss      custom kto_loss (beta=0.10, lam_d=1.0, lam_u=1.33)
-Estimate  1x H100 · ~11 min · ~$0.88 · warnings: 0`,
+Estimate  ~2.2M tokens · ~11 min · ~$0.88 · warnings: 0`,
     benchmarks: [
       { benchmark: "Unpaired alignment vs. DPO", paperReported: "Matches or exceeds DPO at 1B–30B scale using only binary thumbs-up/down labels", templateSetup: "kto-mix-14k · Qwen/Qwen3-8B · beta=0.1" },
     ],
@@ -407,7 +407,7 @@ Estimate  1x H100 · ~11 min · ~$0.88 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~11 min", estCost: "~$0.88" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.2M tokens", duration: "~11 min", estCost: "~$0.88" },
     ],
     datasets: [
       { id: "hf://HuggingFaceH4/ultrafeedback_binarized", label: "UltraFeedback Binarized", source: "Hugging Face (public)", examples: "61,135 preference pairs" },
@@ -456,7 +456,7 @@ entrypoint: train.py`,
 Dataset   hf://HuggingFaceH4/ultrafeedback_binarized (61,135 pairs · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32)
 Loss      custom ipo_loss (tau=0.10, bounded quadratic target=5.0)
-Estimate  1x H100 · ~11 min · ~$0.88 · warnings: 0`,
+Estimate  ~2.2M tokens · ~11 min · ~$0.88 · warnings: 0`,
     benchmarks: [
       { benchmark: "Overfitting resistance", paperReported: "Eliminates DPO late-epoch degradation on deterministic preference sets", templateSetup: "UltraFeedback · Qwen/Qwen3-8B · tau=0.1" },
     ],
@@ -503,7 +503,7 @@ Estimate  1x H100 · ~11 min · ~$0.88 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~22 min", estCost: "~$1.75" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~4.4M tokens", duration: "~22 min", estCost: "~$1.75" },
     ],
     datasets: [
       { id: "hf://HuggingFaceH4/ultrafeedback_binarized", label: "UltraFeedback Prompts", source: "Hugging Face (public)", examples: "Prompts only (on-policy pairs)" },
@@ -559,7 +559,7 @@ entrypoint: train.py`,
 Dataset   hf://HuggingFaceH4/ultrafeedback_binarized (prompts · on-policy n=2)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · online RM ranking
 Loss      dpo (beta=0.10) on live snapshot pairs
-Estimate  1x H100 · ~22 min · ~$1.75 · warnings: 0`,
+Estimate  ~4.4M tokens · ~22 min · ~$1.75 · warnings: 0`,
     benchmarks: [
       { benchmark: "Human/LLM win rate", paperReported: "Consistently beats offline DPO and matches online RLHF without a critic", templateSetup: "UltraFeedback prompts · Qwen/Qwen3-8B · n=2 online ranking" },
     ],
@@ -606,7 +606,7 @@ Estimate  1x H100 · ~22 min · ~$1.75 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~19 min", estCost: "~$1.50" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~3.8M tokens", duration: "~19 min", estCost: "~$1.50" },
     ],
     datasets: [
       { id: "hf://HuggingFaceH4/ultrachat_200k", label: "UltraChat 200k (subset)", source: "Hugging Face (public)", examples: "50,000 gold SFT conversations" },
@@ -654,7 +654,7 @@ entrypoint: train.py`,
 Dataset   hf://HuggingFaceH4/ultrachat_200k (gold SFT only · 3 self-play rounds)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32)
 Loss      iterative dpo (beta=0.10) vs previous-round snapshot
-Estimate  1x H100 · ~19 min · ~$1.50 · warnings: 0`,
+Estimate  ~3.8M tokens · ~19 min · ~$1.50 · warnings: 0`,
     benchmarks: [
       { benchmark: "Open LLM Leaderboard", paperReported: "+6 pts average gain over SFT without any extra preference data", templateSetup: "UltraChat subset · 3 self-play rounds · Qwen/Qwen3-8B" },
     ],

@@ -37,8 +37,8 @@ export const embeddingsMultimodalPapers: PaperGuide[] = [
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "BAAI/bge-small-en-v1.5", label: "BAAI/bge-small-en-v1.5 (fast, 384d)", compute: "1x H100", duration: "~8 min", estCost: "~$0.65" },
-      { id: "BAAI/bge-base-en-v1.5", label: "BAAI/bge-base-en-v1.5 (768d)", compute: "1x H100", duration: "~14 min", estCost: "~$1.10" },
+      { id: "BAAI/bge-small-en-v1.5", label: "BAAI/bge-small-en-v1.5 (fast, 384d)", estTokens: "~2.6M tokens", duration: "~8 min", estCost: "~$0.65" },
+      { id: "BAAI/bge-base-en-v1.5", label: "BAAI/bge-base-en-v1.5 (768d)", estTokens: "~2.8M tokens", duration: "~14 min", estCost: "~$1.10" },
     ],
     datasets: [
       { id: "hf://sentence-transformers/msmarco-bm25", label: "MS MARCO Hard-Negative Triplets", source: "Hugging Face (public)", examples: "500k (query, pos, neg) triplets" },
@@ -96,7 +96,7 @@ entrypoint: train.py`,
 Dataset   hf://sentence-transformers/msmarco-bm25 (triplets · public)
 Model     BAAI/bge-small-en-v1.5 · pool=none (MRL 128/256/384d + ColBERT)
 Loss      custom mrl_colbert_loss
-Estimate  1x H100 · ~8 min · ~$0.65 · warnings: 0`,
+Estimate  ~1.6M tokens · ~8 min · ~$0.65 · warnings: 0`,
     benchmarks: [
       { benchmark: "Storage vs. Recall@10", paperReported: "Up to 14x smaller vector index at 64–128d with ColBERT reranking recovering full precision", templateSetup: "MS MARCO triplets · BGE-small · dims=(128,256,384)" },
     ],
@@ -143,8 +143,8 @@ Estimate  1x H100 · ~8 min · ~$0.65 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "BAAI/bge-m3", label: "BAAI/bge-m3 (recommended, 8k multilingual)", compute: "1x H100", duration: "~18 min", estCost: "~$1.45" },
-      { id: "BAAI/bge-small-en-v1.5", label: "BAAI/bge-small-en-v1.5 (fast smoke run)", compute: "1x H100", duration: "~8 min", estCost: "~$0.65" },
+      { id: "BAAI/bge-m3", label: "BAAI/bge-m3 (recommended, 8k multilingual)", estTokens: "~3.6M tokens", duration: "~18 min", estCost: "~$1.45" },
+      { id: "BAAI/bge-small-en-v1.5", label: "BAAI/bge-small-en-v1.5 (fast smoke run)", estTokens: "~2.6M tokens", duration: "~8 min", estCost: "~$0.65" },
     ],
     datasets: [
       { id: "hf://sentence-transformers/msmarco-bm25", label: "MS MARCO Hard Negatives", source: "Hugging Face (public)", examples: "500k (query, pos, neg) triplets" },
@@ -205,7 +205,7 @@ entrypoint: train.py`,
 Dataset   hf://sentence-transformers/msmarco-bm25 (triplets · public)
 Model     BAAI/bge-m3 · pool=none + token_level head 'lex'
 Loss      custom tri-objective (dense + ColBERT + lexical + self-distillation)
-Estimate  1x H100 · ~18 min · ~$1.45 · warnings: 0`,
+Estimate  ~3.6M tokens · ~18 min · ~$1.45 · warnings: 0`,
     benchmarks: [
       { benchmark: "MIRACL & BEIR Hybrid nDCG@10", paperReported: "Outperforms dense-only & BM25 across 100+ languages using unified self-distilled retrieval", templateSetup: "MS MARCO triplets · BGE-M3 · dense + ColBERT + lexical" },
     ],
@@ -252,7 +252,7 @@ Estimate  1x H100 · ~18 min · ~$1.45 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "BAAI/bge-small-en-v1.5", label: "BAAI/bge-small-en-v1.5 (<5ms CPU)", compute: "1x L4/H100 + CPU", duration: "~2 min", estCost: "~$0.15" },
+      { id: "BAAI/bge-small-en-v1.5", label: "BAAI/bge-small-en-v1.5 (<5ms CPU)", estTokens: "~0.8M embed tokens", duration: "~2 min", estCost: "~$0.15" },
     ],
     datasets: [
       { id: "hf://SetFit/sst2", label: "SST-2 Few-Shot (8 examples/class)", source: "Hugging Face (public)", examples: "16 few-shot train / 872 eval" },
@@ -350,7 +350,7 @@ Estimate  ~2 min total · ~$0.15 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~20 min", estCost: "~$1.60" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~4.0M tokens", duration: "~20 min", estCost: "~$1.60" },
     ],
     datasets: [
       { id: "hf://trivia_qa", label: "TriviaQA (Calibrated QA)", source: "Hugging Face (public)", examples: "15,000 factual QA prompts" },
@@ -401,7 +401,7 @@ entrypoint: train.py`,
 Dataset   hf://trivia_qa (15,000 QA prompts · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · group_size=8
 Loss      grpo with strictly proper Brier reward 1 - (p - y)^2
-Estimate  1x H100 · ~20 min · ~$1.60 · warnings: 0`,
+Estimate  ~4.0M tokens · ~20 min · ~$1.60 · warnings: 0`,
     benchmarks: [
       { benchmark: "Expected Calibration Error (ECE)", paperReported: "Cuts verbalized ECE by >50% across HotpotQA & TriviaQA while holding QA accuracy", templateSetup: "TriviaQA · Qwen/Qwen3-8B · Brier GRPO" },
     ],
@@ -448,7 +448,7 @@ Estimate  1x H100 · ~20 min · ~$1.60 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen2.5-VL-7B-Instruct", label: "Qwen2.5-VL-7B-Instruct (recommended)", compute: "1x H100", duration: "~28 min", estCost: "~$2.25" },
+      { id: "Qwen/Qwen2.5-VL-7B-Instruct", label: "Qwen2.5-VL-7B-Instruct (recommended)", estTokens: "~5.6M tokens", duration: "~28 min", estCost: "~$2.25" },
     ],
     datasets: [
       { id: "hf://laolao77/ViRFT_COCO_base65", label: "Visual-RFT COCO Few-Shot Grounding", source: "Hugging Face (public)", examples: "Few-shot object grounding + IoU boxes" },
@@ -499,7 +499,7 @@ entrypoint: train.py`,
 Dataset   hf://laolao77/ViRFT_COCO_base65 (multimodal grounding · public)
 Model     Qwen/Qwen2.5-VL-7B-Instruct · adapter=lora (rank=32) · MediaRef images
 Loss      grpo (clip=[0.20, 0.28]) with verifiable IoU + JSON format reward
-Estimate  1x H100 · ~28 min · ~$2.25 · warnings: 0`,
+Estimate  ~5.6M tokens · ~28 min · ~$2.25 · warnings: 0`,
     benchmarks: [
       { benchmark: "Few-shot COCO & LVIS mAP", paperReported: "+10 to +24 pts over multimodal SFT on 1-shot & few-shot grounding", templateSetup: "ViRFT_COCO_base65 · Qwen2.5-VL-7B · IoU GRPO" },
     ],

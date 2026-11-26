@@ -59,9 +59,9 @@ export const rlReasoningPapers: PaperGuide[] = [
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~28 min", estCost: "~$2.20" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", compute: "1x H100", duration: "~14 min", estCost: "~$1.10" },
-      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (LoRA rank 32)", compute: "4x H100", duration: "~55 min", estCost: "~$12.80" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~5.5M tokens", duration: "~28 min", estCost: "~$2.20" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~4.4M tokens", duration: "~14 min", estCost: "~$1.10" },
+      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (LoRA rank 32)", estTokens: "~10.7M tokens", duration: "~55 min", estCost: "~$12.80" },
     ],
     datasets: [
       { id: "hf://openai/gsm8k", label: "GSM8K Math", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
@@ -117,7 +117,7 @@ hyperparams:
 Dataset   hf://openai/gsm8k (7,473 train / 1,319 test · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · group_size=8
 Loss      grpo (clip=0.20, kl_beta=0.04 vs frozen base)
-Estimate  1x H100 · ~28 min (80 steps) · ~$2.20 · warnings: 0`,
+Estimate  ~5.5M tokens · ~28 min (80 steps) · ~$2.20 · warnings: 0`,
     benchmarks: [
       { benchmark: "MATH pass@1", paperReported: "DeepSeekMath-RL 7B climbs from 46.8% -> 51.7% without a value network", templateSetup: "GSM8K default run · Qwen/Qwen3-8B · group_size=8 · kl_beta=0.04" },
       { benchmark: "Memory footprint", paperReported: "~50% less GPU memory than critic-based PPO", templateSetup: "Single LoRA trainer + frozen base reference logprobs" },
@@ -167,9 +167,9 @@ Estimate  1x H100 · ~28 min (80 steps) · ~$2.20 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~35 min", estCost: "~$2.80" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", compute: "1x H100", duration: "~16 min", estCost: "~$1.25" },
-      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (LoRA rank 32)", compute: "4x H100", duration: "~65 min", estCost: "~$15.20" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~7.0M tokens", duration: "~35 min", estCost: "~$2.80" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~5.0M tokens", duration: "~16 min", estCost: "~$1.25" },
+      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (LoRA rank 32)", estTokens: "~12.7M tokens", duration: "~65 min", estCost: "~$15.20" },
     ],
     datasets: [
       { id: "hf://openai/gsm8k", label: "GSM8K Math Reasoning", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
@@ -227,7 +227,7 @@ hyperparams:
 Dataset   hf://openai/gsm8k (7,473 train / 1,319 test · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · group_size=8
 Loss      grpo (clip_low=0.20, clip_high=0.28, dynamic zero-var skip)
-Estimate  1x H100 · ~35 min (100 steps) · ~$2.80 · warnings: 0`,
+Estimate  ~7.0M tokens · ~35 min (100 steps) · ~$2.80 · warnings: 0`,
     benchmarks: [
       { benchmark: "AIME 2024 pass@1", paperReported: "50 pts on Qwen2.5-32B in 50% fewer steps than vanilla GRPO", templateSetup: "GSM8K default smoke run (or DAPO-Math-17k) · Qwen/Qwen3-8B" },
       { benchmark: "Entropy stability", paperReported: "Eliminates premature entropy collapse via clip_high=0.28", templateSetup: "Monitored via metrics.kl_sample_train every step" },
@@ -275,8 +275,8 @@ Estimate  1x H100 · ~35 min (100 steps) · ~$2.80 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~24 min", estCost: "~$1.90" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", compute: "1x H100", duration: "~12 min", estCost: "~$0.95" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~4.7M tokens", duration: "~24 min", estCost: "~$1.90" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~3.8M tokens", duration: "~12 min", estCost: "~$0.95" },
     ],
     datasets: [
       { id: "hf://openai/gsm8k", label: "GSM8K Math", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
@@ -327,7 +327,7 @@ entrypoint: train.py`,
 Dataset   hf://openai/gsm8k (7,473 train / 1,319 test · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · group_size=8
 Loss      custom dr_grpo_loss (unnormalized advantage, const_norm=1024)
-Estimate  1x H100 · ~24 min · ~$1.90 · warnings: 0`,
+Estimate  ~4.7M tokens · ~24 min · ~$1.90 · warnings: 0`,
     benchmarks: [
       { benchmark: "Token efficiency & AIME accuracy", paperReported: "+3–5 pts higher accuracy with significantly shorter incorrect traces vs. GRPO", templateSetup: "GSM8K / MATH · Qwen/Qwen3-8B · const_norm=1024" },
     ],
@@ -374,8 +374,8 @@ Estimate  1x H100 · ~24 min · ~$1.90 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-30B-A3B", label: "Qwen/Qwen3-30B-A3B MoE (recommended)", compute: "2x H100", duration: "~30 min", estCost: "~$4.60" },
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (dense smoke run)", compute: "1x H100", duration: "~20 min", estCost: "~$1.60" },
+      { id: "Qwen/Qwen3-30B-A3B", label: "Qwen/Qwen3-30B-A3B MoE (recommended)", estTokens: "~3.8M tokens", duration: "~30 min", estCost: "~$4.60" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (dense smoke run)", estTokens: "~4.0M tokens", duration: "~20 min", estCost: "~$1.60" },
     ],
     datasets: [
       { id: "hf://openai/gsm8k", label: "GSM8K Math", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
@@ -426,7 +426,7 @@ entrypoint: train.py`,
 Dataset   hf://openai/gsm8k (7,473 train / 1,319 test · public)
 Model     Qwen/Qwen3-30B-A3B · adapter=lora (rank=32) · group_size=8
 Loss      custom gspo_loss (sequence geometric mean ratio, eps=[3e-4, 4e-4])
-Estimate  2x H100 · ~30 min · ~$4.60 · warnings: 0`,
+Estimate  ~11.5M tokens · ~30 min · ~$4.60 · warnings: 0`,
     benchmarks: [
       { benchmark: "MoE RL stability (Qwen3-MoE)", paperReported: "Eliminates MoE routing-replay hacks and outperforms GRPO on AIME/LiveCodeBench", templateSetup: "Qwen3-30B-A3B · sequence-level geometric mean clipping" },
     ],
@@ -473,8 +473,8 @@ Estimate  2x H100 · ~30 min · ~$4.60 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~20 min", estCost: "~$1.60" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", compute: "1x H100", duration: "~10 min", estCost: "~$0.80" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~4.0M tokens", duration: "~20 min", estCost: "~$1.60" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~3.2M tokens", duration: "~10 min", estCost: "~$0.80" },
     ],
     datasets: [
       { id: "hf://openai/gsm8k", label: "GSM8K Math", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
@@ -524,7 +524,7 @@ entrypoint: train.py`,
 Dataset   hf://openai/gsm8k (7,473 train / 1,319 test · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · async lag=1 step
 Loss      cispo (stop-grad clipped importance sampling [0.80, 1.28])
-Estimate  1x H100 · ~20 min · ~$1.60 · warnings: 0`,
+Estimate  ~4.0M tokens · ~20 min · ~$1.60 · warnings: 0`,
     benchmarks: [
       { benchmark: "Training speedup & reasoning score", paperReported: "~2x faster convergence vs. DAPO/GRPO while preserving reflection tokens", templateSetup: "1-step overlapped async pool · Qwen/Qwen3-8B" },
     ],
@@ -571,8 +571,8 @@ Estimate  1x H100 · ~20 min · ~$1.60 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~18 min", estCost: "~$1.45" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", compute: "1x H100", duration: "~9 min", estCost: "~$0.70" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~3.6M tokens", duration: "~18 min", estCost: "~$1.45" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~2.8M tokens", duration: "~9 min", estCost: "~$0.70" },
     ],
     datasets: [
       { id: "hf://openai/gsm8k", label: "GSM8K Math", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
@@ -617,7 +617,7 @@ entrypoint: train.py`,
 Dataset   hf://openai/gsm8k (7,473 train / 1,319 test · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · K=4 samples/prompt
 Loss      importance_sampling (kl_beta=0.02, LOO baseline)
-Estimate  1x H100 · ~18 min · ~$1.45 · warnings: 0`,
+Estimate  ~3.6M tokens · ~18 min · ~$1.45 · warnings: 0`,
     benchmarks: [
       { benchmark: "Win rate vs. PPO", paperReported: "Matches or outperforms critic-based PPO at K=4 with half the memory", templateSetup: "GSM8K · Qwen/Qwen3-8B · K=4" },
     ],
@@ -664,8 +664,8 @@ Estimate  1x H100 · ~18 min · ~$1.45 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~16 min", estCost: "~$1.30" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", compute: "1x H100", duration: "~8 min", estCost: "~$0.65" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~3.2M tokens", duration: "~16 min", estCost: "~$1.30" },
+      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~2.6M tokens", duration: "~8 min", estCost: "~$0.65" },
     ],
     datasets: [
       { id: "hf://openai/gsm8k", label: "GSM8K Math", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
@@ -728,7 +728,7 @@ entrypoint: train.py`,
 Dataset   hf://openai/gsm8k (7,473 train / 1,319 test · public)
 Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · n=1 rollout/prompt
 Loss      grpo with per-token KL shaping + global batch whitening
-Estimate  1x H100 · ~16 min · ~$1.30 · warnings: 0`,
+Estimate  ~3.2M tokens · ~16 min · ~$1.30 · warnings: 0`,
     benchmarks: [
       { benchmark: "Stability vs. GRPO at n=1", paperReported: "Matches PPO stability with ~30% faster training and no value critic", templateSetup: "GSM8K · batch_size=64 · n=1 · kl_beta=0.01" },
     ],
@@ -775,8 +775,8 @@ Estimate  1x H100 · ~16 min · ~$1.30 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", compute: "1x H100", duration: "~38 min", estCost: "~$3.00" },
-      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (LoRA rank 32)", compute: "4x H100", duration: "~70 min", estCost: "~$16.40" },
+      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~7.5M tokens", duration: "~38 min", estCost: "~$3.00" },
+      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (LoRA rank 32)", estTokens: "~13.7M tokens", duration: "~70 min", estCost: "~$16.40" },
     ],
     datasets: [
       { id: "hf://BytedTsinghua-SIA/DAPO-Math-17k", label: "DAPO-Math-17k", source: "Hugging Face (public)", examples: "17,000 competition math prompts" },
@@ -843,7 +843,7 @@ entrypoint: train.py`,
 Dataset   hf://openai/gsm8k (7,473 train / 1,319 test · public)
 Model     Qwen/Qwen3-8B · adapter=lora + token_level value head 'v'
 Loss      custom vapo_loss (clip=[0.20,0.28], vf=0.5, pos_nll=0.1)
-Estimate  1x H100 · ~38 min · ~$3.00 · warnings: 0`,
+Estimate  ~7.5M tokens · ~38 min · ~$3.00 · warnings: 0`,
     benchmarks: [
       { benchmark: "AIME 2024 pass@1", paperReported: "60.4 on Qwen2.5-32B (+10 pts over DAPO on long CoT)", templateSetup: "GSM8K / DAPO-Math-17k · Qwen/Qwen3-8B · actor+critic" },
     ],

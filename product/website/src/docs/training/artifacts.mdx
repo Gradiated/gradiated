@@ -2,13 +2,7 @@
 
 <DocsLead>Every training run saves a versioned `.grad` artifact with your trained weights and evaluation results.</DocsLead>
 
-An **`Artifact`** is a saved, versioned model produced by a training run (`support-router@2026-11-26-1`). Keeping saved artifacts separate from live [`Endpoint`](/docs/training/endpoints/)s means you can test a new version offline and roll back production in one command without touching weights.
-
-| | **Artifact** | **[Endpoint](/docs/training/endpoints/)** |
-| --- | --- | --- |
-| **How many models?** | Always **1** fixed model version | **1 or more** artifacts |
-| **Changes over time?** | Never; every new run creates a new `name@version` | Yes; shadow, canary, promote, or roll back in place |
-| **Main uses** | Offline evals, batch scoring (`infer_batch`), RL sampling (`sample`), merging checkpoints | Live production traffic (`infer` / `route`), traffic splits, fallbacks, feedback capture |
+An **`Artifact`** is a saved, versioned model produced by a training run (`fast-diff-merge@2026-11-26-1`). Artifacts are never overwritten: every new run writes a new version with its weights (`adapter_config.json` and `adapter_model.safetensors` for LoRA, or full Safetensors weights) alongside its held-out `eval_report.json`.
 
 ## Inspect and test an artifact
 
@@ -18,7 +12,7 @@ Load any saved artifact with `client.artifacts.get(...)` (or use `run.artifact` 
 from grad import Grad, Record
 
 client = Grad()
-art = client.artifacts.get("coding-effort@2026-11-25-1")
+art = client.artifacts.get("fast-diff-merge@2026-11-26-1")
 
 print(art.eval_report)
 
@@ -28,53 +22,48 @@ print(preds[0].logits)
 
 You can pass any trained `Artifact` anywhere a model name is accepted:
 
-- **Warm-start a next stage:** `DPORecipe(model=sft.artifact, ...)` or `GRPORecipe(model=sft.artifact, ...)`.
-- **Use as a verifier:** `Judge(name="sql_ok", model=verifier_artifact)` or `strategies.Cascade(verifier=verifier_artifact, ...)`.
+- **Start the next training stage:** `DPORecipe(model=sft.artifact, ...)` or `GRPORecipe(model=sft.artifact, ...)`.
+- **Use as a judge:** `Judge(name="sql_ok", model=reward_model_artifact)`.
 - **Use as a distillation teacher:** `DistillRecipe(model="qwen/qwen3-4b", teacher=teacher_artifact)`.
 
-## Deploy an artifact
+## Deploy on Gradiated Cloud or download weights
 
-Every `.grad` artifact stores its model type, source dataset, and default serving strategy in `manifest.json`. Deploy any run or pinned artifact to an [`Endpoint`](/docs/training/endpoints/) in one line:
+Every artifact can either be hosted directly on Gradiated Cloud (with canary rollouts and standard OpenAI / Anthropic / SystemOne SDK calls) or downloaded as standard weights to run on your own vLLM or SGLang servers:
 
 <DocsCodeTabs>
-  <DocsCodeTab label="Python">
+  <DocsCodeTab label="Gradiated Cloud">
 
 ```python
-endpoint = run.deploy(canary=0.10)
-# Or deploy a previously saved artifact:
-# endpoint = client.artifacts.get("support-router@2026-11-26-1").deploy(canary=0.10)
+# Publish under your-org/fast-diff-merge (or roll out at 10% canary)
+run.deploy(canary=0.10)
+
+# Or deploy a previously saved version:
+# client.artifacts.get("fast-diff-merge@2026-11-26-1").deploy(canary=0.10)
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="TypeScript">
+  <DocsCodeTab label="Self-host (vLLM / SGLang)">
 
-```ts
-const endpoint = await run.deploy({ canary: 0.1 });
-// Or deploy a previously saved artifact:
-// const art = await grad.artifacts.get("support-router@2026-11-26-1");
-// const endpoint = await art.deploy({ canary: 0.1 });
-```
+```bash
+# Download standard HuggingFace PEFT LoRA weights (or merged weights)
+grad artifacts download fast-diff-merge@2026-11-26-1 --output ./fast-diff-merge
 
-  </DocsCodeTab>
-  <DocsCodeTab label="Go">
-
-```go
-endpoint, _ := run.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
-// Or deploy a previously saved artifact:
-// art, _ := client.Artifacts.Get(ctx, "support-router@2026-11-26-1")
-// endpoint, _ := art.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
+# Load straight into vLLM or SGLang:
+vllm serve qwen/qwen3-8b --enable-lora --lora-modules fast-diff-merge=./fast-diff-merge
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="CLI">
 
 ```bash
-grad artifacts inspect support-router@2026-11-26-1 --json
-grad deploy support-router@2026-11-26-1 --canary 0.10
+grad artifacts inspect fast-diff-merge@2026-11-26-1 --json
+grad deploy fast-diff-merge@2026-11-26-1 --canary 0.10
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
+
+See [Deploying](/docs/training/deploying/) for canary rollouts, rollbacks, calling deployed models with the OpenAI / Anthropic / SystemOne SDKs, and self-hosting details.
 
 ## Merge artifacts without retraining
 
@@ -94,14 +83,10 @@ merged = client.artifacts.merge(
 )
 ```
 
-## Download and portability
-
-Every `.grad` artifact is a portable bundle (`manifest.json`, weight files such as ONNX or Safetensors, and `eval_report.json`). Download any artifact via `GET /v1/artifacts/{id}/download` or run it on your own infrastructure with [Self-hosting](/docs/training/self-hosting/).
-
 <DocsNext>
-  <a href="/docs/training/endpoints/">
+  <a href="/docs/training/deploying/">
     <small>Next</small>
-    <strong>Endpoints</strong>
+    <strong>Deploying</strong>
   </a>
   <a href="/docs/training/recipes/">
     <small>Train</small>

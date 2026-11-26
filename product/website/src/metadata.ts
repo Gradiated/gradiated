@@ -223,10 +223,10 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Inspect, test, merge, download, and deploy versioned .grad model artifacts saved by training runs.",
   },
-  "/docs/training/endpoints/": {
-    title: "Endpoints",
+  "/docs/training/deploying/": {
+    title: "Deploying",
     description:
-      "Serve trained artifacts behind a stable endpoint name, roll out new versions safely, and log real-world outcomes.",
+      "Host trained artifacts on Gradiated Cloud with canary rollouts, or download standard weights to run on your own vLLM or SGLang servers.",
   },
   "/docs/training/custom-loops/": {
     title: "Custom training loops",
@@ -286,7 +286,7 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/docs/training/recipes/embeddings/": {
     title: "Embeddings guide",
     description:
-      "Fine-tune an embedding model on your own terms, docs, and codebase for better search.",
+      "Fine-tune an embedding model on your own docs and codebase for better search.",
   },
   "/docs/api-reference/": {
     title: "API reference",

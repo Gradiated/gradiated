@@ -1,28 +1,30 @@
 # Self-hosting
 
-<DocsLead>Run Gradiated on your laptop with Docker Compose or in your own Kubernetes cluster with Helm.</DocsLead>
+<DocsLead>Run the Gradiated training API and GPU trainer workers on your laptop with Docker Compose or in your own Kubernetes cluster with Helm.</DocsLead>
 
-Self-hosted deployments use the same API, `.grad` artifact format, and SDKs as Gradiated Cloud. Switching between local, self-hosted Kubernetes, and Gradiated Cloud only requires changing `GRAD_BASE_URL`.
+Self-hosted deployments run the **training, evaluation, and dataset platform** inside your own VPC so prompts, traces, and trained weights never leave your network. Completed runs write standard HuggingFace LoRA or merged Safetensors [`Artifact`](/docs/training/artifacts/)s to your own S3 or GCS bucket, ready to serve on your own vLLM or SGLang cluster.
+
+Switching between local, self-hosted Kubernetes, and Gradiated Cloud only requires changing `GRAD_BASE_URL`.
 
 ## Local development (Docker Compose)
 
-Start a complete local stack in one command with the `grad` CLI:
+Start a local training stack in one command with the `grad` CLI:
 
 ```bash
 brew install gradiated/tap/grad
 
-# CPU stack (default): routers, decision models, trace sync, and local serving
+# CPU stack (default): datasets, trace sync, rubrics, and small local runs
 grad local up
 
-# GPU stack (requires NVIDIA Container Toolkit): adds CUDA trainer and LLM serving
+# GPU stack (requires NVIDIA Container Toolkit): adds CUDA trainer worker
 grad local up --gpu
 ```
 
-`grad local up` starts the Rust API and ONNX serving runtime on `http://localhost:8787`, Postgres, Valkey, local object storage, and a trainer worker. Run `grad local down` to stop and clean up the stack.
+`grad local up` starts the API on `http://localhost:8787`, Postgres, local object storage, and a trainer worker. Run `grad local down` to stop and clean up.
 
 ## Production Kubernetes (Helm)
 
-Deploy `grad` into any Kubernetes cluster using the official Helm chart. The chart runs the Rust API server, CPU trainer workers, and optional GPU node-pool trainer/serving replicas.
+Deploy `grad` into an internal ML namespace in your Kubernetes cluster using the official Helm chart. It runs the CPU API server and scale-to-zero GPU trainer workers on your existing Postgres and S3/GCS bucket, with no hot-path production gateway in front of user traffic:
 
 ```bash
 helm repo add gradiated https://charts.gradiated.com
@@ -35,8 +37,6 @@ helm upgrade --install grad gradiated/grad \
 ```
 
 ### Minimal `values.yaml`
-
-By default, the chart ships with a CPU trainer pool and works with your existing Postgres, Valkey/Redis, and S3-compatible bucket (or bundled dev dependencies for evaluation clusters):
 
 ```yaml
 # values.yaml
@@ -55,7 +55,7 @@ api:
         hosts:
           - grad.internal.example
 
-# Reference a Kubernetes Secret holding API_KEY_HASH, DATABASE_URL, VALKEY_URL, S3 credentials
+# Reference a Kubernetes Secret holding API_KEY_HASH, DATABASE_URL, and S3 credentials
 auth:
   existingSecret: grad-secrets
 
@@ -65,13 +65,11 @@ storage:
     region: us-east-1
 
 trainer:
-  cpu:
-    replicas: 2
-    resources:
-      requests: { cpu: "4", memory: "16Gi" }
   gpu:
     enabled: true
-    replicas: 1
+    # Scale to zero between training runs with Karpenter or KEDA
+    minReplicas: 0
+    maxReplicas: 4
     resources:
       limits: { nvidia.com/gpu: "1" }
     nodeSelector:
@@ -82,7 +80,7 @@ trainer:
         effect: NoSchedule
 ```
 
-For air-gapped or private VPC deployments, mirror the container images (`ghcr.io/gradiated/grad-server` and `ghcr.io/gradiated/grad-trainer`) to your internal registry and set `image.registry`.
+For air-gapped or private VPC deployments, mirror `ghcr.io/gradiated/grad-server` and `ghcr.io/gradiated/grad-trainer` to your internal registry and set `image.registry`. You can also point `Judge` and distillation teacher calls at your own internal OpenAI-compatible inference URL (such as internal vLLM, Bedrock, or Azure OpenAI) so judging stays private too.
 
 ## Connect SDKs and CLI
 
@@ -142,7 +140,7 @@ func main() {
 export GRAD_BASE_URL=https://grad.internal.example
 export GRADIATED_API_KEY=grad_...
 
-grad endpoints status support-router --json
+grad artifacts download fast-diff-merge@latest --output ./adapter
 ```
 
   </DocsCodeTab>
@@ -156,23 +154,25 @@ curl https://grad.internal.example/v1/artifacts \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-## Deployment parity
+## Self-hosted vs. Gradiated Cloud
 
-| Component | Local (`grad local up`) | Self-hosted Kubernetes (Helm) | Gradiated Cloud |
-| --- | --- | --- | --- |
-| Base URL | `http://localhost:8787` | `https://grad.internal.example` | `https://api.gradiated.com` |
-| API & ONNX runtime | `grad-server` container | `grad-server` Deployment (HPA) | Multi-region managed runtime and gateway |
-| Training workers | CPU container (`--gpu` for CUDA) | CPU + optional GPU Deployments | Managed CPU and GPU pools |
-| State & queue | Local Postgres + Valkey | External Postgres + Valkey | Managed Postgres, Valkey, and Temporal |
-| Artifacts & trajectories | Local volume or MinIO | S3 / GCS / MinIO | KMS-encrypted S3 |
+Self-hosting gives you the complete training and evaluation platform inside your VPC while letting you keep your existing production inference stack (vLLM, SGLang, Envoy, Argo Rollouts). Gradiated Cloud adds elastic per-token training GPUs and managed production serving on top:
+
+| Capability | Self-hosted (Docker / Helm) | Gradiated Cloud |
+| --- | --- | --- |
+| Datasets, trace sync, & `feedback.record()` | Included (your Postgres + S3) | Included (managed) |
+| All recipes, rubrics, environments, & custom loops | Included (runs on your GPUs, scales to 0) | Included (pay per million tokens) |
+| Artifacts (PEFT LoRA / merged Safetensors) | Written to your S3/GCS; serve on your vLLM or SGLang | Downloadable anytime, or host with `run.deploy()` |
+| Hosted production serving & canary rollouts | Bring your own vLLM/SGLang + gateway/feature flags | Built-in (`run.deploy(canary=0.10)` + OpenAI/Anthropic/SystemOne SDK) |
+| Zero-code gateway trace capture | Push via SDK or sync from OTel / Langfuse | Automatic via `x-gradiated-task` |
 
 <DocsNext>
   <a href="/docs/training/">
     <small>Overview</small>
     <strong>Training overview</strong>
   </a>
-  <a href="/docs/training/endpoints/">
+  <a href="/docs/training/deploying/">
     <small>Serving</small>
-    <strong>Endpoints</strong>
+    <strong>Deploying</strong>
   </a>
 </DocsNext>

@@ -105,11 +105,11 @@ const PRIMITIVES: PrimitiveNode[] = [
   {
     id: "environment",
     index: "02",
-    name: "Environment & Rubric",
+    name: "Rubric & Environment",
     role: "Grading & tools",
-    href: "/docs/training/environments/",
+    href: "/docs/training/rubrics/",
     summary: "Grade answers with Python checks or a Judge, or run multi-turn agents against your own containers and tools.",
-    ops: ["setup()", "step()", "evaluate()", "teardown()", "snap.openai_client()"],
+    ops: ["Rubric()", "Judge()", "setup()", "step()", "evaluate()"],
     detail: "Environments run on your own CPU or Kubernetes machines. evaluate() checks live containers before teardown() cleans up.",
   },
   {
@@ -117,7 +117,7 @@ const PRIMITIVES: PrimitiveNode[] = [
     index: "03",
     name: "Trainer",
     role: "Model training",
-    href: "/docs/training/custom-loops/",
+    href: "/docs/training/recipes/",
     summary: "Managed training engine (billed per million tokens) driven by a built-in Recipe or your own Python loop.",
     ops: ["runs.create()", "forward_backward()", "optim_step()", "save_state()", "snapshot()"],
     detail: "Runs forward, backward, and optimizer steps back-to-back and supports built-in losses or custom PyTorch CustomLoss classes.",
@@ -125,22 +125,12 @@ const PRIMITIVES: PrimitiveNode[] = [
   {
     id: "artifact",
     index: "04",
-    name: "Artifact",
-    role: "1 saved model version",
-    href: "/docs/training/artifacts/",
-    summary: "A versioned .grad bundle with weights, tokenizer, config, and eval report, or a live RL snapshot.",
-    ops: ["infer_batch()", "sample()", "score_logprobs()", "embed()", "artifacts.merge()"],
-    detail: "Never overwritten once saved. Rollbacks switch pointers without retraining, and merges combine two models without extra training.",
-  },
-  {
-    id: "endpoint",
-    index: "05",
-    name: "Endpoint",
-    role: "Live traffic + feedback",
-    href: "/docs/training/endpoints/",
-    summary: "A stable endpoint name serving one or more artifacts with shadow tests, canaries, fallbacks, and feedback capture.",
-    ops: ["run.deploy()", "endpoints.create()", "endpoint.infer()", "feedback.record()"],
-    detail: "Every live request logs back to capture_dataset with an inference_id so real outcomes improve your next training run.",
+    name: "Artifact & Deploy",
+    role: "Cloud or self-host",
+    href: "/docs/training/deploying/",
+    summary: "A versioned .grad artifact (PEFT LoRA or merged Safetensors) you can host on Gradiated Cloud or download for vLLM / SGLang.",
+    ops: ["run.deploy()", "grad artifacts download", "artifacts.merge()", "feedback.record()"],
+    detail: "Deploy on Gradiated Cloud with canary rollouts via the OpenAI, Anthropic, or SystemOne SDK, or serve the LoRA weights on your own GPUs.",
   },
 ];
 
@@ -149,13 +139,13 @@ export const DocsTrainingFlywheel = (): ReactElement => {
   const active = PRIMITIVES.find((p) => p.id === activeId) ?? PRIMITIVES[0];
 
   return (
-    <figure className="gr-doc-widget" aria-label="The five grad primitives and feedback loop">
+    <figure className="gr-doc-widget" aria-label="The four grad stages and feedback loop">
       <div className="gr-doc-widget-head">
-        <span className="gr-doc-widget-kicker">Architecture · 5 primitives</span>
+        <span className="gr-doc-widget-kicker">Architecture · 4 stages</span>
         <span className="gr-doc-widget-hint">Select a stage to inspect its API</span>
       </div>
 
-      <div className="gr-doc-flywheel-grid" role="tablist" aria-label="Training primitives">
+      <div className="gr-doc-flywheel-grid gr-doc-flywheel-grid--4" role="tablist" aria-label="Training stages">
         {PRIMITIVES.map((node, idx) => {
           const isSelected = node.id === active.id;
           return (
@@ -747,69 +737,53 @@ export const DocsEnvLifecycle = (): ReactElement => {
 };
 
 /* ---------------------------------------------------------------------------
-   6. Interactive Serving Strategy Diagram (Artifacts & Endpoints)
+   6. Interactive Deployment Options Diagram (Cloud vs. Self-hosted vLLM/SGLang)
    --------------------------------------------------------------------------- */
 
-type StrategyView = {
+type DeployOption = {
   id: string;
   label: string;
-  artifacts: string;
+  where: string;
   path: string[];
-  guardrail: string;
+  detail: string;
   useCase: string;
 };
 
-const STRATEGIES: StrategyView[] = [
+const DEPLOY_OPTIONS: DeployOption[] = [
   {
-    id: "sla_lagrangian",
-    label: "SLALagrangian",
-    artifacts: "1 router artifact + fallback Model",
-    path: ["Request", "Router", "Cheap model (64%) / Frontier (36%)", "Live quality check", "feedback.record()"],
-    guardrail: "Keeps quality within your drop limit and switches 100% of traffic back to your fallback if quality slips.",
-    useCase: "Model routers cutting LLM spend while protecting answer quality.",
+    id: "cloud",
+    label: "Gradiated Cloud",
+    where: "Managed GPUs + gateway",
+    path: ["Artifact (@v2)", "run.deploy(canary=0.10)", "OpenAI / Anthropic / SystemOne SDK", "90% @v1 / 10% @v2", "Auto capture + feedback"],
+    detail: "Call your-org/<name> from your existing SDK with zero GPU management, shadow/canary rollouts, and 1-command rollback.",
+    useCase: "Teams that want hosted serving, automatic trace capture, and safe rollouts out of the box.",
   },
   {
-    id: "cascade",
-    label: "Cascade",
-    artifacts: "Fast 8B draft + Reward model + Frontier Model",
-    path: ["Request", "8B specialist draft", "Reward score >= 0.75?", "Return draft (82%) / Fallback 32B (18%)", "capture_dataset"],
-    guardrail: "Only hard requests pay frontier cost; every escalation is logged as a training example.",
-    useCase: "Fast 4B–8B SQL, code, and agent models paired with a reward model.",
-  },
-  {
-    id: "syntax_fallback",
-    label: "SyntaxFallback",
-    artifacts: "Fine-tuned specialist + fallback Model",
-    path: ["Request", "Fine-tuned 8B", "JSON Schema / AST check", "Valid -> return / Invalid -> retry fallback", "capture_dataset"],
-    guardrail: "Broken JSON or unparseable code never reaches users; invalid outputs are logged for your next run.",
-    useCase: "Structured extraction, SQL, and code-edit models trained with SFT & DPO.",
-  },
-  {
-    id: "canary",
-    label: "Shadow / Canary",
-    artifacts: "Active @v1 + Candidate @v2",
-    path: ["Traffic", "90% @v1 active", "10% @v2 canary (or 0% shadow)", "Compare live quality & cost", "Promote or roll back"],
-    guardrail: "Because artifacts are versioned and never overwritten, rolling back to @v1 is one command.",
-    useCase: "Rolling out retrained models safely on any endpoint.",
+    id: "self_hosted",
+    label: "Your vLLM / SGLang",
+    where: "Your GPUs + gateway",
+    path: ["Artifact (@v2)", "grad artifacts download", "PEFT LoRA Safetensors", "vLLM / SGLang (--lora-modules)", "Push traces & feedback back"],
+    detail: "Standard HuggingFace LoRA or merged weights run on your own servers with your existing load balancer and feature flags.",
+    useCase: "Enterprises with strict data residency or an existing vLLM / SGLang inference fleet.",
   },
 ];
 
-export const DocsEndpointDiagram = (): ReactElement => {
-  const [strategyId, setStrategyId] = useState<string>("sla_lagrangian");
-  const active = STRATEGIES.find((s) => s.id === strategyId) ?? STRATEGIES[0];
+export const DocsDeployFlow = (): ReactElement => {
+  const [optionId, setOptionId] = useState<string>("cloud");
+  const active = DEPLOY_OPTIONS.find((s) => s.id === optionId) ?? DEPLOY_OPTIONS[0];
 
   return (
-    <figure className="gr-doc-widget" aria-label="Interactive endpoint serving strategies">
+    <figure className="gr-doc-widget" aria-label="Interactive deployment options">
       <div className="gr-doc-widget-head">
-        <span className="gr-doc-widget-kicker">Serving strategies</span>
-        <div className="gr-doc-seg" role="tablist" aria-label="Endpoint strategies">
-          {STRATEGIES.map((s) => (
+        <span className="gr-doc-widget-kicker">Serving options</span>
+        <div className="gr-doc-seg" role="tablist" aria-label="Deployment target">
+          {DEPLOY_OPTIONS.map((s) => (
             <button
               key={s.id}
               aria-selected={s.id === active.id}
               className="gr-doc-seg-btn"
               data-active={s.id === active.id ? "true" : undefined}
-              onClick={() => setStrategyId(s.id)}
+              onClick={() => setOptionId(s.id)}
               role="tab"
               type="button"
             >
@@ -819,7 +793,7 @@ export const DocsEndpointDiagram = (): ReactElement => {
         </div>
       </div>
 
-      <div className="gr-doc-flow" aria-label="Request flow">
+      <div className="gr-doc-flow" aria-label="Deployment flow">
         {active.path.map((hop, idx) => (
           <div key={hop} className="gr-doc-flow-item">
             <span className="gr-doc-flow-box">{hop}</span>
@@ -835,8 +809,8 @@ export const DocsEndpointDiagram = (): ReactElement => {
       <div className="gr-doc-inspector">
         <div className="gr-doc-spec-strip gr-doc-spec-strip--2">
           <div>
-            <span className="gr-doc-spec-k">Artifacts</span>
-            <span className="gr-doc-spec-v">{active.artifacts}</span>
+            <span className="gr-doc-spec-k">Runs on</span>
+            <span className="gr-doc-spec-v">{active.where}</span>
           </div>
           <div>
             <span className="gr-doc-spec-k">Best for</span>
@@ -844,7 +818,7 @@ export const DocsEndpointDiagram = (): ReactElement => {
           </div>
         </div>
         <p className="gr-doc-inspector-detail">
-          <strong>Guardrail:</strong> {active.guardrail}
+          <strong>How it works:</strong> {active.detail}
         </p>
       </div>
     </figure>

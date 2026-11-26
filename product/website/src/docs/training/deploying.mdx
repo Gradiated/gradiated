@@ -1,0 +1,215 @@
+# Deploying
+
+<DocsLead>Host trained artifacts on Gradiated Cloud with canary rollouts, or download standard weights to run on your own vLLM or SGLang servers.</DocsLead>
+
+Every training run produces a versioned [`Artifact`](/docs/training/artifacts/) (such as `fast-diff-merge@2026-11-26-1`). From there, pick whichever serving path fits your stack:
+
+<DocsDeployFlow />
+
+## Option 1: Host on Gradiated Cloud
+
+On Gradiated Cloud, you don't need to manage GPUs or a serving stack. You can call any saved artifact immediately by its pinned version, or deploy it behind a stable model name so you can update versions without redeploying your app.
+
+### Deploy behind a stable model name
+
+`run.deploy()` (or `grad deploy`) publishes your artifact under `your-org/<name>` on Gradiated's inference gateway. Your app calls the exact same [OpenAI SDK](/docs/openai-sdk/), [Anthropic SDK](/docs/anthropic-sdk/), or [SystemOne SDK](/docs/systemone-sdk/) you already use; you only change the `model` string:
+
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="Python">
+
+```python
+import os
+from openai import OpenAI
+from grad import Grad
+
+# 1. Deploy your trained artifact (or promote a new version at 10% canary)
+client = Grad()
+artifact = client.artifacts.get("fast-diff-merge@2026-11-26-1")
+artifact.deploy(canary=0.10)
+
+# 2. Call it with the standard OpenAI SDK (only `model` changes)
+oai = OpenAI(
+    base_url="https://api.gradiated.com/v1",
+    api_key=os.environ["GRADIATED_API_KEY"],
+)
+res = oai.chat.completions.create(
+    model="your-org/fast-diff-merge",
+    messages=[{"role": "user", "content": prompt}],
+)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import OpenAI from "openai";
+import { Grad } from "@gradiated/grad";
+
+// 1. Deploy your trained artifact (or promote a new version at 10% canary)
+const grad = new Grad();
+const artifact = await grad.artifacts.get("fast-diff-merge@2026-11-26-1");
+await artifact.deploy({ canary: 0.1 });
+
+// 2. Call it with the standard OpenAI SDK (only `model` changes)
+const oai = new OpenAI({
+  baseURL: "https://api.gradiated.com/v1",
+  apiKey: process.env.GRADIATED_API_KEY,
+});
+const res = await oai.chat.completions.create({
+  model: "your-org/fast-diff-merge",
+  messages: [{ role: "user", content: prompt }],
+});
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+artifact, _ := client.Artifacts.Get(ctx, "fast-diff-merge@2026-11-26-1")
+_, _ = artifact.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
+// Then pass "your-org/fast-diff-merge" as `model` in your OpenAI or Anthropic client.
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+# First deploy (publishes your-org/fast-diff-merge)
+grad deploy fast-diff-merge@2026-11-26-1
+
+# Next retrain: shadow, 10% canary, promote to 100%, or roll back in one command
+grad deploy fast-diff-merge@2026-12-03-1 --shadow
+grad deploy fast-diff-merge@2026-12-03-1 --canary 0.10
+grad deployments status fast-diff-merge --watch
+grad deploy fast-diff-merge@2026-12-03-1 --active
+grad deploy fast-diff-merge@2026-11-26-1 --active
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+For [Decision models](/docs/training/recipes/decision-model/), pass `"your-org/<name>"` straight to `TypeSafeClient` (`/v1/systemone`). For [Embeddings](/docs/training/recipes/embeddings/), pass it to `openai.embeddings.create(model="your-org/<name>", ...)`. For [Model routers](/docs/training/recipes/router/), pass it to the OpenAI or Anthropic SDK, or call `client.route("support-router", ...)` if you dispatch to your own providers.
+
+### Shadow, canary, and rollback
+
+Because every [`Artifact`](/docs/training/artifacts/) is a fixed version, rolling forward or rolling back on Gradiated Cloud is a single pointer update with no app redeploy:
+
+<DocsTerminal
+  title="Live canary telemetry"
+  command="grad deployments status fast-diff-merge --watch"
+>
+
+```text
+Model    your-org/fast-diff-merge
+Active   fast-diff-merge@2026-11-26-1  (90% traffic · 18,412 req/hr · p50 380ms)
+Canary   fast-diff-merge@2026-12-03-1  (10% traffic ·  2,044 req/hr · p50 365ms)
+
+  Last 24h feedback
+    Active quality : 91.4%
+    Canary quality : 94.1%  (+2.7% vs. active)
+    Feedback rate  : 94.2% of requests
+```
+
+</DocsTerminal>
+
+### Log feedback for the next training run
+
+Requests sent to your deployed Gradiated Cloud model are captured into its [`Dataset`](/docs/training/trajectories/) automatically and return an `x-gradiated-inference-id` response header. Send outcomes and human fixes back whenever you know how an answer performed:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+client.feedback.record(
+    inference_id=inference_id,
+    idempotency_key=f"pr-{pr_number}-check-1",
+    score=1.0 if tests_passed else 0.0,
+    expected_output={"content": human_fix} if human_fix else None,
+)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+await grad.feedback.record({
+  inferenceId,
+  idempotencyKey: `pr-${prNumber}-check-1`,
+  score: testsPassed ? 1.0 : 0.0,
+  expectedOutput: humanFix ? { content: humanFix } : undefined,
+});
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+_ = client.Feedback.Record(ctx, grad.Feedback{
+	InferenceID:    inferenceID,
+	IdempotencyKey: fmt.Sprintf("pr-%d-check-1", prNumber),
+	Score:          score,
+})
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl https://api.gradiated.com/v1/feedback \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "events": [{
+      "inference_id": "inf_01J9Y",
+      "idempotency_key": "pr-481-check-1",
+      "score": 1.0
+    }]
+  }'
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Duplicate submissions with the same `idempotency_key` are ignored safely. Feedback updates live canary metrics right away and attaches to the saved `Trajectory` for your next training run.
+
+## Option 2: Run on your own vLLM or SGLang
+
+If you already run your own inference infrastructure (or self-host training in your VPC), download the trained artifact directly. LoRA runs export standard HuggingFace PEFT weights (`adapter_config.json` and `adapter_model.safetensors`), and `merge_on_export=True` or full fine-tunes export standalone Safetensors weights.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="vLLM">
+
+```bash
+grad artifacts download fast-diff-merge@2026-11-26-1 --output ./fast-diff-merge
+
+vllm serve qwen/qwen3-8b \
+  --enable-lora \
+  --lora-modules fast-diff-merge=./fast-diff-merge
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="SGLang">
+
+```bash
+grad artifacts download fast-diff-merge@2026-11-26-1 --output ./fast-diff-merge
+
+python -m sglang.launch_server \
+  --model-path qwen/qwen3-8b \
+  --lora-paths fast-diff-merge=./fast-diff-merge
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Handle traffic splitting and rollbacks with whatever you already use in your stack (feature flags, Envoy/Nginx weights, or Argo Rollouts). You can still push production logs and feedback back to Gradiated (via `dataset.push(...)`, OTel, or Langfuse sync) to train your next version.
+
+<DocsNext>
+  <a href="/docs/training/artifacts/">
+    <small>Artifacts</small>
+    <strong>Artifacts</strong>
+  </a>
+  <a href="/docs/training/recipes/router/">
+    <small>Recipe guides</small>
+    <strong>Model router</strong>
+  </a>
+</DocsNext>

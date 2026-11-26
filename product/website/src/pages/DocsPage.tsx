@@ -23,7 +23,7 @@ import { DocsModelCatalog } from "../components/docs/DocsModelCatalog";
 import { DocsSessionProvider } from "../components/docs/DocsSession";
 import {
   DocsCallout,
-  DocsEndpointDiagram,
+  DocsDeployFlow,
   DocsEnvLifecycle,
   DocsPipelineDiagram,
   DocsRecipeChooser,
@@ -47,7 +47,7 @@ import DocsSystemOneSdk from "../docs/systemone-sdk.mdx";
 import DocsTrainingAdvancedObjectives from "../docs/training/advanced-objectives.mdx";
 import DocsTrainingArtifacts from "../docs/training/artifacts.mdx";
 import DocsTrainingCustomLoops from "../docs/training/custom-loops.mdx";
-import DocsTrainingEndpoints from "../docs/training/endpoints.mdx";
+import DocsTrainingDeploying from "../docs/training/deploying.mdx";
 import DocsTrainingEnvironments from "../docs/training/environments.mdx";
 import DocsTrainingOverview from "../docs/training/index.mdx";
 import DocsTrainingRecipes from "../docs/training/recipes.mdx";
@@ -162,10 +162,10 @@ export const documents = {
     path: "/docs/training/artifacts/",
     Component: DocsTrainingArtifacts,
   },
-  "training-endpoints": {
-    title: "Endpoints",
-    path: "/docs/training/endpoints/",
-    Component: DocsTrainingEndpoints,
+  "training-deploying": {
+    title: "Deploying",
+    path: "/docs/training/deploying/",
+    Component: DocsTrainingDeploying,
   },
   "training-custom-loops": {
     title: "Custom loops",
@@ -266,7 +266,7 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
       "training-environments",
       "training-traces-to-environments",
       "training-artifacts",
-      "training-endpoints",
+      "training-deploying",
     ],
   },
   {
@@ -302,6 +302,7 @@ export const legacyPaths: Record<string, string> = {
   "/docs/migrate/": documents.quickstart.path,
   "/docs/streaming/": documents["openai-sdk"].path,
   "/docs/tool-calling/": documents["openai-sdk"].path,
+  "/docs/training/endpoints/": documents["training-deploying"].path,
   "/docs/training/recipes/classifier/": documents["recipe-decision-model"].path,
   "/docs/training/recipes/sft-dpo/": documents["recipe-sft"].path,
   "/docs/usage/": documents.index.path,
@@ -565,7 +566,7 @@ const DocsContent = (): ReactElement => {
             DocsCodeTabs,
             DocsCodeVariant,
             DocsCodeVariants,
-            DocsEndpointDiagram,
+            DocsDeployFlow,
             DocsEnvLifecycle,
             DocsLead,
             DocsModelCatalog,

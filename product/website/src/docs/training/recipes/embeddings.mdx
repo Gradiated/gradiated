@@ -1,6 +1,6 @@
 # Embeddings
 
-<DocsLead>Fine-tune an embedding model on your own terms, docs, and codebase for better search.</DocsLead>
+<DocsLead>Fine-tune an embedding model on your own docs and codebase for better search.</DocsLead>
 
 General-purpose embedding models often miss internal acronyms, product names, and custom schemas. Fine-tuning a small encoder with **`EmbeddingRecipe`** on your own query/document pairs usually boosts top-10 search hit rate by 10–25 points while staying under 10 ms per request.
 
@@ -85,9 +85,9 @@ grad deploy docs-embedder@latest
 - **`losses.InfoNCE(temp=0.05)`:** pulls matching `(anchor, positive)` pairs together and pushes near-miss `negative` docs apart; lower `temp` (`0.03`–`0.05`) sharpens rankings when negatives are close.
 - **`optim.AdamW(lr=...)`:** keep the learning rate low (`1e-5`–`3e-5`) for full encoder fine-tuning.
 
-## Embed offline or deploy to an endpoint
+## Embed offline or deploy
 
-Extract normalized embeddings directly from the exported [`Artifact`](/docs/training/artifacts/) or deploy it behind a `strategies.Direct()` [`Endpoint`](/docs/training/endpoints/) to serve live retrieval traffic:
+Extract normalized embeddings directly from the exported [`Artifact`](/docs/training/artifacts/), [deploy](/docs/training/deploying/) it on Gradiated Cloud (callable via `openai.embeddings.create(model="your-org/docs-embedder", ...)`), or download the weights for your own serving stack:
 
 ```python
 from grad import Record, pooling
@@ -97,7 +97,7 @@ vectors = run.artifact.embed(
     pool=pooling.Mean(),
 ).embeddings
 
-endpoint = run.deploy()
+run.deploy()
 ```
 
 ## Want more control?
@@ -109,8 +109,8 @@ Need Matryoshka resizable embeddings, per-token ColBERT search, or cross-encoder
     <small>Advanced</small>
     <strong>Custom loops</strong>
   </a>
-  <a href="/docs/training/endpoints/">
+  <a href="/docs/training/deploying/">
     <small>Deploy</small>
-    <strong>Endpoints</strong>
+    <strong>Deploying</strong>
   </a>
 </DocsNext>

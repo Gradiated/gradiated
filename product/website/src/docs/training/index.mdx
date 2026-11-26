@@ -14,7 +14,7 @@ dataset = client.datasets.create("support-prod")
 dataset.import_file("./support_traces.jsonl").wait()
 
 run = client.runs.create(dataset=dataset, name="support-router", recipe=RouterRecipe()).wait()
-endpoint = run.deploy(canary=0.10)
+run.deploy(canary=0.10)
 ```
 
   </DocsCodeTab>
@@ -30,7 +30,7 @@ await dataset.importFile("./support_traces.jsonl").wait();
 const run = await grad.runs
   .create({ dataset, name: "support-router", recipe: recipes.router() })
   .wait();
-const endpoint = await run.deploy({ canary: 0.1 });
+await run.deploy({ canary: 0.1 });
 ```
 
   </DocsCodeTab>
@@ -46,7 +46,7 @@ run, _ := client.Runs.Create(ctx, grad.RunParams{
 	Name:    "support-router",
 	Recipe:  grad.RouterRecipe{},
 }).Wait(ctx)
-endpoint, _ := run.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
+_, _ = run.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
 ```
 
   </DocsCodeTab>
@@ -89,9 +89,9 @@ Already sending inference requests through Gradiated with the `x-gradiated-task`
 
 <DocsRecipeChooser />
 
-## The five building blocks
+## The four building blocks
 
-Every workflow in `grad` uses the same five concepts, whether you are training a 4-second router or a multi-turn coding agent. Click any step to see what it does:
+Every workflow in `grad` uses the same four stages, whether you are training a router or a multi-turn coding agent. Click any step to see what it does:
 
 <DocsTrainingFlywheel />
 
@@ -179,16 +179,15 @@ let client = grad_sdk::Client::new().with_api_key(std::env::var("GRADIATED_API_K
 
 Prefer to run on your own infrastructure or locally? See the [self-hosting guide](/docs/training/self-hosting/) for Docker Compose and the Kubernetes Helm chart.
 
-## Call your endpoint and log outcomes
+## Use your deployed model and log outcomes
 
-`run.deploy()` (and `grad deploy`) sets up your endpoint using the artifact's defaults. Call the endpoint from your app and send back how well each response worked so live traffic improves the next run:
+`run.deploy()` (and `grad deploy`) hosts your artifact on Gradiated Cloud under `your-org/<name>`, so you can call it with the OpenAI, Anthropic, or SystemOne SDK (or `client.route(...)` for routers). If you prefer to self-host serving, download the LoRA weights with `grad artifacts download` and load them into vLLM or SGLang.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
-router = client.endpoints.get("support-router")
-decision = router.route(messages=messages, tools=tools)
+decision = client.route("support-router", messages=messages, tools=tools)
 reply = call_your_llm(decision.model, messages, tools)
 
 decision.record_feedback(
@@ -201,8 +200,7 @@ decision.record_feedback(
   <DocsCodeTab label="TypeScript">
 
 ```ts
-const router = await grad.endpoints.get("support-router");
-const decision = await router.route({ messages, tools });
+const decision = await grad.route("support-router", { messages, tools });
 const reply = await callYourLLM(decision.model, messages, tools);
 
 await decision.recordFeedback({
@@ -215,8 +213,7 @@ await decision.recordFeedback({
   <DocsCodeTab label="Go">
 
 ```go
-router, _ := client.Endpoints.Get(ctx, "support-router")
-decision, _ := router.Route(ctx, grad.RouteInput{
+decision, _ := client.Route(ctx, "support-router", grad.RouteInput{
 	Messages: messages,
 	Tools:    tools,
 })
@@ -232,8 +229,8 @@ _ = decision.RecordFeedback(ctx, grad.Feedback{
   <DocsCodeTab label="CLI">
 
 ```bash
-# Watch live canary quality, offload %, and cost savings
-grad endpoints status support-router --watch
+# Watch live canary quality and cost savings on Gradiated Cloud
+grad deployments status support-router --watch
 
 # Promote to 100% when metrics hold, or roll back in one command
 grad deploy support-router@2026-11-25-1 --active
@@ -243,10 +240,13 @@ grad deploy support-router@2026-11-25-1 --active
   <DocsCodeTab label="cURL">
 
 ```bash
-curl https://api.gradiated.com/v1/endpoints/support-router/infer \
+curl https://api.gradiated.com/v1/chat/completions \
   -H "Authorization: Bearer $GRADIATED_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"input": {"messages": [{"role": "user", "content": "Where is invoice #9941?"}]}}'
+  -d '{
+    "model": "your-org/support-router",
+    "messages": [{"role": "user", "content": "Where is invoice #9941?"}]
+  }'
 ```
 
   </DocsCodeTab>
@@ -284,7 +284,7 @@ Read https://gradiated.com/docs/training/recipes/router.md and integrate a Gradi
 2. Push or import historical traces into a Gradiated dataset using GRADIATED_API_KEY from env.
 3. Run `grad train --dataset <name> --name <router> --recipe router --dry-run --json` first and fix any data warnings.
 4. Train the router, verify `eval_report.pareto_summary.quality_drop_ci95` stays inside 2%, and deploy with `grad deploy <router>@latest --canary 0.10`.
-5. Wire `client.endpoints.get("<router>").route(...)` and `client.feedback.record(...)` with idempotency keys.
+5. Wire `client.route("<router>", ...)` (or pass `model="your-org/<router>"` to the OpenAI/Anthropic SDK) and `client.feedback.record(...)` with idempotency keys.
 ```
 
   </DocsCodeTab>
@@ -295,7 +295,7 @@ Read https://gradiated.com/docs/training/recipes/sft.md (and https://gradiated.c
 1. Export verified passing examples into a Gradiated `Dataset` (`input.messages`, `expected_output`, `session_id`, and `scores`).
 2. Score the dataset with a `Judge` (`dataset.score(judge).wait()`) and filter to high-scoring examples (`dataset.filter(lambda t: t.scores["clean"] >= 0.8)`), then configure an `SFTRecipe` (chaining into `DPORecipe` with `.then(...)` if needed) with `model="qwen/qwen3-8b"` and `splits.BySession()`.
 3. Validate with `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json` before starting training.
-4. Deploy with `strategies.SyntaxFallback(fallback="qwen/qwen3-32b")` and wire `feedback.record()` so human fixes are captured as `expected_output`.
+4. Deploy with `run.deploy(canary=0.10)` (or download the LoRA for vLLM/SGLang) and wire `feedback.record()` so human fixes are captured as `expected_output`.
 ```
 
   </DocsCodeTab>

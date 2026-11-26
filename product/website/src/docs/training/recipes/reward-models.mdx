@@ -8,7 +8,7 @@ Most teams do not need to train a reward model. Pick the simplest grader that fi
 
 - **Use a [`Scorer`](/docs/training/rubrics/) (code check)** first whenever correctness can be checked deterministically in code (JSON schema, SQL parser, unit tests). It's instant and free.
 - **Use a [`Judge`](/docs/training/rubrics/) with a frontier or open model and a rubric** as your default for everything else. For most tasks, a prompted judge with clear criteria is the best route: it needs no training data and is easy to update as your requirements change.
-- **Train a reward model (`RewardModelRecipe`)** when you want to strongly encode specific taste or domain-specific reward behavior from preference pairs, or when you need millisecond scoring inside a live `Cascade` or `BestOfN` endpoint.
+- **Train a reward model (`RewardModelRecipe`)** when you want to strongly encode specific taste or domain-specific reward behavior from preference pairs, or when you need millisecond scoring inside your app or evaluation loop.
 
 Before training a reward model, try a prompted [`Judge`](/docs/training/rubrics/) with a [`Rubric`](/docs/training/rubrics/) first:
 
@@ -26,11 +26,11 @@ rubric = Rubric([
 ])
 ```
 
-If a prompted judge is still missing subtle preferences you can demonstrate with examples, train a dedicated reward model with **`RewardModelRecipe`**. You can use the trained [`Artifact`](/docs/training/artifacts/) in three places:
+If a prompted judge is still missing subtle preferences you can demonstrate with examples, train a dedicated reward model with **`RewardModelRecipe`**. You can use the trained [`Artifact`](/docs/training/artifacts/) to:
 
-- Inside a [`Judge`](/docs/training/rubrics/) to score a [`Dataset`](/docs/training/trajectories/) or grade [`GRPORecipe`](/docs/training/recipes/rl-agents/) runs.
-- Inside a `strategies.Cascade` [`Endpoint`](/docs/training/endpoints/) so easy requests stay on a fast 8B model and low-scoring answers automatically fall back to a larger model.
-- With `strategies.BestOfN` or `strategies.MajorityVote` to pick the best of several candidate answers.
+- Plug into a [`Judge`](/docs/training/rubrics/) to score a [`Dataset`](/docs/training/trajectories/) or grade [`GRPORecipe`](/docs/training/recipes/rl-agents/) runs.
+- Score draft answers from a fast 8B model in your app so low-scoring answers fall back to a larger model.
+- Rank multiple candidate answers (best-of-N) and return the highest-scoring one.
 
 ## What data you need
 
@@ -102,7 +102,7 @@ grad train --dataset sql-preferences --name sql-verifier --recipe reward-model -
 - **`optim.AdamW(lr=...)`:** start around `1e-4` for LoRA reward models.
 - **`split`:** `splits.BySession(eval_fraction=0.10)` keeps paired examples and multi-turn conversations together so eval accuracy isn't inflated.
 
-## Use your reward model in `Judge` or production cascades
+## Use your reward model
 
 ### 1. Plug straight into a `Judge` (for datasets or RL)
 
@@ -115,24 +115,18 @@ sql_judge = Judge(name="sql_quality", model=run.artifact)
 scored = client.datasets.get("sql-prod").score(sql_judge).wait()
 ```
 
-### 2. Gate a production `Cascade` endpoint
+### 2. Gate a fast model in your app code
 
-Pair a fast fine-tuned model with your reward model. Each request first runs on the fast model, gets scored from `0` to `1` by your reward model, and only falls back to `"qwen/qwen3-32b"` when the score is below `0.75`:
+You can also [deploy](/docs/training/deploying/) your reward model (or download it to your own server) and use it to check answers from a fast 8B model before returning them, falling back to a larger model only when the score is low:
 
 ```python
-from grad import strategies
+from grad import Record
 
-agent = client.artifacts.get("sql-agent@2026-11-25-2")
+draft = oai.chat.completions.create(model="your-org/sql-agent", messages=messages).choices[0].message.content
+score = run.artifact.infer(Record(messages=[*messages, {"role": "assistant", "content": draft}])).score
 
-client.endpoints.create(
-    slug="sql-agent",
-    artifact=agent,
-    strategy=strategies.Cascade(
-        verifier=run.artifact,
-        frontier="qwen/qwen3-32b",
-        threshold=0.75,
-    ),
-)
+if score < 0.75:
+    draft = oai.chat.completions.create(model="qwen/qwen3-32b", messages=messages).choices[0].message.content
 ```
 
 ## Want more control?

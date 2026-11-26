@@ -96,10 +96,10 @@ grad train -f cartridge-docs.yaml --wait
 
 ## Deploy and serve
 
-Cartridges export as standard `.grad` artifacts (`prefix_kv.safetensors` + `base_model_ref`) and deploy onto any [`Endpoint`](/docs/training/endpoints/) identically to a LoRA adapter. Requests hit the endpoint with only the user question, with no giant system prompt required:
+Cartridges export as standard `.grad` [`Artifact`](/docs/training/artifacts/)s (`prefix_kv.safetensors` + `base_model_ref`). [Deploy](/docs/training/deploying/) onto Gradiated Cloud in one line and call `"your-org/api-docs-cartridge"` through the OpenAI or Anthropic SDK with only the user question, with no giant system prompt required:
 
 ```python
-endpoint = run.deploy()
+run.deploy()
 ```
 
 ### Key parameters

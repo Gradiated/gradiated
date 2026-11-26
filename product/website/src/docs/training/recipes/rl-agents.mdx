@@ -105,28 +105,27 @@ console.log(run.artifact.id);
 2. **Watch for all-pass or all-fail prompts:** if more than 70% of prompts get all `0.0` (too hard) or all `1.0` (too easy), add partial-credit checks to your [`Rubric`](/docs/training/rubrics/) or filter your dataset to medium-difficulty prompts.
 3. **Need multi-turn containers or log replay?** See [Environments](/docs/training/environments/) (including `environments.Harbor` and `environments.MCP`) and [Traces to environments](/docs/training/traces-to-environments/).
 
-## Deploy with a fallback cascade
+## Deploy and call your agent
 
-An RL-trained 4B–8B model often matches a frontier model on 80–90% of requests. Pair your [`Artifact`](/docs/training/artifacts/) with a [reward model](/docs/training/recipes/reward-models/) in a `strategies.Cascade` [`Endpoint`](/docs/training/endpoints/) so hard requests fall back to a larger model automatically:
+Deploy the trained [`Artifact`](/docs/training/artifacts/) to Gradiated Cloud with `run.deploy(canary=0.10)` and call `"your-org/sql-agent"` through the standard [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/), or download the LoRA weights to run on your own vLLM or SGLang servers (see [Deploying](/docs/training/deploying/)):
 
 ```python
-from grad import strategies
+import os
+from openai import OpenAI
 
-agent = client.artifacts.get("sql-agent@2026-11-25-2")
-verifier = client.artifacts.get("sql-verifier@v1")
-capture = client.datasets.get("sql-agent-prod")
+run.deploy(canary=0.10)
 
-client.endpoints.create(
-    slug="sql-agent",
-    artifact=agent,
-    capture_dataset=capture,
-    strategy=strategies.Cascade(
-        verifier=verifier,
-        frontier="qwen/qwen3-32b",
-        threshold=0.75,
-    ),
+oai = OpenAI(
+    base_url="https://api.gradiated.com/v1",
+    api_key=os.environ["GRADIATED_API_KEY"],
+)
+res = oai.chat.completions.create(
+    model="your-org/sql-agent",
+    messages=messages,
 )
 ```
+
+If you want to double-check tricky answers before returning them, you can validate the SQL (or score it with a [reward model](/docs/training/recipes/reward-models/)) in your app code and retry on a larger model only when needed.
 
 ## Want more control?
 

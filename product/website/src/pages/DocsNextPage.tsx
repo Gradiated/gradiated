@@ -27,7 +27,7 @@ import { DocsModelCatalog } from "../components/docs/DocsModelCatalog";
 import { DocsSessionProvider } from "../components/docs/DocsSession";
 import {
   DocsCallout,
-  DocsEndpointDiagram,
+  DocsDeployFlow,
   DocsEnvLifecycle,
   DocsPipelineDiagram,
   DocsRecipeChooser,
@@ -547,7 +547,7 @@ const DocsBody = (): ReactElement => {
                   DocsCodeTabs,
                   DocsCodeVariant,
                   DocsCodeVariants,
-                  DocsEndpointDiagram,
+                  DocsDeployFlow,
                   DocsEnvLifecycle,
                   DocsLead,
                   DocsModelCatalog,

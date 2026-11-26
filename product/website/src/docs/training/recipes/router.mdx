@@ -151,29 +151,26 @@ Before deploying, check `run.eval_report`:
 
 ## Deploy the router
 
-Deploy your trained [`Artifact`](/docs/training/artifacts/) to an [`Endpoint`](/docs/training/endpoints/) in one line (`run.deploy(canary=0.10)`), or configure your fallback model and safety threshold explicitly:
+Deploy your trained [`Artifact`](/docs/training/artifacts/) to Gradiated Cloud in one line. Set your `fallback` model and allowed quality drop directly on `deploy()`:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, strategies
+from grad import Grad
 
 client = Grad()
-capture = client.datasets.get("support-traces")
 
-router = client.endpoints.create(
-    slug="support-router",
-    artifact=run.artifact,
-    capture_dataset=capture,
-    strategy=strategies.SLALagrangian(
-        fallback="{{OPUS_MODEL}}",
-        max_quality_drop=0.02,
-        hard_stop_drop=0.05,
-    ),
+# Host under your-org/support-router on Gradiated Cloud
+run.deploy(
+    fallback="{{OPUS_MODEL}}",
+    max_quality_drop=0.02,
+    hard_stop_drop=0.05,
+    canary=0.10,
 )
 
-decision = router.route(messages=messages, tools=tools)
+# Call directly if you dispatch to your own LLM providers:
+decision = client.route("support-router", messages=messages, tools=tools)
 reply = call_your_llm(decision.model, messages, tools)
 
 decision.record_feedback(
@@ -185,23 +182,18 @@ decision.record_feedback(
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, strategies } from "@gradiated/grad";
+import { Grad } from "@gradiated/grad";
 
 const grad = new Grad();
-const capture = await grad.datasets.get("support-traces");
 
-const router = await grad.endpoints.create({
-  slug: "support-router",
-  artifact: run.artifact,
-  captureDataset: capture,
-  strategy: strategies.slaLagrangian({
-    fallback: "{{OPUS_MODEL}}",
-    maxQualityDrop: 0.02,
-    hardStopDrop: 0.05,
-  }),
+await run.deploy({
+  fallback: "{{OPUS_MODEL}}",
+  maxQualityDrop: 0.02,
+  hardStopDrop: 0.05,
+  canary: 0.1,
 });
 
-const decision = await router.route({ messages, tools });
+const decision = await grad.route("support-router", { messages, tools });
 const reply = await callYourLLM(decision.model, messages, tools);
 
 await decision.recordFeedback({
@@ -213,8 +205,7 @@ await decision.recordFeedback({
   <DocsCodeTab label="Go">
 
 ```go
-router, _ := client.Endpoints.Get(ctx, "support-router")
-decision, _ := router.Route(ctx, grad.RouteInput{Messages: messages, Tools: tools})
+decision, _ := client.Route(ctx, "support-router", grad.RouteInput{Messages: messages, Tools: tools})
 reply := callYourLLM(decision.Model, messages, tools)
 
 _ = decision.RecordFeedback(ctx, grad.Feedback{Score: score})
@@ -224,18 +215,21 @@ _ = decision.RecordFeedback(ctx, grad.Feedback{Score: score})
   <DocsCodeTab label="cURL">
 
 ```bash
-curl https://api.gradiated.com/v1/endpoints/support-router/infer \
+curl https://api.gradiated.com/v1/chat/completions \
   -H "Authorization: Bearer $GRADIATED_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"input": {"messages": [{"role": "user", "content": "Where is invoice #9941?"}]}}'
+  -d '{
+    "model": "your-org/support-router",
+    "messages": [{"role": "user", "content": "Where is invoice #9941?"}]
+  }'
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
 
-As feedback comes in, the endpoint keeps live quality within `max_quality_drop` and automatically routes all traffic back to your `fallback` model if quality ever drops past `hard_stop_drop`.
+As feedback comes in, Gradiated keeps live quality within `max_quality_drop` and automatically routes traffic back to your `fallback` model if quality ever drops past `hard_stop_drop`.
 
-If you already call models through Gradiated with the [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/), you can skip `router.route(...)` and pass `"model": "<org>/support-router"` directly to your chat completion call.
+If you already call models through Gradiated with the [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/), you can skip `client.route(...)` and pass `"model": "your-org/support-router"` directly to your chat completion call. See [Deploying](/docs/training/deploying/) for canary rollouts and self-hosting options.
 
 ## Want more control?
 
@@ -246,8 +240,8 @@ Need custom routing logic or a custom loss? See [Custom loops](/docs/training/cu
     <small>Next guide</small>
     <strong>Decision models</strong>
   </a>
-  <a href="/docs/training/endpoints/">
+  <a href="/docs/training/deploying/">
     <small>Serving</small>
-    <strong>Endpoints</strong>
+    <strong>Deploying</strong>
   </a>
 </DocsNext>

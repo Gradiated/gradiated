@@ -164,13 +164,13 @@ Check `run.eval_report` before shipping:
 
 ## Deploy and call from the TypeSafe SDK
 
-Deploy the trained [`Artifact`](/docs/training/artifacts/) to an [`Endpoint`](/docs/training/endpoints/) in one line:
+[Deploy](/docs/training/deploying/) the trained [`Artifact`](/docs/training/artifacts/) to Gradiated Cloud in one line:
 
 ```python
-endpoint = run.deploy()
+run.deploy()
 ```
 
-Your endpoint is immediately callable through the [SystemOne SDK](/docs/systemone-sdk/) (`TypeSafeClient`) by passing `"<org>/ticket-triage"` as the `model`.
+Your model is immediately callable through the [SystemOne SDK](/docs/systemone-sdk/) (`TypeSafeClient`) by passing `"your-org/ticket-triage"` as the `model`.
 
 Confidence scores are calibrated automatically during training, so you can fall back in your own code whenever the model isn't sure enough (for example, escalating a ticket or calling `gradiated/linden-1` when confidence is below `0.75`):
 

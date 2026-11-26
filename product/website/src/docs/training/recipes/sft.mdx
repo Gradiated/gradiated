@@ -145,34 +145,44 @@ If your logs already include a deterministic score (like `tests_passed` from CI)
 - **`optim.AdamW(lr=...)`:** start around `2e-4` for LoRA SFT (use `1e-5`–`3e-5` if doing full fine-tuning).
 - **`splits.BySession(eval_fraction=0.10)`:** keeps all turns from the same conversation together so eval scores aren't inflated by leakage.
 
-## Deploy with a syntax fallback
+## Deploy and call your model
 
-For JSON, SQL, or code [endpoints](/docs/training/endpoints/), pair your trained [`Artifact`](/docs/training/artifacts/) with `strategies.SyntaxFallback` and a validator (`validators.TypeScriptAST()`, `validators.JSONSchema(...)`, `validators.SQL()`, or your own Python function). If the fine-tuned model outputs broken syntax, the endpoint automatically retries on a stronger fallback model:
+Host the trained [`Artifact`](/docs/training/artifacts/) on Gradiated Cloud with `sft.deploy(canary=0.10)` (or download the LoRA weights to run on your own vLLM / SGLang server; see [Deploying](/docs/training/deploying/)).
+
+Call it through the standard [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/). For structured JSON, SQL, or code edits, you can validate the output in a few lines of app code and retry on a larger model if syntax fails:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, strategies, validators
+import os
+from openai import OpenAI
+from grad import Grad, validators
 
-client = Grad()
-capture = client.datasets.get("diff-merge-prod")
+sft.deploy(canary=0.10)
 
-endpoint = client.endpoints.create(
-    slug="fast-diff-merge",
-    artifact=sft.artifact,
-    capture_dataset=capture,
-    strategy=strategies.SyntaxFallback(
-        validator=validators.TypeScriptAST(),
-        fallback="qwen/qwen3-32b",
-    ),
+oai = OpenAI(
+    base_url="https://api.gradiated.com/v1",
+    api_key=os.environ["GRADIATED_API_KEY"],
 )
+check_ts = validators.TypeScriptAST()
 
-merged = endpoint.infer(payload={"original": original, "edit": edit})
+res = oai.chat.completions.create(
+    model="your-org/fast-diff-merge",
+    messages=messages,
+)
+code = res.choices[0].message.content
 
-merged.record_feedback(
+# Fall back in your own code if the fine-tuned model produces invalid syntax
+if not check_ts(code):
+    res = oai.chat.completions.create(model="qwen/qwen3-32b", messages=messages)
+    code = res.choices[0].message.content
+
+# Log the outcome (and any human fix) for your next training run
+Grad().feedback.record(
+    inference_id=res.id,
     score=1.0 if tests_passed else 0.0,
-    expected_output={"merged_code": human_fix} if human_fix else None,
+    expected_output={"content": human_fix} if human_fix else None,
 )
 ```
 
@@ -180,60 +190,52 @@ merged.record_feedback(
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, strategies, validators } from "@gradiated/grad";
+import OpenAI from "openai";
+import { Grad, validators } from "@gradiated/grad";
 
-const grad = new Grad();
-const capture = await grad.datasets.get("diff-merge-prod");
+await sft.deploy({ canary: 0.1 });
 
-const endpoint = await grad.endpoints.create({
-  slug: "fast-diff-merge",
-  artifact: sft.artifact,
-  captureDataset: capture,
-  strategy: strategies.syntaxFallback({
-    validator: validators.typeScriptAST(),
-    fallback: "qwen/qwen3-32b",
-  }),
+const oai = new OpenAI({
+  baseURL: "https://api.gradiated.com/v1",
+  apiKey: process.env.GRADIATED_API_KEY,
 });
+const checkTs = validators.typeScriptAST();
 
-const merged = await endpoint.infer<{ mergedCode: string }>({
-  payload: { original, edit },
+let res = await oai.chat.completions.create({
+  model: "your-org/fast-diff-merge",
+  messages,
 });
+let code = res.choices[0].message.content ?? "";
 
-await merged.recordFeedback({
-  score: testsPassed ? 1.0 : 0.0,
-  expectedOutput: humanFix ? { merged_code: humanFix } : undefined,
-});
-```
-
-  </DocsCodeTab>
-  <DocsCodeTab label="Go">
-
-```go
-type MergeOut struct {
-	MergedCode string `json:"merged_code"`
+// Fall back in your own code if the fine-tuned model produces invalid syntax
+if (!checkTs(code)) {
+  res = await oai.chat.completions.create({ model: "qwen/qwen3-32b", messages });
+  code = res.choices[0].message.content ?? "";
 }
-endpoint, _ := client.Endpoints.Get(ctx, "fast-diff-merge")
-merged, _ := grad.InferAs[MergeOut](ctx, endpoint, grad.InferInput{
-	Payload: map[string]any{"original": original, "edit": edit},
-})
-_ = merged.RecordFeedback(ctx, grad.Feedback{Score: score})
+
+await new Grad().feedback.record({
+  inferenceId: res.id,
+  score: testsPassed ? 1.0 : 0.0,
+  expectedOutput: humanFix ? { content: humanFix } : undefined,
+});
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="cURL">
+  <DocsCodeTab label="CLI (self-host on vLLM)">
 
 ```bash
-curl https://api.gradiated.com/v1/endpoints/fast-diff-merge/infer \
-  -H "Authorization: Bearer $GRADIATED_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"input": {"payload": {"original": "...", "edit": "..."}}}'
+grad artifacts download fast-diff-merge@latest --output ./fast-diff-merge
+
+vllm serve qwen/qwen3-8b \
+  --enable-lora \
+  --lora-modules fast-diff-merge=./fast-diff-merge
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
 
 <DocsCallout label="Turn production misses into your next dataset" tone="tip">
-When a developer fixes a bad answer or `SyntaxFallback` catches invalid JSON or code, calling `record_feedback(..., expected_output=...)` saves both the failed attempt and the fix on the same trajectory, giving you ready-to-use data for your next SFT or [DPO](/docs/training/recipes/dpo/) run.
+When a developer fixes a bad answer or your syntax check catches invalid JSON or code, calling `feedback.record(..., expected_output=...)` saves both the failed attempt and the fix on the same trajectory, giving you ready-to-use data for your next SFT or [DPO](/docs/training/recipes/dpo/) run.
 </DocsCallout>
 
 ## Want more control?

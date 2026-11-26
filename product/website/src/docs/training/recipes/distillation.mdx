@@ -108,10 +108,10 @@ grad train -f distill-4b.yaml --wait
 
 ## Deploy and serve
 
-Distilled checkpoints export as standard `.grad` [`Artifact`](/docs/training/artifacts/)s and deploy onto any [`Endpoint`](/docs/training/endpoints/) with `strategies.Direct()` (or `strategies.Cascade` paired with a [reward model](/docs/training/recipes/reward-models/)):
+Distilled checkpoints export as standard `.grad` [`Artifact`](/docs/training/artifacts/)s. Host on Gradiated Cloud with `run.deploy(canary=0.10)` and call `"your-org/support-4b-distilled"` via the OpenAI or Anthropic SDK, or download the LoRA weights for vLLM / SGLang (see [Deploying](/docs/training/deploying/)):
 
 ```python
-endpoint = run.deploy(canary=0.10)
+run.deploy(canary=0.10)
 ```
 
 ## Want more control?

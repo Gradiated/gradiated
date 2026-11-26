@@ -68,16 +68,15 @@ See the [SystemOne SDK guide](/docs/systemone-sdk/) for linden-1 examples and su
 | `POST` | `/v1/artifacts/{id}/tokenize` | Server-side tokenization and chat-template rendering (`messages`, `tools`, `media`, optional `return_loss_mask`). |
 | `GET` | `/v1/tensors/{ref_id}` | Fetch binary Safetensors/Arrow payloads for opaque `TensorRef`s. |
 
-## Endpoints
+## Cloud deployments and feedback
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `POST` / `GET` / `PATCH` / `DELETE` | `/v1/endpoints` / `/v1/endpoints/{name}` | Manage named production endpoints over one or more artifacts. |
-| `POST` | `/v1/endpoints/{name}/promote` | Promote an artifact to `shadow`, `canary`, or `active`. |
-| `GET` | `/v1/endpoints/{name}/status` | Inspect live canary telemetry, SLA drop, and cost savings. |
-| `POST` | `/v1/endpoints/{name}/infer` | Run production inference with configured guardrails and trajectory capture. |
+| `POST` / `GET` | `/v1/deployments` / `/v1/deployments/{name}` | Publish an artifact under a stable model name (`your-org/<name>`) on Gradiated Cloud or inspect live canary telemetry. |
+| `POST` | `/v1/deployments/{name}/promote` | Promote an artifact to `shadow`, `canary`, or `active` (or roll back to an earlier version). |
+| `POST` | `/v1/route` | Ask a deployed router which model to call when dispatching to your own providers. |
 | `POST` | `/v1/feedback` | Record deduplicated outcomes and gold corrections by `inference_id` or `trace_id`. |
 
-See the [Primitives reference](/docs/reference/primitives/) for full JSON schemas (`Trajectory`, `Record`, `Model`, `Artifact`, `Endpoint`).
+See the [Primitives reference](/docs/reference/primitives/) for full JSON schemas (`Trajectory`, `Record`, `Model`, `Artifact`).
 
 [View the API reference](https://api.gradiated.com/docs).

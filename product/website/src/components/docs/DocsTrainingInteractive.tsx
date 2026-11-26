@@ -331,8 +331,8 @@ run = client.runs.create(
     name="api-docs-cartridge",
     recipe=CartridgeRecipe(
         model=Model("Qwen/Qwen3-8B"),
-        context=Context.from_uri("s3://my-bucket/api-docs.md"),
-        adapter=adapters.PrefixKV(num_tokens=256),
+        context=Context.from_file("./api-docs.md"),
+        num_tokens=256,
     ),
 ).wait()`,
   },

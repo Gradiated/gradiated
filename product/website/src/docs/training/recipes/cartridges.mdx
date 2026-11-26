@@ -2,20 +2,27 @@
 
 <DocsLead>Compress 30k–100k tokens of repeated system prompts, API documentation, or repository manuals into a compact trainable KV-cache prefix you pay to encode once and hot-swap per tenant.</DocsLead>
 
-When every request prepends the same long static corpus (internal runbooks, compliance rules, product docs, or codebase manuals), re-processing that context on every turn inflates prefill latency and cost. **`CartridgeRecipe`** freezes the base model and trains a small virtual KV-cache prefix (`adapters.PrefixKV`, typically 128–1,024 tokens) so the model without the long prompt matches the model *with* the long prompt.
+When every request prepends the same long static corpus (internal runbooks, compliance rules, product docs, or codebase manuals), re-processing that context on every turn inflates prefill latency and cost.
 
-## What data you need
+## How a Cartridge works
 
-- **Static corpus (`Context`):** Pass your bundle via `Context.from_uri("s3://...")`, `Context.from_file("./api-docs.md")`, or `Context.from_text(...)`.
-- **QA / task prompts (`Dataset`):** 500–2,000 representative questions or tasks grounded in that corpus in `input.messages` ([trajectories](/docs/training/trajectories/)) — no gold answers required.
+A Cartridge replaces a huge static system prompt with a tiny **precomputed attention memory** (KV cache) that stays frozen-base-compatible:
+
+1. **`context`** is the static document(s) you want to compress (`Context.from_file(...)`, `Context.from_uri("s3://...")`, or `Context.from_text(...)`).
+2. **`dataset`** is a set of 500–2,000 representative questions or tasks grounded in that corpus (`input.messages` — no gold answers required).
+3. **`num_tokens`** is the compressed Cartridge size (for example, `256` virtual KV-cache tokens standing in for a 50,000-token manual — backed by `adapters.PrefixKV(num_tokens=256)` under the hood while keeping the base model weights frozen).
+
+During training, the full model reads `context` + each question to produce target predictions, while the Cartridge trains to match those predictions **without** `context` in the prompt. At serving time, one frozen base model can hot-swap different Cartridges per tenant or repository on every request.
 
 ## Train a Cartridge (`CartridgeRecipe`)
+
+`CartridgeRecipe` defaults `teacher=model` (override `teacher=` only if you want to distill from a larger model) and trains an `adapters.PrefixKV(num_tokens=...)` prefix automatically:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Context, Grad, Model, adapters, losses, optim
+from grad import Context, Grad, Model, losses, optim
 from grad.recipes import CartridgeRecipe
 
 client = Grad()
@@ -23,9 +30,8 @@ dataset = client.datasets.get("api-docs-qa-prompts")
 
 recipe = CartridgeRecipe(
     model=Model("Qwen/Qwen3-8B"),
-    teacher=Model("Qwen/Qwen3-8B"),
-    context=Context.from_uri("s3://my-bucket/api-docs-bundle.md"),
-    adapter=adapters.PrefixKV(num_tokens=256),
+    context=Context.from_file("./api-docs-bundle.md"),  # or Context.from_uri("s3://...") / Context.from_text(...)
+    num_tokens=256,
     loss=losses.TopKKLDistill(top_k=20),
     optimizer=optim.AdamW(lr=2e-2),
 )
@@ -39,7 +45,7 @@ print(run.artifact.id, run.eval_report)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Context, Grad, Model, adapters, losses, optim, recipes } from "@gradiated/grad";
+import { Context, Grad, Model, losses, optim, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("api-docs-qa-prompts");
@@ -50,9 +56,8 @@ const run = await grad.runs
     name: "api-docs-cartridge",
     recipe: recipes.cartridge({
       model: new Model("Qwen/Qwen3-8B"),
-      teacher: new Model("Qwen/Qwen3-8B"),
-      context: Context.fromUri("s3://my-bucket/api-docs-bundle.md"),
-      adapter: adapters.prefixKV({ numTokens: 256 }),
+      context: Context.fromFile("./api-docs-bundle.md"),
+      numTokens: 256,
       loss: losses.topKKLDistill({ topK: 20 }),
       optimizer: optim.adamW({ lr: 2e-2 }),
     }),
@@ -71,12 +76,9 @@ dataset: api-docs-qa-prompts
 name: api-docs-cartridge
 recipe: cartridge
 model: Qwen/Qwen3-8B
-teacher: Qwen/Qwen3-8B
 context:
-  uri: s3://my-bucket/api-docs-bundle.md
-adapter:
-  kind: prefix_kv
-  num_tokens: 256
+  file: ./api-docs-bundle.md
+num_tokens: 256
 loss:
   kind: topk_kl_distill
   top_k: 20
@@ -104,9 +106,9 @@ endpoint = run.deploy()
 
 | Component | Guidance |
 | --- | --- |
-| `adapters.PrefixKV(num_tokens=...)` | `128`–`256` for 10k–30k token manuals; `512`–`1024` for 100k+ token corpora. |
+| `num_tokens` | Compressed KV-cache size (`128`–`256` for 10k–30k token manuals; `512`–`1024` for 100k+ token corpora). Uses `adapters.PrefixKV(num_tokens=...)` under the hood. |
 | `optim.AdamW(lr=...)` | Prefix KV tensors need a much higher learning rate (`1e-2`–`2e-2`) than LoRA adapters. |
-| `eval_report` | Compare KL divergence and task QA accuracy against the full-context teacher to pick the smallest `num_tokens` that holds quality. |
+| `eval_report` | Compare KL divergence and task QA accuracy against the full-context model to pick the smallest `num_tokens` that holds quality. |
 
 ## Cartridge (`PrefixKV`) vs. prompt distillation into LoRA
 

@@ -14,7 +14,7 @@ When unit tests or exact-match rules cannot grade an output on their own, train 
 
 ## 1. Pairwise Bradley-Terry reward model
 
-Use `(chosen, rejected)` [trajectories](/docs/training/trajectories/) sharing a `group_id` and train a single scalar head (`heads.Linear(dim=1)`) with a shuffle-safe `BradleyTerryLoss` using `grad.by_group()`:
+Use `PreferencePair` records (or paired `(chosen, rejected)` [trajectories](/docs/training/trajectories/)) and train a single scalar head (`heads.Linear(dim=1)`) with a shuffle-safe `BradleyTerryLoss` using `grad.by_group()`:
 
 ```python
 import torch

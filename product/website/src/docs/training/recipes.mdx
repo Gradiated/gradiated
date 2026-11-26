@@ -293,7 +293,7 @@ run = client.runs.create(dataset=dataset, name="support-fast-distill", recipe=re
   <DocsCodeTab label="Cartridge">
 
 ```python
-from grad import Context, Grad, Model, adapters, losses, optim
+from grad import Context, Grad, Model, losses, optim
 from grad.recipes import CartridgeRecipe
 
 client = Grad()
@@ -301,9 +301,8 @@ dataset = client.datasets.get("api-docs-corpus")
 
 recipe = CartridgeRecipe(
     model=Model("Qwen/Qwen3-8B"),
-    teacher=Model("Qwen/Qwen3-8B"),
-    context=Context.from_uri("s3://my-bucket/api-docs-bundle.md"),
-    adapter=adapters.PrefixKV(num_tokens=256),
+    context=Context.from_file("./api-docs-bundle.md"),
+    num_tokens=256,
     loss=losses.TopKKLDistill(top_k=20),
     optimizer=optim.AdamW(lr=2e-2),
 )

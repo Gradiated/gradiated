@@ -26,7 +26,7 @@ SGLANG_SOURCE = 'afcd7d6b487a9cbe73e25941971b4cc107e6f9ae'
 KIMI_OVERLAY_FINGERPRINT = '6509efad47e02e681caa9cdb49bb9b9375fb94aa30276fcfa5a082e9bfcdab3e'
 DRAFT_MODEL = 'RadixArk/Kimi-K3.1-Dflash2-Preview'
 DRAFT_REVISION = 'd0d8bc2e3c6d0a195d2e00a49017e71ca8d881f1'
-ACTIVE_REQUESTS = 5
+ACTIVE_REQUESTS = 16
 # No frontend queue: a full replica rejects at once with 429, so the gateway
 # can try the other replica and otherwise tell the caller to go elsewhere.
 QUEUED_REQUESTS = 0
@@ -100,25 +100,28 @@ def commands(environment):
     config = settings(environment)
     python = str(config['root'] / 'python/bin/python3')
     backend = [python, str(config['root'] / 'energy/launch.py'), '--model-path', config['model'],
-               '--revision', config['revision'], '--served-model-name', config['served_model_name'], '--tp-size', '8', '--trust-remote-code',
+               '--revision', config['revision'], '--served-model-name', config['served_model_name'],
+               '--tp-size', '8', '--ep-size', '8', '--dcp-size', '8', '--trust-remote-code',
                '--reasoning-parser', 'kimi_k3', '--tool-call-parser', 'kimi_k3',
                '--moe-runner-backend', 'flashinfer_mxfp4', '--flashinfer-mxfp4-moe-precision', 'default',
                '--speculative-algorithm', 'DFLASH', '--speculative-draft-model-path',
                str(config['root'] / 'models/kimi-dflash'),
                '--speculative-draft-model-revision', DRAFT_REVISION,
                '--speculative-draft-attention-backend', 'cutedsl_mla',
+               '--speculative-draft-kv-cache-dtype', 'fp8_e4m3',
                '--speculative-dflash-block-size', '5', '--disable-overlap-schedule',
                '--enable-linear-replayssm-spec', '--mamba-ssm-dtype', 'float32',
+               '--enable-int8-mamba-checkpoint',
                '--max-running-requests', str(ACTIVE_REQUESTS), '--context-length', '1048576',
-               '--mem-fraction-static', '0.85', '--chunked-prefill-size', '8192',
-               '--mamba-full-memory-ratio', '0.45',
+               '--mem-fraction-static', '0.88', '--chunked-prefill-size', '16384',
+               '--mamba-full-memory-ratio', '1.5',
                # Short prompts jump ahead of a long chunked prefill, and running
                # streams get four decode rounds after every prefill chunk instead
                # of freezing for the whole prefill. An idle replica still
                # prefills back to back.
                '--schedule-policy', 'shortest-prefill-first', '--prefill-decode-interval', '4',
                '--prefill-decode-interval-min-bs', '1',
-               '--max-prefill-tokens', '8192', '--cuda-graph-max-bs-decode', str(ACTIVE_REQUESTS),
+               '--max-prefill-tokens', '16384', '--cuda-graph-max-bs-decode', str(ACTIVE_REQUESTS),
                '--enable-metrics', '--random-seed', '42',
                '--host', '127.0.0.1', '--port', str(config['backend'])]
     router = [python, '-m', 'smg.launch_router', '--worker-urls',

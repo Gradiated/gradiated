@@ -13,21 +13,30 @@ Build verification rejects changed source, patches or lineage. Native extensions
 remain paired with their upstream source revision.
 
 The checkpoint is `moonshotai/Kimi-K3.1-Pro` at
-`d9e99b0792a5e93b78ea9bea62a68167e36ddd9e`. Its native compressed-tensors
-MXFP4 weights and MXFP8 expert activations are retained. The launcher selects
+`d9e99b0792a5e93b78ea9bea62a68167e36ddd9e` by default, or
+`yetalabs/Kimi-K3.1-Pro-abliterated` at
+`0911ef0765f49d26dfa25bb0d071f29463f8000b` when `MODEL_ID` is set to
+`yetalabs/kimi-k3.1-pro-abliterated`. Both checkpoints are native
+compressed-tensors MXFP4 with MXFP8 expert activations. The launcher selects
 the `flashinfer_mxfp4` runner with `--flashinfer-mxfp4-moe-precision default`,
 which dispatches to the Blackwell TRT-LLM MXFP4 kernel with MXFP8 activations.
 The distinct `flashinfer_trtllm` runner does not support this checkpoint's MXFP4
 method. The launcher supplies no target dtype or quantization override.
 The model's native BF16 attention and control tensors are not a full-model
-precision fallback. ReplaySSM uses FP32 recurrent state; this state allocation
-does not upcast target weights or expert activations. Native FP8 KV is retained.
+precision fallback. ReplaySSM uses FP32 active recurrent state (`--mamba-ssm-dtype float32`)
+and INT8 radix-cached Mamba checkpoints (`--enable-int8-mamba-checkpoint`); active
+decode state and weights are never downcast. Native FP8 KV is retained.
 
-The provisional profile reserves eight B300 UUIDs on one host and uses TP8,
-85% static device memory, a 0.45 KDA-to-KV memory ratio, an 8K-token prefill budget,
+The tuned profile reserves eight B300 UUIDs on one host and uses TP8 + EP8 + DCP8,
+88% static device memory, a 1.5 KDA-to-KV memory ratio with INT8 Mamba radix
+checkpoints (297 active FP32 Mamba slots, 594 cached INT8 Mamba checkpoints,
+6.46M FP8 KV tokens, ~17 GB/GPU free HBM headroom after CUDA graphs), a 16K-token
+prefill chunk budget (`--chunked-prefill-size 16384 --max-prefill-tokens 16384`),
 shortest-prefill-first scheduling, prefill/decode interval four while any request
-is running, and decode graphs through batch five. DFLASH uses
-block five, non-overlap scheduling and ReplaySSM. Its draft is
+is running, and decode graphs through batch 16 (`ACTIVE_REQUESTS = 16`). DFLASH
+uses block five, FP8 draft KV (`--speculative-draft-kv-cache-dtype fp8_e4m3`),
+non-overlap scheduling (preserving full `seed`, `frequency_penalty`, and
+`presence_penalty` admission), and ReplaySSM. Its draft is
 `RadixArk/Kimi-K3.1-Dflash2-Preview` at
 `d0d8bc2e3c6d0a195d2e00a49017e71ca8d881f1`, with the explicit `cutedsl_mla`
 draft attention backend and the checkpoint's default recent window. Its pinned
@@ -35,10 +44,19 @@ config and 5,569,631,720-byte weights are bundled at `models/kimi-dflash`.
 Build and runtime verification check every file's size and SHA-256 against the
 pinned manifest and archive provenance. The draft has no host Hugging Face cache
 dependency; archive disk accounting covers it and cache eviction cannot remove it.
-Both parsers
-are `kimi_k3`; `OMP_NUM_THREADS` and `MAX_JOBS` are eight. Exact rebuilt-archive
-GPU and SDK qualification remains required. A DCP8/EP2 comparison is still a
-separate candidate; it is not enabled by this provisional launcher.
+Both parsers are `kimi_k3`; `OMP_NUM_THREADS` and `MAX_JOBS` are eight.
+
+On a Nebius 8xB300 spot benchmark (`yetalabs/Kimi-K3.1-Pro-abliterated`, 16 arms,
+archived at `s3://gradiated-dev-training-873716897517/kimi-k31-abliterated/opt-20261125/`),
+this 16-slot profile held 88.0% prefix cache hits across 32 concurrent 2K-48K
+sessions (vs 67-76% eviction collapse without DCP8/INT8 checkpoints), delivered
+62.2-62.5 p50 TPS (~791-795 agg TPS, 1.12s p50 / 1.98s p95 TTFT) at all 16 slots
+full on realistic 88%-cached multi-turn traffic (62.1 p50 / 885.5 agg / 0.80s p95
+TTFT warm; 464-474 agg cold = 96-98% of the 485 TPS no-spec cold ceiling), kept
+128K prefill TTFT at 8.1s with 1.06s short-probe TTFT and 42.6 TPS running-stream
+decode under mixed load, and passed all six production qualification smoke checks
+(non-stream/stream `READY`, `/v1/messages/count_tokens`, `dcp=8` 512-token quantum
+cached prefill warmup, `seed` + penalties, and tool calling).
 
 The source overlays correct committed-history and candidate-prefix penalties,
 add per-request sampling seeds, guard seeded admission and clamp Kimi's cached

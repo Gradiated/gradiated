@@ -98,9 +98,17 @@ const PRIMITIVES: PrimitiveNode[] = [
     name: "Trajectory",
     role: "Data & logs",
     href: "/docs/training/trajectories/",
-    summary: "One shared format stored in a Dataset for production logs, labeled examples, and agent runs.",
-    ops: ["dataset.push()", "dataset.import_file()", "dataset.score()", "dataset.filter()", "dataset.add_source()"],
-    detail: "Filled automatically from Gradiated inference, pushed from your DB, or synced from OTel, Langfuse, and Braintrust.",
+    summary:
+      "One shared format stored in a Dataset for production logs, labeled examples, and agent runs.",
+    ops: [
+      "dataset.push()",
+      "dataset.import_file()",
+      "dataset.score()",
+      "dataset.filter()",
+      "dataset.add_source()",
+    ],
+    detail:
+      "Filled automatically from Gradiated inference, pushed from your DB, or synced from OTel, Langfuse, and Braintrust.",
   },
   {
     id: "environment",
@@ -108,9 +116,11 @@ const PRIMITIVES: PrimitiveNode[] = [
     name: "Rubric & Environment",
     role: "Grading & tools",
     href: "/docs/training/rubrics/",
-    summary: "Grade answers with Python checks or a Judge, or run multi-turn agents against your own containers and tools.",
+    summary:
+      "Grade answers with Python checks or a Judge, or run multi-turn agents against your own containers and tools.",
     ops: ["Rubric()", "Judge()", "setup()", "step()", "evaluate()"],
-    detail: "Environments run in Gradiated sandboxes, or on your own machines with grad env serve. evaluate() checks live containers before teardown() cleans up.",
+    detail:
+      "Environments run in Gradiated sandboxes, or on your own machines with grad env serve. evaluate() checks live containers before teardown() cleans up.",
   },
   {
     id: "trainer",
@@ -118,9 +128,17 @@ const PRIMITIVES: PrimitiveNode[] = [
     name: "Trainer",
     role: "Model training",
     href: "/docs/training/recipes/",
-    summary: "Managed training engine (billed per million tokens) driven by a built-in Recipe or your own Python loop.",
-    ops: ["runs.create()", "forward_backward()", "optim_step()", "save_state()", "snapshot()"],
-    detail: "Runs forward, backward, and optimizer steps back-to-back and supports built-in losses or custom PyTorch CustomLoss classes.",
+    summary:
+      "Managed training engine (billed per million tokens) driven by a built-in Recipe or your own Python loop.",
+    ops: [
+      "runs.create()",
+      "forward_backward()",
+      "optim_step()",
+      "save_state()",
+      "snapshot()",
+    ],
+    detail:
+      "Runs forward, backward, and optimizer steps back-to-back and supports built-in losses or custom PyTorch CustomLoss classes.",
   },
   {
     id: "artifact",
@@ -128,9 +146,16 @@ const PRIMITIVES: PrimitiveNode[] = [
     name: "Artifact & Deploy",
     role: "Cloud or self-host",
     href: "/docs/training/deploying/",
-    summary: "A versioned .grad artifact (PEFT LoRA or merged Safetensors) you can host on Gradiated Cloud or download for vLLM / SGLang.",
-    ops: ["run.deploy()", "grad artifacts download", "artifacts.merge()", "feedback.record()"],
-    detail: "Deploy on Gradiated Cloud in one command via the OpenAI, Anthropic, or SystemOne SDK, or serve the LoRA weights on your own GPUs.",
+    summary:
+      "A versioned .grad artifact (PEFT LoRA or merged Safetensors) you can host on Gradiated Cloud or download for vLLM / SGLang.",
+    ops: [
+      "run.deploy()",
+      "grad artifacts download",
+      "artifacts.merge()",
+      "feedback.record()",
+    ],
+    detail:
+      "Deploy on Gradiated Cloud in one command via the OpenAI, Anthropic, or SystemOne SDK, or serve the LoRA weights on your own GPUs.",
   },
 ];
 
@@ -139,13 +164,22 @@ export const DocsTrainingFlywheel = (): ReactElement => {
   const active = PRIMITIVES.find((p) => p.id === activeId) ?? PRIMITIVES[0];
 
   return (
-    <figure className="gr-doc-widget" aria-label="The four grad stages and feedback loop">
+    <figure
+      className="gr-doc-widget"
+      aria-label="The four grad stages and feedback loop"
+    >
       <div className="gr-doc-widget-head">
         <span className="gr-doc-widget-kicker">Architecture · 4 stages</span>
-        <span className="gr-doc-widget-hint">Select a stage to inspect its API</span>
+        <span className="gr-doc-widget-hint">
+          Select a stage to inspect its API
+        </span>
       </div>
 
-      <div className="gr-doc-flywheel-grid gr-doc-flywheel-grid--4" role="tablist" aria-label="Training stages">
+      <div
+        className="gr-doc-flywheel-grid gr-doc-flywheel-grid--4"
+        role="tablist"
+        aria-label="Training stages"
+      >
         {PRIMITIVES.map((node, idx) => {
           const isSelected = node.id === active.id;
           return (
@@ -172,7 +206,9 @@ export const DocsTrainingFlywheel = (): ReactElement => {
       </div>
 
       <div className="gr-doc-flywheel-loop" aria-hidden="true">
-        <span>↩ live traffic + feedback.record() feeds back into 01 Trajectory</span>
+        <span>
+          ↩ live traffic + feedback.record() feeds back into 01 Trajectory
+        </span>
       </div>
 
       <div className="gr-doc-inspector" role="tabpanel">
@@ -222,7 +258,8 @@ const RECIPE_CHOICES: RecipeChoice[] = [
     recipe: "RouterRecipe",
     profile: "Fine-tuned Qwen3-0.6B router",
     typicalWin: "45–70% cost drop within your quality bar",
-    dataNeeded: "Prompts + a Judge (or existing scores); model pricing is built in",
+    dataNeeded:
+      "Prompts + a Judge (or existing scores); model pricing is built in",
     href: "/docs/training/recipes/router/",
     snippet: `dataset = client.datasets.get("support-traces")
 run = client.runs.create(
@@ -354,7 +391,11 @@ export const DocsRecipeChooser = (): ReactElement => {
         <span className="gr-doc-widget-hint">Pick what you are building</span>
       </div>
 
-      <div className="gr-doc-pill-grid" role="tablist" aria-label="Training goals">
+      <div
+        className="gr-doc-pill-grid"
+        role="tablist"
+        aria-label="Training goals"
+      >
         {RECIPE_CHOICES.map((item) => {
           const isSelected = item.id === current.id;
           return (
@@ -433,18 +474,126 @@ type TokenCell = {
 };
 
 const ALIGNMENT_TOKENS: TokenCell[] = [
-  { idx: 0, text: "<bos>", tokenId: 151644, role: "user", turnId: 0, lossMask: 0.0, logprob: 0.0, advantage: 0.0 },
-  { idx: 1, text: "Count", tokenId: 7812, role: "user", turnId: 0, lossMask: 0.0, logprob: 0.0, advantage: 0.0 },
-  { idx: 2, text: "users", tokenId: 3847, role: "user", turnId: 0, lossMask: 0.0, logprob: 0.0, advantage: 0.0 },
-  { idx: 3, text: "sql(", tokenId: 19204, role: "assistant", turnId: 0, lossMask: 1.0, logprob: -0.18, advantage: 1.14 },
-  { idx: 4, text: "SELECT", tokenId: 4921, role: "assistant", turnId: 0, lossMask: 1.0, logprob: -0.04, advantage: 1.14 },
-  { idx: 5, text: "COUNT", tokenId: 14122, role: "assistant", turnId: 0, lossMask: 1.0, logprob: -0.09, advantage: 1.14 },
-  { idx: 6, text: ")", tokenId: 8, role: "assistant", turnId: 0, lossMask: 1.0, logprob: -0.02, advantage: 1.14 },
-  { idx: 7, text: "rows:", tokenId: 10942, role: "tool", turnId: 1, lossMask: 0.0, logprob: 0.0, advantage: 0.0 },
-  { idx: 8, text: "42", tokenId: 2983, role: "tool", turnId: 1, lossMask: 0.0, logprob: 0.0, advantage: 0.0 },
-  { idx: 9, text: "There", tokenId: 3869, role: "assistant", turnId: 1, lossMask: 1.0, logprob: -0.31, advantage: 1.14 },
-  { idx: 10, text: "are", tokenId: 525, role: "assistant", turnId: 1, lossMask: 1.0, logprob: -0.06, advantage: 1.14 },
-  { idx: 11, text: "42.", tokenId: 2983, role: "assistant", turnId: 1, lossMask: 1.0, logprob: -0.03, advantage: 1.14 },
+  {
+    idx: 0,
+    text: "<bos>",
+    tokenId: 151644,
+    role: "user",
+    turnId: 0,
+    lossMask: 0.0,
+    logprob: 0.0,
+    advantage: 0.0,
+  },
+  {
+    idx: 1,
+    text: "Count",
+    tokenId: 7812,
+    role: "user",
+    turnId: 0,
+    lossMask: 0.0,
+    logprob: 0.0,
+    advantage: 0.0,
+  },
+  {
+    idx: 2,
+    text: "users",
+    tokenId: 3847,
+    role: "user",
+    turnId: 0,
+    lossMask: 0.0,
+    logprob: 0.0,
+    advantage: 0.0,
+  },
+  {
+    idx: 3,
+    text: "sql(",
+    tokenId: 19204,
+    role: "assistant",
+    turnId: 0,
+    lossMask: 1.0,
+    logprob: -0.18,
+    advantage: 1.14,
+  },
+  {
+    idx: 4,
+    text: "SELECT",
+    tokenId: 4921,
+    role: "assistant",
+    turnId: 0,
+    lossMask: 1.0,
+    logprob: -0.04,
+    advantage: 1.14,
+  },
+  {
+    idx: 5,
+    text: "COUNT",
+    tokenId: 14122,
+    role: "assistant",
+    turnId: 0,
+    lossMask: 1.0,
+    logprob: -0.09,
+    advantage: 1.14,
+  },
+  {
+    idx: 6,
+    text: ")",
+    tokenId: 8,
+    role: "assistant",
+    turnId: 0,
+    lossMask: 1.0,
+    logprob: -0.02,
+    advantage: 1.14,
+  },
+  {
+    idx: 7,
+    text: "rows:",
+    tokenId: 10942,
+    role: "tool",
+    turnId: 1,
+    lossMask: 0.0,
+    logprob: 0.0,
+    advantage: 0.0,
+  },
+  {
+    idx: 8,
+    text: "42",
+    tokenId: 2983,
+    role: "tool",
+    turnId: 1,
+    lossMask: 0.0,
+    logprob: 0.0,
+    advantage: 0.0,
+  },
+  {
+    idx: 9,
+    text: "There",
+    tokenId: 3869,
+    role: "assistant",
+    turnId: 1,
+    lossMask: 1.0,
+    logprob: -0.31,
+    advantage: 1.14,
+  },
+  {
+    idx: 10,
+    text: "are",
+    tokenId: 525,
+    role: "assistant",
+    turnId: 1,
+    lossMask: 1.0,
+    logprob: -0.06,
+    advantage: 1.14,
+  },
+  {
+    idx: 11,
+    text: "42.",
+    tokenId: 2983,
+    role: "assistant",
+    turnId: 1,
+    lossMask: 1.0,
+    logprob: -0.03,
+    advantage: 1.14,
+  },
 ];
 
 export const DocsTokenAlignment = (): ReactElement => {
@@ -452,22 +601,35 @@ export const DocsTokenAlignment = (): ReactElement => {
   const tok = ALIGNMENT_TOKENS[selectedIdx] ?? ALIGNMENT_TOKENS[3];
 
   return (
-    <figure className="gr-doc-widget" aria-label="Interactive 1:1 token alignment inspector">
+    <figure
+      className="gr-doc-widget"
+      aria-label="Interactive 1:1 token alignment inspector"
+    >
       <div className="gr-doc-widget-head">
-        <span className="gr-doc-widget-kicker">Token inspector · 12 tokens</span>
-        <span className="gr-doc-widget-hint">Click any token to see its values</span>
+        <span className="gr-doc-widget-kicker">
+          Token inspector · 12 tokens
+        </span>
+        <span className="gr-doc-widget-hint">
+          Click any token to see its values
+        </span>
       </div>
 
       <div className="gr-doc-token-legend">
         <span>
-          <i className="gr-doc-swatch gr-doc-swatch--muted" /> prompt / tool (loss_mask = 0.0)
+          <i className="gr-doc-swatch gr-doc-swatch--muted" /> prompt / tool
+          (loss_mask = 0.0)
         </span>
         <span>
-          <i className="gr-doc-swatch gr-doc-swatch--ink" /> generated (loss_mask = 1.0)
+          <i className="gr-doc-swatch gr-doc-swatch--ink" /> generated
+          (loss_mask = 1.0)
         </span>
       </div>
 
-      <div className="gr-doc-token-strip" role="listbox" aria-label="Aligned token sequence">
+      <div
+        className="gr-doc-token-strip"
+        role="listbox"
+        aria-label="Aligned token sequence"
+      >
         {ALIGNMENT_TOKENS.map((t) => {
           const isSelected = t.idx === tok.idx;
           const isContext = t.idx < tok.idx;
@@ -536,7 +698,10 @@ export const DocsPipelineDiagram = (): ReactElement => {
   const [mode, setMode] = useState<"pipelined" | "sequential">("pipelined");
 
   return (
-    <figure className="gr-doc-widget" aria-label="Pipelined vs sequential trainer execution">
+    <figure
+      className="gr-doc-widget"
+      aria-label="Pipelined vs sequential trainer execution"
+    >
       <div className="gr-doc-widget-head">
         <span className="gr-doc-widget-kicker">Execution pipelining</span>
         <div className="gr-doc-seg" role="tablist" aria-label="Execution mode">
@@ -569,13 +734,22 @@ export const DocsPipelineDiagram = (): ReactElement => {
             <div className="gr-doc-lane">
               <span className="gr-doc-lane-label">Client</span>
               <div className="gr-doc-lane-track">
-                <span className="gr-doc-bar gr-doc-bar--muted" style={{ width: "20%" }}>
+                <span
+                  className="gr-doc-bar gr-doc-bar--muted"
+                  style={{ width: "20%" }}
+                >
                   queue fb + opt
                 </span>
-                <span className="gr-doc-bar gr-doc-bar--ghost" style={{ width: "68%" }}>
+                <span
+                  className="gr-doc-bar gr-doc-bar--ghost"
+                  style={{ width: "68%" }}
+                >
                   wait once (fb.result(), opt.result())
                 </span>
-                <span className="gr-doc-bar gr-doc-bar--muted" style={{ width: "12%" }}>
+                <span
+                  className="gr-doc-bar gr-doc-bar--muted"
+                  style={{ width: "12%" }}
+                >
                   metrics
                 </span>
               </div>
@@ -583,11 +757,20 @@ export const DocsPipelineDiagram = (): ReactElement => {
             <div className="gr-doc-lane">
               <span className="gr-doc-lane-label">GPU worker</span>
               <div className="gr-doc-lane-track">
-                <span className="gr-doc-bar gr-doc-bar--gap" style={{ width: "14%" }} />
-                <span className="gr-doc-bar gr-doc-bar--ink" style={{ width: "56%" }}>
+                <span
+                  className="gr-doc-bar gr-doc-bar--gap"
+                  style={{ width: "14%" }}
+                />
+                <span
+                  className="gr-doc-bar gr-doc-bar--ink"
+                  style={{ width: "56%" }}
+                >
                   forward + backward (no idle gap)
                 </span>
-                <span className="gr-doc-bar gr-doc-bar--accent" style={{ width: "22%" }}>
+                <span
+                  className="gr-doc-bar gr-doc-bar--accent"
+                  style={{ width: "22%" }}
+                >
                   optim_step
                 </span>
               </div>
@@ -598,11 +781,20 @@ export const DocsPipelineDiagram = (): ReactElement => {
             <div className="gr-doc-lane">
               <span className="gr-doc-lane-label">Client</span>
               <div className="gr-doc-lane-track">
-                <span className="gr-doc-bar gr-doc-bar--muted" style={{ width: "18%" }}>
+                <span
+                  className="gr-doc-bar gr-doc-bar--muted"
+                  style={{ width: "18%" }}
+                >
                   fb().result()
                 </span>
-                <span className="gr-doc-bar gr-doc-bar--gap" style={{ width: "36%" }} />
-                <span className="gr-doc-bar gr-doc-bar--muted" style={{ width: "20%" }}>
+                <span
+                  className="gr-doc-bar gr-doc-bar--gap"
+                  style={{ width: "36%" }}
+                />
+                <span
+                  className="gr-doc-bar gr-doc-bar--muted"
+                  style={{ width: "20%" }}
+                >
                   opt().result()
                 </span>
               </div>
@@ -610,14 +802,26 @@ export const DocsPipelineDiagram = (): ReactElement => {
             <div className="gr-doc-lane">
               <span className="gr-doc-lane-label">GPU worker</span>
               <div className="gr-doc-lane-track">
-                <span className="gr-doc-bar gr-doc-bar--gap" style={{ width: "14%" }} />
-                <span className="gr-doc-bar gr-doc-bar--ink" style={{ width: "36%" }}>
+                <span
+                  className="gr-doc-bar gr-doc-bar--gap"
+                  style={{ width: "14%" }}
+                />
+                <span
+                  className="gr-doc-bar gr-doc-bar--ink"
+                  style={{ width: "36%" }}
+                >
                   fwd + bwd
                 </span>
-                <span className="gr-doc-bar gr-doc-bar--warn" style={{ width: "24%" }}>
+                <span
+                  className="gr-doc-bar gr-doc-bar--warn"
+                  style={{ width: "24%" }}
+                >
                   idle RTT stall
                 </span>
-                <span className="gr-doc-bar gr-doc-bar--accent" style={{ width: "18%" }}>
+                <span
+                  className="gr-doc-bar gr-doc-bar--accent"
+                  style={{ width: "18%" }}
+                >
                   optim_step
                 </span>
               </div>
@@ -683,13 +887,23 @@ export const DocsEnvLifecycle = (): ReactElement => {
   const active = ENV_STAGES.find((s) => s.id === stageId) ?? ENV_STAGES[0];
 
   return (
-    <figure className="gr-doc-widget" aria-label="Stateful environment rollout lifecycle">
+    <figure
+      className="gr-doc-widget"
+      aria-label="Stateful environment rollout lifecycle"
+    >
       <div className="gr-doc-widget-head">
-        <span className="gr-doc-widget-kicker">Rollout lifecycle · 4 hooks</span>
-        <span className="gr-doc-widget-hint">Select a hook to inspect guarantees</span>
+        <span className="gr-doc-widget-kicker">
+          Rollout lifecycle · 4 hooks
+        </span>
+        <span className="gr-doc-widget-hint">
+          Select a hook to inspect guarantees
+        </span>
       </div>
 
-      <div className="gr-doc-flywheel-grid gr-doc-flywheel-grid--4" role="tablist">
+      <div
+        className="gr-doc-flywheel-grid gr-doc-flywheel-grid--4"
+        role="tablist"
+      >
         {ENV_STAGES.map((stage, idx) => {
           const isSelected = stage.id === active.id;
           return (
@@ -754,29 +968,53 @@ const DEPLOY_OPTIONS: DeployOption[] = [
     id: "cloud",
     label: "Gradiated Cloud",
     where: "Managed GPUs + gateway",
-    path: ["Artifact (@v2)", "run.deploy()", "OpenAI / Anthropic / SystemOne SDK", "Active @v2 (1-cmd rollback)", "Auto capture + feedback"],
-    detail: "Call your-org/<name> from your existing SDK with zero GPU management and 1-command rollback.",
-    useCase: "Teams that want hosted serving, automatic trace capture, and safe rollouts out of the box.",
+    path: [
+      "Artifact (@v2)",
+      "run.deploy()",
+      "OpenAI / Anthropic / SystemOne SDK",
+      "Active @v2 (1-cmd rollback)",
+      "Auto capture + feedback",
+    ],
+    detail:
+      "Call your-org/<name> from your existing SDK with zero GPU management and 1-command rollback.",
+    useCase:
+      "Teams that want hosted serving, automatic trace capture, and safe rollouts out of the box.",
   },
   {
     id: "self_hosted",
     label: "Your vLLM / SGLang",
     where: "Your GPUs + gateway",
-    path: ["Artifact (@v2)", "grad artifacts download", "PEFT LoRA Safetensors", "vLLM / SGLang (--lora-modules)", "Push traces & feedback back"],
-    detail: "Standard HuggingFace LoRA or merged weights run on your own servers with your existing load balancer and feature flags.",
-    useCase: "Enterprises with strict data residency or an existing vLLM / SGLang inference fleet.",
+    path: [
+      "Artifact (@v2)",
+      "grad artifacts download",
+      "PEFT LoRA Safetensors",
+      "vLLM / SGLang (--lora-modules)",
+      "Push traces & feedback back",
+    ],
+    detail:
+      "Standard HuggingFace LoRA or merged weights run on your own servers with your existing load balancer and feature flags.",
+    useCase:
+      "Enterprises with strict data residency or an existing vLLM / SGLang inference fleet.",
   },
 ];
 
 export const DocsDeployFlow = (): ReactElement => {
   const [optionId, setOptionId] = useState<string>("cloud");
-  const active = DEPLOY_OPTIONS.find((s) => s.id === optionId) ?? DEPLOY_OPTIONS[0];
+  const active =
+    DEPLOY_OPTIONS.find((s) => s.id === optionId) ?? DEPLOY_OPTIONS[0];
 
   return (
-    <figure className="gr-doc-widget" aria-label="Interactive deployment options">
+    <figure
+      className="gr-doc-widget"
+      aria-label="Interactive deployment options"
+    >
       <div className="gr-doc-widget-head">
         <span className="gr-doc-widget-kicker">Serving options</span>
-        <div className="gr-doc-seg" role="tablist" aria-label="Deployment target">
+        <div
+          className="gr-doc-seg"
+          role="tablist"
+          aria-label="Deployment target"
+        >
           {DEPLOY_OPTIONS.map((s) => (
             <button
               key={s.id}

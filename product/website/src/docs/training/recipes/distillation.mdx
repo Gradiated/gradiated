@@ -1,6 +1,8 @@
 # Model distillation
 
-<DocsLead>Train a small, fast model to copy a larger one using your own prompts.</DocsLead>
+<DocsLead>
+  Train a small, fast model to copy a larger one using your own prompts.
+</DocsLead>
 
 If you just fine-tune a small model on saved outputs from a big model, it can go off the rails as soon as it starts writing its own slightly different wording. **`DistillRecipe`** fixes that by training on-policy: the small **student** generates answers to your prompts, and the larger **teacher** scores those exact tokens so the student learns to recover from its own mistakes.
 
@@ -43,7 +45,10 @@ const run = await grad.runs
   .create({
     dataset,
     name: "support-4b-distilled",
-    recipe: recipes.distill({ model: "qwen/qwen3-4b", teacher: "qwen/qwen3-32b" }),
+    recipe: recipes.distill({
+      model: "qwen/qwen3-4b",
+      teacher: "qwen/qwen3-32b",
+    }),
   })
   .wait();
 

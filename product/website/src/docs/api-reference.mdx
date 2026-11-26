@@ -26,58 +26,58 @@ See the [SystemOne SDK guide](/docs/systemone-sdk/) for linden-1 examples and su
 
 ## Datasets, trajectories, and sync
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `POST` / `GET` | `/v1/datasets` / `/v1/datasets/{name}` | Create, list, or inspect `Dataset` resources. |
-| `POST` | `/v1/trajectories` | Push `grad.trajectory/1` records into a dataset. |
-| `POST` / `GET` | `/v1/trajectories/imports` / `/v1/trajectories/imports/{id}` | Stream Parquet or JSONL files from supported trace providers and inspect import status. |
-| `POST` / `GET` / `PATCH` / `DELETE` | `/v1/trajectories/sources` | Configure scheduled incremental pull sync from an observability provider. |
-| `POST` | `/v1/trajectories/sources/{id}/sync` | Trigger an immediate incremental pull. |
+| Method                              | Path                                                         | Purpose                                                                                 |
+| ----------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| `POST` / `GET`                      | `/v1/datasets` / `/v1/datasets/{name}`                       | Create, list, or inspect `Dataset` resources.                                           |
+| `POST`                              | `/v1/trajectories`                                           | Push `grad.trajectory/1` records into a dataset.                                        |
+| `POST` / `GET`                      | `/v1/trajectories/imports` / `/v1/trajectories/imports/{id}` | Stream Parquet or JSONL files from supported trace providers and inspect import status. |
+| `POST` / `GET` / `PATCH` / `DELETE` | `/v1/trajectories/sources`                                   | Configure scheduled incremental pull sync from an observability provider.               |
+| `POST`                              | `/v1/trajectories/sources/{id}/sync`                         | Trigger an immediate incremental pull.                                                  |
 
 ## Training and compute primitives
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `POST` | `/v1/runs` | Start a managed `Recipe` run (or queue a chained run via `depends_on` / `run.then(...)`). |
-| `POST` | `/v1/runs/plan` | Dry-run pre-flight check: validate dataset coverage, resolve recipe defaults, and estimate training tokens and cost (`--dry-run`). |
-| `GET` | `/v1/runs/{id}` | Inspect run status, resolved `recipe_spec`, `eval_report`, and produced `artifact_id`. |
-| `GET` | `/v1/runs/{id}/metrics` | Stream step-by-step training telemetry (SSE or JSON). |
-| `POST` | `/v1/runs/{id}/cancel` | Cancel an active training run. |
-| `POST` / `GET` | `/v1/evals` / `/v1/evals/{id}` | Run standalone side-by-side evaluations against a `Rubric` or `Environment` and fetch scored results. |
-| `POST` / `DELETE` | `/v1/trainers` / `/v1/trainers/{id}` | Open or close an interactive `Trainer` session (or resume from a saved checkpoint). |
-| `POST` | `/v1/trainers/{id}/fit-batch` | Closed-form or convex fit over embeddings or `Record`s. |
-| `POST` | `/v1/trainers/{id}/forward-backward` | Run a pipelined forward and backward pass with a built-in loss. |
-| `POST` | `/v1/trainers/{id}/forward` | Run a forward pass returning requested differentiable tensors (`logprobs`, `topk_logprobs`, `embeddings`, `heads`, `layers`). |
-| `POST` | `/v1/trainers/{id}/backward-surrogate` | Apply client-computed surrogate gradients (`dLoss/dOut`) for `CustomLoss` subclasses. |
-| `POST` | `/v1/trainers/{id}/optim-step` | Apply an optimizer step (`adamw`, `muon`, `sgd`, `param_groups`, `weight_anchor`). |
-| `POST` | `/v1/trainers/{id}/snapshot` | Snapshot current weights into an ephemeral callable `Artifact`. |
-| `POST` | `/v1/trainers/{id}/save-state` | Checkpoint trainer and optimizer state for `trainers.resume(ckpt)`. |
-| `POST` | `/v1/trainers/{id}/export` | Freeze trained weights and `eval_report` into an immutable `.grad` artifact. |
-| `POST` / `DELETE` | `/v1/secrets` / `/v1/secrets/{name}` | Store or delete write-only named workspace secrets for observability sync. |
-| `POST` / `GET` / `DELETE` | `/v1/keys` / `/v1/keys/{id}` | Mint, list, or revoke scoped API keys (including locally in self-hosted clusters). |
+| Method                    | Path                                   | Purpose                                                                                                                            |
+| ------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `POST`                    | `/v1/runs`                             | Start a managed `Recipe` run (or queue a chained run via `depends_on` / `run.then(...)`).                                          |
+| `POST`                    | `/v1/runs/plan`                        | Dry-run pre-flight check: validate dataset coverage, resolve recipe defaults, and estimate training tokens and cost (`--dry-run`). |
+| `GET`                     | `/v1/runs/{id}`                        | Inspect run status, resolved `recipe_spec`, `eval_report`, and produced `artifact_id`.                                             |
+| `GET`                     | `/v1/runs/{id}/metrics`                | Stream step-by-step training telemetry (SSE or JSON).                                                                              |
+| `POST`                    | `/v1/runs/{id}/cancel`                 | Cancel an active training run.                                                                                                     |
+| `POST` / `GET`            | `/v1/evals` / `/v1/evals/{id}`         | Run standalone side-by-side evaluations against a `Rubric` or `Environment` and fetch scored results.                              |
+| `POST` / `DELETE`         | `/v1/trainers` / `/v1/trainers/{id}`   | Open or close an interactive `Trainer` session (or resume from a saved checkpoint).                                                |
+| `POST`                    | `/v1/trainers/{id}/fit-batch`          | Closed-form or convex fit over embeddings or `Record`s.                                                                            |
+| `POST`                    | `/v1/trainers/{id}/forward-backward`   | Run a pipelined forward and backward pass with a built-in loss.                                                                    |
+| `POST`                    | `/v1/trainers/{id}/forward`            | Run a forward pass returning requested differentiable tensors (`logprobs`, `topk_logprobs`, `embeddings`, `heads`, `layers`).      |
+| `POST`                    | `/v1/trainers/{id}/backward-surrogate` | Apply client-computed surrogate gradients (`dLoss/dOut`) for `CustomLoss` subclasses.                                              |
+| `POST`                    | `/v1/trainers/{id}/optim-step`         | Apply an optimizer step (`adamw`, `muon`, `sgd`, `param_groups`, `weight_anchor`).                                                 |
+| `POST`                    | `/v1/trainers/{id}/snapshot`           | Snapshot current weights into an ephemeral callable `Artifact`.                                                                    |
+| `POST`                    | `/v1/trainers/{id}/save-state`         | Checkpoint trainer and optimizer state for `trainers.resume(ckpt)`.                                                                |
+| `POST`                    | `/v1/trainers/{id}/export`             | Freeze trained weights and `eval_report` into an immutable `.grad` artifact.                                                       |
+| `POST` / `DELETE`         | `/v1/secrets` / `/v1/secrets/{name}`   | Store or delete write-only named workspace secrets for observability sync.                                                         |
+| `POST` / `GET` / `DELETE` | `/v1/keys` / `/v1/keys/{id}`           | Mint, list, or revoke scoped API keys (including locally in self-hosted clusters).                                                 |
 
 ## Artifacts
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `GET` | `/v1/artifacts` / `/v1/artifacts/{id}` | List or inspect immutable `.grad` artifacts. |
-| `GET` | `/v1/artifacts/{id}/download` | Download a `.grad` bundle archive. |
-| `POST` | `/v1/artifacts/merge` | Zero-GPU weight-space merge (`linear`, `ties`, `dare`, `slerp`). |
-| `POST` | `/v1/artifacts/{id}/infer` | Direct read-only single or batched inference (`infer` / `infer_batch`). |
-| `POST` | `/v1/artifacts/{id}/sample` | Generate token-aligned `Trajectory` rollouts (supports `temperature`, `top_p`, `stop`, `seed`, `resume_from`, `append_env_tokens`, and `response_format`). |
-| `POST` | `/v1/artifacts/{id}/score-logprobs` | Score full sequences, `Trajectory` objects, or `(prefix, response)` pairs (optional `top_k`, `candidate_tokens`, `return_layers`). |
-| `POST` | `/v1/artifacts/{id}/embed` | Extract cached embeddings or hidden states (optional `pool` override). |
-| `POST` | `/v1/artifacts/{id}/tokenize` | Server-side tokenization and chat-template rendering (`messages`, `tools`, `media`, optional `return_loss_mask`). |
-| `GET` | `/v1/tensors/{ref_id}` | Fetch binary Safetensors/Arrow payloads for opaque `TensorRef`s. |
+| Method | Path                                   | Purpose                                                                                                                                                    |
+| ------ | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/v1/artifacts` / `/v1/artifacts/{id}` | List or inspect immutable `.grad` artifacts.                                                                                                               |
+| `GET`  | `/v1/artifacts/{id}/download`          | Download a `.grad` bundle archive.                                                                                                                         |
+| `POST` | `/v1/artifacts/merge`                  | Zero-GPU weight-space merge (`linear`, `ties`, `dare`, `slerp`).                                                                                           |
+| `POST` | `/v1/artifacts/{id}/infer`             | Direct read-only single or batched inference (`infer` / `infer_batch`).                                                                                    |
+| `POST` | `/v1/artifacts/{id}/sample`            | Generate token-aligned `Trajectory` rollouts (supports `temperature`, `top_p`, `stop`, `seed`, `resume_from`, `append_env_tokens`, and `response_format`). |
+| `POST` | `/v1/artifacts/{id}/score-logprobs`    | Score full sequences, `Trajectory` objects, or `(prefix, response)` pairs (optional `top_k`, `candidate_tokens`, `return_layers`).                         |
+| `POST` | `/v1/artifacts/{id}/embed`             | Extract cached embeddings or hidden states (optional `pool` override).                                                                                     |
+| `POST` | `/v1/artifacts/{id}/tokenize`          | Server-side tokenization and chat-template rendering (`messages`, `tools`, `media`, optional `return_loss_mask`).                                          |
+| `GET`  | `/v1/tensors/{ref_id}`                 | Fetch binary Safetensors/Arrow payloads for opaque `TensorRef`s.                                                                                           |
 
 ## Cloud deployments and feedback
 
-| Method | Path | Purpose |
-| --- | --- | --- |
+| Method         | Path                                         | Purpose                                                                                                             |
+| -------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `POST` / `GET` | `/v1/deployments` / `/v1/deployments/{name}` | Publish an artifact under a stable model name (`your-org/<name>`) on Gradiated Cloud or inspect the active version. |
-| `POST` | `/v1/deployments/{name}/promote` | Point `your-org/<name>` at a new artifact version (or roll back to an earlier version). |
-| `POST` | `/v1/route` | Ask a deployed router which model to call when dispatching to your own providers. |
-| `POST` | `/v1/feedback` | Record deduplicated outcomes and gold corrections by `inference_id` or `trace_id`. |
+| `POST`         | `/v1/deployments/{name}/promote`             | Point `your-org/<name>` at a new artifact version (or roll back to an earlier version).                             |
+| `POST`         | `/v1/route`                                  | Ask a deployed router which model to call when dispatching to your own providers.                                   |
+| `POST`         | `/v1/feedback`                               | Record deduplicated outcomes and gold corrections by `inference_id` or `trace_id`.                                  |
 
 See the [Primitives reference](/docs/reference/primitives/) for full JSON schemas (`Trajectory`, `Record`, `Model`, `Artifact`).
 

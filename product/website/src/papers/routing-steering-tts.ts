@@ -24,9 +24,24 @@ export const routingSteeringTtsPapers: PaperGuide[] = [
         "12 lines of YAML train, calibrate, and validate the router on CPU with zero custom PyTorch.",
     },
     walkthrough: [
-      { title: "Point recipe='router' at preference or production traces", explanation: "Split by session_id so multi-turn conversations never leak across train and eval.", gradCall: "recipe: router · split.strategy: by_session" },
-      { title: "Fit the calibrated CPU dual-head solver in 6 seconds", explanation: "Extract frozen bge-small embeddings once and solve in closed form — $0 GPU.", gradCall: "solver: dual_head_kernel_lbfgs · compute: cpu" },
-      { title: "Deploy with sla_lagrangian guardrails and 10% fallback probes", explanation: "Unbiased fallback probes continuously track live quality delta and trip a circuit breaker on drift.", gradCall: "grad deploy routellm-arena@latest --canary 0.10" },
+      {
+        title: "Point recipe='router' at preference or production traces",
+        explanation:
+          "Split by session_id so multi-turn conversations never leak across train and eval.",
+        gradCall: "recipe: router · split.strategy: by_session",
+      },
+      {
+        title: "Fit the calibrated CPU dual-head solver in 6 seconds",
+        explanation:
+          "Extract frozen bge-small embeddings once and solve in closed form — $0 GPU.",
+        gradCall: "solver: dual_head_kernel_lbfgs · compute: cpu",
+      },
+      {
+        title: "Deploy with sla_lagrangian guardrails and 10% fallback probes",
+        explanation:
+          "Unbiased fallback probes continuously track live quality delta and trip a circuit breaker on drift.",
+        gradCall: "grad deploy routellm-arena@latest --canary 0.10",
+      },
     ],
     gotchas: [
       "Inspect the upper bound of quality_drop_ci95, not just the point estimate, before tightening max_quality_drop.",
@@ -37,11 +52,28 @@ export const routingSteeringTtsPapers: PaperGuide[] = [
     mode: "Managed recipe",
     entrypoint: "recipe.yaml",
     models: [
-      { id: "BAAI/bge-small-en-v1.5", label: "BAAI/bge-small-en-v1.5 (CPU, <10ms)", estTokens: "~0.8M embed tokens", duration: "~6 sec", estCost: "$0.00 train tokens" },
-      { id: "Qwen/Qwen3-0.6B", label: "Qwen/Qwen3-0.6B (GPU, long context)", estTokens: "~1.0M tokens", duration: "~3 min", estCost: "~$0.25" },
+      {
+        id: "BAAI/bge-small-en-v1.5",
+        label: "BAAI/bge-small-en-v1.5 (CPU, <10ms)",
+        estTokens: "~0.8M embed tokens",
+        duration: "~6 sec",
+        estCost: "$0.00 train tokens",
+      },
+      {
+        id: "Qwen/Qwen3-0.6B",
+        label: "Qwen/Qwen3-0.6B (GPU, long context)",
+        estTokens: "~1.0M tokens",
+        duration: "~3 min",
+        estCost: "~$0.25",
+      },
     ],
     datasets: [
-      { id: "hf://lmsys/chatbot_arena_conversations", label: "Chatbot Arena Conversations", source: "Hugging Face (public)", examples: "33,000 human preference battles" },
+      {
+        id: "hf://lmsys/chatbot_arena_conversations",
+        label: "Chatbot Arena Conversations",
+        source: "Hugging Face (public)",
+        examples: "33,000 human preference battles",
+      },
     ],
     primitives: [
       { label: "Model router recipe", href: "/docs/training/recipes/router/" },
@@ -75,7 +107,11 @@ Model     BAAI/bge-small-en-v1.5 (frozen) + dual_head_kernel_lbfgs
 Guardrail sla_lagrangian · target quality drop <= 2.0% · 10% fallback probes
 Estimate  ~0.8M embed tokens · $0.00 train tokens · warnings: 0`,
     benchmarks: [
-      { benchmark: "Cost reduction at >=95% strong quality", paperReported: "2x–3.66x lower API spend on MT-Bench, MMLU, and GSM8K", templateSetup: "Chatbot Arena · BAAI/bge-small-en-v1.5 · 6s CPU fit" },
+      {
+        benchmark: "Cost reduction at >=95% strong quality",
+        paperReported: "2x–3.66x lower API spend on MT-Bench, MMLU, and GSM8K",
+        templateSetup: "Chatbot Arena · BAAI/bge-small-en-v1.5 · 6s CPU fit",
+      },
     ],
     bibtex: `@inproceedings{ong2025routellm,
   title={RouteLLM: Learning to Route LLMs with Preference Data},
@@ -107,9 +143,26 @@ Estimate  ~0.8M embed tokens · $0.00 train tokens · warnings: 0`,
         "Both the 1,000-example SFT run and Wait-token budget forcing are native grad features.",
     },
     walkthrough: [
-      { title: "Run managed SFT on the 1,000 curated s1K-1.1 traces", explanation: "5 epochs of cosine LoRA SFT converge cleanly in ~12 minutes.", gradCall: "client.runs.create(..., recipe='sft')" },
-      { title: "Intercept </think> and inject 'Wait' via append_env_tokens", explanation: "Extend the exact KV trajectory via resume_from to trigger self-checking.", gradCall: "art.sample(..., stop=['</think>'], resume_from=[traj], append_env_tokens=[wait_toks])" },
-      { title: "Deploy behind a managed budget_forcing Endpoint", explanation: "Expose deterministic min/max thinking budgets per request in production.", gradCall: "strategy={'kind': 'budget_forcing', 'wait_text': '\\nWait', 'max_waits': 2}" },
+      {
+        title: "Run managed SFT on the 1,000 curated s1K-1.1 traces",
+        explanation:
+          "5 epochs of cosine LoRA SFT converge cleanly in ~12 minutes.",
+        gradCall: "client.runs.create(..., recipe='sft')",
+      },
+      {
+        title: "Intercept </think> and inject 'Wait' via append_env_tokens",
+        explanation:
+          "Extend the exact KV trajectory via resume_from to trigger self-checking.",
+        gradCall:
+          "art.sample(..., stop=['</think>'], resume_from=[traj], append_env_tokens=[wait_toks])",
+      },
+      {
+        title: "Deploy behind a managed budget_forcing Endpoint",
+        explanation:
+          "Expose deterministic min/max thinking budgets per request in production.",
+        gradCall:
+          "strategy={'kind': 'budget_forcing', 'wait_text': '\\nWait', 'max_waits': 2}",
+      },
     ],
     gotchas: [
       "Cap Wait extensions at 2–4; beyond 6 forced waits, models start second-guessing correct derivations.",
@@ -120,11 +173,28 @@ Estimate  ~0.8M embed tokens · $0.00 train tokens · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (paper scale)", estTokens: "~4.7M tokens", duration: "~24 min", estCost: "~$5.60" },
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (fast reproduction)", estTokens: "~2.4M tokens", duration: "~12 min", estCost: "~$0.95" },
+      {
+        id: "Qwen/Qwen3-32B",
+        label: "Qwen/Qwen3-32B (paper scale)",
+        estTokens: "~4.7M tokens",
+        duration: "~24 min",
+        estCost: "~$5.60",
+      },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (fast reproduction)",
+        estTokens: "~2.4M tokens",
+        duration: "~12 min",
+        estCost: "~$0.95",
+      },
     ],
     datasets: [
-      { id: "hf://simplescaling/s1K-1.1", label: "s1K-1.1 Curated Traces", source: "Hugging Face (public)", examples: "1,000 curated reasoning traces" },
+      {
+        id: "hf://simplescaling/s1K-1.1",
+        label: "s1K-1.1 Curated Traces",
+        source: "Hugging Face (public)",
+        examples: "1,000 curated reasoning traces",
+      },
     ],
     primitives: [
       { label: "SFT recipe", href: "/docs/training/recipes/sft-dpo/" },
@@ -175,7 +245,12 @@ Dataset   hf://simplescaling/s1K-1.1 (1,000 curated traces · public)
 Model     Qwen/Qwen3-8B · SFT (5 epochs) + budget_forcing Endpoint
 Estimate  ~2.4M tokens · ~12 min · ~$0.95 · warnings: 0`,
     benchmarks: [
-      { benchmark: "AIME24 & MATH500", paperReported: "56.7% AIME24 & 93.0% MATH500 on s1-32B with budget forcing", templateSetup: "s1K-1.1 · 5 epochs SFT · n_waits=2" },
+      {
+        benchmark: "AIME24 & MATH500",
+        paperReported:
+          "56.7% AIME24 & 93.0% MATH500 on s1-32B with budget forcing",
+        templateSetup: "s1K-1.1 · 5 epochs SFT · n_waits=2",
+      },
     ],
     bibtex: `@article{muennighoff2025s1,
   title={s1: Simple test-time scaling},
@@ -207,9 +282,27 @@ Estimate  ~2.4M tokens · ~12 min · ~$0.95 · warnings: 0`,
         "Multi-layer TensorRefs + eagle3_draft adapter + built-in topk_kl_distill eliminate custom draft-training forks.",
     },
     walkthrough: [
-      { title: "Extract multi-layer features & top-32 logits in one pass", explanation: "Request return_layers=[2, 18, 34] and top_k=32 from the frozen target Artifact.", gradCall: "target.score_logprobs(..., top_k=32, return_layers=[2, 18, 34])" },
-      { title: "Attach the frozen-trunk eagle3_draft adapter", explanation: "Set adapter='eagle3_draft', train_mode='frozen_head', and rollout_steps=4.", gradCall: "ModelSpec(..., adapter='eagle3_draft', train_mode='frozen_head')" },
-      { title: "Distill with built-in topk_kl_distill and export", explanation: "Train directly on target logit distributions and export the lossless draft .grad bundle.", gradCall: "trainer.forward_backward(datums, loss={'kind': 'topk_kl_distill'})" },
+      {
+        title: "Extract multi-layer features & top-32 logits in one pass",
+        explanation:
+          "Request return_layers=[2, 18, 34] and top_k=32 from the frozen target Artifact.",
+        gradCall:
+          "target.score_logprobs(..., top_k=32, return_layers=[2, 18, 34])",
+      },
+      {
+        title: "Attach the frozen-trunk eagle3_draft adapter",
+        explanation:
+          "Set adapter='eagle3_draft', train_mode='frozen_head', and rollout_steps=4.",
+        gradCall:
+          "ModelSpec(..., adapter='eagle3_draft', train_mode='frozen_head')",
+      },
+      {
+        title: "Distill with built-in topk_kl_distill and export",
+        explanation:
+          "Train directly on target logit distributions and export the lossless draft .grad bundle.",
+        gradCall:
+          "trainer.forward_backward(datums, loss={'kind': 'topk_kl_distill'})",
+      },
     ],
     gotchas: [
       "Train on target-generated completions rather than raw web text to boost accepted draft length by +1 token.",
@@ -220,15 +313,35 @@ Estimate  ~2.4M tokens · ~12 min · ~$0.95 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (highest speedup ROI)", estTokens: "~10.7M tokens", duration: "~55 min", estCost: "~$12.80" },
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (fast reproduction)", estTokens: "~4.7M tokens", duration: "~24 min", estCost: "~$1.90" },
+      {
+        id: "Qwen/Qwen3-32B",
+        label: "Qwen/Qwen3-32B (highest speedup ROI)",
+        estTokens: "~10.7M tokens",
+        duration: "~55 min",
+        estCost: "~$12.80",
+      },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (fast reproduction)",
+        estTokens: "~4.7M tokens",
+        duration: "~24 min",
+        estCost: "~$1.90",
+      },
     ],
     datasets: [
-      { id: "hf://Aeala/ShareGPT_Vicuna_unfiltered", label: "ShareGPT Conversations", source: "Hugging Face (public)", examples: "68,000 dialogues" },
+      {
+        id: "hf://Aeala/ShareGPT_Vicuna_unfiltered",
+        label: "ShareGPT Conversations",
+        source: "Hugging Face (public)",
+        examples: "68,000 dialogues",
+      },
     ],
     primitives: [
       { label: "eagle3_draft adapter", href: "/docs/reference/primitives/" },
-      { label: "topk_kl_distill", href: "/docs/training/recipes/distillation/" },
+      {
+        label: "topk_kl_distill",
+        href: "/docs/training/recipes/distillation/",
+      },
     ],
     codeLabel: "train.py",
     codeLanguage: "python",
@@ -277,7 +390,13 @@ Model     Qwen/Qwen3-8B (frozen) + eagle3_draft (layers=[2,18,34], rollout_steps
 Loss      topk_kl_distill (top_k=32) · AdamW lr=3.0e-4
 Estimate  ~4.7M tokens · ~24 min · ~$1.90 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Lossless decoding speedup", paperReported: "3.0x–6.5x speedup over vanilla decoding (+1.4x over EAGLE-2)", templateSetup: "Qwen/Qwen3-8B · fusion_layers=[2,18,34] · rollout_steps=4" },
+      {
+        benchmark: "Lossless decoding speedup",
+        paperReported:
+          "3.0x–6.5x speedup over vanilla decoding (+1.4x over EAGLE-2)",
+        templateSetup:
+          "Qwen/Qwen3-8B · fusion_layers=[2,18,34] · rollout_steps=4",
+      },
     ],
     bibtex: `@article{li2025eagle3,
   title={EAGLE-3: Scaling up Inference Acceleration of LLMs via Training-Time Test},
@@ -289,7 +408,8 @@ Estimate  ~4.7M tokens · ~24 min · ~$1.90 · warnings: 0`,
   {
     slug: "medusa",
     shortTitle: "Medusa",
-    title: "Medusa: Multi-Head Parallel Decoding Without a Separate Draft Model",
+    title:
+      "Medusa: Multi-Head Parallel Decoding Without a Separate Draft Model",
     authors: "Cai et al.",
     year: 2024,
     arxivId: "2401.10774",
@@ -309,9 +429,26 @@ Estimate  ~4.7M tokens · ~24 min · ~$1.90 · warnings: 0`,
         "Server-side multi-horizon head CE (added after our 50-paper smell audit eliminated client-side 152k-vocab transfers!) shrinks Medusa to 21 clean lines.",
     },
     walkthrough: [
-      { title: "Declare K=3 token-level decoding heads on a frozen trunk", explanation: "Set train_mode='frozen_head' and attach k1, k2, k3 heads.", gradCall: "heads={f'k{k}': {'dim': base.vocab_size, 'token_level': True} for k in (1, 2, 3)}" },
-      { title: "Run server-side shifted t+k+1 cross-entropy with 0.8^k decay", explanation: "Pass heads={k1: {shift: 2, weight: 0.8}, ...} to built-in cross_entropy so 152k-vocab logits never leave the GPU.", gradCall: "trainer.forward_backward(datums, loss={'kind': 'cross_entropy', 'heads': loss_heads})" },
-      { title: "Export compact multi-head artifact", explanation: "Package only the Medusa head weights without duplicating the frozen backbone.", gradCall: "trainer.export(name='qwen3-8b-medusa-3h')" },
+      {
+        title: "Declare K=3 token-level decoding heads on a frozen trunk",
+        explanation:
+          "Set train_mode='frozen_head' and attach k1, k2, k3 heads.",
+        gradCall:
+          "heads={f'k{k}': {'dim': base.vocab_size, 'token_level': True} for k in (1, 2, 3)}",
+      },
+      {
+        title: "Run server-side shifted t+k+1 cross-entropy with 0.8^k decay",
+        explanation:
+          "Pass heads={k1: {shift: 2, weight: 0.8}, ...} to built-in cross_entropy so 152k-vocab logits never leave the GPU.",
+        gradCall:
+          "trainer.forward_backward(datums, loss={'kind': 'cross_entropy', 'heads': loss_heads})",
+      },
+      {
+        title: "Export compact multi-head artifact",
+        explanation:
+          "Package only the Medusa head weights without duplicating the frozen backbone.",
+        gradCall: "trainer.export(name='qwen3-8b-medusa-3h')",
+      },
     ],
     gotchas: [
       "Self-distill training replies from the exact target model — off-distribution text lowers acceptance rate by 20–30%.",
@@ -322,14 +459,28 @@ Estimate  ~4.7M tokens · ~24 min · ~$1.90 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~5.6M tokens", duration: "~28 min", estCost: "~$2.25" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~5.6M tokens",
+        duration: "~28 min",
+        estCost: "~$2.25",
+      },
     ],
     datasets: [
-      { id: "hf://Aeala/ShareGPT_Vicuna_unfiltered", label: "ShareGPT Conversations", source: "Hugging Face (public)", examples: "60,000 dialogues" },
+      {
+        id: "hf://Aeala/ShareGPT_Vicuna_unfiltered",
+        label: "ShareGPT Conversations",
+        source: "Hugging Face (public)",
+        examples: "60,000 dialogues",
+      },
     ],
     primitives: [
       { label: "Token-level heads", href: "/docs/reference/primitives/" },
-      { label: "Multi-horizon cross_entropy", href: "/docs/training/custom-loops/" },
+      {
+        label: "Multi-horizon cross_entropy",
+        href: "/docs/training/custom-loops/",
+      },
     ],
     codeLabel: "train.py",
     codeLanguage: "python",
@@ -367,7 +518,12 @@ Model     Qwen/Qwen3-8B (frozen) + 3 token_level heads (k1, k2, k3)
 Loss      built-in cross_entropy(heads={k1..k3, shift=2..4, decay=0.8^k})
 Estimate  ~5.6M tokens · ~28 min · ~$2.25 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Lossless decoding speedup", paperReported: "2.2x–2.8x speedup on Vicuna-7B/13B/33B with zero separate draft model", templateSetup: "Qwen/Qwen3-8B frozen trunk · K=3 heads · decay=0.8" },
+      {
+        benchmark: "Lossless decoding speedup",
+        paperReported:
+          "2.2x–2.8x speedup on Vicuna-7B/13B/33B with zero separate draft model",
+        templateSetup: "Qwen/Qwen3-8B frozen trunk · K=3 heads · decay=0.8",
+      },
     ],
     bibtex: `@inproceedings{cai2024medusa,
   title={Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads},
@@ -379,7 +535,8 @@ Estimate  ~5.6M tokens · ~28 min · ~$2.25 · warnings: 0`,
   {
     slug: "repe",
     shortTitle: "RepE",
-    title: "Representation Engineering (RepE): Concept Reading & Steering Vectors",
+    title:
+      "Representation Engineering (RepE): Concept Reading & Steering Vectors",
     authors: "Zou et al. (CAIS)",
     year: 2023,
     arxivId: "2310.01405",
@@ -399,9 +556,25 @@ Estimate  ~5.6M tokens · ~28 min · ~$2.25 · warnings: 0`,
         "Zero gradient loops and zero custom PyTorch forward hooks — fit_batch(solver='mean_diff_steering') exports a steered artifact in 2 minutes.",
     },
     walkthrough: [
-      { title: "Extract middle-layer activations on contrastive pairs", explanation: "Run matched honest vs. untruthful prompts through base.embed(return_layers=[14, 16, 18, 20]).", gradCall: "base.embed(pos_inputs, return_layers=layers)['layer_refs']" },
-      { title: "Solve steering vectors in closed form", explanation: "Pass pos_refs, neg_refs, and alpha into trainer.fit_batch([], solver='mean_diff_steering').", gradCall: "trainer.fit_batch([], solver='mean_diff_steering', params=...)" },
-      { title: "Export & verify truthfulness lift", explanation: "Compare steered.sample() vs base.sample() on held-out probes before deploying.", gradCall: "trainer.export(name='qwen3-8b-honesty-repe')" },
+      {
+        title: "Extract middle-layer activations on contrastive pairs",
+        explanation:
+          "Run matched honest vs. untruthful prompts through base.embed(return_layers=[14, 16, 18, 20]).",
+        gradCall: "base.embed(pos_inputs, return_layers=layers)['layer_refs']",
+      },
+      {
+        title: "Solve steering vectors in closed form",
+        explanation:
+          "Pass pos_refs, neg_refs, and alpha into trainer.fit_batch([], solver='mean_diff_steering').",
+        gradCall:
+          "trainer.fit_batch([], solver='mean_diff_steering', params=...)",
+      },
+      {
+        title: "Export & verify truthfulness lift",
+        explanation:
+          "Compare steered.sample() vs base.sample() on held-out probes before deploying.",
+        gradCall: "trainer.export(name='qwen3-8b-honesty-repe')",
+      },
     ],
     gotchas: [
       "Target middle layers (40%–60% depth) — early layers steer syntax, while top layers cause repetition.",
@@ -412,10 +585,21 @@ Estimate  ~5.6M tokens · ~28 min · ~$2.25 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~350K tokens", duration: "~2 min", estCost: "~$0.15" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~350K tokens",
+        duration: "~2 min",
+        estCost: "~$0.15",
+      },
     ],
     datasets: [
-      { id: "hf://truthfulqa/truthful_qa", label: "TruthfulQA Honesty Pairs", source: "Hugging Face (public)", examples: "128 contrastive pairs + 817 eval" },
+      {
+        id: "hf://truthfulqa/truthful_qa",
+        label: "TruthfulQA Honesty Pairs",
+        source: "Hugging Face (public)",
+        examples: "128 contrastive pairs + 817 eval",
+      },
     ],
     primitives: [
       { label: "Closed-form fit_batch", href: "/docs/training/custom-loops/" },
@@ -464,7 +648,11 @@ Model     Qwen/Qwen3-8B (frozen) · layers=[14,16,18,20] · alpha=1.25
 Solver    mean_diff_steering (zero-gradient closed-form)
 Estimate  ~350K tokens · ~2 min · ~$0.15 · warnings: 0`,
     benchmarks: [
-      { benchmark: "TruthfulQA MC1 lift", paperReported: "+10–18 pts truthfulness lift with zero weight updates", templateSetup: "Qwen/Qwen3-8B · 128 pairs · alpha=1.25" },
+      {
+        benchmark: "TruthfulQA MC1 lift",
+        paperReported: "+10–18 pts truthfulness lift with zero weight updates",
+        templateSetup: "Qwen/Qwen3-8B · 128 pairs · alpha=1.25",
+      },
     ],
     bibtex: `@article{zou2023repe,
   title={Representation Engineering: A Top-Down Approach to AI Transparency},
@@ -496,9 +684,26 @@ Estimate  ~350K tokens · ~2 min · ~$0.15 · warnings: 0`,
         "resume_from chunking + built-in CISPO handle mixed-version partial rollouts cleanly in 44 lines.",
     },
     walkthrough: [
-      { title: "Sample fixed 2,048-token chunks and resume unfinished partials", explanation: "Cap worst-case step latency regardless of total CoT length.", gradCall: "snap.sample(inputs, max_new_tokens=2048, resume_from=partials)" },
-      { title: "Shape rewards with Kimi's group length penalty", explanation: "Reward concise correct proofs highest and softly penalize verbose failures.", gradCall: "kimi_length_reward(ok, len_i, min_len, max_len, coef)" },
-      { title: "Step across mixed weight versions with CISPO", explanation: "Each resumed chunk carries its exact generating sampling_logprobs.", gradCall: "trainer.forward_backward(datums, loss={'kind': 'cispo', 'kl_beta': 0.01})" },
+      {
+        title: "Sample fixed 2,048-token chunks and resume unfinished partials",
+        explanation:
+          "Cap worst-case step latency regardless of total CoT length.",
+        gradCall:
+          "snap.sample(inputs, max_new_tokens=2048, resume_from=partials)",
+      },
+      {
+        title: "Shape rewards with Kimi's group length penalty",
+        explanation:
+          "Reward concise correct proofs highest and softly penalize verbose failures.",
+        gradCall: "kimi_length_reward(ok, len_i, min_len, max_len, coef)",
+      },
+      {
+        title: "Step across mixed weight versions with CISPO",
+        explanation:
+          "Each resumed chunk carries its exact generating sampling_logprobs.",
+        gradCall:
+          "trainer.forward_backward(datums, loss={'kind': 'cispo', 'kl_beta': 0.01})",
+      },
     ],
     gotchas: [
       "Ramp length penalty weight from 0.0 -> 0.5 after 30–50 warm-up steps so you don't suppress early long-CoT discovery.",
@@ -509,14 +714,28 @@ Estimate  ~350K tokens · ~2 min · ~$0.15 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~8.8M tokens", duration: "~44 min", estCost: "~$3.50" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~8.8M tokens",
+        duration: "~44 min",
+        estCost: "~$3.50",
+      },
     ],
     datasets: [
-      { id: "hf://BytedTsinghua-SIA/DAPO-Math-17k", label: "DAPO-Math-17k", source: "Hugging Face (public)", examples: "17,000 math prompts" },
+      {
+        id: "hf://BytedTsinghua-SIA/DAPO-Math-17k",
+        label: "DAPO-Math-17k",
+        source: "Hugging Face (public)",
+        examples: "17,000 math prompts",
+      },
     ],
     primitives: [
       { label: "sample(resume_from=...)", href: "/docs/reference/primitives/" },
-      { label: "CISPO off-policy RL", href: "/docs/training/recipes/rl-agents/" },
+      {
+        label: "CISPO off-policy RL",
+        href: "/docs/training/recipes/rl-agents/",
+      },
     ],
     codeLabel: "train.py",
     codeLanguage: "python",
@@ -577,7 +796,13 @@ Model     Qwen/Qwen3-8B · partial rollout chunks=2048 (max 16k)
 Loss      cispo (kl_beta=0.01) + ramped group length penalty
 Estimate  ~8.8M tokens · ~44 min · ~$3.50 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Long-CoT RL efficiency & accuracy", paperReported: "Matches o1 on AIME/MATH while cutting response length 40%+ via length rewards", templateSetup: "DAPO-Math-17k · chunk=2048 · CISPO + partial rollout replay" },
+      {
+        benchmark: "Long-CoT RL efficiency & accuracy",
+        paperReported:
+          "Matches o1 on AIME/MATH while cutting response length 40%+ via length rewards",
+        templateSetup:
+          "DAPO-Math-17k · chunk=2048 · CISPO + partial rollout replay",
+      },
     ],
     bibtex: `@article{kimi2025k15,
   title={Kimi k1.5: Scaling Reinforcement Learning with LLMs},

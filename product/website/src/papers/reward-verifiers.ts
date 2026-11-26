@@ -24,9 +24,27 @@ export const rewardVerifiersPapers: PaperGuide[] = [
         "Built-in sparse-position BCE + token_level head + best_of_n Endpoint strategy handle training and test-time verification end-to-end.",
     },
     walkthrough: [
-      { title: "Mark step-boundary token indices in DatumTargets", explanation: "Store the token index of each step boundary in positions=[...] alongside Monte Carlo labels.", gradCall: "DatumTargets(positions=[42, 98, 151], labels=[1.0, 1.0, 0.0])" },
-      { title: "Train the token-level PRM head in one forward pass", explanation: "Built-in bce_sparse_positions computes BCE strictly at the marked step indices.", gradCall: "trainer.forward_backward(batch, loss={'kind': 'bce_sparse_positions', 'head': 'prm'})" },
-      { title: "Deploy as a best-of-N verifier endpoint", explanation: "Export the .grad PRM artifact and attach it to a best_of_n or cascade production endpoint.", gradCall: "client.endpoints.create(slug='math-verified', strategy={'kind': 'best_of_n', 'verifier': prm.id, 'n': 8})" },
+      {
+        title: "Mark step-boundary token indices in DatumTargets",
+        explanation:
+          "Store the token index of each step boundary in positions=[...] alongside Monte Carlo labels.",
+        gradCall:
+          "DatumTargets(positions=[42, 98, 151], labels=[1.0, 1.0, 0.0])",
+      },
+      {
+        title: "Train the token-level PRM head in one forward pass",
+        explanation:
+          "Built-in bce_sparse_positions computes BCE strictly at the marked step indices.",
+        gradCall:
+          "trainer.forward_backward(batch, loss={'kind': 'bce_sparse_positions', 'head': 'prm'})",
+      },
+      {
+        title: "Deploy as a best-of-N verifier endpoint",
+        explanation:
+          "Export the .grad PRM artifact and attach it to a best_of_n or cascade production endpoint.",
+        gradCall:
+          "client.endpoints.create(slug='math-verified', strategy={'kind': 'best_of_n', 'verifier': prm.id, 'n': 8})",
+      },
     ],
     gotchas: [
       "Use the minimum step score (min_k p_k) rather than the mean when ranking full reasoning chains — one bad algebra step ruins the answer.",
@@ -37,14 +55,34 @@ export const rewardVerifiersPapers: PaperGuide[] = [
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~3.2M tokens", duration: "~16 min", estCost: "~$1.30" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast verifier)", estTokens: "~2.6M tokens", duration: "~8 min", estCost: "~$0.65" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~3.2M tokens",
+        duration: "~16 min",
+        estCost: "~$1.30",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast verifier)",
+        estTokens: "~2.6M tokens",
+        duration: "~8 min",
+        estCost: "~$0.65",
+      },
     ],
     datasets: [
-      { id: "hf://peiyi9979/Math-Shepherd", label: "Math-Shepherd Step Labels", source: "Hugging Face (public)", examples: "445k step-annotated trajectories" },
+      {
+        id: "hf://peiyi9979/Math-Shepherd",
+        label: "Math-Shepherd Step Labels",
+        source: "Hugging Face (public)",
+        examples: "445k step-annotated trajectories",
+      },
     ],
     primitives: [
-      { label: "Reward models guide", href: "/docs/training/recipes/reward-models/" },
+      {
+        label: "Reward models guide",
+        href: "/docs/training/recipes/reward-models/",
+      },
       { label: "bce_sparse_positions", href: "/docs/reference/primitives/" },
       { label: "best_of_n Endpoint", href: "/docs/training/endpoints/" },
     ],
@@ -89,7 +127,13 @@ Model     Qwen/Qwen3-8B · adapter=lora + token_level head 'prm'
 Loss      bce_sparse_positions (built-in)
 Estimate  ~3.2M tokens · ~16 min · ~$1.30 · warnings: 0`,
     benchmarks: [
-      { benchmark: "GSM8K / MATH Best-of-N", paperReported: "Boosts Mistral-7B from 77.9% -> 84.1% on GSM8K via PRM verification", templateSetup: "Math-Shepherd public labels · Qwen/Qwen3-8B · Best-of-8" },
+      {
+        benchmark: "GSM8K / MATH Best-of-N",
+        paperReported:
+          "Boosts Mistral-7B from 77.9% -> 84.1% on GSM8K via PRM verification",
+        templateSetup:
+          "Math-Shepherd public labels · Qwen/Qwen3-8B · Best-of-8",
+      },
     ],
     bibtex: `@inproceedings{wang2024mathshepherd,
   title={Math-Shepherd: Verify and Reinforce LLMs Step-by-step without Human Annotations},
@@ -121,9 +165,26 @@ Estimate  ~3.2M tokens · ~16 min · ~$1.30 · warnings: 0`,
         "Two co-evolving Trainers in one script work smoothly with zero distributed orchestration; 38 lines total.",
     },
     walkthrough: [
-      { title: "Open two Trainers: policy + online implicit PRM", explanation: "Both share the same frozen reference artifact for computing log-ratios.", gradCall: "with client.trainers.create(...) as policy, client.trainers.create(...) as prm:" },
-      { title: "Update the implicit PRM on outcome labels", explanation: "Compute implicit sequence reward beta * sum(lp_prm - lp_ref) and fit BCE against binary task success.", gradCall: "prm.forward_backward_custom(datums, outputs=['logprobs'], loss_fn=implicit_prm_loss)" },
-      { title: "Extract per-token process rewards and update the policy", explanation: "Score dense token-level log-ratios from prm.snapshot() and pass per-token advantages into policy.forward_backward().", gradCall: "policy.forward_backward(pol_datums, loss={'kind': 'grpo'})" },
+      {
+        title: "Open two Trainers: policy + online implicit PRM",
+        explanation:
+          "Both share the same frozen reference artifact for computing log-ratios.",
+        gradCall:
+          "with client.trainers.create(...) as policy, client.trainers.create(...) as prm:",
+      },
+      {
+        title: "Update the implicit PRM on outcome labels",
+        explanation:
+          "Compute implicit sequence reward beta * sum(lp_prm - lp_ref) and fit BCE against binary task success.",
+        gradCall:
+          "prm.forward_backward_custom(datums, outputs=['logprobs'], loss_fn=implicit_prm_loss)",
+      },
+      {
+        title: "Extract per-token process rewards and update the policy",
+        explanation:
+          "Score dense token-level log-ratios from prm.snapshot() and pass per-token advantages into policy.forward_backward().",
+        gradCall: "policy.forward_backward(pol_datums, loss={'kind': 'grpo'})",
+      },
     ],
     gotchas: [
       "Keep PRM beta small (0.05) and clip per-token implicit rewards to [-2, 2] so outlier tokens don't hijack policy updates.",
@@ -134,14 +195,31 @@ Estimate  ~3.2M tokens · ~16 min · ~$1.30 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B policy + 4B PRM", estTokens: "~12.2M tokens", duration: "~32 min", estCost: "~$4.90" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B policy + 4B PRM",
+        estTokens: "~12.2M tokens",
+        duration: "~32 min",
+        estCost: "~$4.90",
+      },
     ],
     datasets: [
-      { id: "hf://openai/gsm8k", label: "GSM8K Math", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
+      {
+        id: "hf://openai/gsm8k",
+        label: "GSM8K Math",
+        source: "Hugging Face (public)",
+        examples: "7,473 train / 1,319 test",
+      },
     ],
     primitives: [
-      { label: "Multi-trainer custom loops", href: "/docs/training/custom-loops/" },
-      { label: "Reward models guide", href: "/docs/training/recipes/reward-models/" },
+      {
+        label: "Multi-trainer custom loops",
+        href: "/docs/training/custom-loops/",
+      },
+      {
+        label: "Reward models guide",
+        href: "/docs/training/recipes/reward-models/",
+      },
     ],
     codeLabel: "train.py",
     codeLanguage: "python",
@@ -199,7 +277,12 @@ Model     2x Trainers (Qwen/Qwen3-8B policy + online implicit PRM)
 Loss      online implicit_prm_loss + per-token grpo
 Estimate  ~12.2M tokens · ~32 min · ~$4.90 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Sample efficiency on math/code", paperReported: "2.5x sample efficiency & +6.9% average gain over outcome-only RLOO", templateSetup: "GSM8K · dual LoRA trainers · beta=0.05" },
+      {
+        benchmark: "Sample efficiency on math/code",
+        paperReported:
+          "2.5x sample efficiency & +6.9% average gain over outcome-only RLOO",
+        templateSetup: "GSM8K · dual LoRA trainers · beta=0.05",
+      },
     ],
     bibtex: `@article{cui2025prime,
   title={Process Reinforcement through Implicit Rewards},
@@ -231,9 +314,26 @@ Estimate  ~12.2M tokens · ~32 min · ~$4.90 · warnings: 0`,
         "Per-head trainable: False (which we added specifically after hitting this smell!) makes Stage-2 head freezing 1 line.",
     },
     walkthrough: [
-      { title: "Stage 1: Train the K-dimensional attribute regression head", explanation: "Fit heads={'attrs': {'dim': 5}} on HelpSteer2 multi-attribute ratings.", gradCall: "ModelSpec(..., heads={'attrs': {'dim': 5}})" },
-      { title: "Stage 2: Freeze attrs and add the MoE gating head", explanation: "Warm-start with init_from=stage1.id, set attrs.trainable=False, and attach gate.trainable=True.", gradCall: "heads={'attrs': {'dim': 5, 'trainable': False}, 'gate': {'dim': 5, 'trainable': True}}" },
-      { title: "Optimize gated Bradley-Terry preference loss", explanation: "Compute scalar score = (softmax(gate) * attrs).sum(-1) for chosen and rejected pairs.", gradCall: "trainer.forward_backward_custom(pairs, outputs=['heads'], loss_fn=gated_bt_loss)" },
+      {
+        title: "Stage 1: Train the K-dimensional attribute regression head",
+        explanation:
+          "Fit heads={'attrs': {'dim': 5}} on HelpSteer2 multi-attribute ratings.",
+        gradCall: "ModelSpec(..., heads={'attrs': {'dim': 5}})",
+      },
+      {
+        title: "Stage 2: Freeze attrs and add the MoE gating head",
+        explanation:
+          "Warm-start with init_from=stage1.id, set attrs.trainable=False, and attach gate.trainable=True.",
+        gradCall:
+          "heads={'attrs': {'dim': 5, 'trainable': False}, 'gate': {'dim': 5, 'trainable': True}}",
+      },
+      {
+        title: "Optimize gated Bradley-Terry preference loss",
+        explanation:
+          "Compute scalar score = (softmax(gate) * attrs).sum(-1) for chosen and rejected pairs.",
+        gradCall:
+          "trainer.forward_backward_custom(pairs, outputs=['heads'], loss_fn=gated_bt_loss)",
+      },
     ],
     gotchas: [
       "Subtracting a verbosity correction coefficient from the final gated score eliminates length bias on RewardBench.",
@@ -244,14 +344,31 @@ Estimate  ~12.2M tokens · ~32 min · ~$4.90 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.8M tokens", duration: "~14 min", estCost: "~$1.10" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~2.8M tokens",
+        duration: "~14 min",
+        estCost: "~$1.10",
+      },
     ],
     datasets: [
-      { id: "hf://nvidia/HelpSteer2", label: "NVIDIA HelpSteer2 (5 attributes)", source: "Hugging Face (public)", examples: "21,362 multi-attribute ratings" },
+      {
+        id: "hf://nvidia/HelpSteer2",
+        label: "NVIDIA HelpSteer2 (5 attributes)",
+        source: "Hugging Face (public)",
+        examples: "21,362 multi-attribute ratings",
+      },
     ],
     primitives: [
-      { label: "Multi-stage head freezing", href: "/docs/training/custom-loops/" },
-      { label: "Reward models guide", href: "/docs/training/recipes/reward-models/" },
+      {
+        label: "Multi-stage head freezing",
+        href: "/docs/training/custom-loops/",
+      },
+      {
+        label: "Reward models guide",
+        href: "/docs/training/recipes/reward-models/",
+      },
     ],
     codeLabel: "train.py",
     codeLanguage: "python",
@@ -308,7 +425,12 @@ Model     Qwen/Qwen3-8B · 2-stage frozen_head (attrs[frozen] + gate[trainable])
 Loss      Stage 1 MSE -> Stage 2 gated Bradley-Terry
 Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
     benchmarks: [
-      { benchmark: "RewardBench overall", paperReported: "90.4 overall with Llama-3-8B (top 8B reward model at release)", templateSetup: "HelpSteer2 + UltraFeedback · 2-stage frozen_head" },
+      {
+        benchmark: "RewardBench overall",
+        paperReported:
+          "90.4 overall with Llama-3-8B (top 8B reward model at release)",
+        templateSetup: "HelpSteer2 + UltraFeedback · 2-stage frozen_head",
+      },
     ],
     bibtex: `@inproceedings{wang2024armorm,
   title={Interpretable Preferences via Multi-Objective Reward Modeling and Mixture-of-Experts},
@@ -320,7 +442,8 @@ Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
   {
     slug: "genrm",
     shortTitle: "GenRM",
-    title: "Generative Verifiers (GenRM): Reward Modeling as Next-Token Prediction",
+    title:
+      "Generative Verifiers (GenRM): Reward Modeling as Next-Token Prediction",
     authors: "Zhang et al. (Google DeepMind)",
     year: 2024,
     arxivId: "2408.15240",
@@ -340,9 +463,24 @@ Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
         "Managed SFT + built-in majority_vote Endpoint strategy — zero custom training or serving loop required.",
     },
     walkthrough: [
-      { title: "Format verification traces as (critique + verdict)", explanation: "Store problem, candidate answer, short critique, and final Yes/No verdict in expected_output.", gradCall: "expected_output: {'content': critique + '\\nVerdict: Yes'}" },
-      { title: "Train with managed SFT recipe", explanation: "Fine-tune Qwen3-8B with LoRA and merge_adapter=True for low serving latency.", gradCall: "client.runs.create(recipe='sft', ...)" },
-      { title: "Deploy with majority_vote test-time scaling", explanation: "Sample 5 independent critiques at test time and aggregate the verdict automatically.", gradCall: "strategy={'kind': 'majority_vote', 'n_samples': 5}" },
+      {
+        title: "Format verification traces as (critique + verdict)",
+        explanation:
+          "Store problem, candidate answer, short critique, and final Yes/No verdict in expected_output.",
+        gradCall: "expected_output: {'content': critique + '\\nVerdict: Yes'}",
+      },
+      {
+        title: "Train with managed SFT recipe",
+        explanation:
+          "Fine-tune Qwen3-8B with LoRA and merge_adapter=True for low serving latency.",
+        gradCall: "client.runs.create(recipe='sft', ...)",
+      },
+      {
+        title: "Deploy with majority_vote test-time scaling",
+        explanation:
+          "Sample 5 independent critiques at test time and aggregate the verdict automatically.",
+        gradCall: "strategy={'kind': 'majority_vote', 'n_samples': 5}",
+      },
     ],
     gotchas: [
       "Balance positive and negative solutions 50/50 in your training set so the verifier doesn't default to 'Yes'.",
@@ -353,14 +491,34 @@ Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
     mode: "Managed recipe",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.4M tokens", duration: "~12 min", estCost: "~$0.95" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast verifier)", estTokens: "~1.9M tokens", duration: "~6 min", estCost: "~$0.48" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~2.4M tokens",
+        duration: "~12 min",
+        estCost: "~$0.95",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast verifier)",
+        estTokens: "~1.9M tokens",
+        duration: "~6 min",
+        estCost: "~$0.48",
+      },
     ],
     datasets: [
-      { id: "hf://openai/gsm8k", label: "GSM8K Critique Verifier Set", source: "Hugging Face (public)", examples: "Synthesized correct + faulty solutions" },
+      {
+        id: "hf://openai/gsm8k",
+        label: "GSM8K Critique Verifier Set",
+        source: "Hugging Face (public)",
+        examples: "Synthesized correct + faulty solutions",
+      },
     ],
     primitives: [
-      { label: "Reward models guide", href: "/docs/training/recipes/reward-models/" },
+      {
+        label: "Reward models guide",
+        href: "/docs/training/recipes/reward-models/",
+      },
       { label: "majority_vote Endpoint", href: "/docs/training/endpoints/" },
     ],
     codeLabel: "train.py",
@@ -399,7 +557,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · majority_vote n=5
 Loss      cross_entropy (managed sft)
 Estimate  ~2.4M tokens · ~12 min · ~$0.95 · warnings: 0`,
     benchmarks: [
-      { benchmark: "GSM8K verification accuracy", paperReported: "+16–64% relative gain over discriminative scalar reward models with majority voting", templateSetup: "Qwen/Qwen3-8B SFT + majority_vote n=5" },
+      {
+        benchmark: "GSM8K verification accuracy",
+        paperReported:
+          "+16–64% relative gain over discriminative scalar reward models with majority voting",
+        templateSetup: "Qwen/Qwen3-8B SFT + majority_vote n=5",
+      },
     ],
     bibtex: `@inproceedings{zhang2025genrm,
   title={Generative Verifiers: Reward Modeling as Next-Token Prediction},
@@ -431,9 +594,24 @@ Estimate  ~2.4M tokens · ~12 min · ~$0.95 · warnings: 0`,
         "resume_from prefix branching + dense per-token advantages=[...] make VinePPO's tree-structured credit assignment 32 lines.",
     },
     walkthrough: [
-      { title: "Sample an initial reasoning trajectory", explanation: "Generate a full multi-step solution from trainer.snapshot().", gradCall: "traj = snap.sample([prompt], n=1)[0][0]" },
-      { title: "Branch K Monte Carlo rollouts from each step prefix", explanation: "Slice the trajectory at each step boundary and call snap.sample(resume_from=prefix, n=4) to estimate V(s_t).", gradCall: "snap.sample([prompt], resume_from=[prefix], n=4)" },
-      { title: "Assign step-level advantage V(s_{t+1}) - V(s_t) per token", explanation: "Broadcast each step's exact advantage onto its tokens and step with built-in grpo.", gradCall: "traj.to_datum(advantages=tok_adv)" },
+      {
+        title: "Sample an initial reasoning trajectory",
+        explanation:
+          "Generate a full multi-step solution from trainer.snapshot().",
+        gradCall: "traj = snap.sample([prompt], n=1)[0][0]",
+      },
+      {
+        title: "Branch K Monte Carlo rollouts from each step prefix",
+        explanation:
+          "Slice the trajectory at each step boundary and call snap.sample(resume_from=prefix, n=4) to estimate V(s_t).",
+        gradCall: "snap.sample([prompt], resume_from=[prefix], n=4)",
+      },
+      {
+        title: "Assign step-level advantage V(s_{t+1}) - V(s_t) per token",
+        explanation:
+          "Broadcast each step's exact advantage onto its tokens and step with built-in grpo.",
+        gradCall: "traj.to_datum(advantages=tok_adv)",
+      },
     ],
     gotchas: [
       "Only branch at natural step delimiters (e.g. double newlines) — branching every token is prohibitively expensive.",
@@ -444,10 +622,21 @@ Estimate  ~2.4M tokens · ~12 min · ~$0.95 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~7.1M tokens", duration: "~36 min", estCost: "~$2.85" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~7.1M tokens",
+        duration: "~36 min",
+        estCost: "~$2.85",
+      },
     ],
     datasets: [
-      { id: "hf://openai/gsm8k", label: "GSM8K Math", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
+      {
+        id: "hf://openai/gsm8k",
+        label: "GSM8K Math",
+        source: "Hugging Face (public)",
+        examples: "7,473 train / 1,319 test",
+      },
     ],
     primitives: [
       { label: "sample(resume_from=...)", href: "/docs/reference/primitives/" },
@@ -502,7 +691,13 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · K=4 MC branches/step
 Loss      grpo with Monte Carlo step advantages V(s_{t+1}) - V(s_t)
 Estimate  ~7.1M tokens · ~36 min · ~$2.85 · warnings: 0`,
     benchmarks: [
-      { benchmark: "MATH & GSM8K accuracy", paperReported: "Outperforms PPO and RLOO with 9x lower value estimation error", templateSetup: "GSM8K · Qwen/Qwen3-8B · K=4 branches per reasoning step" },
+      {
+        benchmark: "MATH & GSM8K accuracy",
+        paperReported:
+          "Outperforms PPO and RLOO with 9x lower value estimation error",
+        templateSetup:
+          "GSM8K · Qwen/Qwen3-8B · K=4 branches per reasoning step",
+      },
     ],
     bibtex: `@article{kazemnejad2024vineppo,
   title={VinePPO: Unlocking RL Potential For LLM Reasoning Through Refined Credit Assignment},
@@ -534,9 +729,25 @@ Estimate  ~7.1M tokens · ~36 min · ~$2.85 · warnings: 0`,
         "Two read-only Artifact handles + 2-line dual update on lambda plug directly into built-in loss='grpo'.",
     },
     walkthrough: [
-      { title: "Pin separate Reward and Cost verifier Artifacts", explanation: "Keep helpfulness and safety scores independent so you can inspect both curves live.", gradCall: "rm.infer_batch(inputs), cm.infer_batch(inputs)" },
-      { title: "Form Lagrangian shaped reward R - lam * C", explanation: "Group-normalize the Lagrangian utility and pass advantages into built-in GRPO.", gradCall: "util = r_help - lam * c_harm" },
-      { title: "Update Lagrange multiplier lambda via dual ascent", explanation: "Increase lambda whenever mean batch cost exceeds your threshold; decay it when safely below.", gradCall: "log_lam = clamp(log_lam + lr_lam * (mean_cost - cost_limit))" },
+      {
+        title: "Pin separate Reward and Cost verifier Artifacts",
+        explanation:
+          "Keep helpfulness and safety scores independent so you can inspect both curves live.",
+        gradCall: "rm.infer_batch(inputs), cm.infer_batch(inputs)",
+      },
+      {
+        title: "Form Lagrangian shaped reward R - lam * C",
+        explanation:
+          "Group-normalize the Lagrangian utility and pass advantages into built-in GRPO.",
+        gradCall: "util = r_help - lam * c_harm",
+      },
+      {
+        title: "Update Lagrange multiplier lambda via dual ascent",
+        explanation:
+          "Increase lambda whenever mean batch cost exceeds your threshold; decay it when safely below.",
+        gradCall:
+          "log_lam = clamp(log_lam + lr_lam * (mean_cost - cost_limit))",
+      },
     ],
     gotchas: [
       "Clamp log_lam (e.g. [-4, 4]) so early unsafe batches don't explode lambda and cause total refusal collapse.",
@@ -547,10 +758,21 @@ Estimate  ~7.1M tokens · ~36 min · ~$2.85 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~4.7M tokens", duration: "~24 min", estCost: "~$1.90" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~4.7M tokens",
+        duration: "~24 min",
+        estCost: "~$1.90",
+      },
     ],
     datasets: [
-      { id: "hf://PKU-Alignment/PKU-SafeRLHF", label: "PKU-SafeRLHF", source: "Hugging Face (public)", examples: "83,417 helpfulness + safety prompts" },
+      {
+        id: "hf://PKU-Alignment/PKU-SafeRLHF",
+        label: "PKU-SafeRLHF",
+        source: "Hugging Face (public)",
+        examples: "83,417 helpfulness + safety prompts",
+      },
     ],
     primitives: [
       { label: "Artifact.infer_batch", href: "/docs/training/endpoints/" },
@@ -603,7 +825,12 @@ Model     Qwen/Qwen3-8B · dual reward/cost artifacts + online lambda
 Loss      grpo with Lagrangian utility R - lam * C
 Estimate  ~4.7M tokens · ~24 min · ~$1.90 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Harmlessness + helpfulness Pareto", paperReported: "Reduces harmful responses from 53% -> <3% while improving helpfulness", templateSetup: "PKU-SafeRLHF · Qwen/Qwen3-8B · cost_limit=0.0" },
+      {
+        benchmark: "Harmlessness + helpfulness Pareto",
+        paperReported:
+          "Reduces harmful responses from 53% -> <3% while improving helpfulness",
+        templateSetup: "PKU-SafeRLHF · Qwen/Qwen3-8B · cost_limit=0.0",
+      },
     ],
     bibtex: `@inproceedings{dai2024saferlhf,
   title={Safe RLHF: Safe Reinforcement Learning from Human Feedback},

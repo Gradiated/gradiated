@@ -1,6 +1,9 @@
 # Evaluations
 
-<DocsLead>Benchmark base models, frontier models, and trained artifacts side by side using the same Rubric or Environment before you ship.</DocsLead>
+<DocsLead>
+  Benchmark base models, frontier models, and trained artifacts side by side
+  using the same Rubric or Environment before you ship.
+</DocsLead>
 
 Every training run produces an automatic held-out `eval_report`, and you can also run standalone evaluations anytime with **`client.evals.create(...)`** or **`grad eval`**. Use standalone evals to:
 
@@ -59,7 +62,8 @@ const rubric = new Rubric([
   new Judge({
     name: "correct_query",
     model: "{{SONNET_MODEL}}",
-    prompt: "Verify the SQL answers the user's question accurately without hallucinated columns.",
+    prompt:
+      "Verify the SQL answers the user's question accurately without hallucinated columns.",
     weight: 0.7,
   }),
 ]);
@@ -128,14 +132,14 @@ Use `samples=1` and `temperature=0` for a quick deterministic check. For decisio
 
 Fine-tuning on a narrow task can cost general ability, such as instruction following or math. Run standard benchmarks alongside your own tasks to catch it. Gradiated hosts these with pinned prompts, answer checks, and scoring, so results are comparable across runs:
 
-| Benchmark | Measures |
-| --- | --- |
-| `benchmarks.IFEval()` | Following explicit formatting and content instructions |
-| `benchmarks.GSM8K()` | Grade-school math word problems |
-| `benchmarks.MMLUPro()` | Broad knowledge and reasoning across 14 subjects |
-| `benchmarks.GPQADiamond()` | Graduate-level science questions |
-| `benchmarks.HumanEval()` | Writing Python functions that pass unit tests |
-| `benchmarks.LiveCodeBench()` | Recent competitive programming problems |
+| Benchmark                    | Measures                                               |
+| ---------------------------- | ------------------------------------------------------ |
+| `benchmarks.IFEval()`        | Following explicit formatting and content instructions |
+| `benchmarks.GSM8K()`         | Grade-school math word problems                        |
+| `benchmarks.MMLUPro()`       | Broad knowledge and reasoning across 14 subjects       |
+| `benchmarks.GPQADiamond()`   | Graduate-level science questions                       |
+| `benchmarks.HumanEval()`     | Writing Python functions that pass unit tests          |
+| `benchmarks.LiveCodeBench()` | Recent competitive programming problems                |
 
 ```python
 from grad import Grad, benchmarks
@@ -227,7 +231,9 @@ print(f"Saved {hard_cases.count()} failing examples for the next training round"
 ```
 
 <DocsCallout label="Keep an untouched holdout set" tone="tip">
-Never train on your evaluation holdout dataset. Use `ev.failures(...)` on a separate staging or production sample dataset to mine hard examples, and keep `sql-eval-holdout` strictly for apples-to-apples comparisons across versions.
+  Never train on your evaluation holdout dataset. Use `ev.failures(...)` on a
+  separate staging or production sample dataset to mine hard examples, and keep
+  `sql-eval-holdout` strictly for apples-to-apples comparisons across versions.
 </DocsCallout>
 
 <DocsNext>

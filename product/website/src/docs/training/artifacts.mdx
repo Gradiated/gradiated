@@ -1,6 +1,9 @@
 # Artifacts
 
-<DocsLead>Every training run saves a versioned `.grad` artifact with your trained weights and evaluation results.</DocsLead>
+<DocsLead>
+  Every training run saves a versioned `.grad` artifact with your trained
+  weights and evaluation results.
+</DocsLead>
 
 An **`Artifact`** is a saved, versioned model produced by a training run (`fast-diff-merge@2026-11-26-1`). Artifacts are never overwritten: every new run writes a new version with its weights (`adapter_config.json` and `adapter_model.safetensors` for LoRA, or full Safetensors weights) alongside its held-out `eval_report.json`.
 

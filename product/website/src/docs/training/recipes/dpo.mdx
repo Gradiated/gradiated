@@ -1,6 +1,9 @@
 # Preference tuning (DPO)
 
-<DocsLead>Teach a model which answers you prefer by showing it pairs of good and bad examples.</DocsLead>
+<DocsLead>
+  Teach a model which answers you prefer by showing it pairs of good and bad
+  examples.
+</DocsLead>
 
 Use **`DPORecipe`** after [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) when your model already knows the right format but still makes recurring mistakes (like cutting off code, being too wordy, or picking the wrong tool arguments). Showing it **chosen** vs. **rejected** pairs steers it away from those patterns.
 
@@ -13,7 +16,9 @@ Use **`DPORecipe`** after [Supervised fine-tuning (SFT)](/docs/training/recipes/
 {
   "prompt": [{ "role": "user", "content": "Merge this diff." }],
   "chosen": [{ "role": "assistant", "content": "clean merged code..." }],
-  "rejected": [{ "role": "assistant", "content": "truncated code with syntax error..." }]
+  "rejected": [
+    { "role": "assistant", "content": "truncated code with syntax error..." }
+  ]
 }
 ```
 
@@ -25,15 +30,28 @@ If your pairs come from production [trajectories](/docs/training/trajectories/),
     "schema": "grad.trajectory/1",
     "group_id": "pair_19",
     "role": "chosen",
-    "input": { "messages": [{ "role": "user", "content": "Merge this diff." }] },
-    "output": { "turns": [{ "role": "assistant", "content": "clean merged code..." }] }
+    "input": {
+      "messages": [{ "role": "user", "content": "Merge this diff." }]
+    },
+    "output": {
+      "turns": [{ "role": "assistant", "content": "clean merged code..." }]
+    }
   },
   {
     "schema": "grad.trajectory/1",
     "group_id": "pair_19",
     "role": "rejected",
-    "input": { "messages": [{ "role": "user", "content": "Merge this diff." }] },
-    "output": { "turns": [{ "role": "assistant", "content": "truncated code with syntax error..." }] }
+    "input": {
+      "messages": [{ "role": "user", "content": "Merge this diff." }]
+    },
+    "output": {
+      "turns": [
+        {
+          "role": "assistant",
+          "content": "truncated code with syntax error..."
+        }
+      ]
+    }
   }
 ]
 ```

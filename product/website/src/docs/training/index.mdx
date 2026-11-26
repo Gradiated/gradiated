@@ -1,6 +1,9 @@
 # Training overview
 
-<DocsLead>Train routers, decision models, and fine-tuned models from your production logs or test environments.</DocsLead>
+<DocsLead>
+  Train routers, decision models, and fine-tuned models from your production
+  logs or test environments.
+</DocsLead>
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Fine-tune a model (60s)">
@@ -121,10 +124,10 @@ Already sending inference requests through Gradiated with the `x-gradiated-task`
 
 ## Where to start
 
-| If you are... | Recommended path |
-| --- | --- |
-| **Shipping a product feature** (lower LLM spend, fine-tune a smaller model, compress a long prompt) | [Trajectories](/docs/training/trajectories/) → [Recipes](/docs/training/recipes/) → [Deploying](/docs/training/deploying/) |
-| **Running RL, evals, or custom research** (custom graders, tool sandboxes, PyTorch loss functions) | [Rubrics](/docs/training/rubrics/) & [Environments](/docs/training/environments/) → [Evaluations](/docs/training/evaluations/) → [Custom loops](/docs/training/custom-loops/) |
+| If you are...                                                                                       | Recommended path                                                                                                                                                              |
+| --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Shipping a product feature** (lower LLM spend, fine-tune a smaller model, compress a long prompt) | [Trajectories](/docs/training/trajectories/) → [Recipes](/docs/training/recipes/) → [Deploying](/docs/training/deploying/)                                                    |
+| **Running RL, evals, or custom research** (custom graders, tool sandboxes, PyTorch loss functions)  | [Rubrics](/docs/training/rubrics/) & [Environments](/docs/training/environments/) → [Evaluations](/docs/training/evaluations/) → [Custom loops](/docs/training/custom-loops/) |
 
 See [Supported models](/docs/training/models/) for trainable base models and how token billing works.
 
@@ -298,19 +301,30 @@ import OpenAI from "openai";
 import { Grad } from "@gradiated/grad";
 
 const grad = new Grad();
-const oai = new OpenAI({ baseURL: "https://api.gradiated.com/v1", apiKey: process.env.GRADIATED_API_KEY });
-const messages = [{ role: "user" as const, content: "Where is invoice #9941?" }];
+const oai = new OpenAI({
+  baseURL: "https://api.gradiated.com/v1",
+  apiKey: process.env.GRADIATED_API_KEY,
+});
+const messages = [
+  { role: "user" as const, content: "Where is invoice #9941?" },
+];
 
 const decision = await grad.route("support-router", { messages });
 
 const start = performance.now();
-const reply = await oai.chat.completions.create({ model: decision.model, messages });
+const reply = await oai.chat.completions.create({
+  model: decision.model,
+  messages,
+});
 const latencyMs = performance.now() - start;
 
 const userResolved = true; // replace with your real outcome signal
 await decision.recordFeedback({
   score: userResolved ? 1.0 : 0.0,
-  metrics: { latency_ms: latencyMs, output_tokens: reply.usage?.completion_tokens ?? 0 },
+  metrics: {
+    latency_ms: latencyMs,
+    output_tokens: reply.usage?.completion_tokens ?? 0,
+  },
 });
 ```
 
@@ -369,15 +383,18 @@ curl https://api.gradiated.com/v1/chat/completions \
 
 Start with a built-in `Recipe` and its defaults. Learning rate, batch size and schedule are calibrated for each base model, and the dry run prints every resolved value. When you need more control, override a single piece (like the loss function or dataset split), or write your own Python loop directly on `Trainer`.
 
-| Mode | How it works | When to use it |
-| --- | --- | --- |
-| [**Recipes**](/docs/training/recipes/) | Pick a recipe (`RouterRecipe`, `DecisionModelRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`, `RewardModelRecipe`, `EmbeddingRecipe`), chain stages with `.then(...)`, or run from YAML. | Almost always, including multi-turn agent RL (`GRPORecipe(env=...)`). You get calibrated defaults, held-out evaluations, automatic checkpoints, and can swap individual pieces without writing a training loop. |
-| [**Custom loops**](/docs/training/custom-loops/) | Call `Trainer`, `Artifact`, `Environment`, and `Rubric` directly in Python with built-in losses or your own PyTorch `CustomLoss`. | You are building a new algorithm: a custom research loop, multi-trainer setup, replay buffer, or rollout logic a recipe can't express. |
+| Mode                                             | How it works                                                                                                                                                                                                                 | When to use it                                                                                                                                                                                                  |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [**Recipes**](/docs/training/recipes/)           | Pick a recipe (`RouterRecipe`, `DecisionModelRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`, `RewardModelRecipe`, `EmbeddingRecipe`), chain stages with `.then(...)`, or run from YAML. | Almost always, including multi-turn agent RL (`GRPORecipe(env=...)`). You get calibrated defaults, held-out evaluations, automatic checkpoints, and can swap individual pieces without writing a training loop. |
+| [**Custom loops**](/docs/training/custom-loops/) | Call `Trainer`, `Artifact`, `Environment`, and `Rubric` directly in Python with built-in losses or your own PyTorch `CustomLoss`.                                                                                            | You are building a new algorithm: a custom research loop, multi-trainer setup, replay buffer, or rollout logic a recipe can't express.                                                                          |
 
 You can export the full resolved config of any run as YAML (`grad runs inspect <run_id> --yaml > recipe.yaml`) to check it into Git.
 
 <DocsCallout label="Pay only for tokens trained" tone="tip">
-You pay per million tokens processed (training and sampling) plus storage for saved artifacts and checkpoints. You never pay for idle GPUs. Start with the simplest option that proves value: a router or decision model trains quickly, then move up to fine-tuning or RL once you have a baseline.
+  You pay per million tokens processed (training and sampling) plus storage for
+  saved artifacts and checkpoints. You never pay for idle GPUs. Start with the
+  simplest option that proves value: a router or decision model trains quickly,
+  then move up to fine-tuning or RL once you have a baseline.
 </DocsCallout>
 
 ## Using with coding agents

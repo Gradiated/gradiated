@@ -4,7 +4,8 @@ export const agentsToolsPapers: PaperGuide[] = [
   {
     slug: "search-r1",
     shortTitle: "Search-R1",
-    title: "Search-R1: Training LLMs to Reason and Leverage Search Engines with RL",
+    title:
+      "Search-R1: Training LLMs to Reason and Leverage Search Engines with RL",
     authors: "Jin et al.",
     year: 2025,
     arxivId: "2503.09516",
@@ -24,10 +25,31 @@ export const agentsToolsPapers: PaperGuide[] = [
         "Environment.rollout_groups() handles stop-tag interruption, server-side observation masking, and bounded retrieval concurrency out of the box.",
     },
     walkthrough: [
-      { title: "Wrap your retriever in a multi-turn Environment", explanation: "Parse <search>...</search>, query your local FAISS/BM25 index, and return Observation(text=...) wrapped in <information> tags.", gradCall: "Environment.step() -> Observation(text=..., done=...)" },
-      { title: "Score only the final answer with a verifiable Rubric", explanation: "Attach an exact-match RubricTerm on <answer>...</answer> — no gold search queries required.", gradCall: "Rubric([RubricTerm('em', 1.0, exact_match)])" },
-      { title: "Roll out multi-hop trajectories with auto-masked docs", explanation: "env.rollout_groups() stops at </search> or </answer> and injects retrieved text with loss_mask=0.0 automatically.", gradCall: "env.rollout_groups(snap, batch, group_size=8, max_turns=4)" },
-      { title: "Pipeline the masked GRPO update", explanation: "Center group rewards, skip zero-variance groups, and step with built-in grpo.", gradCall: "trainer.forward_backward(datums, loss={'kind': 'grpo', 'kl_beta': 0.001})" },
+      {
+        title: "Wrap your retriever in a multi-turn Environment",
+        explanation:
+          "Parse <search>...</search>, query your local FAISS/BM25 index, and return Observation(text=...) wrapped in <information> tags.",
+        gradCall: "Environment.step() -> Observation(text=..., done=...)",
+      },
+      {
+        title: "Score only the final answer with a verifiable Rubric",
+        explanation:
+          "Attach an exact-match RubricTerm on <answer>...</answer> — no gold search queries required.",
+        gradCall: "Rubric([RubricTerm('em', 1.0, exact_match)])",
+      },
+      {
+        title: "Roll out multi-hop trajectories with auto-masked docs",
+        explanation:
+          "env.rollout_groups() stops at </search> or </answer> and injects retrieved text with loss_mask=0.0 automatically.",
+        gradCall: "env.rollout_groups(snap, batch, group_size=8, max_turns=4)",
+      },
+      {
+        title: "Pipeline the masked GRPO update",
+        explanation:
+          "Center group rewards, skip zero-variance groups, and step with built-in grpo.",
+        gradCall:
+          "trainer.forward_backward(datums, loss={'kind': 'grpo', 'kl_beta': 0.001})",
+      },
     ],
     gotchas: [
       "Always pass stop=['</search>', '</answer>'] — without hard stop delimiters the model hallucinates its own <information> block right after a query.",
@@ -39,14 +61,34 @@ export const agentsToolsPapers: PaperGuide[] = [
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~8.4M tokens", duration: "~42 min", estCost: "~$3.35" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~6.0M tokens", duration: "~19 min", estCost: "~$1.50" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~8.4M tokens",
+        duration: "~42 min",
+        estCost: "~$3.35",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast smoke run)",
+        estTokens: "~6.0M tokens",
+        duration: "~19 min",
+        estCost: "~$1.50",
+      },
     ],
     datasets: [
-      { id: "hf://PeterJinGo/nq_hotpotqa_train", label: "NQ + HotpotQA Multi-Hop QA", source: "Hugging Face (public)", examples: "169,615 single & multi-hop QA pairs" },
+      {
+        id: "hf://PeterJinGo/nq_hotpotqa_train",
+        label: "NQ + HotpotQA Multi-Hop QA",
+        source: "Hugging Face (public)",
+        examples: "169,615 single & multi-hop QA pairs",
+      },
     ],
     primitives: [
-      { label: "Environment & Observation", href: "/docs/training/environments/" },
+      {
+        label: "Environment & Observation",
+        href: "/docs/training/environments/",
+      },
       { label: "GRPO for agents", href: "/docs/training/recipes/rl-agents/" },
       { label: "Custom loops", href: "/docs/training/custom-loops/" },
     ],
@@ -113,7 +155,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · group_size=8 · max_turns=4
 Loss      grpo (clip=0.2, kl_beta=0.001) · retrieved <information> tokens auto-masked
 Estimate  ~8.4M tokens · ~42 min · ~$3.35 · warnings: 0`,
     benchmarks: [
-      { benchmark: "7-Dataset QA Average EM", paperReported: "+26% relative EM gain over single-shot RAG and IRCoT on Qwen2.5-7B", templateSetup: "Qwen/Qwen3-8B · group_size=8 · max_turns=4 · topk=3" },
+      {
+        benchmark: "7-Dataset QA Average EM",
+        paperReported:
+          "+26% relative EM gain over single-shot RAG and IRCoT on Qwen2.5-7B",
+        templateSetup: "Qwen/Qwen3-8B · group_size=8 · max_turns=4 · topk=3",
+      },
     ],
     bibtex: `@article{jin2025searchr1,
   title={Search-R1: Training LLMs to Reason and Leverage Search Engines with Reinforcement Learning},
@@ -145,9 +192,26 @@ Estimate  ~8.4M tokens · ~42 min · ~$3.35 · warnings: 0`,
         "turn_ids on Datum + resume_from continuation make turn-dependent KL penalties 12 clean lines in forward_backward_custom.",
     },
     walkthrough: [
-      { title: "Sample Turn 1 and stitch Turn 2 via resume_from", explanation: "Inject the masked self-correction cue via append_env_tokens so Turn 2 automatically gets turn_ids=1.", gradCall: "snap.sample(..., resume_from=t1, append_env_tokens=[retry_toks])" },
-      { title: "Score reference logprobs across both turns at once", explanation: "Pass the stitched Trajectory objects straight to ref.score_logprobs(t2).", gradCall: "ref.score_logprobs(t2)['aligned_logprobs']" },
-      { title: "Apply per-turn KL weights using d.model_input.turn_ids", explanation: "Use torch.where(turn_ids == 0, 0.20, 0.01) inside a 12-line surrogate loss.", gradCall: "trainer.forward_backward_custom(datums, ['logprobs'], score_loss)" },
+      {
+        title: "Sample Turn 1 and stitch Turn 2 via resume_from",
+        explanation:
+          "Inject the masked self-correction cue via append_env_tokens so Turn 2 automatically gets turn_ids=1.",
+        gradCall:
+          "snap.sample(..., resume_from=t1, append_env_tokens=[retry_toks])",
+      },
+      {
+        title: "Score reference logprobs across both turns at once",
+        explanation:
+          "Pass the stitched Trajectory objects straight to ref.score_logprobs(t2).",
+        gradCall: "ref.score_logprobs(t2)['aligned_logprobs']",
+      },
+      {
+        title: "Apply per-turn KL weights using d.model_input.turn_ids",
+        explanation:
+          "Use torch.where(turn_ids == 0, 0.20, 0.01) inside a 12-line surrogate loss.",
+        gradCall:
+          "trainer.forward_backward_custom(datums, ['logprobs'], score_loss)",
+      },
     ],
     gotchas: [
       "Always log Turn-1 accuracy and Turn-2 accuracy separately — Turn-1 must never drop while Turn-2 rises.",
@@ -158,14 +222,31 @@ Estimate  ~8.4M tokens · ~42 min · ~$3.35 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~7.6M tokens", duration: "~38 min", estCost: "~$3.05" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~7.6M tokens",
+        duration: "~38 min",
+        estCost: "~$3.05",
+      },
     ],
     datasets: [
-      { id: "hf://hendrycks/competition_math", label: "MATH Competition Problems", source: "Hugging Face (public)", examples: "7,500 train / 5,000 test" },
+      {
+        id: "hf://hendrycks/competition_math",
+        label: "MATH Competition Problems",
+        source: "Hugging Face (public)",
+        examples: "7,500 train / 5,000 test",
+      },
     ],
     primitives: [
-      { label: "forward_backward_custom", href: "/docs/training/custom-loops/" },
-      { label: "Multi-turn per-turn KL", href: "/docs/training/recipes/rl-agents/" },
+      {
+        label: "forward_backward_custom",
+        href: "/docs/training/custom-loops/",
+      },
+      {
+        label: "Multi-turn per-turn KL",
+        href: "/docs/training/recipes/rl-agents/",
+      },
       { label: "Trajectory turn_ids", href: "/docs/reference/primitives/" },
     ],
     codeLabel: "train.py",
@@ -225,7 +306,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · 2-turn self-correction
 Loss      custom per-turn KL (beta_t1=0.20, beta_t2=0.01) + progress bonus
 Estimate  ~7.6M tokens · ~38 min · ~$3.05 · warnings: 0`,
     benchmarks: [
-      { benchmark: "MATH intrinsic self-correction", paperReported: "+15.6% absolute self-correction gain on MATH without sandbagging", templateSetup: "Qwen/Qwen3-8B · beta_t1=0.20, beta_t2=0.01, alpha=2.0" },
+      {
+        benchmark: "MATH intrinsic self-correction",
+        paperReported:
+          "+15.6% absolute self-correction gain on MATH without sandbagging",
+        templateSetup: "Qwen/Qwen3-8B · beta_t1=0.20, beta_t2=0.01, alpha=2.0",
+      },
     ],
     bibtex: `@article{kumar2024score,
   title={Training Language Models to Self-Correct via Reinforcement Learning},
@@ -257,9 +343,25 @@ Estimate  ~7.6M tokens · ~38 min · ~$3.05 · warnings: 0`,
         "One shared Trainer drives both Proposer and Solver cleanly via a single snapshot and built-in CISPO.",
     },
     walkthrough: [
-      { title: "Propose executable Python puzzles from the live snapshot", explanation: "Generate candidate (program, input) puzzles and validate determinism in an isolated 2-second Python sandbox.", gradCall: "snap.sample(proposer_prompts, n=1)" },
-      { title: "Roll out G=8 Solver attempts per valid puzzle", explanation: "Score solver pass rate p to reward the Proposer with learnability peaking at p=0.5.", gradCall: "snap.sample(solver_prompts, n=8)" },
-      { title: "Apply TRR++ per-role advantage normalization", explanation: "Normalize Proposer and Solver advantages independently, concatenate Datums, and step with CISPO.", gradCall: "trainer.forward_backward(prop_ds + sol_ds, loss={'kind': 'cispo'})" },
+      {
+        title: "Propose executable Python puzzles from the live snapshot",
+        explanation:
+          "Generate candidate (program, input) puzzles and validate determinism in an isolated 2-second Python sandbox.",
+        gradCall: "snap.sample(proposer_prompts, n=1)",
+      },
+      {
+        title: "Roll out G=8 Solver attempts per valid puzzle",
+        explanation:
+          "Score solver pass rate p to reward the Proposer with learnability peaking at p=0.5.",
+        gradCall: "snap.sample(solver_prompts, n=8)",
+      },
+      {
+        title: "Apply TRR++ per-role advantage normalization",
+        explanation:
+          "Normalize Proposer and Solver advantages independently, concatenate Datums, and step with CISPO.",
+        gradCall:
+          "trainer.forward_backward(prop_ds + sol_ds, loss={'kind': 'cispo'})",
+      },
     ],
     gotchas: [
       "Block random, time, network, and disk writes inside the sandbox — non-deterministic proposals inject unlearnable noise.",
@@ -270,11 +372,28 @@ Estimate  ~7.6M tokens · ~38 min · ~$3.05 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~9.0M tokens", duration: "~45 min", estCost: "~$3.60" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~6.4M tokens", duration: "~20 min", estCost: "~$1.60" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~9.0M tokens",
+        duration: "~45 min",
+        estCost: "~$3.60",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast smoke run)",
+        estTokens: "~6.4M tokens",
+        duration: "~20 min",
+        estCost: "~$1.60",
+      },
     ],
     datasets: [
-      { id: "synthetic://azr-zero-data", label: "Zero Human Data (Self-Generated Python Buffer)", source: "Generated online by policy + sandbox", examples: "0 static rows (infinite self-play)" },
+      {
+        id: "synthetic://azr-zero-data",
+        label: "Zero Human Data (Self-Generated Python Buffer)",
+        source: "Generated online by policy + sandbox",
+        examples: "0 static rows (infinite self-play)",
+      },
     ],
     primitives: [
       { label: "Trainer & snapshot()", href: "/docs/training/custom-loops/" },
@@ -338,7 +457,13 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · dual-role Proposer + Solver
 Loss      cispo with TRR++ per-role advantage normalization
 Estimate  ~9.0M tokens · ~45 min · ~$3.60 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Coding + Math Average (Zero Human Data)", paperReported: "50.4% avg on Qwen2.5-7B-Coder, surpassing RLVR models trained on 50k+ human tasks", templateSetup: "Qwen/Qwen3-8B · 16 proposals x 8 solver rollouts · Python sandbox" },
+      {
+        benchmark: "Coding + Math Average (Zero Human Data)",
+        paperReported:
+          "50.4% avg on Qwen2.5-7B-Coder, surpassing RLVR models trained on 50k+ human tasks",
+        templateSetup:
+          "Qwen/Qwen3-8B · 16 proposals x 8 solver rollouts · Python sandbox",
+      },
     ],
     bibtex: `@article{zhao2025absolutezero,
   title={Absolute Zero: Reinforced Self-Play Reasoning with Zero Data},
@@ -370,9 +495,27 @@ Estimate  ~9.0M tokens · ~45 min · ~$3.60 · warnings: 0`,
         "Dual (q, v) heads and two Trainers compose cleanly without distributed actor-critic glue.",
     },
     walkthrough: [
-      { title: "Open an Actor Trainer and a dual-head (q, v) Critic Trainer", explanation: "Use a compact 0.6B backbone for the utterance critic so off-policy Bellman steps are fast.", gradCall: "ModelSpec(base='Qwen/Qwen3-0.6B', heads={'q': {'dim': 1}, 'v': {'dim': 1}})" },
-      { title: "Train Critic off-policy via IQL expectile + Bellman TD", explanation: "Sample utterance transitions from a replay deque and run 2 critic steps per actor step.", gradCall: "critic.forward_backward_custom(c_datums, ['heads'], archer_critic_loss)" },
-      { title: "Broadcast utterance advantages A_t = Q - V to the token Actor", explanation: "Attach A_t to turn t's generated tokens and update the actor with CISPO.", gradCall: "actor.forward_backward(actor_datums, loss={'kind': 'cispo'})" },
+      {
+        title: "Open an Actor Trainer and a dual-head (q, v) Critic Trainer",
+        explanation:
+          "Use a compact 0.6B backbone for the utterance critic so off-policy Bellman steps are fast.",
+        gradCall:
+          "ModelSpec(base='Qwen/Qwen3-0.6B', heads={'q': {'dim': 1}, 'v': {'dim': 1}})",
+      },
+      {
+        title: "Train Critic off-policy via IQL expectile + Bellman TD",
+        explanation:
+          "Sample utterance transitions from a replay deque and run 2 critic steps per actor step.",
+        gradCall:
+          "critic.forward_backward_custom(c_datums, ['heads'], archer_critic_loss)",
+      },
+      {
+        title: "Broadcast utterance advantages A_t = Q - V to the token Actor",
+        explanation:
+          "Attach A_t to turn t's generated tokens and update the actor with CISPO.",
+        gradCall:
+          "actor.forward_backward(actor_datums, loss={'kind': 'cispo'})",
+      },
     ],
     gotchas: [
       "Clip utterance advantages to [-5, 5] so early Bellman bootstrap errors don't destabilize the token actor.",
@@ -383,10 +526,21 @@ Estimate  ~9.0M tokens · ~45 min · ~$3.60 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B Actor + 0.6B Critic", estTokens: "~10.8M tokens", duration: "~34 min", estCost: "~$2.70" },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B Actor + 0.6B Critic",
+        estTokens: "~10.8M tokens",
+        duration: "~34 min",
+        estCost: "~$2.70",
+      },
     ],
     datasets: [
-      { id: "hf://gradiated/archer-twenty-questions", label: "Twenty Questions & Interactive Tasks", source: "Hugging Face (public)", examples: "2,000 multi-turn episodes" },
+      {
+        id: "hf://gradiated/archer-twenty-questions",
+        label: "Twenty Questions & Interactive Tasks",
+        source: "Hugging Face (public)",
+        examples: "2,000 multi-turn episodes",
+      },
     ],
     primitives: [
       { label: "Multi-head ModelSpec", href: "/docs/reference/primitives/" },
@@ -455,7 +609,12 @@ Model     Actor Qwen/Qwen3-4B + Critic Qwen/Qwen3-0.6B (heads: q, v)
 Loss      Critic expectile-IQL Bellman TD + Actor CISPO
 Estimate  ~6.8M tokens · ~34 min · ~$2.70 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Multi-turn sample efficiency", paperReported: "~100x fewer environment steps than flat on-policy PPO on 20 Questions & WebShop", templateSetup: "Qwen/Qwen3-4B actor + 0.6B critic · replay=4,096" },
+      {
+        benchmark: "Multi-turn sample efficiency",
+        paperReported:
+          "~100x fewer environment steps than flat on-policy PPO on 20 Questions & WebShop",
+        templateSetup: "Qwen/Qwen3-4B actor + 0.6B critic · replay=4,096",
+      },
     ],
     bibtex: `@inproceedings{zhou2024archer,
   title={ArCHer: Training Language Model Agents via Hierarchical Multi-Turn RL},
@@ -487,23 +646,51 @@ Estimate  ~6.8M tokens · ~34 min · ~$2.70 · warnings: 0`,
         "Batched split-prefix score_logprobs() + standard cross_entropy SFT implement Toolformer with zero custom loss code.",
     },
     walkthrough: [
-      { title: "Sample & execute candidate tool insertions on raw text", explanation: "Generate candidate [Calculator(...)] calls and run them in a safe Python executor.", gradCall: "base.sample(prompts, n=4, stop=[')'])" },
-      { title: "Filter by exact future-token NLL reduction", explanation: "Score continuation logprobs under no-call, empty-call, and executed-call prefixes; keep only calls beating tau=0.15.", gradCall: "base.score_logprobs(prefixes, conts)['response_logprobs']" },
-      { title: "Fine-tune with masked tool-result tokens", explanation: "Set loss_mask=0.0 on externally returned tool outputs so the model trains on calls and synthesis.", gradCall: "trainer.forward_backward(kept_datums, loss={'kind': 'cross_entropy'})" },
+      {
+        title: "Sample & execute candidate tool insertions on raw text",
+        explanation:
+          "Generate candidate [Calculator(...)] calls and run them in a safe Python executor.",
+        gradCall: "base.sample(prompts, n=4, stop=[')'])",
+      },
+      {
+        title: "Filter by exact future-token NLL reduction",
+        explanation:
+          "Score continuation logprobs under no-call, empty-call, and executed-call prefixes; keep only calls beating tau=0.15.",
+        gradCall: "base.score_logprobs(prefixes, conts)['response_logprobs']",
+      },
+      {
+        title: "Fine-tune with masked tool-result tokens",
+        explanation:
+          "Set loss_mask=0.0 on externally returned tool outputs so the model trains on calls and synthesis.",
+        gradCall:
+          "trainer.forward_backward(kept_datums, loss={'kind': 'cross_entropy'})",
+      },
     ],
     gotchas: [
       "Always compare against min(L_none, L_empty) so spurious formatting changes don't pass the filter.",
       "Mix 50% plain unaugmented text into SFT so the model doesn't over-trigger tools on simple prose.",
     ],
     linesOfCode: 42,
-    typicalBaselineLoc: "~1,300 LOC custom multi-pass scoring & filtering pipeline",
+    typicalBaselineLoc:
+      "~1,300 LOC custom multi-pass scoring & filtering pipeline",
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~4.4M tokens", duration: "~22 min", estCost: "~$1.75" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~4.4M tokens",
+        duration: "~22 min",
+        estCost: "~$1.75",
+      },
     ],
     datasets: [
-      { id: "hf://wikimedia/wikipedia", label: "Wikipedia Raw Text (subset)", source: "Hugging Face (public)", examples: "25,000 unlabeled passages" },
+      {
+        id: "hf://wikimedia/wikipedia",
+        label: "Wikipedia Raw Text (subset)",
+        source: "Hugging Face (public)",
+        examples: "25,000 unlabeled passages",
+      },
     ],
     primitives: [
       { label: "Artifact.score_logprobs", href: "/docs/reference/primitives/" },
@@ -563,7 +750,12 @@ Model     Qwen/Qwen3-8B · self-filtered tool SFT (tau_f=0.15)
 Loss      cross_entropy (tool return tokens masked to 0.0)
 Estimate  ~4.4M tokens · ~22 min · ~$1.75 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Zero-shot arithmetic & QA", paperReported: "6.7B Toolformer beats 175B GPT-3 on ASDiv, SVAMP, and WebQS via self-learned APIs", templateSetup: "Wikipedia subset · Qwen/Qwen3-8B · tau_f=0.15" },
+      {
+        benchmark: "Zero-shot arithmetic & QA",
+        paperReported:
+          "6.7B Toolformer beats 175B GPT-3 on ASDiv, SVAMP, and WebQS via self-learned APIs",
+        templateSetup: "Wikipedia subset · Qwen/Qwen3-8B · tau_f=0.15",
+      },
     ],
     bibtex: `@inproceedings{schick2023toolformer,
   title={Toolformer: Language Models Can Teach Themselves to Use Tools},
@@ -595,9 +787,24 @@ Estimate  ~4.4M tokens · ~22 min · ~$1.75 · warnings: 0`,
         "Self-play multi-agent episodes require zero special multi-agent coordinator framework — just two Trajectory objects updated on one Trainer.",
     },
     walkthrough: [
-      { title: "Play two-player zero-sum episodes from one snapshot", explanation: "Alternate Player 0 and Player 1 moves using trainer.snapshot().sample(); inject opponent moves into each player's trajectory with loss_mask=0.0.", gradCall: "play_zero_sum_game(snap, game)" },
-      { title: "Compute Role-Conditioned Advantages (RAE)", explanation: "Normalize Player 0 and Player 1 returns against separate per-seat baselines to cancel first-player bias.", gradCall: "adv = r - seat_baseline[player_id]" },
-      { title: "Update the shared policy jointly on both seats", explanation: "Feed both players' Datums into built-in CISPO and export the improved reasoning model.", gradCall: "trainer.forward_backward(datums, loss={'kind': 'cispo'})" },
+      {
+        title: "Play two-player zero-sum episodes from one snapshot",
+        explanation:
+          "Alternate Player 0 and Player 1 moves using trainer.snapshot().sample(); inject opponent moves into each player's trajectory with loss_mask=0.0.",
+        gradCall: "play_zero_sum_game(snap, game)",
+      },
+      {
+        title: "Compute Role-Conditioned Advantages (RAE)",
+        explanation:
+          "Normalize Player 0 and Player 1 returns against separate per-seat baselines to cancel first-player bias.",
+        gradCall: "adv = r - seat_baseline[player_id]",
+      },
+      {
+        title: "Update the shared policy jointly on both seats",
+        explanation:
+          "Feed both players' Datums into built-in CISPO and export the improved reasoning model.",
+        gradCall: "trainer.forward_backward(datums, loss={'kind': 'cispo'})",
+      },
     ],
     gotchas: [
       "Keep a small pool (20%) of older historical snapshots as opponents to prevent cyclic rock-paper-scissors forgetting.",
@@ -608,15 +815,35 @@ Estimate  ~4.4M tokens · ~22 min · ~$1.75 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~7.1M tokens", duration: "~36 min", estCost: "~$2.85" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~5.2M tokens", duration: "~16 min", estCost: "~$1.30" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~7.1M tokens",
+        duration: "~36 min",
+        estCost: "~$2.85",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast smoke run)",
+        estTokens: "~5.2M tokens",
+        duration: "~16 min",
+        estCost: "~$1.30",
+      },
     ],
     datasets: [
-      { id: "synthetic://spiral-zero-sum", label: "Zero-Sum Game Suite (Kuhn Poker / Tic-Tac-Toe)", source: "Deterministic Python game simulators", examples: "Unlimited self-play episodes" },
+      {
+        id: "synthetic://spiral-zero-sum",
+        label: "Zero-Sum Game Suite (Kuhn Poker / Tic-Tac-Toe)",
+        source: "Deterministic Python game simulators",
+        examples: "Unlimited self-play episodes",
+      },
     ],
     primitives: [
       { label: "Trainer & snapshot()", href: "/docs/training/custom-loops/" },
-      { label: "Multi-turn Environments", href: "/docs/training/environments/" },
+      {
+        label: "Multi-turn Environments",
+        href: "/docs/training/environments/",
+      },
     ],
     codeLabel: "train.py",
     codeLanguage: "python",
@@ -664,7 +891,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · RAE per-seat baselines
 Loss      cispo over both seats' masked trajectories
 Estimate  ~7.1M tokens · ~36 min · ~$2.85 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Zero-shot transfer to MATH / GPQA", paperReported: "+8.6% math & +8.4% general reasoning gain purely from zero-sum game self-play", templateSetup: "Qwen/Qwen3-8B · 32 games/step · RAE baselines" },
+      {
+        benchmark: "Zero-shot transfer to MATH / GPQA",
+        paperReported:
+          "+8.6% math & +8.4% general reasoning gain purely from zero-sum game self-play",
+        templateSetup: "Qwen/Qwen3-8B · 32 games/step · RAE baselines",
+      },
     ],
     bibtex: `@article{liu2025spiral,
   title={SPIRAL: Self-Play on Zero-Sum Games Incentivizes Reasoning via Multi-Agent Multi-Turn Reinforcement Learning},

@@ -1,6 +1,9 @@
 # Rubrics
 
-<DocsLead>Score model outputs and datasets with Python checks, validators, or an LLM judge.</DocsLead>
+<DocsLead>
+  Score model outputs and datasets with Python checks, validators, or an LLM
+  judge.
+</DocsLead>
 
 A **`Rubric`** combines one or more weighted **`Scorer`** checks into an overall score while saving each individual check in [`trajectory.scores`](/docs/training/trajectories/). You can reuse the same `Rubric` or `Judge` in three places:
 
@@ -30,12 +33,12 @@ rubric = Rubric([
 
 Pick the scorer class that matches how you grade an answer:
 
-| Class | Signature | When to use it |
-| --- | --- | --- |
-| **`Scorer`** | `(traj: Trajectory) -> float` | Fast code checks (`validators.SQL()`, `validators.TypeScriptAST()`, `validators.JSONSchema(...)`), exact matches, or your own Python function. |
-| **`Judge`** | `Judge(name, model, prompt=...)` | Grade with a frontier model string (such as `"{{SONNET_MODEL}}"`) **or** a fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact` (no prompt needed for a reward model). `model` is required, with no default that could change under you, and every score records the exact judge model and prompt hash, so scores from different judges are never mixed silently. |
-| **`StatefulScorer`** | `(traj: Trajectory, handle: H) -> float` | Checks that query live Postgres rows, Redis keys, HTTP endpoints, or container files inside an [`Environment`](/docs/training/environments/) before cleanup. |
-| **`GroupScorer`** | `(group: list[Trajectory]) -> list[float]` | Compare multiple candidate answers for the same prompt side by side (for example, **`PairwiseJudge`**). |
+| Class                | Signature                                  | When to use it                                                                                                                                                                                                                                                                                                                                                                           |
+| -------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`Scorer`**         | `(traj: Trajectory) -> float`              | Fast code checks (`validators.SQL()`, `validators.TypeScriptAST()`, `validators.JSONSchema(...)`), exact matches, or your own Python function.                                                                                                                                                                                                                                           |
+| **`Judge`**          | `Judge(name, model, prompt=...)`           | Grade with a frontier model string (such as `"{{SONNET_MODEL}}"`) **or** a fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact` (no prompt needed for a reward model). `model` is required, with no default that could change under you, and every score records the exact judge model and prompt hash, so scores from different judges are never mixed silently. |
+| **`StatefulScorer`** | `(traj: Trajectory, handle: H) -> float`   | Checks that query live Postgres rows, Redis keys, HTTP endpoints, or container files inside an [`Environment`](/docs/training/environments/) before cleanup.                                                                                                                                                                                                                             |
+| **`GroupScorer`**    | `(group: list[Trajectory]) -> list[float]` | Compare multiple candidate answers for the same prompt side by side (for example, **`PairwiseJudge`**).                                                                                                                                                                                                                                                                                  |
 
 To reuse a score already stored on your imported logs, pass `Scorer.from_score("task_success", weight=1.0)`.
 
@@ -77,7 +80,12 @@ answer_check = Scorer("answer", fn=math_answer, requirements=["sympy==1.14.0"])
 `runs.plan()` checks every scorer before anything is billed and tells you if one can't run in the sandbox (for example, because it reads a local file). If a scorer has to run on your own machine, such as one that calls an internal service, pass `runtime="local"` and keep `grad worker` running. See [Where your code runs](/docs/training/recipes/#where-your-code-runs).
 
 <DocsCallout label="When to train a reward model instead" tone="tip">
-A frontier or open model `Judge` with a clear rubric is the right default for most teams. If you need to strongly encode custom preferences from examples or score outputs in milliseconds, train a dedicated verifier with [`RewardModelRecipe`](/docs/training/recipes/reward-models/) and pass that [`Artifact`](/docs/training/artifacts/) straight into `Judge(name="resolved", model=verifier_artifact)`.
+  A frontier or open model `Judge` with a clear rubric is the right default for
+  most teams. If you need to strongly encode custom preferences from examples or
+  score outputs in milliseconds, train a dedicated verifier with
+  [`RewardModelRecipe`](/docs/training/recipes/reward-models/) and pass that
+  [`Artifact`](/docs/training/artifacts/) straight into `Judge(name="resolved",
+  model=verifier_artifact)`.
 </DocsCallout>
 
 ## Grading live state inside an `Environment`

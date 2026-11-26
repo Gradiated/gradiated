@@ -126,10 +126,18 @@ const DocsHeading = ({
 }: ComponentPropsWithoutRef<"h2"> & { as: "h2" | "h3" }): ReactElement => {
   const id = props.id ?? slugify(getText(children));
   return (
-    <Tag {...props} className={`gr-doc-heading ${props.className ?? ""}`} id={id || undefined}>
+    <Tag
+      {...props}
+      className={`gr-doc-heading ${props.className ?? ""}`}
+      id={id || undefined}
+    >
       {children}
       {id ? (
-        <a aria-label={`Link to ${getText(children)}`} className="gr-doc-anchor" href={`#${id}`}>
+        <a
+          aria-label={`Link to ${getText(children)}`}
+          className="gr-doc-anchor"
+          href={`#${id}`}
+        >
           #
         </a>
       ) : null}
@@ -475,9 +483,7 @@ const PageActions = ({
             type="button"
           >
             <span className="gr-doc-copy-item-title">Copy page</span>
-            <span className="gr-doc-copy-item-desc">
-              Raw Markdown (.md)
-            </span>
+            <span className="gr-doc-copy-item-desc">Raw Markdown (.md)</span>
           </button>
           <button
             className="gr-doc-copy-item"

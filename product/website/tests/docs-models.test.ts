@@ -28,8 +28,8 @@ describe("docs model catalog constants", () => {
     expect(cjsModels.OPUS_MODEL).toBe(OPUS_MODEL);
     expect(cjsModels.SONNET_MODEL).toBe(SONNET_MODEL);
     expect(cjsModels.GPT_MODEL).toBe(GPT_MODEL);
-    expect(cjsModels.substituteDocModels("{{OPUS_MODEL}} / {{SONNET_MODEL}}")).toBe(
-      `${OPUS_MODEL} / ${SONNET_MODEL}`,
-    );
+    expect(
+      cjsModels.substituteDocModels("{{OPUS_MODEL}} / {{SONNET_MODEL}}"),
+    ).toBe(`${OPUS_MODEL} / ${SONNET_MODEL}`);
   });
 });

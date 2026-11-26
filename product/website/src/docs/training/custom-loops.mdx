@@ -1,6 +1,9 @@
 # Custom loops
 
-<DocsLead>Write your own Python training loop when you are building a new training algorithm.</DocsLead>
+<DocsLead>
+  Write your own Python training loop when you are building a new training
+  algorithm.
+</DocsLead>
 
 Most teams never need this page. A managed [recipe](/docs/training/recipes/) handles SFT, DPO, distillation, and RL, including multi-turn agent RL with `GRPORecipe(env=...)` against any [`Environment`](/docs/training/environments/). Recipes also pick the learning rate, checkpoint automatically, and keep running after you close your laptop. Use the `Trainer` when you want to change the algorithm itself: a new loss, a new advantage estimator, or a schedule a recipe doesn't offer.
 
@@ -134,13 +137,23 @@ with client.trainers.create(model="qwen/qwen3-8b") as trainer:
 ```
 
 <DocsCallout label="Built-in RL numerics diagnostics" tone="tip">
-On every `losses.GRPO`, `losses.CISPO`, or `losses.ImportanceSampling` step, `fb.result().metrics` reports `kl_sample_train` and `sample_train_max_diff`, comparing the sampler's exact `sampling_logprobs` against the trainer's recomputed logprobs so you spot off-policy staleness or tokenizer mismatches immediately. It also reports `truncation_rate`, the share of attempts that hit `max_new_tokens`.
+  On every `losses.GRPO`, `losses.CISPO`, or `losses.ImportanceSampling` step,
+  `fb.result().metrics` reports `kl_sample_train` and `sample_train_max_diff`,
+  comparing the sampler's exact `sampling_logprobs` against the trainer's
+  recomputed logprobs so you spot off-policy staleness or tokenizer mismatches
+  immediately. It also reports `truncation_rate`, the share of attempts that hit
+  `max_new_tokens`.
 </DocsCallout>
 
 Passing an empty `batch` list (when every group in a batch has identical rewards) is a safe no-op.
 
 <DocsCallout label="Choosing a learning rate" tone="tip">
-`optim.AdamW()` defaults to `lr="auto"`, which resolves from the trainer's base model, adapter, and the loss in the preceding `forward_backward()`. The examples on this page pass explicit numbers so you can see them. Typical values at `qwen/qwen3-8b` with `LoRA(rank=32)`: SFT `5e-4`, RL `5e-5`, DPO `2e-5`. See [Tuning & troubleshooting](/docs/training/tuning-troubleshooting/).
+  `optim.AdamW()` defaults to `lr="auto"`, which resolves from the trainer's
+  base model, adapter, and the loss in the preceding `forward_backward()`. The
+  examples on this page pass explicit numbers so you can see them. Typical
+  values at `qwen/qwen3-8b` with `LoRA(rank=32)`: SFT `5e-4`, RL `5e-5`, DPO
+  `2e-5`. See [Tuning &
+  troubleshooting](/docs/training/tuning-troubleshooting/).
 </DocsCallout>
 
 ## Example 2: Custom objectives with CustomLoss
@@ -230,7 +243,10 @@ with client.trainers.create(model=sft_art) as grpo_trainer:
 ```
 
 <DocsCallout label="Session timeouts, W&B logging, and debugging" tone="tip">
-Open `Trainer` sessions close automatically after 30 minutes of inactivity (you are never billed while idle), so set `autosave_every=` on long loops. See [Tuning & troubleshooting](/docs/training/tuning-troubleshooting/) for crash recovery, W&B / MLflow logging, and fixing KL spikes or flat RL rewards.
+  Open `Trainer` sessions close automatically after 30 minutes of inactivity
+  (you are never billed while idle), so set `autosave_every=` on long loops. See
+  [Tuning & troubleshooting](/docs/training/tuning-troubleshooting/) for crash
+  recovery, W&B / MLflow logging, and fixing KL spikes or flat RL rewards.
 </DocsCallout>
 
 ### Gradient accumulation, LR schedules, and held-out eval
@@ -385,28 +401,28 @@ Routers, linear probes, and steering vectors that don't need SGD can be solved i
 
 ### Built-in `losses.*` classes
 
-| Class | Use it for |
-| --- | --- |
-| `losses.CrossEntropy(heads=...)` | Next-token SFT respecting `loss_mask`; optionally pass `heads={"k1": HeadCE(shift=2, weight=0.8), ...}` for server-side Medusa / multi-token prediction without sending vocab logits over HTTP. |
-| `losses.BCEWithLogits(head=...)` | Binary or multi-label head classification. |
-| `losses.OrdinalBCE()` | Ordered tier classification (`low < medium < high`). |
-| `losses.L2Logistic()` | Regularized logistic heads. |
-| `losses.DPO(beta=0.1)` | Paired preference optimization (`group_id` + `chosen` / `rejected`). |
-| `losses.ImportanceSampling(kl_coef=0.0)` | Unclipped importance-weighted policy gradient for on-policy or lightly off-policy RL. |
-| `losses.GRPO(clip_low=0.2, clip_high=0.28, mask_ratio=None, kl_coef=0.0)` | Clipped policy-gradient RL with optional KL penalty. The default RL loss; set `mask_ratio=(0.5, 2.0)` when rollouts lag the trainer. |
-| `losses.CISPO(clip_low=0.2, clip_high=0.28)` | Stop-gradient clipped importance sampling. Can be unstable on stale rollouts; for async loops use `losses.GRPO(..., mask_ratio=(0.5, 2.0))`. |
-| `losses.ReverseKLDistill()` | Token-level reverse-KL distillation against `ref_logprobs`. |
-| `losses.TopKKLDistill(top_k=32)` | Distillation against `teacher_topk` (`TensorRef` or multi-teacher weighted list). |
-| `losses.InfoNCE(temp=0.05)` | Contrastive embedding training (`anchor` / `positive` / `negative`). |
-| `losses.BCESparsePositions(head="prm")` | Token-level or step-level heads at explicit `positions` (PRMs, prompt compression). |
-| `losses.CustomLoss` | Write your own loss formula locally in PyTorch while Gradiated's GPUs run the model forward and backward passes. |
+| Class                                                                     | Use it for                                                                                                                                                                                      |
+| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `losses.CrossEntropy(heads=...)`                                          | Next-token SFT respecting `loss_mask`; optionally pass `heads={"k1": HeadCE(shift=2, weight=0.8), ...}` for server-side Medusa / multi-token prediction without sending vocab logits over HTTP. |
+| `losses.BCEWithLogits(head=...)`                                          | Binary or multi-label head classification.                                                                                                                                                      |
+| `losses.OrdinalBCE()`                                                     | Ordered tier classification (`low < medium < high`).                                                                                                                                            |
+| `losses.L2Logistic()`                                                     | Regularized logistic heads.                                                                                                                                                                     |
+| `losses.DPO(beta=0.1)`                                                    | Paired preference optimization (`group_id` + `chosen` / `rejected`).                                                                                                                            |
+| `losses.ImportanceSampling(kl_coef=0.0)`                                  | Unclipped importance-weighted policy gradient for on-policy or lightly off-policy RL.                                                                                                           |
+| `losses.GRPO(clip_low=0.2, clip_high=0.28, mask_ratio=None, kl_coef=0.0)` | Clipped policy-gradient RL with optional KL penalty. The default RL loss; set `mask_ratio=(0.5, 2.0)` when rollouts lag the trainer.                                                            |
+| `losses.CISPO(clip_low=0.2, clip_high=0.28)`                              | Stop-gradient clipped importance sampling. Can be unstable on stale rollouts; for async loops use `losses.GRPO(..., mask_ratio=(0.5, 2.0))`.                                                    |
+| `losses.ReverseKLDistill()`                                               | Token-level reverse-KL distillation against `ref_logprobs`.                                                                                                                                     |
+| `losses.TopKKLDistill(top_k=32)`                                          | Distillation against `teacher_topk` (`TensorRef` or multi-teacher weighted list).                                                                                                               |
+| `losses.InfoNCE(temp=0.05)`                                               | Contrastive embedding training (`anchor` / `positive` / `negative`).                                                                                                                            |
+| `losses.BCESparsePositions(head="prm")`                                   | Token-level or step-level heads at explicit `positions` (PRMs, prompt compression).                                                                                                             |
+| `losses.CustomLoss`                                                       | Write your own loss formula locally in PyTorch while Gradiated's GPUs run the model forward and backward passes.                                                                                |
 
 ### Adapters
 
-| Class | What gets trained |
-| --- | --- |
+| Class                              | What gets trained                                                                                                                                                                                                                                         |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `adapters.LoRA(rank=32, alpha=32)` | Low-rank adapters plus any trainable `heads`. The default. `alpha` stays fixed at 32 when you change `rank`, so the right learning rate doesn't move. Ranks 8–16 are enough for RL and small datasets; SFT on more than 50k records benefits from 64–128. |
-| `adapters.FrozenHead()` | Backbone frozen; trains only attached `heads`. |
+| `adapters.FrozenHead()`            | Backbone frozen; trains only attached `heads`.                                                                                                                                                                                                            |
 
 DoRA, QLoRA, prefix tuning (`PrefixKV`, used by Cartridges), LoReFT, EAGLE-3 draft heads, and partial unfreezing are covered in [Advanced adapters](/docs/training/advanced-objectives/#advanced-adapters).
 

@@ -1,6 +1,9 @@
 # Recipes
 
-<DocsLead>Pick a recipe, check the cost with a dry run, and train with sensible defaults.</DocsLead>
+<DocsLead>
+  Pick a recipe, check the cost with a dry run, and train with sensible
+  defaults.
+</DocsLead>
 
 A **recipe** is a Python class that wires up a common training workflow (`RouterRecipe`, `DecisionModelRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`, `RewardModelRecipe`, `EmbeddingRecipe`). When a run finishes, it saves a versioned `.grad` [`Artifact`](/docs/training/artifacts/) along with its held-out evaluation report.
 
@@ -8,17 +11,17 @@ A **recipe** is a Python class that wires up a common training workflow (`Router
 
 ## Built-in recipes
 
-| Recipe class | Guide | Expected dataset fields |
-| --- | --- | --- |
-| `RouterRecipe` | [Model router](/docs/training/recipes/router/) | Prompts (`messages`) + a `rubric=` (such as a `Judge`) or existing `scores` (optional `metrics.cost_usd`) |
-| `DecisionModelRecipe` | [Decision models](/docs/training/recipes/decision-model/) | SystemOne `state` + `questions` (`choice`, `noul`, `score`) and `expected_output` |
-| `SFTRecipe` | [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) | Chat records (`{"messages": [...]}`, last assistant turn is the target), or `input` + `expected_output` |
-| `DPORecipe` | [Preference tuning (DPO)](/docs/training/recipes/dpo/) | `prompt` + `chosen` + `rejected` records, or paired `group_id` trajectories |
-| `GRPORecipe` | [RL for agents](/docs/training/recipes/rl-agents/) | Tasks + a [`Rubric`](/docs/training/rubrics/), or any [`Environment`](/docs/training/environments/), single- or multi-turn |
-| `DistillRecipe` | [Model distillation](/docs/training/recipes/distillation/) | Prompts or traces + `teacher` model |
-| `CartridgeRecipe` | [Context Cartridges](/docs/training/recipes/cartridges/) | Static corpus (`Context`) + QA prompts (`num_tokens`) |
-| `RewardModelRecipe` | [Reward models](/docs/training/recipes/reward-models/) | `prompt` + `chosen` + `rejected` records, or paired `group_id` trajectories |
-| `EmbeddingRecipe` | [Embeddings](/docs/training/recipes/embeddings/) | `Triplet` examples (`query`, `positive` doc, optional `negatives`) |
+| Recipe class          | Guide                                                       | Expected dataset fields                                                                                                    |
+| --------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `RouterRecipe`        | [Model router](/docs/training/recipes/router/)              | Prompts (`messages`) + a `rubric=` (such as a `Judge`) or existing `scores` (optional `metrics.cost_usd`)                  |
+| `DecisionModelRecipe` | [Decision models](/docs/training/recipes/decision-model/)   | SystemOne `state` + `questions` (`choice`, `noul`, `score`) and `expected_output`                                          |
+| `SFTRecipe`           | [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) | Chat records (`{"messages": [...]}`, last assistant turn is the target), or `input` + `expected_output`                    |
+| `DPORecipe`           | [Preference tuning (DPO)](/docs/training/recipes/dpo/)      | `prompt` + `chosen` + `rejected` records, or paired `group_id` trajectories                                                |
+| `GRPORecipe`          | [RL for agents](/docs/training/recipes/rl-agents/)          | Tasks + a [`Rubric`](/docs/training/rubrics/), or any [`Environment`](/docs/training/environments/), single- or multi-turn |
+| `DistillRecipe`       | [Model distillation](/docs/training/recipes/distillation/)  | Prompts or traces + `teacher` model                                                                                        |
+| `CartridgeRecipe`     | [Context Cartridges](/docs/training/recipes/cartridges/)    | Static corpus (`Context`) + QA prompts (`num_tokens`)                                                                      |
+| `RewardModelRecipe`   | [Reward models](/docs/training/recipes/reward-models/)      | `prompt` + `chosen` + `rejected` records, or paired `group_id` trajectories                                                |
+| `EmbeddingRecipe`     | [Embeddings](/docs/training/recipes/embeddings/)            | `Triplet` examples (`query`, `positive` doc, optional `negatives`)                                                         |
 
 Any dataset works as input: a list of plain chat records or a `.jsonl` file (`client.datasets.push(name, records_or_path)`), a Hugging Face dataset (`client.datasets.from_hf(...)`), or traces imported from your observability tool. See [Trajectories](/docs/training/trajectories/).
 
@@ -67,10 +70,20 @@ const plan = await grad.runs.plan({
   name: "support-router",
   recipe: recipes.router(),
 });
-console.log(plan.resolvedRecipe, plan.warnings, plan.estimatedTokens, plan.estimatedCostUsd);
+console.log(
+  plan.resolvedRecipe,
+  plan.warnings,
+  plan.estimatedTokens,
+  plan.estimatedCostUsd,
+);
 
 const run = await grad.runs
-  .create({ dataset, name: "support-router", recipe: recipes.router(), maxCostUsd: 20 })
+  .create({
+    dataset,
+    name: "support-router",
+    recipe: recipes.router(),
+    maxCostUsd: 20,
+  })
   .wait({
     onMetric: (m) => console.log(`step=${m.step} loss=${m.loss.toFixed(4)}`),
   });

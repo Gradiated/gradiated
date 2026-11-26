@@ -4,7 +4,8 @@ export const embeddingsMultimodalPapers: PaperGuide[] = [
   {
     slug: "matryoshka-colbert",
     shortTitle: "Matryoshka + ColBERT",
-    title: "Matryoshka Representation Learning + ColBERT Multi-Vector Retrieval",
+    title:
+      "Matryoshka Representation Learning + ColBERT Multi-Vector Retrieval",
     authors: "Kusupati et al. / Khattab & Zaharia",
     year: 2022,
     arxivId: "2205.13147",
@@ -24,9 +25,25 @@ export const embeddingsMultimodalPapers: PaperGuide[] = [
         "pool='none' + 14-line joint Matryoshka/ColBERT loss in forward_backward_custom handles both coarse and late-interaction retrieval cleanly.",
     },
     walkthrough: [
-      { title: "Configure ModelSpec with pool='none'", explanation: "Receive full (L, D) per-token representations instead of a single pooled vector.", gradCall: "ModelSpec(..., pool='none')" },
-      { title: "Sum Matryoshka prefix InfoNCE + ColBERT MaxSim", explanation: "Optimize nested dimensions (128, 256, 384) jointly with token-level MaxSim.", gradCall: "trainer.forward_backward_custom(batch, outputs=['embeddings'], loss_fn=mrl_colbert_loss)" },
-      { title: "Override pool per call at serving time", explanation: "Call embed(pool='mean')[:128] for fast vector search and embed(pool='none') for ColBERT reranking.", gradCall: "art.embed(inputs, pool='none')['embeddings']" },
+      {
+        title: "Configure ModelSpec with pool='none'",
+        explanation:
+          "Receive full (L, D) per-token representations instead of a single pooled vector.",
+        gradCall: "ModelSpec(..., pool='none')",
+      },
+      {
+        title: "Sum Matryoshka prefix InfoNCE + ColBERT MaxSim",
+        explanation:
+          "Optimize nested dimensions (128, 256, 384) jointly with token-level MaxSim.",
+        gradCall:
+          "trainer.forward_backward_custom(batch, outputs=['embeddings'], loss_fn=mrl_colbert_loss)",
+      },
+      {
+        title: "Override pool per call at serving time",
+        explanation:
+          "Call embed(pool='mean')[:128] for fast vector search and embed(pool='none') for ColBERT reranking.",
+        gradCall: "art.embed(inputs, pool='none')['embeddings']",
+      },
     ],
     gotchas: [
       "L2-normalize every truncated Matryoshka prefix independently before dot products — normalizing only the full vector biases smaller slices.",
@@ -37,15 +54,38 @@ export const embeddingsMultimodalPapers: PaperGuide[] = [
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "BAAI/bge-small-en-v1.5", label: "BAAI/bge-small-en-v1.5 (fast, 384d)", estTokens: "~2.6M tokens", duration: "~8 min", estCost: "~$0.65" },
-      { id: "BAAI/bge-base-en-v1.5", label: "BAAI/bge-base-en-v1.5 (768d)", estTokens: "~2.8M tokens", duration: "~14 min", estCost: "~$1.10" },
+      {
+        id: "BAAI/bge-small-en-v1.5",
+        label: "BAAI/bge-small-en-v1.5 (fast, 384d)",
+        estTokens: "~2.6M tokens",
+        duration: "~8 min",
+        estCost: "~$0.65",
+      },
+      {
+        id: "BAAI/bge-base-en-v1.5",
+        label: "BAAI/bge-base-en-v1.5 (768d)",
+        estTokens: "~2.8M tokens",
+        duration: "~14 min",
+        estCost: "~$1.10",
+      },
     ],
     datasets: [
-      { id: "hf://sentence-transformers/msmarco-bm25", label: "MS MARCO Hard-Negative Triplets", source: "Hugging Face (public)", examples: "500k (query, pos, neg) triplets" },
+      {
+        id: "hf://sentence-transformers/msmarco-bm25",
+        label: "MS MARCO Hard-Negative Triplets",
+        source: "Hugging Face (public)",
+        examples: "500k (query, pos, neg) triplets",
+      },
     ],
     primitives: [
-      { label: "Embeddings & rerankers guide", href: "/docs/training/recipes/embeddings/" },
-      { label: "pool='none' token embeddings", href: "/docs/reference/primitives/" },
+      {
+        label: "Embeddings & rerankers guide",
+        href: "/docs/training/recipes/embeddings/",
+      },
+      {
+        label: "pool='none' token embeddings",
+        href: "/docs/reference/primitives/",
+      },
     ],
     codeLabel: "train.py",
     codeLanguage: "python",
@@ -98,7 +138,12 @@ Model     BAAI/bge-small-en-v1.5 · pool=none (MRL 128/256/384d + ColBERT)
 Loss      custom mrl_colbert_loss
 Estimate  ~1.6M tokens · ~8 min · ~$0.65 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Storage vs. Recall@10", paperReported: "Up to 14x smaller vector index at 64–128d with ColBERT reranking recovering full precision", templateSetup: "MS MARCO triplets · BGE-small · dims=(128,256,384)" },
+      {
+        benchmark: "Storage vs. Recall@10",
+        paperReported:
+          "Up to 14x smaller vector index at 64–128d with ColBERT reranking recovering full precision",
+        templateSetup: "MS MARCO triplets · BGE-small · dims=(128,256,384)",
+      },
     ],
     bibtex: `@inproceedings{kusupati2022matryoshka,
   title={Matryoshka Representation Learning},
@@ -110,7 +155,8 @@ Estimate  ~1.6M tokens · ~8 min · ~$0.65 · warnings: 0`,
   {
     slug: "bge-m3",
     shortTitle: "BGE-M3",
-    title: "BGE-M3: Joint Dense, Lexical Sparse (SPLADE), and Multi-Vector Retrieval",
+    title:
+      "BGE-M3: Joint Dense, Lexical Sparse (SPLADE), and Multi-Vector Retrieval",
     authors: "Chen et al. (BAAI)",
     year: 2024,
     arxivId: "2402.03216",
@@ -130,9 +176,26 @@ Estimate  ~1.6M tokens · ~8 min · ~$0.65 · warnings: 0`,
         "Tri-objective hybrid retrieval (dense + ColBERT + lexical head with FLOPS regularization) fits in 38 lines.",
     },
     walkthrough: [
-      { title: "Attach a token-level lexical importance head", explanation: "Add heads={'lex': {'dim': 1, 'token_level': True}} alongside pool='none' token embeddings.", gradCall: "ModelSpec(..., pool='none', heads={'lex': {'dim': 1, 'token_level': True}})" },
-      { title: "Compute Dense + ColBERT + Lexical scores jointly", explanation: "Score triplets on all three retrieval modalities plus a FLOPS L1 sparsity regularizer on lexical weights.", gradCall: "trainer.forward_backward_custom(batch, outputs=['embeddings', 'heads'], loss_fn=bge_m3_loss)" },
-      { title: "Self-distill from the combined ensemble score", explanation: "Match each modality's distribution to the detached ensemble score for free accuracy gains.", gradCall: "F.kl_div(..., target=ensemble.detach())" },
+      {
+        title: "Attach a token-level lexical importance head",
+        explanation:
+          "Add heads={'lex': {'dim': 1, 'token_level': True}} alongside pool='none' token embeddings.",
+        gradCall:
+          "ModelSpec(..., pool='none', heads={'lex': {'dim': 1, 'token_level': True}})",
+      },
+      {
+        title: "Compute Dense + ColBERT + Lexical scores jointly",
+        explanation:
+          "Score triplets on all three retrieval modalities plus a FLOPS L1 sparsity regularizer on lexical weights.",
+        gradCall:
+          "trainer.forward_backward_custom(batch, outputs=['embeddings', 'heads'], loss_fn=bge_m3_loss)",
+      },
+      {
+        title: "Self-distill from the combined ensemble score",
+        explanation:
+          "Match each modality's distribution to the detached ensemble score for free accuracy gains.",
+        gradCall: "F.kl_div(..., target=ensemble.detach())",
+      },
     ],
     gotchas: [
       "Include a small L1/FLOPS sparsity weight (1e-4) on ReLU(lex_weights) so lexical weights stay sparse and fast to invert.",
@@ -143,14 +206,34 @@ Estimate  ~1.6M tokens · ~8 min · ~$0.65 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "BAAI/bge-m3", label: "BAAI/bge-m3 (recommended, 8k multilingual)", estTokens: "~3.6M tokens", duration: "~18 min", estCost: "~$1.45" },
-      { id: "BAAI/bge-small-en-v1.5", label: "BAAI/bge-small-en-v1.5 (fast smoke run)", estTokens: "~2.6M tokens", duration: "~8 min", estCost: "~$0.65" },
+      {
+        id: "BAAI/bge-m3",
+        label: "BAAI/bge-m3 (recommended, 8k multilingual)",
+        estTokens: "~3.6M tokens",
+        duration: "~18 min",
+        estCost: "~$1.45",
+      },
+      {
+        id: "BAAI/bge-small-en-v1.5",
+        label: "BAAI/bge-small-en-v1.5 (fast smoke run)",
+        estTokens: "~2.6M tokens",
+        duration: "~8 min",
+        estCost: "~$0.65",
+      },
     ],
     datasets: [
-      { id: "hf://sentence-transformers/msmarco-bm25", label: "MS MARCO Hard Negatives", source: "Hugging Face (public)", examples: "500k (query, pos, neg) triplets" },
+      {
+        id: "hf://sentence-transformers/msmarco-bm25",
+        label: "MS MARCO Hard Negatives",
+        source: "Hugging Face (public)",
+        examples: "500k (query, pos, neg) triplets",
+      },
     ],
     primitives: [
-      { label: "Embeddings & rerankers", href: "/docs/training/recipes/embeddings/" },
+      {
+        label: "Embeddings & rerankers",
+        href: "/docs/training/recipes/embeddings/",
+      },
       { label: "Multi-head ModelSpec", href: "/docs/reference/primitives/" },
     ],
     codeLabel: "train.py",
@@ -207,7 +290,12 @@ Model     BAAI/bge-m3 · pool=none + token_level head 'lex'
 Loss      custom tri-objective (dense + ColBERT + lexical + self-distillation)
 Estimate  ~3.6M tokens · ~18 min · ~$1.45 · warnings: 0`,
     benchmarks: [
-      { benchmark: "MIRACL & BEIR Hybrid nDCG@10", paperReported: "Outperforms dense-only & BM25 across 100+ languages using unified self-distilled retrieval", templateSetup: "MS MARCO triplets · BGE-M3 · dense + ColBERT + lexical" },
+      {
+        benchmark: "MIRACL & BEIR Hybrid nDCG@10",
+        paperReported:
+          "Outperforms dense-only & BM25 across 100+ languages using unified self-distilled retrieval",
+        templateSetup: "MS MARCO triplets · BGE-M3 · dense + ColBERT + lexical",
+      },
     ],
     bibtex: `@article{chen2024bgem3,
   title={BGE M3-Embedding: Multi-Lingual, Multi-Functionality, Multi-Granularity Text Embeddings Through Self-Knowledge Distillation},
@@ -239,9 +327,26 @@ Estimate  ~3.6M tokens · ~18 min · ~$1.45 · warnings: 0`,
         "Zero custom loss math — combines built-in infonce + Artifact.embed() + CPU fit_batch() in 30 lines.",
     },
     walkthrough: [
-      { title: "Generate contrastive triplets from 8 examples/class", explanation: "Pair same-class texts as positives and different-class texts as negatives to multiply training signal quadratically.", gradCall: "build_contrastive_triplets(few_shot_rows)" },
-      { title: "Stage 1: Fine-tune the encoder with built-in infonce", explanation: "Pull same-class embeddings together and push different classes apart in ~1 minute.", gradCall: "trainer.forward_backward(triplets, loss={'kind': 'infonce', 'temp': 0.05})" },
-      { title: "Stage 2: Fit a convex head on cached embeddings on CPU", explanation: "Extract embeddings with s1_art.embed() and solve L2-logistic via fit_batch().", gradCall: "cpu_trn.fit_batch(emb_datums, solver='dual_head_kernel_lbfgs')" },
+      {
+        title: "Generate contrastive triplets from 8 examples/class",
+        explanation:
+          "Pair same-class texts as positives and different-class texts as negatives to multiply training signal quadratically.",
+        gradCall: "build_contrastive_triplets(few_shot_rows)",
+      },
+      {
+        title: "Stage 1: Fine-tune the encoder with built-in infonce",
+        explanation:
+          "Pull same-class embeddings together and push different classes apart in ~1 minute.",
+        gradCall:
+          "trainer.forward_backward(triplets, loss={'kind': 'infonce', 'temp': 0.05})",
+      },
+      {
+        title: "Stage 2: Fit a convex head on cached embeddings on CPU",
+        explanation:
+          "Extract embeddings with s1_art.embed() and solve L2-logistic via fit_batch().",
+        gradCall:
+          "cpu_trn.fit_batch(emb_datums, solver='dual_head_kernel_lbfgs')",
+      },
     ],
     gotchas: [
       "Keep Stage-1 epochs small (1–2 epochs over generated pairs) so the encoder doesn't collapse on 8-shot data.",
@@ -252,14 +357,31 @@ Estimate  ~3.6M tokens · ~18 min · ~$1.45 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "BAAI/bge-small-en-v1.5", label: "BAAI/bge-small-en-v1.5 (<5ms CPU)", estTokens: "~0.8M embed tokens", duration: "~2 min", estCost: "~$0.15" },
+      {
+        id: "BAAI/bge-small-en-v1.5",
+        label: "BAAI/bge-small-en-v1.5 (<5ms CPU)",
+        estTokens: "~0.8M embed tokens",
+        duration: "~2 min",
+        estCost: "~$0.15",
+      },
     ],
     datasets: [
-      { id: "hf://SetFit/sst2", label: "SST-2 Few-Shot (8 examples/class)", source: "Hugging Face (public)", examples: "16 few-shot train / 872 eval" },
+      {
+        id: "hf://SetFit/sst2",
+        label: "SST-2 Few-Shot (8 examples/class)",
+        source: "Hugging Face (public)",
+        examples: "16 few-shot train / 872 eval",
+      },
     ],
     primitives: [
-      { label: "Built-in infonce loss", href: "/docs/training/recipes/embeddings/" },
-      { label: "Classifiers & decisions", href: "/docs/training/recipes/classifier/" },
+      {
+        label: "Built-in infonce loss",
+        href: "/docs/training/recipes/embeddings/",
+      },
+      {
+        label: "Classifiers & decisions",
+        href: "/docs/training/recipes/classifier/",
+      },
     ],
     codeLabel: "train.py",
     codeLanguage: "python",
@@ -305,7 +427,12 @@ Dataset   hf://SetFit/sst2 (8 shots/class -> 112 contrastive pairs · public)
 Model     BAAI/bge-small-en-v1.5 · Stage 1 InfoNCE (GPU) -> Stage 2 L-BFGS (CPU)
 Estimate  ~600K train tokens (~$0.15) · warnings: 0`,
     benchmarks: [
-      { benchmark: "8-shot RAFT / SST-2 accuracy", paperReported: "Matches GPT-3 175B few-shot accuracy at 1,600x smaller model size", templateSetup: "SST-2 8-shot · BGE-small · InfoNCE + CPU L-BFGS" },
+      {
+        benchmark: "8-shot RAFT / SST-2 accuracy",
+        paperReported:
+          "Matches GPT-3 175B few-shot accuracy at 1,600x smaller model size",
+        templateSetup: "SST-2 8-shot · BGE-small · InfoNCE + CPU L-BFGS",
+      },
     ],
     bibtex: `@article{tunstall2022setfit,
   title={Efficient Few-Shot Learning Without Prompts},
@@ -317,7 +444,8 @@ Estimate  ~600K train tokens (~$0.15) · warnings: 0`,
   {
     slug: "sayself",
     shortTitle: "SaySelf",
-    title: "SaySelf: Teaching LLMs Calibrated Verbalized Confidence via Brier RL",
+    title:
+      "SaySelf: Teaching LLMs Calibrated Verbalized Confidence via Brier RL",
     authors: "Xu et al.",
     year: 2024,
     arxivId: "2405.20974",
@@ -337,9 +465,24 @@ Estimate  ~600K train tokens (~$0.15) · warnings: 0`,
         "Strictly proper Brier reward + built-in GRPO turns calibration training into a 28-line loop.",
     },
     walkthrough: [
-      { title: "Sample answers with verbalized confidence p in [0, 1]", explanation: "Prompt the model to output both its answer and calibrated confidence score.", gradCall: "snap.sample(prompts, n=8)" },
-      { title: "Score every rollout with strictly proper Brier reward", explanation: "Compute r = 1 - (p - y)^2 (or -0.5 for malformed confidence format).", gradCall: "r = 1.0 - (p - y) ** 2" },
-      { title: "Update with built-in GRPO", explanation: "Group-center Brier rewards and step with built-in loss='grpo'.", gradCall: "trainer.forward_backward(datums, loss={'kind': 'grpo'})" },
+      {
+        title: "Sample answers with verbalized confidence p in [0, 1]",
+        explanation:
+          "Prompt the model to output both its answer and calibrated confidence score.",
+        gradCall: "snap.sample(prompts, n=8)",
+      },
+      {
+        title: "Score every rollout with strictly proper Brier reward",
+        explanation:
+          "Compute r = 1 - (p - y)^2 (or -0.5 for malformed confidence format).",
+        gradCall: "r = 1.0 - (p - y) ** 2",
+      },
+      {
+        title: "Update with built-in GRPO",
+        explanation:
+          "Group-center Brier rewards and step with built-in loss='grpo'.",
+        gradCall: "trainer.forward_backward(datums, loss={'kind': 'grpo'})",
+      },
     ],
     gotchas: [
       "Give a clear negative penalty (-0.5) for unparseable confidence tags so the model doesn't dodge calibration by omitting the score.",
@@ -350,14 +493,28 @@ Estimate  ~600K train tokens (~$0.15) · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~4.0M tokens", duration: "~20 min", estCost: "~$1.60" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~4.0M tokens",
+        duration: "~20 min",
+        estCost: "~$1.60",
+      },
     ],
     datasets: [
-      { id: "hf://trivia_qa", label: "TriviaQA (Calibrated QA)", source: "Hugging Face (public)", examples: "15,000 factual QA prompts" },
+      {
+        id: "hf://trivia_qa",
+        label: "TriviaQA (Calibrated QA)",
+        source: "Hugging Face (public)",
+        examples: "15,000 factual QA prompts",
+      },
     ],
     primitives: [
       { label: "RL for agents", href: "/docs/training/recipes/rl-agents/" },
-      { label: "Classifiers & calibration", href: "/docs/training/recipes/classifier/" },
+      {
+        label: "Classifiers & calibration",
+        href: "/docs/training/recipes/classifier/",
+      },
     ],
     codeLabel: "train.py",
     codeLanguage: "python",
@@ -403,7 +560,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · group_size=8
 Loss      grpo with strictly proper Brier reward 1 - (p - y)^2
 Estimate  ~4.0M tokens · ~20 min · ~$1.60 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Expected Calibration Error (ECE)", paperReported: "Cuts verbalized ECE by >50% across HotpotQA & TriviaQA while holding QA accuracy", templateSetup: "TriviaQA · Qwen/Qwen3-8B · Brier GRPO" },
+      {
+        benchmark: "Expected Calibration Error (ECE)",
+        paperReported:
+          "Cuts verbalized ECE by >50% across HotpotQA & TriviaQA while holding QA accuracy",
+        templateSetup: "TriviaQA · Qwen/Qwen3-8B · Brier GRPO",
+      },
     ],
     bibtex: `@inproceedings{xu2024sayself,
   title={SaySelf: Teaching LLMs to Express Confidence with Self-Reflective Rationales},
@@ -415,7 +577,8 @@ Estimate  ~4.0M tokens · ~20 min · ~$1.60 · warnings: 0`,
   {
     slug: "vlm-grpo",
     shortTitle: "Visual-RFT / VLM GRPO",
-    title: "Visual-RFT: Multimodal Reinforcement Fine-Tuning with Verifiable IoU Rewards",
+    title:
+      "Visual-RFT: Multimodal Reinforcement Fine-Tuning with Verifiable IoU Rewards",
     authors: "Liu et al.",
     year: 2025,
     arxivId: "2503.01785",
@@ -435,9 +598,25 @@ Estimate  ~4.0M tokens · ~20 min · ~$1.60 · warnings: 0`,
         "Server-side MediaRef handling makes VLM GRPO identical to text-only GRPO in 31 lines.",
     },
     walkthrough: [
-      { title: "Attach images via MediaRef in ModelInput", explanation: "Pass S3/HTTP/HF image refs directly — the server handles vision encoding and token expansion.", gradCall: "ModelInput(messages=msgs, media=[MediaRef(kind='image', ref=img_url)])" },
-      { title: "Sample G=8 multimodal reasoning + bbox rollouts", explanation: "Artifact.sample() preserves exact 1:1 token alignment across vision and text tokens.", gradCall: "trainer.snapshot().sample(vlm_inputs, n=8)" },
-      { title: "Grade bounding boxes with verifiable IoU + step with GRPO", explanation: "Compute exact IoU against ground-truth boxes and run built-in grpo.", gradCall: "trainer.forward_backward(datums, loss={'kind': 'grpo'})" },
+      {
+        title: "Attach images via MediaRef in ModelInput",
+        explanation:
+          "Pass S3/HTTP/HF image refs directly — the server handles vision encoding and token expansion.",
+        gradCall:
+          "ModelInput(messages=msgs, media=[MediaRef(kind='image', ref=img_url)])",
+      },
+      {
+        title: "Sample G=8 multimodal reasoning + bbox rollouts",
+        explanation:
+          "Artifact.sample() preserves exact 1:1 token alignment across vision and text tokens.",
+        gradCall: "trainer.snapshot().sample(vlm_inputs, n=8)",
+      },
+      {
+        title: "Grade bounding boxes with verifiable IoU + step with GRPO",
+        explanation:
+          "Compute exact IoU against ground-truth boxes and run built-in grpo.",
+        gradCall: "trainer.forward_backward(datums, loss={'kind': 'grpo'})",
+      },
     ],
     gotchas: [
       "Keep a small format reward (0.1 for valid JSON/XML box coordinates) so early rollouts get non-zero variance even before IoU improves.",
@@ -448,10 +627,21 @@ Estimate  ~4.0M tokens · ~20 min · ~$1.60 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen2.5-VL-7B-Instruct", label: "Qwen2.5-VL-7B-Instruct (recommended)", estTokens: "~5.6M tokens", duration: "~28 min", estCost: "~$2.25" },
+      {
+        id: "Qwen/Qwen2.5-VL-7B-Instruct",
+        label: "Qwen2.5-VL-7B-Instruct (recommended)",
+        estTokens: "~5.6M tokens",
+        duration: "~28 min",
+        estCost: "~$2.25",
+      },
     ],
     datasets: [
-      { id: "hf://laolao77/ViRFT_COCO_base65", label: "Visual-RFT COCO Few-Shot Grounding", source: "Hugging Face (public)", examples: "Few-shot object grounding + IoU boxes" },
+      {
+        id: "hf://laolao77/ViRFT_COCO_base65",
+        label: "Visual-RFT COCO Few-Shot Grounding",
+        source: "Hugging Face (public)",
+        examples: "Few-shot object grounding + IoU boxes",
+      },
     ],
     primitives: [
       { label: "Multimodal MediaRef", href: "/docs/training/custom-loops/" },
@@ -501,7 +691,12 @@ Model     Qwen/Qwen2.5-VL-7B-Instruct · adapter=lora (rank=32) · MediaRef imag
 Loss      grpo (clip=[0.20, 0.28]) with verifiable IoU + JSON format reward
 Estimate  ~5.6M tokens · ~28 min · ~$2.25 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Few-shot COCO & LVIS mAP", paperReported: "+10 to +24 pts over multimodal SFT on 1-shot & few-shot grounding", templateSetup: "ViRFT_COCO_base65 · Qwen2.5-VL-7B · IoU GRPO" },
+      {
+        benchmark: "Few-shot COCO & LVIS mAP",
+        paperReported:
+          "+10 to +24 pts over multimodal SFT on 1-shot & few-shot grounding",
+        templateSetup: "ViRFT_COCO_base65 · Qwen2.5-VL-7B · IoU GRPO",
+      },
     ],
     bibtex: `@article{liu2025visualrft,
   title={Visual-RFT: Visual Reinforcement Fine-Tuning},

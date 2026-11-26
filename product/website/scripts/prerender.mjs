@@ -142,7 +142,10 @@ const toPortableMarkdown = (source) =>
       "[View the live model catalog](https://api.gradiated.com/api/v1/models)",
     )
     .replace(/<DocsApiKeyAction\s*\/>/g, "")
-    .replace(/<Docs(?:TrainingFlywheel|RecipeChooser|TokenAlignment|PipelineDiagram|EnvLifecycle|DeployFlow)\s*\/>/g, "")
+    .replace(
+      /<Docs(?:TrainingFlywheel|RecipeChooser|TokenAlignment|PipelineDiagram|EnvLifecycle|DeployFlow)\s*\/>/g,
+      "",
+    )
     .replace(/<\/?Docs[A-Za-z]+(?:\s[^>]*)?>/g, "")
     .replace(/^[ \t]+$/gm, "")
     .replace(/\n{3,}/g, "\n\n")

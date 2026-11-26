@@ -24,10 +24,32 @@ export const distillationCompressionPapers: PaperGuide[] = [
         "Split prefix/response score_logprobs + built-in topk_kl_distill make SDFT absurdly clean — 22 lines total.",
     },
     walkthrough: [
-      { title: "Pin the frozen base model as self-teacher", explanation: "Grab a read-only Artifact handle to the exact same base model — no second model deployment required.", gradCall: "teacher = client.artifacts.get(base_id)" },
-      { title: "Sample on-policy from the student without the demo", explanation: "Generate completions seeing only the bare question so training stays strictly on-policy.", gradCall: "trainer.snapshot().sample(batch.question_inputs, n=1)" },
-      { title: "Score student tokens under the demo-conditioned teacher", explanation: "Pass demo_prefix_tokens separately from response_tokens and request compact top_k=20 TensorRefs.", gradCall: "teacher.score_logprobs(prefix_tokens=demo_prefixes, response_tokens=resps, top_k=20)" },
-      { title: "Step with built-in topk_kl_distill", explanation: "Attach each TensorRef via to_datum(teacher_topk=ref) and pipeline forward_backward + optim_step.", gradCall: "trainer.forward_backward(datums, loss={'kind': 'topk_kl_distill'})" },
+      {
+        title: "Pin the frozen base model as self-teacher",
+        explanation:
+          "Grab a read-only Artifact handle to the exact same base model — no second model deployment required.",
+        gradCall: "teacher = client.artifacts.get(base_id)",
+      },
+      {
+        title: "Sample on-policy from the student without the demo",
+        explanation:
+          "Generate completions seeing only the bare question so training stays strictly on-policy.",
+        gradCall: "trainer.snapshot().sample(batch.question_inputs, n=1)",
+      },
+      {
+        title: "Score student tokens under the demo-conditioned teacher",
+        explanation:
+          "Pass demo_prefix_tokens separately from response_tokens and request compact top_k=20 TensorRefs.",
+        gradCall:
+          "teacher.score_logprobs(prefix_tokens=demo_prefixes, response_tokens=resps, top_k=20)",
+      },
+      {
+        title: "Step with built-in topk_kl_distill",
+        explanation:
+          "Attach each TensorRef via to_datum(teacher_topk=ref) and pipeline forward_backward + optim_step.",
+        gradCall:
+          "trainer.forward_backward(datums, loss={'kind': 'topk_kl_distill'})",
+      },
     ],
     gotchas: [
       "Keep the teacher frozen (or EMA-synced every 50 steps) — updating the teacher every step creates a moving target.",
@@ -38,16 +60,47 @@ export const distillationCompressionPapers: PaperGuide[] = [
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~3.5M tokens", duration: "~18 min", estCost: "~$1.40" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~2.8M tokens", duration: "~9 min", estCost: "~$0.70" },
-      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (LoRA rank 64)", estTokens: "~7.4M tokens", duration: "~38 min", estCost: "~$8.90" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~3.5M tokens",
+        duration: "~18 min",
+        estCost: "~$1.40",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast smoke run)",
+        estTokens: "~2.8M tokens",
+        duration: "~9 min",
+        estCost: "~$0.70",
+      },
+      {
+        id: "Qwen/Qwen3-32B",
+        label: "Qwen/Qwen3-32B (LoRA rank 64)",
+        estTokens: "~7.4M tokens",
+        duration: "~38 min",
+        estCost: "~$8.90",
+      },
     ],
     datasets: [
-      { id: "hf://sciknoweval/chemistry-demo", label: "SciKnowEval Chemistry", source: "Hugging Face (public)", examples: "1,200 demos + held-out eval" },
-      { id: "hf://toolalpaca/eval", label: "ToolAlpaca Tool-Use", source: "Hugging Face (public)", examples: "2,400 tool demos" },
+      {
+        id: "hf://sciknoweval/chemistry-demo",
+        label: "SciKnowEval Chemistry",
+        source: "Hugging Face (public)",
+        examples: "1,200 demos + held-out eval",
+      },
+      {
+        id: "hf://toolalpaca/eval",
+        label: "ToolAlpaca Tool-Use",
+        source: "Hugging Face (public)",
+        examples: "2,400 tool demos",
+      },
     ],
     primitives: [
-      { label: "Artifact.score_logprobs", href: "/docs/training/recipes/distillation/" },
+      {
+        label: "Artifact.score_logprobs",
+        href: "/docs/training/recipes/distillation/",
+      },
       { label: "topk_kl_distill", href: "/docs/reference/primitives/" },
       { label: "Trainer", href: "/docs/training/custom-loops/" },
     ],
@@ -95,7 +148,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=64) · shared base teacher
 Loss      topk_kl_distill (top_k=20) · AdamW lr=2.0e-5
 Estimate  ~3.5M tokens · ~18 min · ~$1.40 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Continual skill acquisition", paperReported: "Matches or exceeds SFT while preserving prior benchmark accuracy", templateSetup: "SciKnowEval Chemistry · LoRA rank 64 · top_k=20" },
+      {
+        benchmark: "Continual skill acquisition",
+        paperReported:
+          "Matches or exceeds SFT while preserving prior benchmark accuracy",
+        templateSetup: "SciKnowEval Chemistry · LoRA rank 64 · top_k=20",
+      },
     ],
     bibtex: `@article{shenfeld2026sdft,
   title={Self-Distillation Enables Continual Learning},
@@ -127,9 +185,25 @@ Estimate  ~3.5M tokens · ~18 min · ~$1.40 · warnings: 0`,
         "First-class managed recipe='cartridge' + prefix_kv adapter — deployable on any Endpoint in one line.",
     },
     walkthrough: [
-      { title: "Point context_ref at your static corpus", explanation: "Provide a document bundle or Hugging Face corpus plus representative QA prompts.", gradCall: "context_ref: hf://hazyresearch/cartridges-longhealth/corpus.md" },
-      { title: "Train only the 256-token prefix_kv adapter", explanation: "Keep base weights frozen and train prefix KV tensors with a high LR (2e-2) using top_k=20 KL.", gradCall: "adapter: { kind: prefix_kv, num_tokens: 256 }" },
-      { title: "Deploy and serve without the 60k prompt", explanation: "Export a tiny prefix_kv.safetensors .grad bundle and serve user queries directly.", gradCall: "grad deploy longhealth-cartridge@latest" },
+      {
+        title: "Point context_ref at your static corpus",
+        explanation:
+          "Provide a document bundle or Hugging Face corpus plus representative QA prompts.",
+        gradCall:
+          "context_ref: hf://hazyresearch/cartridges-longhealth/corpus.md",
+      },
+      {
+        title: "Train only the 256-token prefix_kv adapter",
+        explanation:
+          "Keep base weights frozen and train prefix KV tensors with a high LR (2e-2) using top_k=20 KL.",
+        gradCall: "adapter: { kind: prefix_kv, num_tokens: 256 }",
+      },
+      {
+        title: "Deploy and serve without the 60k prompt",
+        explanation:
+          "Export a tiny prefix_kv.safetensors .grad bundle and serve user queries directly.",
+        gradCall: "grad deploy longhealth-cartridge@latest",
+      },
     ],
     gotchas: [
       "Prefix KV parameters need ~100x higher learning rate (1e-2 to 2e-2) than LoRA adapters — using 1e-4 will barely move loss.",
@@ -140,15 +214,40 @@ Estimate  ~3.5M tokens · ~18 min · ~$1.40 · warnings: 0`,
     mode: "Managed recipe",
     entrypoint: "recipe.yaml",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.8M tokens", duration: "~14 min", estCost: "~$1.10" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~2.2M tokens", duration: "~7 min", estCost: "~$0.55" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~2.8M tokens",
+        duration: "~14 min",
+        estCost: "~$1.10",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast smoke run)",
+        estTokens: "~2.2M tokens",
+        duration: "~7 min",
+        estCost: "~$0.55",
+      },
     ],
     datasets: [
-      { id: "hf://hazyresearch/cartridges-longhealth", label: "LongHealth Clinical Corpus", source: "Hugging Face (public)", examples: "60k-token corpus + QA probes" },
-      { id: "hf://nyu-mll/quality", label: "QuALITY Long-Context QA", source: "Hugging Face (public)", examples: "Long stories + QA" },
+      {
+        id: "hf://hazyresearch/cartridges-longhealth",
+        label: "LongHealth Clinical Corpus",
+        source: "Hugging Face (public)",
+        examples: "60k-token corpus + QA probes",
+      },
+      {
+        id: "hf://nyu-mll/quality",
+        label: "QuALITY Long-Context QA",
+        source: "Hugging Face (public)",
+        examples: "Long stories + QA",
+      },
     ],
     primitives: [
-      { label: "recipe='cartridge'", href: "/docs/training/recipes/distillation/" },
+      {
+        label: "recipe='cartridge'",
+        href: "/docs/training/recipes/distillation/",
+      },
       { label: "prefix_kv adapter", href: "/docs/reference/primitives/" },
       { label: "Endpoint deploy", href: "/docs/training/endpoints/" },
     ],
@@ -184,7 +283,13 @@ Model     Qwen/Qwen3-8B (frozen) + prefix_kv (256 virtual tokens -> 228x KV comp
 Loss      topk_kl_distill (top_k=20) · AdamW lr=2.0e-2
 Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
     benchmarks: [
-      { benchmark: "KV memory & throughput", paperReported: "38.6x smaller KV memory & up to 26.4x higher throughput vs. in-context prompting", templateSetup: "256 virtual prefix tokens compressing ~58k-token corpus" },
+      {
+        benchmark: "KV memory & throughput",
+        paperReported:
+          "38.6x smaller KV memory & up to 26.4x higher throughput vs. in-context prompting",
+        templateSetup:
+          "256 virtual prefix tokens compressing ~58k-token corpus",
+      },
     ],
     bibtex: `@article{eyuboglu2025cartridges,
   title={Cartridges: Lightweight and general-purpose long context representations via self-study},
@@ -216,9 +321,26 @@ Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
         "gather_indices keeps JSD network traffic to (T_resp, 32) tensors and auto-batch-fetches out['teacher_topk_logprobs'] in one RPC — zero inner-loop fetches.",
     },
     walkthrough: [
-      { title: "Sample rollouts on-policy from the student", explanation: "Generate completions from trainer.snapshot() on unlabeled prompts.", gradCall: "trainer.snapshot().sample(prompts, n=1)" },
-      { title: "Fetch teacher's top-32 logprob TensorRefs", explanation: "Ask the 32B teacher to score the student's exact sequences and return opaque top-k refs.", gradCall: "teacher.score_logprobs(prefixes, resps, top_k=32)['topk_refs']" },
-      { title: "Optimize generalized JSD via gather_indices", explanation: "Pass gather_indices=t_refs so both out['topk_logprobs'] and batched out['teacher_topk_logprobs'] arrive aligned.", gradCall: "trainer.forward_backward_custom(datums, outputs=['topk_logprobs'], gather_indices=t_refs, loss_fn=jsd_loss)" },
+      {
+        title: "Sample rollouts on-policy from the student",
+        explanation:
+          "Generate completions from trainer.snapshot() on unlabeled prompts.",
+        gradCall: "trainer.snapshot().sample(prompts, n=1)",
+      },
+      {
+        title: "Fetch teacher's top-32 logprob TensorRefs",
+        explanation:
+          "Ask the 32B teacher to score the student's exact sequences and return opaque top-k refs.",
+        gradCall:
+          "teacher.score_logprobs(prefixes, resps, top_k=32)['topk_refs']",
+      },
+      {
+        title: "Optimize generalized JSD via gather_indices",
+        explanation:
+          "Pass gather_indices=t_refs so both out['topk_logprobs'] and batched out['teacher_topk_logprobs'] arrive aligned.",
+        gradCall:
+          "trainer.forward_backward_custom(datums, outputs=['topk_logprobs'], gather_indices=t_refs, loss_fn=jsd_loss)",
+      },
     ],
     gotchas: [
       "Always pass gather_indices=t_refs for custom distillation — pulling raw logits on a 152k vocabulary is ~5,000x larger.",
@@ -229,14 +351,34 @@ Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B student <- 32B teacher", estTokens: "~5.2M tokens", duration: "~16 min", estCost: "~$1.30" },
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B student <- 32B teacher", estTokens: "~4.7M tokens", duration: "~24 min", estCost: "~$1.90" },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B student <- 32B teacher",
+        estTokens: "~5.2M tokens",
+        duration: "~16 min",
+        estCost: "~$1.30",
+      },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B student <- 32B teacher",
+        estTokens: "~4.7M tokens",
+        duration: "~24 min",
+        estCost: "~$1.90",
+      },
     ],
     datasets: [
-      { id: "hf://HuggingFaceH4/no_robots", label: "No Robots Prompts", source: "Hugging Face (public)", examples: "9,500 diverse prompts" },
+      {
+        id: "hf://HuggingFaceH4/no_robots",
+        label: "No Robots Prompts",
+        source: "Hugging Face (public)",
+        examples: "9,500 diverse prompts",
+      },
     ],
     primitives: [
-      { label: "Distillation guide", href: "/docs/training/recipes/distillation/" },
+      {
+        label: "Distillation guide",
+        href: "/docs/training/recipes/distillation/",
+      },
       { label: "gather_indices", href: "/docs/training/custom-loops/" },
     ],
     codeLabel: "train.py",
@@ -287,7 +429,12 @@ Model     Qwen/Qwen3-4B student <- Qwen/Qwen3-32B teacher
 Loss      custom jsd_loss (beta=0.5, top_k=32 gather_indices)
 Estimate  ~3.2M tokens · ~16 min · ~$1.30 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Summarization & instruction following", paperReported: "Outperforms sequence-level KD & forward KL across T5/Gemma students", templateSetup: "No Robots prompts · 32B -> 4B · JSD beta=0.5" },
+      {
+        benchmark: "Summarization & instruction following",
+        paperReported:
+          "Outperforms sequence-level KD & forward KL across T5/Gemma students",
+        templateSetup: "No Robots prompts · 32B -> 4B · JSD beta=0.5",
+      },
     ],
     bibtex: `@inproceedings{agarwal2024gkd,
   title={On-Policy Distillation of Language Models: Learning from Self-Generated Mistakes},
@@ -319,9 +466,23 @@ Estimate  ~3.2M tokens · ~16 min · ~$1.30 · warnings: 0`,
         "Built-in reverse_kl_distill + teacher.score_logprobs(rollouts) turns MiniLLM into a 19-line loop.",
     },
     walkthrough: [
-      { title: "Sample student completions on-policy", explanation: "Generate rollouts from the live student snapshot.", gradCall: "trainer.snapshot().sample(prompts, n=1)" },
-      { title: "Score student sequences with the teacher", explanation: "Get 1:1 aligned teacher logprobs on every student token.", gradCall: "teacher.score_logprobs(rollouts)['aligned_logprobs']" },
-      { title: "Step with built-in reverse_kl_distill", explanation: "Attach ref_logprobs=teacher_lp and call built-in reverse_kl_distill.", gradCall: "trainer.forward_backward(datums, loss={'kind': 'reverse_kl_distill'})" },
+      {
+        title: "Sample student completions on-policy",
+        explanation: "Generate rollouts from the live student snapshot.",
+        gradCall: "trainer.snapshot().sample(prompts, n=1)",
+      },
+      {
+        title: "Score student sequences with the teacher",
+        explanation: "Get 1:1 aligned teacher logprobs on every student token.",
+        gradCall: "teacher.score_logprobs(rollouts)['aligned_logprobs']",
+      },
+      {
+        title: "Step with built-in reverse_kl_distill",
+        explanation:
+          "Attach ref_logprobs=teacher_lp and call built-in reverse_kl_distill.",
+        gradCall:
+          "trainer.forward_backward(datums, loss={'kind': 'reverse_kl_distill'})",
+      },
     ],
     gotchas: [
       "Reverse KL can narrow diversity if run too long — pair with a 10% teacher-SFT anchor batch if creative variety matters.",
@@ -332,14 +493,28 @@ Estimate  ~3.2M tokens · ~16 min · ~$1.30 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B <- Qwen/Qwen3-32B", estTokens: "~4.4M tokens", duration: "~14 min", estCost: "~$1.10" },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B <- Qwen/Qwen3-32B",
+        estTokens: "~4.4M tokens",
+        duration: "~14 min",
+        estCost: "~$1.10",
+      },
     ],
     datasets: [
-      { id: "hf://HuggingFaceH4/no_robots", label: "No Robots Prompts", source: "Hugging Face (public)", examples: "9,500 prompts" },
+      {
+        id: "hf://HuggingFaceH4/no_robots",
+        label: "No Robots Prompts",
+        source: "Hugging Face (public)",
+        examples: "9,500 prompts",
+      },
     ],
     primitives: [
       { label: "reverse_kl_distill", href: "/docs/reference/primitives/" },
-      { label: "Distillation guide", href: "/docs/training/recipes/distillation/" },
+      {
+        label: "Distillation guide",
+        href: "/docs/training/recipes/distillation/",
+      },
     ],
     codeLabel: "train.py",
     codeLanguage: "python",
@@ -375,7 +550,12 @@ Model     Qwen/Qwen3-4B <- Qwen/Qwen3-32B
 Loss      reverse_kl_distill (built-in)
 Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Hallucination & Rouge-L", paperReported: "Consistently beats forward KD on GPT-2/OPT/LLaMA students with lower exposure bias", templateSetup: "No Robots · 32B -> 4B · reverse_kl_distill" },
+      {
+        benchmark: "Hallucination & Rouge-L",
+        paperReported:
+          "Consistently beats forward KD on GPT-2/OPT/LLaMA students with lower exposure bias",
+        templateSetup: "No Robots · 32B -> 4B · reverse_kl_distill",
+      },
     ],
     bibtex: `@inproceedings{gu2024minillm,
   title={MiniLLM: Knowledge Distillation of Large Language Models},
@@ -407,9 +587,25 @@ Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
         "7-line skew-KL objective + standard Python replay deque; zero custom serving infrastructure needed.",
     },
     walkthrough: [
-      { title: "Maintain a rolling replay buffer of student rollouts", explanation: "Generate fresh rollouts every other step and sample from the deque on alternating steps to cut sampling overhead in half.", gradCall: "buf.extend(datums)" },
-      { title: "Score top-32 teacher logprobs once per rollout", explanation: "Cache teacher TensorRefs alongside each buffered datum so replayed steps cost zero teacher calls.", gradCall: "teacher.score_logprobs(prefixes, resps, top_k=32)" },
-      { title: "Optimize Skew Forward KL with gather_indices", explanation: "Mix alpha * pt + (1 - alpha) * ps in the denominator for bounded, low-variance gradients.", gradCall: "trainer.forward_backward_custom(batch, outputs=['topk_logprobs'], gather_indices=refs, loss_fn=skew_kl)" },
+      {
+        title: "Maintain a rolling replay buffer of student rollouts",
+        explanation:
+          "Generate fresh rollouts every other step and sample from the deque on alternating steps to cut sampling overhead in half.",
+        gradCall: "buf.extend(datums)",
+      },
+      {
+        title: "Score top-32 teacher logprobs once per rollout",
+        explanation:
+          "Cache teacher TensorRefs alongside each buffered datum so replayed steps cost zero teacher calls.",
+        gradCall: "teacher.score_logprobs(prefixes, resps, top_k=32)",
+      },
+      {
+        title: "Optimize Skew Forward KL with gather_indices",
+        explanation:
+          "Mix alpha * pt + (1 - alpha) * ps in the denominator for bounded, low-variance gradients.",
+        gradCall:
+          "trainer.forward_backward_custom(batch, outputs=['topk_logprobs'], gather_indices=refs, loss_fn=skew_kl)",
+      },
     ],
     gotchas: [
       "Keep buffer size small (2–4 batches) so replayed rollouts stay close to the current student policy.",
@@ -420,14 +616,28 @@ Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B <- Qwen/Qwen3-32B", estTokens: "~3.2M tokens", duration: "~10 min", estCost: "~$0.80" },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B <- Qwen/Qwen3-32B",
+        estTokens: "~3.2M tokens",
+        duration: "~10 min",
+        estCost: "~$0.80",
+      },
     ],
     datasets: [
-      { id: "hf://HuggingFaceH4/no_robots", label: "No Robots Prompts", source: "Hugging Face (public)", examples: "9,500 prompts" },
+      {
+        id: "hf://HuggingFaceH4/no_robots",
+        label: "No Robots Prompts",
+        source: "Hugging Face (public)",
+        examples: "9,500 prompts",
+      },
     ],
     primitives: [
       { label: "gather_indices", href: "/docs/training/custom-loops/" },
-      { label: "Distillation guide", href: "/docs/training/recipes/distillation/" },
+      {
+        label: "Distillation guide",
+        href: "/docs/training/recipes/distillation/",
+      },
     ],
     codeLabel: "train.py",
     codeLanguage: "python",
@@ -476,7 +686,12 @@ Model     Qwen/Qwen3-4B <- Qwen/Qwen3-32B (2x replay reuse)
 Loss      custom skew_kl_loss (alpha=0.1, top_k=32)
 Estimate  ~2.0M tokens · ~10 min · ~$0.80 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Speed & quality vs. MiniLLM", paperReported: "Up to 4.3x faster training than on-policy reverse KL with higher Rouge-L", templateSetup: "No Robots · 32B -> 4B · skew alpha=0.1" },
+      {
+        benchmark: "Speed & quality vs. MiniLLM",
+        paperReported:
+          "Up to 4.3x faster training than on-policy reverse KL with higher Rouge-L",
+        templateSetup: "No Robots · 32B -> 4B · skew alpha=0.1",
+      },
     ],
     bibtex: `@inproceedings{ko2024distillm,
   title={DistiLLM: Towards Streamlined Distillation for Large Language Models},
@@ -508,9 +723,26 @@ Estimate  ~2.0M tokens · ~10 min · ~$0.80 · warnings: 0`,
         "Built-in token_level head + bce_sparse_positions covers training and serving identically with zero custom loss.",
     },
     walkthrough: [
-      { title: "Attach a token_level binary head to an encoder", explanation: "Set heads={'keep': {'dim': 1, 'token_level': True}} on a compact bidirectional encoder.", gradCall: "ModelSpec(base='FacebookAI/xlm-roberta-base', heads={'keep': {'dim': 1, 'token_level': True}})" },
-      { title: "Train with built-in bce_sparse_positions", explanation: "Pass per-token positions and 0/1 keep labels directly in DatumTargets.", gradCall: "trainer.forward_backward(batch, loss={'kind': 'bce_sparse_positions', 'head': 'keep'})" },
-      { title: "Compress prompts in milliseconds via Artifact.infer()", explanation: "Score all tokens in one forward pass and drop tokens whose sigmoid keep-probability falls below threshold.", gradCall: "compressor.infer({'tokens': toks})['heads']['keep']" },
+      {
+        title: "Attach a token_level binary head to an encoder",
+        explanation:
+          "Set heads={'keep': {'dim': 1, 'token_level': True}} on a compact bidirectional encoder.",
+        gradCall:
+          "ModelSpec(base='FacebookAI/xlm-roberta-base', heads={'keep': {'dim': 1, 'token_level': True}})",
+      },
+      {
+        title: "Train with built-in bce_sparse_positions",
+        explanation:
+          "Pass per-token positions and 0/1 keep labels directly in DatumTargets.",
+        gradCall:
+          "trainer.forward_backward(batch, loss={'kind': 'bce_sparse_positions', 'head': 'keep'})",
+      },
+      {
+        title: "Compress prompts in milliseconds via Artifact.infer()",
+        explanation:
+          "Score all tokens in one forward pass and drop tokens whose sigmoid keep-probability falls below threshold.",
+        gradCall: "compressor.infer({'tokens': toks})['heads']['keep']",
+      },
     ],
     gotchas: [
       "Protect special tokens, JSON keys, and code identifiers from dropping by forcing keep=1.0 on structural punctuation.",
@@ -521,11 +753,28 @@ Estimate  ~2.0M tokens · ~10 min · ~$0.80 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "FacebookAI/xlm-roberta-base", label: "XLM-RoBERTa Base (recommended, fast)", estTokens: "~1.6M tokens", duration: "~6 min", estCost: "~$0.40" },
-      { id: "BAAI/bge-small-en-v1.5", label: "BGE-Small-EN (ultra-fast CPU serving)", estTokens: "~800K tokens", duration: "~3 min", estCost: "~$0.20" },
+      {
+        id: "FacebookAI/xlm-roberta-base",
+        label: "XLM-RoBERTa Base (recommended, fast)",
+        estTokens: "~1.6M tokens",
+        duration: "~6 min",
+        estCost: "~$0.40",
+      },
+      {
+        id: "BAAI/bge-small-en-v1.5",
+        label: "BGE-Small-EN (ultra-fast CPU serving)",
+        estTokens: "~800K tokens",
+        duration: "~3 min",
+        estCost: "~$0.20",
+      },
     ],
     datasets: [
-      { id: "hf://microsoft/MeetingBank-LLMCompressed", label: "MeetingBank LLM-Compressed", source: "Hugging Face (public)", examples: "Distilled token-level keep/drop labels" },
+      {
+        id: "hf://microsoft/MeetingBank-LLMCompressed",
+        label: "MeetingBank LLM-Compressed",
+        source: "Hugging Face (public)",
+        examples: "Distilled token-level keep/drop labels",
+      },
     ],
     primitives: [
       { label: "bce_sparse_positions", href: "/docs/reference/primitives/" },
@@ -571,7 +820,13 @@ Model     FacebookAI/xlm-roberta-base + token_level head 'keep'
 Loss      bce_sparse_positions (built-in)
 Estimate  ~1.0M tokens · ~6 min · ~$0.40 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Compression ratio & latency", paperReported: "2x–5x prompt compression at 3–6x lower latency than perplexity compressors", templateSetup: "MeetingBank-LLMCompressed · XLM-RoBERTa · keep threshold 0.45" },
+      {
+        benchmark: "Compression ratio & latency",
+        paperReported:
+          "2x–5x prompt compression at 3–6x lower latency than perplexity compressors",
+        templateSetup:
+          "MeetingBank-LLMCompressed · XLM-RoBERTa · keep threshold 0.45",
+      },
     ],
     bibtex: `@inproceedings{pan2024llmlingua2,
   title={LLMLingua-2: Data Distillation for Efficient and Faithful Task-Agnostic Prompt Compression},

@@ -1,6 +1,9 @@
 # Deploying
 
-<DocsLead>Host trained artifacts on Gradiated Cloud in one command, or download standard weights to run on your own vLLM or SGLang servers.</DocsLead>
+<DocsLead>
+  Host trained artifacts on Gradiated Cloud in one command, or download standard
+  weights to run on your own vLLM or SGLang servers.
+</DocsLead>
 
 Every training run produces a versioned [`Artifact`](/docs/training/artifacts/) (such as `fast-diff-merge@2026-11-26-1`). From there, pick whichever serving path fits your stack:
 
@@ -58,7 +61,9 @@ const oai = new OpenAI({
 });
 const res = await oai.chat.completions.create({
   model: "your-org/fast-diff-merge",
-  messages: [{ role: "user", content: "Merge these two diffs into one patch: ..." }],
+  messages: [
+    { role: "user", content: "Merge these two diffs into one patch: ..." },
+  ],
 });
 console.log(res.choices[0].message.content);
 ```
@@ -154,12 +159,17 @@ import OpenAI from "openai";
 import { Grad } from "@gradiated/grad";
 
 const grad = new Grad();
-const oai = new OpenAI({ baseURL: "https://api.gradiated.com/v1", apiKey: process.env.GRADIATED_API_KEY });
+const oai = new OpenAI({
+  baseURL: "https://api.gradiated.com/v1",
+  apiKey: process.env.GRADIATED_API_KEY,
+});
 
 const { data, response } = await oai.chat.completions
   .create({
     model: "your-org/fast-diff-merge",
-    messages: [{ role: "user", content: "Merge these two diffs into one patch: ..." }],
+    messages: [
+      { role: "user", content: "Merge these two diffs into one patch: ..." },
+    ],
   })
   .withResponse();
 const inferenceId = response.headers.get("x-gradiated-inference-id")!;

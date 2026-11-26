@@ -262,7 +262,8 @@ export const PapersIndexPage = (): ReactElement => {
                         <div>
                           <span className="gr-paper-spec-k">Footprint</span>
                           <span className="gr-paper-spec-v">
-                            {paper.linesOfCode} lines · {paper.smoothness.rating}
+                            {paper.linesOfCode} lines ·{" "}
+                            {paper.smoothness.rating}
                           </span>
                         </div>
                         <div>
@@ -388,7 +389,9 @@ export const PaperDetailPage = ({
         <Module className="gr-module--top" index={0}>
           <article className="gr-papers-wrap gr-papers-detail">
             <nav aria-label="Breadcrumb" className="gr-paper-crumb">
-              <Link to="/papers/">← All {papers.length} paper reproductions</Link>
+              <Link to="/papers/">
+                ← All {papers.length} paper reproductions
+              </Link>
               <span>·</span>
               <span>{paper.category}</span>
               <span>·</span>
@@ -478,10 +481,7 @@ export const PaperDetailPage = ({
                 <button
                   className="gr-papers-btn-secondary"
                   onClick={() =>
-                    copy(
-                      "prompt",
-                      agentPromptFor(paper, modelId, datasetId),
-                    )
+                    copy("prompt", agentPromptFor(paper, modelId, datasetId))
                   }
                   type="button"
                 >

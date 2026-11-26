@@ -1,6 +1,8 @@
 # Embeddings
 
-<DocsLead>Fine-tune an embedding model on your own docs and codebase for better search.</DocsLead>
+<DocsLead>
+  Fine-tune an embedding model on your own docs and codebase for better search.
+</DocsLead>
 
 General-purpose embedding models often miss internal acronyms, product names, and custom schemas. Fine-tuning a small encoder with **`EmbeddingRecipe`** on your own query/document pairs usually boosts top-10 search hit rate by 10–25 points while staying under 10 ms per request.
 
@@ -30,7 +32,7 @@ dataset = client.datasets.push("docs-retrieval-triplets", [
 ])
 ```
 
-**Why wrong docs should be close misses:** if the query is *"rotate my api key"* and the negative is *"Pricing FAQ"*, any base model already knows those are unrelated and learns almost nothing. Pulling close-but-wrong results from your current search or RAG pipeline (like *"create an API key"* when the user asked to *rotate* one) teaches the model the exact distinctions it currently gets wrong. If you only have `(query, positive)` pairs to start, you can omit `negatives` and `EmbeddingRecipe` will use other docs in the same batch as negatives, though adding real close-miss negatives improves ranking quality further.
+**Why wrong docs should be close misses:** if the query is _"rotate my api key"_ and the negative is _"Pricing FAQ"_, any base model already knows those are unrelated and learns almost nothing. Pulling close-but-wrong results from your current search or RAG pipeline (like _"create an API key"_ when the user asked to _rotate_ one) teaches the model the exact distinctions it currently gets wrong. If you only have `(query, positive)` pairs to start, you can omit `negatives` and `EmbeddingRecipe` will use other docs in the same batch as negatives, though adding real close-miss negatives improves ranking quality further.
 
 ## Train with `EmbeddingRecipe`
 

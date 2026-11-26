@@ -1,6 +1,9 @@
 # RL for agents
 
-<DocsLead>Train a model with reinforcement learning by grading its answers with code or another model.</DocsLead>
+<DocsLead>
+  Train a model with reinforcement learning by grading its answers with code or
+  another model.
+</DocsLead>
 
 Use **`GRPORecipe`** when you can **grade whether an answer worked** (the right number, valid SQL, passing unit tests, the right API call) even when there is more than one right way to write it. The same managed recipe handles single-turn prompts and multi-turn agents that call tools or work inside containers: pass `rubric=` for prompts, or `env=` for an [`Environment`](/docs/training/environments/). Gradiated runs the sampling, grading, and training, checkpoints as it goes, and keeps running after you close your laptop.
 
@@ -47,10 +50,14 @@ const tasks = await grad.datasets.fromHf("openai/gsm8k", {
 
 const recipe = recipes.grpo({
   model: "qwen/qwen3-4b",
-  rubric: new Rubric([new Scorer("correct", { fn: validators.numericMatch({ field: "answer" }) })]),
+  rubric: new Rubric([
+    new Scorer("correct", { fn: validators.numericMatch({ field: "answer" }) }),
+  ]),
 });
 
-const run = await grad.runs.create({ dataset: tasks, name: "gsm8k-grpo", recipe }).wait();
+const run = await grad.runs
+  .create({ dataset: tasks, name: "gsm8k-grpo", recipe })
+  .wait();
 console.log(run.artifact.id);
 ```
 
@@ -104,10 +111,10 @@ Python tools and scorers are packaged and run in an isolated sandbox; see [Where
 
 ## Parameters you might change
 
-- **`group_size`** *(default `8`)*: how many attempts the model makes at each prompt; they're scored and compared against each other. Raise it to `16` when most prompts score all `0` or all `1`.
+- **`group_size`** _(default `8`)_: how many attempts the model makes at each prompt; they're scored and compared against each other. Raise it to `16` when most prompts score all `0` or all `1`.
 - **`max_turns`**: the turn limit for a multi-turn environment, when you want a different one from the environment's own.
-- **`max_staleness`** *(default `0`)*: let rollouts run up to this many weight versions behind training. `1`–`2` keeps the GPUs busy when container rollouts are slow.
-- **`kl_coef`** *(default `0.0`)*: set `0.01`–`0.05` only if outputs drift away from your starting model's style.
+- **`max_staleness`** _(default `0`)_: let rollouts run up to this many weight versions behind training. `1`–`2` keeps the GPUs busy when container rollouts are slow.
+- **`kl_coef`** _(default `0.0`)_: set `0.01`–`0.05` only if outputs drift away from your starting model's style.
 
 Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#grporecipe).
 

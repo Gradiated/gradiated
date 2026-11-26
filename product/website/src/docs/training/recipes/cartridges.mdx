@@ -1,6 +1,9 @@
 # Context Cartridges
 
-<DocsLead>Turn a long, repeated prompt or doc set into a small add-on you don't have to resend on every request.</DocsLead>
+<DocsLead>
+  Turn a long, repeated prompt or doc set into a small add-on you don't have to
+  resend on every request.
+</DocsLead>
 
 If every request sends the same long block of runbooks, product docs, or compliance rules (up to ~500k tokens), you pay to re-read that text over and over and wait longer for the first token.
 
@@ -12,7 +15,7 @@ A Cartridge shrinks a long system prompt or large block of background context in
 2. **`dataset`** is 500–2,000 real questions or tasks that depend on that context, as plain chat records ending in a user turn (`{"messages": [...]}`), with no labeled answers needed.
 3. **`num_tokens`** is how small to compress that context. The default, `256` virtual tokens, can stand in for a 50,000-token prompt; try `512` or `1024` for very large contexts.
 
-During training, the model reads `context` + each question to see what it *would* answer with the full text, and trains the Cartridge to give the same answer **without** sending `context` in the prompt.
+During training, the model reads `context` + each question to see what it _would_ answer with the full text, and trains the Cartridge to give the same answer **without** sending `context` in the prompt.
 
 ## Train a Cartridge (`CartridgeRecipe`)
 

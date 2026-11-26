@@ -1,6 +1,9 @@
 # Primitives reference
 
-<DocsLead>Reference for the core objects and JSON schemas used across the Gradiated SDKs and API.</DocsLead>
+<DocsLead>
+  Reference for the core objects and JSON schemas used across the Gradiated SDKs
+  and API.
+</DocsLead>
 
 These wire schemas mirror the OpenAPI 3.1 contract (`spec/openapi.yaml`) used across the server, CLI, and Python, TypeScript, Go, and Rust SDKs. See [API reference](/docs/api-reference/) for HTTP routes.
 
@@ -45,24 +48,24 @@ Universal model-agnostic record for production traces, supervised `(input, expec
     "endpoint": "support-router",
     "artifact": "support-router@v12",
     "inference_id": "inf_01J9Y",
-    "propensity": 0.10,
+    "propensity": 0.1,
     "is_probe": true
   },
   "timestamp": "2026-11-25T18:00:05Z"
 }
 ```
 
-| Field | Type | Purpose |
-| --- | --- | --- |
-| `session_id` | `string \| null` | Groups multi-turn conversations so train/eval splits never leak turns across splits. |
-| `group_id` | `string \| null` | Keeps paired or grouped examples atomic across splits and microbatches (DPO, GRPO, InfoNCE, rerankers). |
-| `role` | `string \| null` | `chosen`, `rejected`, `anchor`, `positive`, `negative`, `desirable`, `undesirable`, or `rollout`. |
-| `input` | `object` | `messages[]`, `tools[]`, `media[]` (`{ kind, ref }`), `features{}` (tabular signals), and optional arbitrary `payload`. |
-| `output` | `object` | `turns[]`, optional `payload`, plus token-aligned RL fields (`token_ids`, `turn_ids`, `response_offset`, `sampling_logprobs`, `loss_mask`, `weight_version`) filled by `Artifact.sample()`. |
-| `expected_output` | `object \| null` | Gold correction or ground-truth label (`{ label }` or `{ content }`) used by `SFTRecipe` and `DecisionModelRecipe`. |
-| `scores` | `Record<string, number>` | Named scalar outcomes (`task_success`, `tests_passed`, `reward`, etc.). |
-| `metrics` | `Record<string, number>` | Request telemetry (`cost_usd`, `latency_ms`, `input_tokens`, `output_tokens`). |
-| `metadata` | `Record<string, any>` | Serving provenance (`endpoint`, `artifact`, `inference_id`, `model`, `propensity`, `is_probe`). |
+| Field             | Type                     | Purpose                                                                                                                                                                                     |
+| ----------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `session_id`      | `string \| null`         | Groups multi-turn conversations so train/eval splits never leak turns across splits.                                                                                                        |
+| `group_id`        | `string \| null`         | Keeps paired or grouped examples atomic across splits and microbatches (DPO, GRPO, InfoNCE, rerankers).                                                                                     |
+| `role`            | `string \| null`         | `chosen`, `rejected`, `anchor`, `positive`, `negative`, `desirable`, `undesirable`, or `rollout`.                                                                                           |
+| `input`           | `object`                 | `messages[]`, `tools[]`, `media[]` (`{ kind, ref }`), `features{}` (tabular signals), and optional arbitrary `payload`.                                                                     |
+| `output`          | `object`                 | `turns[]`, optional `payload`, plus token-aligned RL fields (`token_ids`, `turn_ids`, `response_offset`, `sampling_logprobs`, `loss_mask`, `weight_version`) filled by `Artifact.sample()`. |
+| `expected_output` | `object \| null`         | Gold correction or ground-truth label (`{ label }` or `{ content }`) used by `SFTRecipe` and `DecisionModelRecipe`.                                                                         |
+| `scores`          | `Record<string, number>` | Named scalar outcomes (`task_success`, `tests_passed`, `reward`, etc.).                                                                                                                     |
+| `metrics`         | `Record<string, number>` | Request telemetry (`cost_usd`, `latency_ms`, `input_tokens`, `output_tokens`).                                                                                                              |
+| `metadata`        | `Record<string, any>`    | Serving provenance (`endpoint`, `artifact`, `inference_id`, `model`, `propensity`, `is_probe`).                                                                                             |
 
 ### SDK helpers on `Trajectory` & custom loops
 
@@ -70,7 +73,7 @@ Universal model-agnostic record for production traces, supervised `(input, expec
 - `traj.slice_prefix(end_idx)` extracts an immutable prefix trajectory for Monte Carlo step branching (e.g. VinePPO).
 - `traj.with_targets(advantage=..., advantages=..., ref_logprobs=..., teacher_topk=..., scalar=...)` attaches RL, distillation, or scalar training targets directly onto a `Trajectory` (since `Trajectory` subclasses `Record`, no separate conversion type is needed).
 - `grad.with_advantages(groups, rewards=..., advantage=advantages.GroupStd(), skip_zero_var=True, ref_logprobs=...)` normalizes RL rollout groups into advantage-annotated `Trajectory` records using any `AdvantageEstimator` (`advantages.GroupStd`, `advantages.GroupMean`, `advantages.RLOO`, or a custom callable).
-- `grad.by_group(records, out)` and `grad.masked_mean(x, mask)` group `CustomLoss` outputs safely by `group_id` and `role` (`PreferencePair`, `Triplet`, or grouped `Record`s) using pre-tensorized `out.masks` *(with `mask[0] == 0.0` guaranteed)*, `out.sampling_logprobs`, `out.ref_logprobs`, `out.advantages`, `out.turn_ids`, and auto-batch-fetched `out.teacher_topk_logprobs`.
+- `grad.by_group(records, out)` and `grad.masked_mean(x, mask)` group `CustomLoss` outputs safely by `group_id` and `role` (`PreferencePair`, `Triplet`, or grouped `Record`s) using pre-tensorized `out.masks` _(with `mask[0] == 0.0` guaranteed)_, `out.sampling_logprobs`, `out.ref_logprobs`, `out.advantages`, `out.turn_ids`, and auto-batch-fetched `out.teacher_topk_logprobs`.
 
 ## `Record` & 1:1 token alignment
 
@@ -106,19 +109,19 @@ Universal model-agnostic record for production traces, supervised `(input, expec
 
 The SDK uses typed resource handles (`Dataset`, `Model`, `Artifact`, `Secret`, `Pool`), value specs (pure configuration), and extensible base classes (swappable algorithms):
 
-| Category | Kind | Classes |
-| --- | --- | --- |
-| **Records** | `Record` + typed subclasses | `Record` (base input for `Trainer`), `Trajectory(Record)`, `PreferencePair(Record)`, `Triplet(Record)` |
-| **Domain Entities** | Resource handles & value refs | `Dataset` (`client.datasets.get/create`, `.push()`, `.import_file()`, `.score()`, `.filter()`, `.add_source()`), `Eval` (`client.evals.create`, `.summary_table()`, `.failures()`), `Task` (`Task.from_trajectory(...)`), `Model("...")` / `client.models.get(...)`, `Artifact(Model)` (`run.artifact`, `client.artifacts.get(...)`, `.deploy()`), `Secret` (`client.secrets.get(...)`), `Pool` (`client.pools.get(...)`) |
-| **Environments** | Extensible `Environment[H]` + adapters | `Environment[H]` (`setup`, `step`, `evaluate`, `teardown`, `rollout_groups`), `Observation`, `environments.Harbor` (`load_tasks`, `verify_oracles`), `environments.from_verifiers`, `environments.MCP`, `environments.DockerCompose`, `environments.from_gym` |
-| **Adapters & Pooling** | `@dataclass(frozen=True)` | `adapters.FrozenHead`, `adapters.LoRA(rank, merge_on_export=False)`, `adapters.DoRA`, `adapters.QLoRA`, `adapters.PrefixKV`, `adapters.LoReFT`, `adapters.Eagle3Draft`, `adapters.PartialUnfreeze`; `pooling.Mean`, `pooling.Last`, `pooling.PerToken` |
-| **Heads** | `@dataclass(frozen=True)` | `heads.Linear(dim, token_level=False, trainable=True)` |
-| **Optimizers** | `@dataclass(frozen=True)` | `optim.AdamW`, `optim.Muon`, `optim.SGD`, `optim.ParamGroup(target=...)`, `optim.WeightAnchor` |
-| **Losses & Advantages** | Extensible `Loss` / `AdvantageEstimator` | Built-in GPU kernels (`losses.CrossEntropy`, `losses.BCEWithLogits`, `losses.OrdinalBCE`, `losses.DPO`, `losses.ImportanceSampling`, `losses.GRPO`, `losses.CISPO`, `losses.ReverseKLDistill`, `losses.TopKKLDistill`, `losses.InfoNCE`, `losses.BCESparsePositions`), user `losses.CustomLoss` subclasses, and `advantages.GroupStd`, `advantages.GroupMean`, `advantages.RLOO` |
-| **Solvers, Splitters & Mergers** | Extensible interfaces | `solvers.DualHeadKernelLBFGS`, `solvers.MeanDiffSteering`, `splits.BySession`, `splits.ByGroup`, `splits.Random`, `mergers.TIES`, `mergers.Linear`, `mergers.DARE`, `mergers.SLERP` *(filter datasets with any `dataset.filter(lambda t: ...)` predicate)* |
-| **Calibration** | `@dataclass(frozen=True)` | `calibration.Temperature()` *(default on `DecisionModelRecipe`)*, `calibration.Conformal(alpha=0.10)` *(abstention cutoff for bounded error)*, `calibration.SLA(max_quality_drop=0.02)` |
-| **Rubrics & Validators** | Typed scorers & validators | `Rubric`, `Scorer`, `Judge(Scorer)`, `StatefulScorer(Scorer)`, `GroupScorer`, `PairwiseJudge(GroupScorer)`; `validators.TypeScriptAST`, `validators.JSONSchema`, `validators.SQL` (or any `Callable[[str], bool]`) |
-| **Recipes** | Subclassable `Recipe` + chained `Run` | `RouterRecipe`, `DecisionModelRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe(rollout=OnPolicy/OffPolicy)`, `CartridgeRecipe(context=Context.from_file(...), num_tokens=256)`, `RewardModelRecipe`, `EmbeddingRecipe` (chain via `run.then(...)` or pending `run.artifact`; stream via `run.metrics()`; log via `loggers.WandB` / `loggers.MLflow`) |
+| Category                         | Kind                                     | Classes                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Records**                      | `Record` + typed subclasses              | `Record` (base input for `Trainer`), `Trajectory(Record)`, `PreferencePair(Record)`, `Triplet(Record)`                                                                                                                                                                                                                                                                                                                    |
+| **Domain Entities**              | Resource handles & value refs            | `Dataset` (`client.datasets.get/create`, `.push()`, `.import_file()`, `.score()`, `.filter()`, `.add_source()`), `Eval` (`client.evals.create`, `.summary_table()`, `.failures()`), `Task` (`Task.from_trajectory(...)`), `Model("...")` / `client.models.get(...)`, `Artifact(Model)` (`run.artifact`, `client.artifacts.get(...)`, `.deploy()`), `Secret` (`client.secrets.get(...)`), `Pool` (`client.pools.get(...)`) |
+| **Environments**                 | Extensible `Environment[H]` + adapters   | `Environment[H]` (`setup`, `step`, `evaluate`, `teardown`, `rollout_groups`), `Observation`, `environments.Harbor` (`load_tasks`, `verify_oracles`), `environments.from_verifiers`, `environments.MCP`, `environments.DockerCompose`, `environments.from_gym`                                                                                                                                                             |
+| **Adapters & Pooling**           | `@dataclass(frozen=True)`                | `adapters.FrozenHead`, `adapters.LoRA(rank, merge_on_export=False)`, `adapters.DoRA`, `adapters.QLoRA`, `adapters.PrefixKV`, `adapters.LoReFT`, `adapters.Eagle3Draft`, `adapters.PartialUnfreeze`; `pooling.Mean`, `pooling.Last`, `pooling.PerToken`                                                                                                                                                                    |
+| **Heads**                        | `@dataclass(frozen=True)`                | `heads.Linear(dim, token_level=False, trainable=True)`                                                                                                                                                                                                                                                                                                                                                                    |
+| **Optimizers**                   | `@dataclass(frozen=True)`                | `optim.AdamW`, `optim.Muon`, `optim.SGD`, `optim.ParamGroup(target=...)`, `optim.WeightAnchor`                                                                                                                                                                                                                                                                                                                            |
+| **Losses & Advantages**          | Extensible `Loss` / `AdvantageEstimator` | Built-in GPU kernels (`losses.CrossEntropy`, `losses.BCEWithLogits`, `losses.OrdinalBCE`, `losses.DPO`, `losses.ImportanceSampling`, `losses.GRPO`, `losses.CISPO`, `losses.ReverseKLDistill`, `losses.TopKKLDistill`, `losses.InfoNCE`, `losses.BCESparsePositions`), user `losses.CustomLoss` subclasses, and `advantages.GroupStd`, `advantages.GroupMean`, `advantages.RLOO`                                          |
+| **Solvers, Splitters & Mergers** | Extensible interfaces                    | `solvers.DualHeadKernelLBFGS`, `solvers.MeanDiffSteering`, `splits.BySession`, `splits.ByGroup`, `splits.Random`, `mergers.TIES`, `mergers.Linear`, `mergers.DARE`, `mergers.SLERP` _(filter datasets with any `dataset.filter(lambda t: ...)` predicate)_                                                                                                                                                                |
+| **Calibration**                  | `@dataclass(frozen=True)`                | `calibration.Temperature()` _(default on `DecisionModelRecipe`)_, `calibration.Conformal(alpha=0.10)` _(abstention cutoff for bounded error)_, `calibration.SLA(max_quality_drop=0.02)`                                                                                                                                                                                                                                   |
+| **Rubrics & Validators**         | Typed scorers & validators               | `Rubric`, `Scorer`, `Judge(Scorer)`, `StatefulScorer(Scorer)`, `GroupScorer`, `PairwiseJudge(GroupScorer)`; `validators.TypeScriptAST`, `validators.JSONSchema`, `validators.SQL` (or any `Callable[[str], bool]`)                                                                                                                                                                                                        |
+| **Recipes**                      | Subclassable `Recipe` + chained `Run`    | `RouterRecipe`, `DecisionModelRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe(rollout=OnPolicy/OffPolicy)`, `CartridgeRecipe(context=Context.from_file(...), num_tokens=256)`, `RewardModelRecipe`, `EmbeddingRecipe` (chain via `run.then(...)` or pending `run.artifact`; stream via `run.metrics()`; log via `loggers.WandB` / `loggers.MLflow`)                                                       |
 
 - `Artifact` subclasses `Model`, and model arguments (`model=`, `teacher=`, `fallback=`, `models=`) accept a plain model string (`"qwen/qwen3-8b"`, automatically trimmed, lowercased, and converted to a `Model` reference internally), a `Model("...")` ref, a live `client.models.get(...)` handle, a completed `Artifact`, or a pending `run.artifact` from an in-flight run.
 - `client.trainers.resume(ckpt)` restores both weights and optimizer moments from a `trainer.save_state()` checkpoint.
@@ -126,7 +129,7 @@ The SDK uses typed resource handles (`Dataset`, `Model`, `Artifact`, `Secret`, `
 ## `Model`, `Artifact` (`.grad`) & Deploying
 
 - A **`Model`** (passed as a plain string `"qwen/qwen3-8b"`, `Model("qwen/qwen3-8b")`, or a live `client.models.get("qwen/qwen3-8b")` handle) represents an immutable base or catalog model; an **`Artifact(Model)`** (`name@version` or ephemeral `trainer.snapshot()`) subclasses `Model` and adds `manifest.json`, trained runtime weights (PEFT LoRA or merged Safetensors), `eval_report.json`, and `.deploy()`.
-- `Model.sample()` / `Artifact.sample()` returns 1:1 token-aligned `Trajectory` rollouts and accepts `n`, `temperature`, `top_p`, `max_new_tokens`, `stop` *(string or token-ID sequences)*, `seed`, `response_format` (`ResponseFormat.json_schema(...)`), `resume_from` *(optional `prompts=None` when resuming)*, and `append_env_tokens`. Use `artifact.openai_client()` to drive an existing OpenAI-SDK agent against a live snapshot while recording aligned trajectories automatically.
+- `Model.sample()` / `Artifact.sample()` returns 1:1 token-aligned `Trajectory` rollouts and accepts `n`, `temperature`, `top_p`, `max_new_tokens`, `stop` _(string or token-ID sequences)_, `seed`, `response_format` (`ResponseFormat.json_schema(...)`), `resume_from` _(optional `prompts=None` when resuming)_, and `append_env_tokens`. Use `artifact.openai_client()` to drive an existing OpenAI-SDK agent against a live snapshot while recording aligned trajectories automatically.
 - `Model.score_logprobs()` / `Artifact.score_logprobs()` returns a typed `ScoreResult` (`.response_logprobs`, `.aligned_logprobs`, `.topk_refs`, `.candidate_logprobs`, `.layer_refs`) for full sequences, `Trajectory` objects, or `(prefix_tokens, response_tokens)` pairs.
 - `Model.infer()` / `Artifact.infer_batch()` accept `Record` or `Trajectory` lists and return typed `InferResult` objects (`.logits`, `.heads`).
 - `Model.tokenize()` renders chat templates server-side (`messages`, `tools`, `media`, optional `return_loss_mask=True`); `Trainer` calls this automatically whenever you pass untokenized `Record(messages=...)`, `PreferencePair`, or `Triplet` inputs.

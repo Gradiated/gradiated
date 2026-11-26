@@ -1,6 +1,9 @@
 # Self-hosting
 
-<DocsLead>Run the Gradiated training API and GPU trainer workers on your laptop with Docker Compose or in your own Kubernetes cluster with Helm.</DocsLead>
+<DocsLead>
+  Run the Gradiated training API and GPU trainer workers on your laptop with
+  Docker Compose or in your own Kubernetes cluster with Helm.
+</DocsLead>
 
 Self-hosted deployments run the **training, evaluation, and dataset platform** inside your own VPC so prompts, traces, and trained weights never leave your network. Completed runs write standard HuggingFace LoRA or merged Safetensors [`Artifact`](/docs/training/artifacts/)s to your own S3 or GCS bucket, ready to serve on your own vLLM or SGLang cluster.
 
@@ -211,13 +214,13 @@ curl https://grad.internal.example/v1/artifacts \
 
 Self-hosting gives you the complete training and evaluation platform inside your VPC while letting you keep your existing production inference stack (vLLM, SGLang, Envoy, Argo Rollouts). Gradiated Cloud adds elastic per-token training GPUs and managed production serving on top:
 
-| Capability | Self-hosted (Docker / Helm) | Gradiated Cloud |
-| --- | --- | --- |
-| Datasets, trace sync, & `feedback.record()` | Included (your Postgres + S3) | Included (managed) |
-| All recipes, rubrics, environments, & custom loops | Included (runs on your GPUs, scales to 0) | Included (pay per million tokens) |
-| Artifacts (PEFT LoRA / merged Safetensors) | Written to your S3/GCS; serve on your vLLM or SGLang | Downloadable anytime, or host with `run.deploy()` |
-| Hosted production serving | Bring your own vLLM/SGLang + gateway/feature flags | Built-in (`run.deploy()` + OpenAI/Anthropic/SystemOne SDK) |
-| Zero-code gateway trace capture | Push via SDK or sync from OTel / Langfuse | Automatic via `x-gradiated-task` |
+| Capability                                         | Self-hosted (Docker / Helm)                          | Gradiated Cloud                                            |
+| -------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------- |
+| Datasets, trace sync, & `feedback.record()`        | Included (your Postgres + S3)                        | Included (managed)                                         |
+| All recipes, rubrics, environments, & custom loops | Included (runs on your GPUs, scales to 0)            | Included (pay per million tokens)                          |
+| Artifacts (PEFT LoRA / merged Safetensors)         | Written to your S3/GCS; serve on your vLLM or SGLang | Downloadable anytime, or host with `run.deploy()`          |
+| Hosted production serving                          | Bring your own vLLM/SGLang + gateway/feature flags   | Built-in (`run.deploy()` + OpenAI/Anthropic/SystemOne SDK) |
+| Zero-code gateway trace capture                    | Push via SDK or sync from OTel / Langfuse            | Automatic via `x-gradiated-task`                           |
 
 <DocsNext>
   <a href="/docs/training/">

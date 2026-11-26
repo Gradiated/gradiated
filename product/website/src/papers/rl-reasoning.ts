@@ -40,13 +40,15 @@ export const rlReasoningPapers: PaperGuide[] = [
         title: "Center rewards per group and convert to aligned Datums",
         explanation:
           "Normalize each rollout's reward against its prompt group mean and standard deviation while automatically skipping zero-variance groups and aligning reference logprobs.",
-        gradCall: "grad.group_datums(groups, rewards=rewards, norm='std', ref_logprobs=ref_lps)",
+        gradCall:
+          "grad.group_datums(groups, rewards=rewards, norm='std', ref_logprobs=ref_lps)",
       },
       {
         title: "Pipeline forward-backward and optimizer update",
         explanation:
           "Queue both calls before awaiting .result() so forward, backward, and AdamW run back-to-back in a single RTT.",
-        gradCall: "trainer.forward_backward(datums, loss={'kind': 'grpo', 'kl_beta': 0.04})",
+        gradCall:
+          "trainer.forward_backward(datums, loss={'kind': 'grpo', 'kl_beta': 0.04})",
       },
     ],
     gotchas: [
@@ -59,13 +61,41 @@ export const rlReasoningPapers: PaperGuide[] = [
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~5.5M tokens", duration: "~28 min", estCost: "~$2.20" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~4.4M tokens", duration: "~14 min", estCost: "~$1.10" },
-      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (LoRA rank 32)", estTokens: "~10.7M tokens", duration: "~55 min", estCost: "~$12.80" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~5.5M tokens",
+        duration: "~28 min",
+        estCost: "~$2.20",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast smoke run)",
+        estTokens: "~4.4M tokens",
+        duration: "~14 min",
+        estCost: "~$1.10",
+      },
+      {
+        id: "Qwen/Qwen3-32B",
+        label: "Qwen/Qwen3-32B (LoRA rank 32)",
+        estTokens: "~10.7M tokens",
+        duration: "~55 min",
+        estCost: "~$12.80",
+      },
     ],
     datasets: [
-      { id: "hf://openai/gsm8k", label: "GSM8K Math", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
-      { id: "hf://hendrycks/competition_math", label: "MATH Benchmark", source: "Hugging Face (public)", examples: "7,500 train / 5,000 test" },
+      {
+        id: "hf://openai/gsm8k",
+        label: "GSM8K Math",
+        source: "Hugging Face (public)",
+        examples: "7,473 train / 1,319 test",
+      },
+      {
+        id: "hf://hendrycks/competition_math",
+        label: "MATH Benchmark",
+        source: "Hugging Face (public)",
+        examples: "7,500 train / 5,000 test",
+      },
     ],
     primitives: [
       { label: "Trainer", href: "/docs/training/custom-loops/" },
@@ -119,8 +149,18 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · group_size=8
 Loss      grpo (clip=0.20, kl_beta=0.04 vs frozen base)
 Estimate  ~5.5M tokens · ~28 min (80 steps) · ~$2.20 · warnings: 0`,
     benchmarks: [
-      { benchmark: "MATH pass@1", paperReported: "DeepSeekMath-RL 7B climbs from 46.8% -> 51.7% without a value network", templateSetup: "GSM8K default run · Qwen/Qwen3-8B · group_size=8 · kl_beta=0.04" },
-      { benchmark: "Memory footprint", paperReported: "~50% less GPU memory than critic-based PPO", templateSetup: "Single LoRA trainer + frozen base reference logprobs" },
+      {
+        benchmark: "MATH pass@1",
+        paperReported:
+          "DeepSeekMath-RL 7B climbs from 46.8% -> 51.7% without a value network",
+        templateSetup:
+          "GSM8K default run · Qwen/Qwen3-8B · group_size=8 · kl_beta=0.04",
+      },
+      {
+        benchmark: "Memory footprint",
+        paperReported: "~50% less GPU memory than critic-based PPO",
+        templateSetup: "Single LoRA trainer + frozen base reference logprobs",
+      },
     ],
     bibtex: `@article{shao2024deepseekmath,
   title={DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models},
@@ -152,10 +192,31 @@ Estimate  ~5.5M tokens · ~28 min (80 steps) · ~$2.20 · warnings: 0`,
         "Every DAPO ingredient (clip_high, token-level averaging, zero-var filtering) is first-class in grad with zero custom loss code.",
     },
     walkthrough: [
-      { title: "Sample reasoning groups with generous token budget", explanation: "Sample n=8 long reasoning rollouts per prompt so the model has room to explore backtracking.", gradCall: "snap.sample(prompts, n=8, max_new_tokens=2048)" },
-      { title: "Apply soft overlong penalty in the reward function", explanation: "Penalize completions approaching the max length smoothly instead of assigning abrupt cliff penalties.", gradCall: "reward = base_score - overlong_penalty(len(tokens))" },
-      { title: "Dynamic sampling: skip zero-variance groups", explanation: "Drop groups where std(rewards) < 1e-6 so every gradient step carries real relative signal.", gradCall: "if sd < 1e-6: continue" },
-      { title: "Update with asymmetric Clip-Higher and kl_beta=0", explanation: "Pass clip_low=0.2, clip_high=0.28 into built-in grpo and pipeline optim_step.", gradCall: "trainer.forward_backward(datums, loss={'kind': 'grpo', 'clip_low': 0.2, 'clip_high': 0.28})" },
+      {
+        title: "Sample reasoning groups with generous token budget",
+        explanation:
+          "Sample n=8 long reasoning rollouts per prompt so the model has room to explore backtracking.",
+        gradCall: "snap.sample(prompts, n=8, max_new_tokens=2048)",
+      },
+      {
+        title: "Apply soft overlong penalty in the reward function",
+        explanation:
+          "Penalize completions approaching the max length smoothly instead of assigning abrupt cliff penalties.",
+        gradCall: "reward = base_score - overlong_penalty(len(tokens))",
+      },
+      {
+        title: "Dynamic sampling: skip zero-variance groups",
+        explanation:
+          "Drop groups where std(rewards) < 1e-6 so every gradient step carries real relative signal.",
+        gradCall: "if sd < 1e-6: continue",
+      },
+      {
+        title: "Update with asymmetric Clip-Higher and kl_beta=0",
+        explanation:
+          "Pass clip_low=0.2, clip_high=0.28 into built-in grpo and pipeline optim_step.",
+        gradCall:
+          "trainer.forward_backward(datums, loss={'kind': 'grpo', 'clip_low': 0.2, 'clip_high': 0.28})",
+      },
     ],
     gotchas: [
       "Clip-Higher is sensitive to learning rate — keep lr around 1e-5 to 2e-5 when raising clip_high to 0.28.",
@@ -167,13 +228,41 @@ Estimate  ~5.5M tokens · ~28 min (80 steps) · ~$2.20 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~7.0M tokens", duration: "~35 min", estCost: "~$2.80" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~5.0M tokens", duration: "~16 min", estCost: "~$1.25" },
-      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (LoRA rank 32)", estTokens: "~12.7M tokens", duration: "~65 min", estCost: "~$15.20" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~7.0M tokens",
+        duration: "~35 min",
+        estCost: "~$2.80",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast smoke run)",
+        estTokens: "~5.0M tokens",
+        duration: "~16 min",
+        estCost: "~$1.25",
+      },
+      {
+        id: "Qwen/Qwen3-32B",
+        label: "Qwen/Qwen3-32B (LoRA rank 32)",
+        estTokens: "~12.7M tokens",
+        duration: "~65 min",
+        estCost: "~$15.20",
+      },
     ],
     datasets: [
-      { id: "hf://openai/gsm8k", label: "GSM8K Math Reasoning", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
-      { id: "hf://BytedTsinghua-SIA/DAPO-Math-17k", label: "DAPO-Math-17k", source: "Hugging Face (public)", examples: "17,000 competition math prompts" },
+      {
+        id: "hf://openai/gsm8k",
+        label: "GSM8K Math Reasoning",
+        source: "Hugging Face (public)",
+        examples: "7,473 train / 1,319 test",
+      },
+      {
+        id: "hf://BytedTsinghua-SIA/DAPO-Math-17k",
+        label: "DAPO-Math-17k",
+        source: "Hugging Face (public)",
+        examples: "17,000 competition math prompts",
+      },
     ],
     primitives: [
       { label: "Trainer", href: "/docs/training/custom-loops/" },
@@ -229,8 +318,19 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · group_size=8
 Loss      grpo (clip_low=0.20, clip_high=0.28, dynamic zero-var skip)
 Estimate  ~7.0M tokens · ~35 min (100 steps) · ~$2.80 · warnings: 0`,
     benchmarks: [
-      { benchmark: "AIME 2024 pass@1", paperReported: "50 pts on Qwen2.5-32B in 50% fewer steps than vanilla GRPO", templateSetup: "GSM8K default smoke run (or DAPO-Math-17k) · Qwen/Qwen3-8B" },
-      { benchmark: "Entropy stability", paperReported: "Eliminates premature entropy collapse via clip_high=0.28", templateSetup: "Monitored via metrics.kl_sample_train every step" },
+      {
+        benchmark: "AIME 2024 pass@1",
+        paperReported:
+          "50 pts on Qwen2.5-32B in 50% fewer steps than vanilla GRPO",
+        templateSetup:
+          "GSM8K default smoke run (or DAPO-Math-17k) · Qwen/Qwen3-8B",
+      },
+      {
+        benchmark: "Entropy stability",
+        paperReported:
+          "Eliminates premature entropy collapse via clip_high=0.28",
+        templateSetup: "Monitored via metrics.kl_sample_train every step",
+      },
     ],
     bibtex: `@article{yu2025dapo,
   title={DAPO: An Open-Source LLM Reinforcement Learning System at Scale},
@@ -262,9 +362,24 @@ Estimate  ~7.0M tokens · ~35 min (100 steps) · ~$2.80 · warnings: 0`,
         "Removing std-division is a 1-character change, and constant-length normalization is 8 clean lines in forward_backward_custom.",
     },
     walkthrough: [
-      { title: "Sample prompt groups as usual", explanation: "Generate G=8 rollouts per prompt from the live snapshot.", gradCall: "trainer.snapshot().sample(prompts, n=8)" },
-      { title: "Use unbiased mean-only advantages (no / std)", explanation: "Subtract group mean without dividing by standard deviation so every prompt carries equal weight.", gradCall: "traj.to_datum(advantage=r - mean)" },
-      { title: "Normalize by constant max_tokens instead of response length", explanation: "Divide the summed clipped objective by a fixed constant so wrong answers cannot game length.", gradCall: "trainer.forward_backward_custom(datums, outputs=['logprobs'], loss_fn=dr_grpo_loss)" },
+      {
+        title: "Sample prompt groups as usual",
+        explanation: "Generate G=8 rollouts per prompt from the live snapshot.",
+        gradCall: "trainer.snapshot().sample(prompts, n=8)",
+      },
+      {
+        title: "Use unbiased mean-only advantages (no / std)",
+        explanation:
+          "Subtract group mean without dividing by standard deviation so every prompt carries equal weight.",
+        gradCall: "traj.to_datum(advantage=r - mean)",
+      },
+      {
+        title: "Normalize by constant max_tokens instead of response length",
+        explanation:
+          "Divide the summed clipped objective by a fixed constant so wrong answers cannot game length.",
+        gradCall:
+          "trainer.forward_backward_custom(datums, outputs=['logprobs'], loss_fn=dr_grpo_loss)",
+      },
     ],
     gotchas: [
       "Set const_norm close to your typical max_new_tokens (e.g. 1024) so the effective gradient scale matches standard LR ranges.",
@@ -275,15 +390,40 @@ Estimate  ~7.0M tokens · ~35 min (100 steps) · ~$2.80 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~4.7M tokens", duration: "~24 min", estCost: "~$1.90" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~3.8M tokens", duration: "~12 min", estCost: "~$0.95" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~4.7M tokens",
+        duration: "~24 min",
+        estCost: "~$1.90",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast smoke run)",
+        estTokens: "~3.8M tokens",
+        duration: "~12 min",
+        estCost: "~$0.95",
+      },
     ],
     datasets: [
-      { id: "hf://openai/gsm8k", label: "GSM8K Math", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
-      { id: "hf://hendrycks/competition_math", label: "MATH Benchmark", source: "Hugging Face (public)", examples: "7,500 train / 5,000 test" },
+      {
+        id: "hf://openai/gsm8k",
+        label: "GSM8K Math",
+        source: "Hugging Face (public)",
+        examples: "7,473 train / 1,319 test",
+      },
+      {
+        id: "hf://hendrycks/competition_math",
+        label: "MATH Benchmark",
+        source: "Hugging Face (public)",
+        examples: "7,500 train / 5,000 test",
+      },
     ],
     primitives: [
-      { label: "forward_backward_custom", href: "/docs/training/custom-loops/" },
+      {
+        label: "forward_backward_custom",
+        href: "/docs/training/custom-loops/",
+      },
       { label: "RL for agents", href: "/docs/training/recipes/rl-agents/" },
     ],
     codeLabel: "train.py",
@@ -329,7 +469,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · group_size=8
 Loss      custom dr_grpo_loss (unnormalized advantage, const_norm=1024)
 Estimate  ~4.7M tokens · ~24 min · ~$1.90 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Token efficiency & AIME accuracy", paperReported: "+3–5 pts higher accuracy with significantly shorter incorrect traces vs. GRPO", templateSetup: "GSM8K / MATH · Qwen/Qwen3-8B · const_norm=1024" },
+      {
+        benchmark: "Token efficiency & AIME accuracy",
+        paperReported:
+          "+3–5 pts higher accuracy with significantly shorter incorrect traces vs. GRPO",
+        templateSetup: "GSM8K / MATH · Qwen/Qwen3-8B · const_norm=1024",
+      },
     ],
     bibtex: `@article{liu2025drgrpo,
   title={Understanding R1-Zero-Like Training: A Critical Perspective},
@@ -361,9 +506,26 @@ Estimate  ~4.7M tokens · ~24 min · ~$1.90 · warnings: 0`,
         "9-line custom loss via forward_backward_custom(); zero server changes needed, and works identically on multi-turn trajectories where env tokens are masked to 0.",
     },
     walkthrough: [
-      { title: "Sample group rollouts", explanation: "Collect G=8 trajectories per prompt with exact sampling_logprobs.", gradCall: "trainer.snapshot().sample(prompts, n=8)" },
-      { title: "Compute sequence-level geometric mean log-ratio", explanation: "Average (lp - old_lp) strictly over generated tokens where loss_mask == 1.0, then exponentiate.", gradCall: "seq_r = torch.exp(((lp - old_lp) * mask).sum() / mask.sum())" },
-      { title: "Apply sequence-level clipping via forward_backward_custom", explanation: "Clip the sequence ratio s_i against sequence advantage and send exact surrogate gradients to the GPU.", gradCall: "trainer.forward_backward_custom(datums, outputs=['logprobs'], loss_fn=gspo_loss)" },
+      {
+        title: "Sample group rollouts",
+        explanation:
+          "Collect G=8 trajectories per prompt with exact sampling_logprobs.",
+        gradCall: "trainer.snapshot().sample(prompts, n=8)",
+      },
+      {
+        title: "Compute sequence-level geometric mean log-ratio",
+        explanation:
+          "Average (lp - old_lp) strictly over generated tokens where loss_mask == 1.0, then exponentiate.",
+        gradCall:
+          "seq_r = torch.exp(((lp - old_lp) * mask).sum() / mask.sum())",
+      },
+      {
+        title: "Apply sequence-level clipping via forward_backward_custom",
+        explanation:
+          "Clip the sequence ratio s_i against sequence advantage and send exact surrogate gradients to the GPU.",
+        gradCall:
+          "trainer.forward_backward_custom(datums, outputs=['logprobs'], loss_fn=gspo_loss)",
+      },
     ],
     gotchas: [
       "Sequence-level ratios have much tighter variance than token ratios — start with tighter clipping (eps=3e-4 to 1e-2) when training MoE models.",
@@ -374,15 +536,40 @@ Estimate  ~4.7M tokens · ~24 min · ~$1.90 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-30B-A3B", label: "Qwen/Qwen3-30B-A3B MoE (recommended)", estTokens: "~3.8M tokens", duration: "~30 min", estCost: "~$4.60" },
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (dense smoke run)", estTokens: "~4.0M tokens", duration: "~20 min", estCost: "~$1.60" },
+      {
+        id: "Qwen/Qwen3-30B-A3B",
+        label: "Qwen/Qwen3-30B-A3B MoE (recommended)",
+        estTokens: "~3.8M tokens",
+        duration: "~30 min",
+        estCost: "~$4.60",
+      },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (dense smoke run)",
+        estTokens: "~4.0M tokens",
+        duration: "~20 min",
+        estCost: "~$1.60",
+      },
     ],
     datasets: [
-      { id: "hf://openai/gsm8k", label: "GSM8K Math", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
-      { id: "hf://HuggingFaceH4/MATH-500", label: "MATH-500", source: "Hugging Face (public)", examples: "500 competition problems" },
+      {
+        id: "hf://openai/gsm8k",
+        label: "GSM8K Math",
+        source: "Hugging Face (public)",
+        examples: "7,473 train / 1,319 test",
+      },
+      {
+        id: "hf://HuggingFaceH4/MATH-500",
+        label: "MATH-500",
+        source: "Hugging Face (public)",
+        examples: "500 competition problems",
+      },
     ],
     primitives: [
-      { label: "forward_backward_custom", href: "/docs/training/custom-loops/" },
+      {
+        label: "forward_backward_custom",
+        href: "/docs/training/custom-loops/",
+      },
       { label: "RL for agents", href: "/docs/training/recipes/rl-agents/" },
     ],
     codeLabel: "train.py",
@@ -428,7 +615,12 @@ Model     Qwen/Qwen3-30B-A3B · adapter=lora (rank=32) · group_size=8
 Loss      custom gspo_loss (sequence geometric mean ratio, eps=[3e-4, 4e-4])
 Estimate  ~11.5M tokens · ~30 min · ~$4.60 · warnings: 0`,
     benchmarks: [
-      { benchmark: "MoE RL stability (Qwen3-MoE)", paperReported: "Eliminates MoE routing-replay hacks and outperforms GRPO on AIME/LiveCodeBench", templateSetup: "Qwen3-30B-A3B · sequence-level geometric mean clipping" },
+      {
+        benchmark: "MoE RL stability (Qwen3-MoE)",
+        paperReported:
+          "Eliminates MoE routing-replay hacks and outperforms GRPO on AIME/LiveCodeBench",
+        templateSetup: "Qwen3-30B-A3B · sequence-level geometric mean clipping",
+      },
     ],
     bibtex: `@article{zheng2025gspo,
   title={Group Sequence Policy Optimization},
@@ -440,7 +632,8 @@ Estimate  ~11.5M tokens · ~30 min · ~$4.60 · warnings: 0`,
   {
     slug: "cispo",
     shortTitle: "CISPO",
-    title: "MiniMax-M1 / CISPO: Clipped Importance Sampling Policy Optimization",
+    title:
+      "MiniMax-M1 / CISPO: Clipped Importance Sampling Policy Optimization",
     authors: "MiniMax Team",
     year: 2025,
     arxivId: "2506.13585",
@@ -460,9 +653,24 @@ Estimate  ~11.5M tokens · ~30 min · ~$4.60 · warnings: 0`,
         "Built-in loss='cispo' + immutable trainer.snapshot() handles stale off-policy async rollouts natively.",
     },
     walkthrough: [
-      { title: "Prefetch next batch's rollouts asynchronously", explanation: "Submit rollouts against the current snapshot on a background thread while the GPU trains on the previous batch.", gradCall: "pool.submit(snap.sample, next_prompts, n=8)" },
-      { title: "Train on slightly stale trajectories with built-in CISPO", explanation: "Pass loss={'kind': 'cispo', 'clip_low': 0.2, 'clip_high': 0.28} — stop-grad importance weights stabilize off-policy lag.", gradCall: "trainer.forward_backward(datums, loss={'kind': 'cispo'})" },
-      { title: "Refresh snapshot every step", explanation: "Each step publishes a cheap pointer snapshot so rollouts lag by at most 1 weight version.", gradCall: "trainer.snapshot()" },
+      {
+        title: "Prefetch next batch's rollouts asynchronously",
+        explanation:
+          "Submit rollouts against the current snapshot on a background thread while the GPU trains on the previous batch.",
+        gradCall: "pool.submit(snap.sample, next_prompts, n=8)",
+      },
+      {
+        title: "Train on slightly stale trajectories with built-in CISPO",
+        explanation:
+          "Pass loss={'kind': 'cispo', 'clip_low': 0.2, 'clip_high': 0.28} — stop-grad importance weights stabilize off-policy lag.",
+        gradCall: "trainer.forward_backward(datums, loss={'kind': 'cispo'})",
+      },
+      {
+        title: "Refresh snapshot every step",
+        explanation:
+          "Each step publishes a cheap pointer snapshot so rollouts lag by at most 1 weight version.",
+        gradCall: "trainer.snapshot()",
+      },
     ],
     gotchas: [
       "Keep off-policy staleness <= 2–4 weight versions; check traj.output['weight_version'] vs trainer step if workers stall.",
@@ -473,11 +681,28 @@ Estimate  ~11.5M tokens · ~30 min · ~$4.60 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~4.0M tokens", duration: "~20 min", estCost: "~$1.60" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~3.2M tokens", duration: "~10 min", estCost: "~$0.80" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~4.0M tokens",
+        duration: "~20 min",
+        estCost: "~$1.60",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast smoke run)",
+        estTokens: "~3.2M tokens",
+        duration: "~10 min",
+        estCost: "~$0.80",
+      },
     ],
     datasets: [
-      { id: "hf://openai/gsm8k", label: "GSM8K Math", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
+      {
+        id: "hf://openai/gsm8k",
+        label: "GSM8K Math",
+        source: "Hugging Face (public)",
+        examples: "7,473 train / 1,319 test",
+      },
     ],
     primitives: [
       { label: "Built-in cispo loss", href: "/docs/training/custom-loops/" },
@@ -526,7 +751,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · async lag=1 step
 Loss      cispo (stop-grad clipped importance sampling [0.80, 1.28])
 Estimate  ~4.0M tokens · ~20 min · ~$1.60 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Training speedup & reasoning score", paperReported: "~2x faster convergence vs. DAPO/GRPO while preserving reflection tokens", templateSetup: "1-step overlapped async pool · Qwen/Qwen3-8B" },
+      {
+        benchmark: "Training speedup & reasoning score",
+        paperReported:
+          "~2x faster convergence vs. DAPO/GRPO while preserving reflection tokens",
+        templateSetup: "1-step overlapped async pool · Qwen/Qwen3-8B",
+      },
     ],
     bibtex: `@article{minimax2025m1,
   title={MiniMax-M1: Scaling Test-Time Compute Efficiently with Lightning Attention},
@@ -558,9 +788,25 @@ Estimate  ~4.0M tokens · ~20 min · ~$1.60 · warnings: 0`,
         "Built-in importance_sampling loss + 2-line LOO baseline makes RLOO the cleanest small-group RL baseline in grad.",
     },
     walkthrough: [
-      { title: "Sample small groups (K=4)", explanation: "RLOO shines when rollouts are expensive and you can only afford 4 samples per prompt.", gradCall: "snap.sample(prompts, n=4)" },
-      { title: "Compute unbiased leave-one-out baseline", explanation: "Exclude r_i from its own baseline so E[A_i] stays strictly unbiased.", gradCall: "adv = r - (total - r) / (K - 1)" },
-      { title: "Step with built-in importance_sampling loss", explanation: "Apply clean importance-weighted policy gradients with optional KL anchor.", gradCall: "trainer.forward_backward(datums, loss={'kind': 'importance_sampling', 'kl_beta': 0.02})" },
+      {
+        title: "Sample small groups (K=4)",
+        explanation:
+          "RLOO shines when rollouts are expensive and you can only afford 4 samples per prompt.",
+        gradCall: "snap.sample(prompts, n=4)",
+      },
+      {
+        title: "Compute unbiased leave-one-out baseline",
+        explanation:
+          "Exclude r_i from its own baseline so E[A_i] stays strictly unbiased.",
+        gradCall: "adv = r - (total - r) / (K - 1)",
+      },
+      {
+        title: "Step with built-in importance_sampling loss",
+        explanation:
+          "Apply clean importance-weighted policy gradients with optional KL anchor.",
+        gradCall:
+          "trainer.forward_backward(datums, loss={'kind': 'importance_sampling', 'kl_beta': 0.02})",
+      },
     ],
     gotchas: [
       "RLOO requires K >= 2; K=4 is the sweet spot between sampling cost and baseline variance.",
@@ -571,14 +817,34 @@ Estimate  ~4.0M tokens · ~20 min · ~$1.60 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~3.6M tokens", duration: "~18 min", estCost: "~$1.45" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~2.8M tokens", duration: "~9 min", estCost: "~$0.70" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~3.6M tokens",
+        duration: "~18 min",
+        estCost: "~$1.45",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast smoke run)",
+        estTokens: "~2.8M tokens",
+        duration: "~9 min",
+        estCost: "~$0.70",
+      },
     ],
     datasets: [
-      { id: "hf://openai/gsm8k", label: "GSM8K Math", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
+      {
+        id: "hf://openai/gsm8k",
+        label: "GSM8K Math",
+        source: "Hugging Face (public)",
+        examples: "7,473 train / 1,319 test",
+      },
     ],
     primitives: [
-      { label: "importance_sampling loss", href: "/docs/training/custom-loops/" },
+      {
+        label: "importance_sampling loss",
+        href: "/docs/training/custom-loops/",
+      },
       { label: "RL for agents", href: "/docs/training/recipes/rl-agents/" },
     ],
     codeLabel: "train.py",
@@ -619,7 +885,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · K=4 samples/prompt
 Loss      importance_sampling (kl_beta=0.02, LOO baseline)
 Estimate  ~3.6M tokens · ~18 min · ~$1.45 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Win rate vs. PPO", paperReported: "Matches or outperforms critic-based PPO at K=4 with half the memory", templateSetup: "GSM8K · Qwen/Qwen3-8B · K=4" },
+      {
+        benchmark: "Win rate vs. PPO",
+        paperReported:
+          "Matches or outperforms critic-based PPO at K=4 with half the memory",
+        templateSetup: "GSM8K · Qwen/Qwen3-8B · K=4",
+      },
     ],
     bibtex: `@inproceedings{ahmadian2024rloo,
   title={Back to Basics: Revisiting REINFORCE Style Optimization for Learning from Human Feedback in LLMs},
@@ -651,9 +922,24 @@ Estimate  ~3.6M tokens · ~18 min · ~$1.45 · warnings: 0`,
         "Per-token advantages=[...] on to_datum() + built-in clipped grpo makes REINFORCE++ work cleanly with n=1 rollouts per prompt.",
     },
     walkthrough: [
-      { title: "Sample 1 rollout per prompt", explanation: "Generate a single completion per prompt across a wide batch (e.g. 64 prompts).", gradCall: "snap.sample(prompts, n=1)" },
-      { title: "Shape per-token KL rewards against the reference model", explanation: "Score reference logprobs and subtract beta * (lp - ref_lp) at every generated token.", gradCall: "ref.score_logprobs(trajs)['aligned_logprobs']" },
-      { title: "Whiten token advantages globally across the batch", explanation: "Standardize all active token returns across the full batch and pass advantages=[...] to to_datum().", gradCall: "traj.to_datum(advantages=whitened_tok_advs)" },
+      {
+        title: "Sample 1 rollout per prompt",
+        explanation:
+          "Generate a single completion per prompt across a wide batch (e.g. 64 prompts).",
+        gradCall: "snap.sample(prompts, n=1)",
+      },
+      {
+        title: "Shape per-token KL rewards against the reference model",
+        explanation:
+          "Score reference logprobs and subtract beta * (lp - ref_lp) at every generated token.",
+        gradCall: "ref.score_logprobs(trajs)['aligned_logprobs']",
+      },
+      {
+        title: "Whiten token advantages globally across the batch",
+        explanation:
+          "Standardize all active token returns across the full batch and pass advantages=[...] to to_datum().",
+        gradCall: "traj.to_datum(advantages=whitened_tok_advs)",
+      },
     ],
     gotchas: [
       "Whiten ONLY over tokens where loss_mask == 1.0 — including prompt padding zeros skews the batch mean and variance.",
@@ -664,11 +950,28 @@ Estimate  ~3.6M tokens · ~18 min · ~$1.45 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~3.2M tokens", duration: "~16 min", estCost: "~$1.30" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~2.6M tokens", duration: "~8 min", estCost: "~$0.65" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~3.2M tokens",
+        duration: "~16 min",
+        estCost: "~$1.30",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast smoke run)",
+        estTokens: "~2.6M tokens",
+        duration: "~8 min",
+        estCost: "~$0.65",
+      },
     ],
     datasets: [
-      { id: "hf://openai/gsm8k", label: "GSM8K Math", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
+      {
+        id: "hf://openai/gsm8k",
+        label: "GSM8K Math",
+        source: "Hugging Face (public)",
+        examples: "7,473 train / 1,319 test",
+      },
     ],
     primitives: [
       { label: "Trajectory.to_datum", href: "/docs/reference/primitives/" },
@@ -730,7 +1033,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · n=1 rollout/prompt
 Loss      grpo with per-token KL shaping + global batch whitening
 Estimate  ~3.2M tokens · ~16 min · ~$1.30 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Stability vs. GRPO at n=1", paperReported: "Matches PPO stability with ~30% faster training and no value critic", templateSetup: "GSM8K · batch_size=64 · n=1 · kl_beta=0.01" },
+      {
+        benchmark: "Stability vs. GRPO at n=1",
+        paperReported:
+          "Matches PPO stability with ~30% faster training and no value critic",
+        templateSetup: "GSM8K · batch_size=64 · n=1 · kl_beta=0.01",
+      },
     ],
     bibtex: `@article{hu2025reinforcepp,
   title={REINFORCE++: A Simple and Efficient Approach for Aligning Large Language Models},
@@ -762,9 +1070,27 @@ Estimate  ~3.2M tokens · ~16 min · ~$1.30 · warnings: 0`,
         "Token-level value head + param_groups make joint actor-critic PPO clean in ~42 lines without spinning up a second server.",
     },
     walkthrough: [
-      { title: "Attach a token-level value head", explanation: "Declare heads={'v': {'dim': 1, 'token_level': True}} in ModelSpec so forward() returns (T, 1) per-token value predictions.", gradCall: "ModelSpec(..., heads={'v': {'dim': 1, 'token_level': True}})" },
-      { title: "Compute decoupled GAE + positive-NLL loss", explanation: "Train the value head against Monte Carlo returns (lambda=1.0), policy with GAE + clip-higher, and add 0.1 * NLL on correct rollouts.", gradCall: "trainer.forward_backward_custom(datums, outputs=['logprobs', 'heads'], loss_fn=vapo_loss)" },
-      { title: "Give the value head a faster learning rate", explanation: "Pass param_groups to optim_step() so extra_heads.v converges rapidly during early steps.", gradCall: "trainer.optim_step(lr=1e-5, param_groups=[{'match': 'extra_heads.v', 'lr': 1e-4}])" },
+      {
+        title: "Attach a token-level value head",
+        explanation:
+          "Declare heads={'v': {'dim': 1, 'token_level': True}} in ModelSpec so forward() returns (T, 1) per-token value predictions.",
+        gradCall:
+          "ModelSpec(..., heads={'v': {'dim': 1, 'token_level': True}})",
+      },
+      {
+        title: "Compute decoupled GAE + positive-NLL loss",
+        explanation:
+          "Train the value head against Monte Carlo returns (lambda=1.0), policy with GAE + clip-higher, and add 0.1 * NLL on correct rollouts.",
+        gradCall:
+          "trainer.forward_backward_custom(datums, outputs=['logprobs', 'heads'], loss_fn=vapo_loss)",
+      },
+      {
+        title: "Give the value head a faster learning rate",
+        explanation:
+          "Pass param_groups to optim_step() so extra_heads.v converges rapidly during early steps.",
+        gradCall:
+          "trainer.optim_step(lr=1e-5, param_groups=[{'match': 'extra_heads.v', 'lr': 1e-4}])",
+      },
     ],
     gotchas: [
       "Warm-start the value head for 20–50 steps (setting policy loss weight to 0) before updating the actor so initial value errors don't corrupt the policy.",
@@ -775,12 +1101,34 @@ Estimate  ~3.2M tokens · ~16 min · ~$1.30 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~7.5M tokens", duration: "~38 min", estCost: "~$3.00" },
-      { id: "Qwen/Qwen3-32B", label: "Qwen/Qwen3-32B (LoRA rank 32)", estTokens: "~13.7M tokens", duration: "~70 min", estCost: "~$16.40" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~7.5M tokens",
+        duration: "~38 min",
+        estCost: "~$3.00",
+      },
+      {
+        id: "Qwen/Qwen3-32B",
+        label: "Qwen/Qwen3-32B (LoRA rank 32)",
+        estTokens: "~13.7M tokens",
+        duration: "~70 min",
+        estCost: "~$16.40",
+      },
     ],
     datasets: [
-      { id: "hf://BytedTsinghua-SIA/DAPO-Math-17k", label: "DAPO-Math-17k", source: "Hugging Face (public)", examples: "17,000 competition math prompts" },
-      { id: "hf://openai/gsm8k", label: "GSM8K Math", source: "Hugging Face (public)", examples: "7,473 train / 1,319 test" },
+      {
+        id: "hf://BytedTsinghua-SIA/DAPO-Math-17k",
+        label: "DAPO-Math-17k",
+        source: "Hugging Face (public)",
+        examples: "17,000 competition math prompts",
+      },
+      {
+        id: "hf://openai/gsm8k",
+        label: "GSM8K Math",
+        source: "Hugging Face (public)",
+        examples: "7,473 train / 1,319 test",
+      },
     ],
     primitives: [
       { label: "Token-level heads", href: "/docs/training/custom-loops/" },
@@ -845,7 +1193,11 @@ Model     Qwen/Qwen3-8B · adapter=lora + token_level value head 'v'
 Loss      custom vapo_loss (clip=[0.20,0.28], vf=0.5, pos_nll=0.1)
 Estimate  ~7.5M tokens · ~38 min · ~$3.00 · warnings: 0`,
     benchmarks: [
-      { benchmark: "AIME 2024 pass@1", paperReported: "60.4 on Qwen2.5-32B (+10 pts over DAPO on long CoT)", templateSetup: "GSM8K / DAPO-Math-17k · Qwen/Qwen3-8B · actor+critic" },
+      {
+        benchmark: "AIME 2024 pass@1",
+        paperReported: "60.4 on Qwen2.5-32B (+10 pts over DAPO on long CoT)",
+        templateSetup: "GSM8K / DAPO-Math-17k · Qwen/Qwen3-8B · actor+critic",
+      },
     ],
     bibtex: `@article{yue2025vapo,
   title={VAPO: Efficient and Reliable Reinforcement Learning for Advanced Reasoning Models},

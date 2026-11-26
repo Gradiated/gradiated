@@ -66,7 +66,8 @@ const docsPaths = readdirSync(join(websiteRoot, "src", "docs"), {
   .map((file) => file.replace(/\.mdx$/, ""))
   .map((slug) => {
     if (slug === "index") return "/docs/";
-    if (slug.endsWith("/index")) return `/docs/${slug.slice(0, -"/index".length)}/`;
+    if (slug.endsWith("/index"))
+      return `/docs/${slug.slice(0, -"/index".length)}/`;
     return `/docs/${slug}/`;
   });
 

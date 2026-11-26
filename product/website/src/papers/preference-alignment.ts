@@ -24,9 +24,24 @@ export const preferenceAlignmentPapers: PaperGuide[] = [
         "Zero training-loop code required via managed recipe='dpo', and group_id keeps chosen/rejected pairs atomic across splits.",
     },
     walkthrough: [
-      { title: "Store preference pairs with shared group_id", explanation: "Tag each pair with the same group_id and role='chosen' or role='rejected'.", gradCall: "group_id='pair_19', role='chosen' | 'rejected'" },
-      { title: "Warm-start from an SFT checkpoint (optional)", explanation: "Pass init_from to inherit the SFT weights as both starting policy and frozen reference.", gradCall: "init_from: assistant@sft-v1" },
-      { title: "Launch managed DPO run", explanation: "Set loss.beta (0.05–0.2) and let grad handle reference scoring, splitting, and held-out reward-accuracy eval.", gradCall: "grad run papers/dpo --wait" },
+      {
+        title: "Store preference pairs with shared group_id",
+        explanation:
+          "Tag each pair with the same group_id and role='chosen' or role='rejected'.",
+        gradCall: "group_id='pair_19', role='chosen' | 'rejected'",
+      },
+      {
+        title: "Warm-start from an SFT checkpoint (optional)",
+        explanation:
+          "Pass init_from to inherit the SFT weights as both starting policy and frozen reference.",
+        gradCall: "init_from: assistant@sft-v1",
+      },
+      {
+        title: "Launch managed DPO run",
+        explanation:
+          "Set loss.beta (0.05–0.2) and let grad handle reference scoring, splitting, and held-out reward-accuracy eval.",
+        gradCall: "grad run papers/dpo --wait",
+      },
     ],
     gotchas: [
       "Keep DPO learning rates 5–10x lower than SFT (1e-5 to 5e-5 for LoRA) or the policy will quickly overfit and emit repetitive text.",
@@ -37,11 +52,28 @@ export const preferenceAlignmentPapers: PaperGuide[] = [
     mode: "Managed recipe",
     entrypoint: "recipe.yaml",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.4M tokens", duration: "~12 min", estCost: "~$0.95" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~1.9M tokens", duration: "~6 min", estCost: "~$0.48" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~2.4M tokens",
+        duration: "~12 min",
+        estCost: "~$0.95",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast smoke run)",
+        estTokens: "~1.9M tokens",
+        duration: "~6 min",
+        estCost: "~$0.48",
+      },
     ],
     datasets: [
-      { id: "hf://HuggingFaceH4/ultrafeedback_binarized", label: "UltraFeedback Binarized", source: "Hugging Face (public)", examples: "61,135 preference pairs" },
+      {
+        id: "hf://HuggingFaceH4/ultrafeedback_binarized",
+        label: "UltraFeedback Binarized",
+        source: "Hugging Face (public)",
+        examples: "61,135 preference pairs",
+      },
     ],
     primitives: [
       { label: "recipe='dpo'", href: "/docs/training/recipes/sft-dpo/" },
@@ -74,7 +106,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · merge_adapter=true
 Loss      dpo (beta=0.10) · AdamW lr=5.0e-5
 Estimate  ~2.4M tokens · ~12 min · ~$0.95 · warnings: 0`,
     benchmarks: [
-      { benchmark: "MT-Bench / AlpacaEval", paperReported: "Matches or exceeds PPO-based RLHF with far higher stability", templateSetup: "UltraFeedback Binarized · Qwen/Qwen3-8B · beta=0.1" },
+      {
+        benchmark: "MT-Bench / AlpacaEval",
+        paperReported:
+          "Matches or exceeds PPO-based RLHF with far higher stability",
+        templateSetup: "UltraFeedback Binarized · Qwen/Qwen3-8B · beta=0.1",
+      },
     ],
     bibtex: `@inproceedings{rafailov2023dpo,
   title={Direct Preference Optimization: Your Language Model is Secretly a Reward Model},
@@ -106,9 +143,25 @@ Estimate  ~2.4M tokens · ~12 min · ~$0.95 · warnings: 0`,
         "Reference-free SimPO is 9 lines of PyTorch in forward_backward_custom with bit-exact gradients.",
     },
     walkthrough: [
-      { title: "Pack (chosen, rejected) pairs with assistant loss_mask", explanation: "Let base.tokenize(..., return_loss_mask=True) mask out the shared prompt automatically.", gradCall: "base.tokenize(messages=pair, return_loss_mask=True)" },
-      { title: "Compute length-normalized logprobs with target margin gamma", explanation: "Divide masked logprobs by mask.sum() for chosen and rejected, then apply logsigmoid(beta * diff - gamma).", gradCall: "trainer.forward_backward_custom(batch, outputs=['logprobs'], loss_fn=simpo_loss)" },
-      { title: "Export merged artifact", explanation: "No reference model ever touched the GPU — merge LoRA and deploy.", gradCall: "trainer.export(name='simpo-aligned', merge_adapter=True)" },
+      {
+        title: "Pack (chosen, rejected) pairs with assistant loss_mask",
+        explanation:
+          "Let base.tokenize(..., return_loss_mask=True) mask out the shared prompt automatically.",
+        gradCall: "base.tokenize(messages=pair, return_loss_mask=True)",
+      },
+      {
+        title: "Compute length-normalized logprobs with target margin gamma",
+        explanation:
+          "Divide masked logprobs by mask.sum() for chosen and rejected, then apply logsigmoid(beta * diff - gamma).",
+        gradCall:
+          "trainer.forward_backward_custom(batch, outputs=['logprobs'], loss_fn=simpo_loss)",
+      },
+      {
+        title: "Export merged artifact",
+        explanation:
+          "No reference model ever touched the GPU — merge LoRA and deploy.",
+        gradCall: "trainer.export(name='simpo-aligned', merge_adapter=True)",
+      },
     ],
     gotchas: [
       "SimPO uses a MUCH larger beta (2.0–2.5) than DPO (0.1) because logprobs are averaged instead of summed.",
@@ -119,14 +172,34 @@ Estimate  ~2.4M tokens · ~12 min · ~$0.95 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~1.6M tokens", duration: "~8 min", estCost: "~$0.65" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~1.4M tokens", duration: "~4 min", estCost: "~$0.35" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~1.6M tokens",
+        duration: "~8 min",
+        estCost: "~$0.65",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast smoke run)",
+        estTokens: "~1.4M tokens",
+        duration: "~4 min",
+        estCost: "~$0.35",
+      },
     ],
     datasets: [
-      { id: "hf://HuggingFaceH4/ultrafeedback_binarized", label: "UltraFeedback Binarized", source: "Hugging Face (public)", examples: "61,135 preference pairs" },
+      {
+        id: "hf://HuggingFaceH4/ultrafeedback_binarized",
+        label: "UltraFeedback Binarized",
+        source: "Hugging Face (public)",
+        examples: "61,135 preference pairs",
+      },
     ],
     primitives: [
-      { label: "forward_backward_custom", href: "/docs/training/custom-loops/" },
+      {
+        label: "forward_backward_custom",
+        href: "/docs/training/custom-loops/",
+      },
       { label: "SFT & DPO guide", href: "/docs/training/recipes/sft-dpo/" },
     ],
     codeLabel: "train.py",
@@ -168,7 +241,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · reference-free
 Loss      custom simpo_loss (beta=2.0, gamma=0.5)
 Estimate  ~1.6M tokens · ~8 min · ~$0.65 · warnings: 0`,
     benchmarks: [
-      { benchmark: "AlpacaEval 2 LC Win Rate", paperReported: "+6.4 pts over DPO on Llama-3-8B without a reference model", templateSetup: "UltraFeedback · Qwen/Qwen3-8B · beta=2.0, gamma=0.5" },
+      {
+        benchmark: "AlpacaEval 2 LC Win Rate",
+        paperReported:
+          "+6.4 pts over DPO on Llama-3-8B without a reference model",
+        templateSetup: "UltraFeedback · Qwen/Qwen3-8B · beta=2.0, gamma=0.5",
+      },
     ],
     bibtex: `@inproceedings{meng2024simpo,
   title={SimPO: Simple Preference Optimization with a Reference-Free Reward},
@@ -200,9 +278,25 @@ Estimate  ~1.6M tokens · ~8 min · ~$0.65 · warnings: 0`,
         "10 lines of PyTorch in forward_backward_custom — no reference model and no two-stage checkpoint handoff.",
     },
     walkthrough: [
-      { title: "Compute mean log-probability for chosen and rejected", explanation: "Use each datum's 1:1 loss_mask to average logprobs over assistant tokens.", gradCall: "avg_w = (lp_w * mc).sum() / mc.sum()" },
-      { title: "Convert probabilities to numerically stable log-odds", explanation: "Clamp exp(avg_lp) below 1-1e-6 before taking log(p / (1 - p)).", gradCall: "log_odds = avg_lp - torch.log1p(-avg_lp.exp().clamp(max=1-1e-6))" },
-      { title: "Add lambda * odds-ratio loss to chosen SFT NLL", explanation: "Optimize both terms jointly in one pass with AdamW.", gradCall: "trainer.forward_backward_custom(batch, outputs=['logprobs'], loss_fn=orpo_loss)" },
+      {
+        title: "Compute mean log-probability for chosen and rejected",
+        explanation:
+          "Use each datum's 1:1 loss_mask to average logprobs over assistant tokens.",
+        gradCall: "avg_w = (lp_w * mc).sum() / mc.sum()",
+      },
+      {
+        title: "Convert probabilities to numerically stable log-odds",
+        explanation:
+          "Clamp exp(avg_lp) below 1-1e-6 before taking log(p / (1 - p)).",
+        gradCall:
+          "log_odds = avg_lp - torch.log1p(-avg_lp.exp().clamp(max=1-1e-6))",
+      },
+      {
+        title: "Add lambda * odds-ratio loss to chosen SFT NLL",
+        explanation: "Optimize both terms jointly in one pass with AdamW.",
+        gradCall:
+          "trainer.forward_backward_custom(batch, outputs=['logprobs'], loss_fn=orpo_loss)",
+      },
     ],
     gotchas: [
       "Clamp exp(avg_lp) strictly below 1.0 - 1e-6 to avoid NaN gradients inside log1p(-p) on very confident sequences.",
@@ -213,14 +307,34 @@ Estimate  ~1.6M tokens · ~8 min · ~$0.65 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~1.7M tokens", duration: "~9 min", estCost: "~$0.70" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~1.6M tokens", duration: "~5 min", estCost: "~$0.40" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~1.7M tokens",
+        duration: "~9 min",
+        estCost: "~$0.70",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast smoke run)",
+        estTokens: "~1.6M tokens",
+        duration: "~5 min",
+        estCost: "~$0.40",
+      },
     ],
     datasets: [
-      { id: "hf://HuggingFaceH4/ultrafeedback_binarized", label: "UltraFeedback Binarized", source: "Hugging Face (public)", examples: "61,135 preference pairs" },
+      {
+        id: "hf://HuggingFaceH4/ultrafeedback_binarized",
+        label: "UltraFeedback Binarized",
+        source: "Hugging Face (public)",
+        examples: "61,135 preference pairs",
+      },
     ],
     primitives: [
-      { label: "forward_backward_custom", href: "/docs/training/custom-loops/" },
+      {
+        label: "forward_backward_custom",
+        href: "/docs/training/custom-loops/",
+      },
       { label: "SFT & DPO guide", href: "/docs/training/recipes/sft-dpo/" },
     ],
     codeLabel: "train.py",
@@ -265,7 +379,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · single-stage SFT+preference
 Loss      custom orpo_loss (lam=0.10)
 Estimate  ~1.7M tokens · ~9 min · ~$0.70 · warnings: 0`,
     benchmarks: [
-      { benchmark: "AlpacaEval 2.0", paperReported: "Outperforms 2-stage SFT+DPO on Mistral-7B in a single training run", templateSetup: "UltraFeedback · Qwen/Qwen3-8B · lam=0.1" },
+      {
+        benchmark: "AlpacaEval 2.0",
+        paperReported:
+          "Outperforms 2-stage SFT+DPO on Mistral-7B in a single training run",
+        templateSetup: "UltraFeedback · Qwen/Qwen3-8B · lam=0.1",
+      },
     ],
     bibtex: `@inproceedings{hong2024orpo,
   title={ORPO: Monolithic Preference Optimization without Reference Model},
@@ -297,9 +416,25 @@ Estimate  ~1.7M tokens · ~9 min · ~$0.70 · warnings: 0`,
         "Unpaired trajectories with role='desirable'|'undesirable' plug straight into forward_backward_custom with zero pair matching.",
     },
     walkthrough: [
-      { title: "Tag unpaired examples as desirable or undesirable", explanation: "Set role='desirable' for thumbs-up traces and role='undesirable' for thumbs-down traces.", gradCall: "Datum(..., role='desirable' | 'undesirable')" },
-      { title: "Score reference logprobs once", explanation: "Compute aligned reference logprobs against the frozen starting checkpoint.", gradCall: "ref.score_logprobs(trajs)['aligned_logprobs']" },
-      { title: "Optimize prospect-theoretic KTO loss with detached z_0", explanation: "Estimate the KL baseline z_0 across the batch (detached) and weight desirable vs undesirable examples.", gradCall: "trainer.forward_backward_custom(datums, outputs=['logprobs'], loss_fn=kto_loss)" },
+      {
+        title: "Tag unpaired examples as desirable or undesirable",
+        explanation:
+          "Set role='desirable' for thumbs-up traces and role='undesirable' for thumbs-down traces.",
+        gradCall: "Datum(..., role='desirable' | 'undesirable')",
+      },
+      {
+        title: "Score reference logprobs once",
+        explanation:
+          "Compute aligned reference logprobs against the frozen starting checkpoint.",
+        gradCall: "ref.score_logprobs(trajs)['aligned_logprobs']",
+      },
+      {
+        title: "Optimize prospect-theoretic KTO loss with detached z_0",
+        explanation:
+          "Estimate the KL baseline z_0 across the batch (detached) and weight desirable vs undesirable examples.",
+        gradCall:
+          "trainer.forward_backward_custom(datums, outputs=['logprobs'], loss_fn=kto_loss)",
+      },
     ],
     gotchas: [
       "Always .detach() z_0 (the mean batch KL baseline) — backpropagating through z_0 destabilizes training.",
@@ -310,15 +445,38 @@ Estimate  ~1.7M tokens · ~9 min · ~$0.70 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.2M tokens", duration: "~11 min", estCost: "~$0.88" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~1.9M tokens", duration: "~6 min", estCost: "~$0.48" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~2.2M tokens",
+        duration: "~11 min",
+        estCost: "~$0.88",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast smoke run)",
+        estTokens: "~1.9M tokens",
+        duration: "~6 min",
+        estCost: "~$0.48",
+      },
     ],
     datasets: [
-      { id: "hf://trl-lib/kto-mix-14k", label: "KTO Mix 14k (unpaired)", source: "Hugging Face (public)", examples: "13,500 binary-labeled examples" },
+      {
+        id: "hf://trl-lib/kto-mix-14k",
+        label: "KTO Mix 14k (unpaired)",
+        source: "Hugging Face (public)",
+        examples: "13,500 binary-labeled examples",
+      },
     ],
     primitives: [
-      { label: "forward_backward_custom", href: "/docs/training/custom-loops/" },
-      { label: "Trajectories & feedback", href: "/docs/training/trajectories/" },
+      {
+        label: "forward_backward_custom",
+        href: "/docs/training/custom-loops/",
+      },
+      {
+        label: "Trajectories & feedback",
+        href: "/docs/training/trajectories/",
+      },
     ],
     codeLabel: "train.py",
     codeLanguage: "python",
@@ -362,7 +520,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32)
 Loss      custom kto_loss (beta=0.10, lam_d=1.0, lam_u=1.33)
 Estimate  ~2.2M tokens · ~11 min · ~$0.88 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Unpaired alignment vs. DPO", paperReported: "Matches or exceeds DPO at 1B–30B scale using only binary thumbs-up/down labels", templateSetup: "kto-mix-14k · Qwen/Qwen3-8B · beta=0.1" },
+      {
+        benchmark: "Unpaired alignment vs. DPO",
+        paperReported:
+          "Matches or exceeds DPO at 1B–30B scale using only binary thumbs-up/down labels",
+        templateSetup: "kto-mix-14k · Qwen/Qwen3-8B · beta=0.1",
+      },
     ],
     bibtex: `@inproceedings{ethayarajh2024kto,
   title={KTO: Model Alignment as Prospect Theoretic Optimization},
@@ -394,9 +557,24 @@ Estimate  ~2.2M tokens · ~11 min · ~$0.88 · warnings: 0`,
         "Swapping logsigmoid for the bounded IPO squared target is a 1-line edit in forward_backward_custom.",
     },
     walkthrough: [
-      { title: "Score reference logprobs on (chosen, rejected) pairs", explanation: "Cache aligned reference logprobs from the starting SFT artifact.", gradCall: "ref.score_logprobs(pairs)['aligned_logprobs']" },
-      { title: "Regress the log-ratio margin toward 1/(2*tau)", explanation: "Compute delta = (lp_w - ref_w) - (lp_l - ref_l) and minimize (delta - 0.5 / tau) ** 2.", gradCall: "((delta - 0.5 / tau) ** 2).mean()" },
-      { title: "Step and export", explanation: "IPO stays well-regularized even over multiple epochs on small preference datasets.", gradCall: "trainer.export(name='ipo-aligned', merge_adapter=True)" },
+      {
+        title: "Score reference logprobs on (chosen, rejected) pairs",
+        explanation:
+          "Cache aligned reference logprobs from the starting SFT artifact.",
+        gradCall: "ref.score_logprobs(pairs)['aligned_logprobs']",
+      },
+      {
+        title: "Regress the log-ratio margin toward 1/(2*tau)",
+        explanation:
+          "Compute delta = (lp_w - ref_w) - (lp_l - ref_l) and minimize (delta - 0.5 / tau) ** 2.",
+        gradCall: "((delta - 0.5 / tau) ** 2).mean()",
+      },
+      {
+        title: "Step and export",
+        explanation:
+          "IPO stays well-regularized even over multiple epochs on small preference datasets.",
+        gradCall: "trainer.export(name='ipo-aligned', merge_adapter=True)",
+      },
     ],
     gotchas: [
       "IPO is especially strong on small, high-agreement domain preference sets (500–3,000 pairs) where DPO overfits after 1 epoch.",
@@ -407,13 +585,27 @@ Estimate  ~2.2M tokens · ~11 min · ~$0.88 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.2M tokens", duration: "~11 min", estCost: "~$0.88" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~2.2M tokens",
+        duration: "~11 min",
+        estCost: "~$0.88",
+      },
     ],
     datasets: [
-      { id: "hf://HuggingFaceH4/ultrafeedback_binarized", label: "UltraFeedback Binarized", source: "Hugging Face (public)", examples: "61,135 preference pairs" },
+      {
+        id: "hf://HuggingFaceH4/ultrafeedback_binarized",
+        label: "UltraFeedback Binarized",
+        source: "Hugging Face (public)",
+        examples: "61,135 preference pairs",
+      },
     ],
     primitives: [
-      { label: "forward_backward_custom", href: "/docs/training/custom-loops/" },
+      {
+        label: "forward_backward_custom",
+        href: "/docs/training/custom-loops/",
+      },
       { label: "SFT & DPO guide", href: "/docs/training/recipes/sft-dpo/" },
     ],
     codeLabel: "train.py",
@@ -458,7 +650,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32)
 Loss      custom ipo_loss (tau=0.10, bounded quadratic target=5.0)
 Estimate  ~2.2M tokens · ~11 min · ~$0.88 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Overfitting resistance", paperReported: "Eliminates DPO late-epoch degradation on deterministic preference sets", templateSetup: "UltraFeedback · Qwen/Qwen3-8B · tau=0.1" },
+      {
+        benchmark: "Overfitting resistance",
+        paperReported:
+          "Eliminates DPO late-epoch degradation on deterministic preference sets",
+        templateSetup: "UltraFeedback · Qwen/Qwen3-8B · tau=0.1",
+      },
     ],
     bibtex: `@inproceedings{azar2024ipo,
   title={A General Theoretical Paradigm to Understand Learning from Human Preferences},
@@ -490,9 +687,25 @@ Estimate  ~2.2M tokens · ~11 min · ~$0.88 · warnings: 0`,
         "Combines three built-in primitives (snapshot.sample, ref.score_logprobs, loss='dpo') with zero custom loss code.",
     },
     walkthrough: [
-      { title: "Sample two live candidates per prompt", explanation: "Generate on-policy pairs directly from the current trainer snapshot.", gradCall: "trainer.snapshot().sample(prompts, n=2)" },
-      { title: "Rank winner vs. loser with a reward model or judge", explanation: "Score both completions with a trained RM artifact or deterministic rubric to assign chosen/rejected.", gradCall: "rm.infer_batch(candidates)" },
-      { title: "Update with built-in DPO loss", explanation: "Attach reference logprobs and shared group_id, then step with built-in loss='dpo'.", gradCall: "trainer.forward_backward(datums, loss={'kind': 'dpo', 'beta': 0.1})" },
+      {
+        title: "Sample two live candidates per prompt",
+        explanation:
+          "Generate on-policy pairs directly from the current trainer snapshot.",
+        gradCall: "trainer.snapshot().sample(prompts, n=2)",
+      },
+      {
+        title: "Rank winner vs. loser with a reward model or judge",
+        explanation:
+          "Score both completions with a trained RM artifact or deterministic rubric to assign chosen/rejected.",
+        gradCall: "rm.infer_batch(candidates)",
+      },
+      {
+        title: "Update with built-in DPO loss",
+        explanation:
+          "Attach reference logprobs and shared group_id, then step with built-in loss='dpo'.",
+        gradCall:
+          "trainer.forward_backward(datums, loss={'kind': 'dpo', 'beta': 0.1})",
+      },
     ],
     gotchas: [
       "Skip pairs where the reward difference |r_a - r_b| is near zero (ties) so noisy judge flips don't corrupt gradients.",
@@ -503,10 +716,21 @@ Estimate  ~2.2M tokens · ~11 min · ~$0.88 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~4.4M tokens", duration: "~22 min", estCost: "~$1.75" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~4.4M tokens",
+        duration: "~22 min",
+        estCost: "~$1.75",
+      },
     ],
     datasets: [
-      { id: "hf://HuggingFaceH4/ultrafeedback_binarized", label: "UltraFeedback Prompts", source: "Hugging Face (public)", examples: "Prompts only (on-policy pairs)" },
+      {
+        id: "hf://HuggingFaceH4/ultrafeedback_binarized",
+        label: "UltraFeedback Prompts",
+        source: "Hugging Face (public)",
+        examples: "Prompts only (on-policy pairs)",
+      },
     ],
     primitives: [
       { label: "trainer.snapshot()", href: "/docs/training/custom-loops/" },
@@ -561,7 +785,13 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32) · online RM ranking
 Loss      dpo (beta=0.10) on live snapshot pairs
 Estimate  ~4.4M tokens · ~22 min · ~$1.75 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Human/LLM win rate", paperReported: "Consistently beats offline DPO and matches online RLHF without a critic", templateSetup: "UltraFeedback prompts · Qwen/Qwen3-8B · n=2 online ranking" },
+      {
+        benchmark: "Human/LLM win rate",
+        paperReported:
+          "Consistently beats offline DPO and matches online RLHF without a critic",
+        templateSetup:
+          "UltraFeedback prompts · Qwen/Qwen3-8B · n=2 online ranking",
+      },
     ],
     bibtex: `@article{guo2024online_dpo,
   title={Direct Language Model Alignment from Online AI Feedback},
@@ -593,9 +823,25 @@ Estimate  ~4.4M tokens · ~22 min · ~$1.75 · warnings: 0`,
         "Refreshing opponent = trainer.snapshot() each outer round + built-in loss='dpo' implements exact SPIN in 26 lines.",
     },
     walkthrough: [
-      { title: "Snapshot the current model as round-t opponent", explanation: "At the start of each self-play round, capture an immutable snapshot to serve as both generator and reference.", gradCall: "opponent = trainer.snapshot()" },
-      { title: "Generate synthetic negatives on your existing SFT prompts", explanation: "Sample one completion per prompt from opponent and pair it against the gold human response.", gradCall: "opponent.sample(prompts, n=1)" },
-      { title: "Train with built-in DPO against the opponent reference", explanation: "Push gold human answers up and previous-round synthetic answers down, then repeat for 3 rounds.", gradCall: "trainer.forward_backward(datums, loss={'kind': 'dpo', 'beta': 0.1})" },
+      {
+        title: "Snapshot the current model as round-t opponent",
+        explanation:
+          "At the start of each self-play round, capture an immutable snapshot to serve as both generator and reference.",
+        gradCall: "opponent = trainer.snapshot()",
+      },
+      {
+        title: "Generate synthetic negatives on your existing SFT prompts",
+        explanation:
+          "Sample one completion per prompt from opponent and pair it against the gold human response.",
+        gradCall: "opponent.sample(prompts, n=1)",
+      },
+      {
+        title: "Train with built-in DPO against the opponent reference",
+        explanation:
+          "Push gold human answers up and previous-round synthetic answers down, then repeat for 3 rounds.",
+        gradCall:
+          "trainer.forward_backward(datums, loss={'kind': 'dpo', 'beta': 0.1})",
+      },
     ],
     gotchas: [
       "Stop after 2–3 self-play rounds — once the policy matches human distribution closely, extra rounds overfit stylistic artifacts.",
@@ -606,10 +852,21 @@ Estimate  ~4.4M tokens · ~22 min · ~$1.75 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~3.8M tokens", duration: "~19 min", estCost: "~$1.50" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~3.8M tokens",
+        duration: "~19 min",
+        estCost: "~$1.50",
+      },
     ],
     datasets: [
-      { id: "hf://HuggingFaceH4/ultrachat_200k", label: "UltraChat 200k (subset)", source: "Hugging Face (public)", examples: "50,000 gold SFT conversations" },
+      {
+        id: "hf://HuggingFaceH4/ultrachat_200k",
+        label: "UltraChat 200k (subset)",
+        source: "Hugging Face (public)",
+        examples: "50,000 gold SFT conversations",
+      },
     ],
     primitives: [
       { label: "trainer.snapshot()", href: "/docs/training/custom-loops/" },
@@ -656,7 +913,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=32)
 Loss      iterative dpo (beta=0.10) vs previous-round snapshot
 Estimate  ~3.8M tokens · ~19 min · ~$1.50 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Open LLM Leaderboard", paperReported: "+6 pts average gain over SFT without any extra preference data", templateSetup: "UltraChat subset · 3 self-play rounds · Qwen/Qwen3-8B" },
+      {
+        benchmark: "Open LLM Leaderboard",
+        paperReported:
+          "+6 pts average gain over SFT without any extra preference data",
+        templateSetup: "UltraChat subset · 3 self-play rounds · Qwen/Qwen3-8B",
+      },
     ],
     bibtex: `@inproceedings{chen2024spin,
   title={Self-Play Fine-Tuning Converts Weak Language Models to Strong Language Models},

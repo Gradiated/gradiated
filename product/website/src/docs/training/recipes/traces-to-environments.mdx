@@ -1,14 +1,17 @@
 # Building an environment from traces
 
-<DocsLead>Turn your existing production logs into an RL environment, starting simple and adding containers only when you need them.</DocsLead>
+<DocsLead>
+  Turn your existing production logs into an RL environment, starting simple and
+  adding containers only when you need them.
+</DocsLead>
 
 Most teams start with thousands of logged requests in a [`Dataset`](/docs/training/trajectories/), not a ready-made RL simulator. You don't need to build containers on day one. Start at the simplest level that fits your task and move up using the same [`Task` and `Environment`](/docs/training/environments/) and [`Rubric`](/docs/training/rubrics/) classes:
 
-| Level | Best for | Setup time | How it works |
-| --- | --- | --- | --- |
-| **1. Trace → `Task` + `Rubric`** | SQL, diff-merge, JSON extraction, support replies, single-turn tool calls | Minutes | Uses the prompt and tools from each log; graded by `validators.*`, unit tests, or a `Judge`. |
-| **2. Trace → Mock tool sandbox** | Multi-turn tool-calling agents (`get_order`, `search_kb`, `issue_refund`) | An hour | Seeds an in-memory store from the log's tool outputs; write tools update that store instead of production. |
-| **3. Trace → Harbor container** | Coding agents, CLI debugging, full-stack web apps | 1–2 days | Harbor container tasks (`Dockerfile`, `tests/test.sh`, `solution/solve.sh`) verified so tests fail before the fix and pass after. |
+| Level                            | Best for                                                                  | Setup time | How it works                                                                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Trace → `Task` + `Rubric`** | SQL, diff-merge, JSON extraction, support replies, single-turn tool calls | Minutes    | Uses the prompt and tools from each log; graded by `validators.*`, unit tests, or a `Judge`.                                      |
+| **2. Trace → Mock tool sandbox** | Multi-turn tool-calling agents (`get_order`, `search_kb`, `issue_refund`) | An hour    | Seeds an in-memory store from the log's tool outputs; write tools update that store instead of production.                        |
+| **3. Trace → Harbor container**  | Coding agents, CLI debugging, full-stack web apps                         | 1–2 days   | Harbor container tasks (`Dockerfile`, `tests/test.sh`, `solution/solve.sh`) verified so tests fail before the fix and pass after. |
 
 ## Step 0: Pick examples the model actually struggles on
 
@@ -149,7 +152,9 @@ run = client.runs.create(
 This environment is plain Python with no containers, so it is packaged and runs in Gradiated's sandbox. If your tools only need canned responses, [`environments.Tools`](/docs/training/environments/#tools-from-python-functions) with functions that read a fixture is even shorter.
 
 <DocsCallout label="Handling unexpected tool calls" tone="tip">
-During RL, the model will try tool arguments that weren't in the original log. Return a realistic `"not_found"` response from your local store (or fall back to a small mock model) instead of crashing the run.
+  During RL, the model will try tool arguments that weren't in the original log.
+  Return a realistic `"not_found"` response from your local store (or fall back
+  to a small mock model) instead of crashing the run.
 </DocsCallout>
 
 ## Level 3: Trace to Harbor containers (coding, CLI, and full-stack apps)

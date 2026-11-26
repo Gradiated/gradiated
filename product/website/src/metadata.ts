@@ -316,7 +316,7 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/docs/reference/training-parameters/": {
     title: "Training parameters reference",
     description:
-      "Every training setting, its default, and how the \"auto\" defaults are chosen. You rarely need to set any of them.",
+      'Every training setting, its default, and how the "auto" defaults are chosen. You rarely need to set any of them.',
   },
   "/privacy/": {
     title: "Privacy",

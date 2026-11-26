@@ -1,6 +1,8 @@
 # Supervised fine-tuning (SFT)
 
-<DocsLead>Fine-tune an open model on examples of the exact outputs you want.</DocsLead>
+<DocsLead>
+  Fine-tune an open model on examples of the exact outputs you want.
+</DocsLead>
 
 Use **`SFTRecipe`** when you have good examples of what the model should produce (code edits, structured JSON, SQL queries, or a specific style). Once it reliably follows your format, you can run [Preference tuning (DPO)](/docs/training/recipes/dpo/) or [RL for agents](/docs/training/recipes/rl-agents/) on top of the saved [`Artifact`](/docs/training/artifacts/) to improve it further.
 
@@ -13,7 +15,10 @@ Use **`SFTRecipe`** when you have good examples of what the model should produce
 ```json
 {
   "messages": [
-    { "role": "system", "content": "Apply the edit snippet to the original file. Return only the merged file." },
+    {
+      "role": "system",
+      "content": "Apply the edit snippet to the original file. Return only the merged file."
+    },
     { "role": "user", "content": "<original>...</original>\n<edit>...</edit>" },
     { "role": "assistant", "content": "export const retry = ..." }
   ]
@@ -106,7 +111,8 @@ const dataset = await grad.datasets.get("diff-merge-prod");
 const judge = new Judge({
   name: "clean_merge",
   model: "{{SONNET_MODEL}}",
-  prompt: "Did the assistant apply the edit accurately without breaking surrounding code?",
+  prompt:
+    "Did the assistant apply the edit accurately without breaking surrounding code?",
 });
 const cleanDataset = (await dataset.score(judge).wait()).filter({
   scores: { clean_merge: ">=0.8" },
@@ -219,8 +225,16 @@ import { Grad, validators } from "@gradiated/grad";
 await sft.deploy();
 
 const messages = [
-  { role: "system" as const, content: "Apply the edit snippet to the original file. Return only the merged file." },
-  { role: "user" as const, content: "<original>export const retry = 1</original>\n<edit>export const retry = 3</edit>" },
+  {
+    role: "system" as const,
+    content:
+      "Apply the edit snippet to the original file. Return only the merged file.",
+  },
+  {
+    role: "user" as const,
+    content:
+      "<original>export const retry = 1</original>\n<edit>export const retry = 3</edit>",
+  },
 ];
 
 const oai = new OpenAI({
@@ -237,7 +251,10 @@ let code = res.choices[0].message.content ?? "";
 
 // Fall back in your own code if the fine-tuned model produces invalid syntax
 if (!checkTs(code)) {
-  res = await oai.chat.completions.create({ model: "qwen/qwen3-32b", messages });
+  res = await oai.chat.completions.create({
+    model: "qwen/qwen3-32b",
+    messages,
+  });
   code = res.choices[0].message.content ?? "";
 }
 
@@ -265,7 +282,10 @@ vllm serve qwen/qwen3-8b \
 </DocsCodeTabs>
 
 <DocsCallout label="Turn production misses into your next dataset" tone="tip">
-When a developer fixes a bad answer or your syntax check catches invalid JSON or code, calling `feedback.record(..., expected_output=...)` saves both the failed attempt and the fix on the same trajectory, giving you ready-to-use data for your next SFT or [DPO](/docs/training/recipes/dpo/) run.
+  When a developer fixes a bad answer or your syntax check catches invalid JSON
+  or code, calling `feedback.record(..., expected_output=...)` saves both the
+  failed attempt and the fix on the same trajectory, giving you ready-to-use
+  data for your next SFT or [DPO](/docs/training/recipes/dpo/) run.
 </DocsCallout>
 
 ## Want more control?

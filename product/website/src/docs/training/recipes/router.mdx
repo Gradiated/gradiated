@@ -1,6 +1,8 @@
 # Model router
 
-<DocsLead>Send each request to the cheapest model that still meets your quality bar.</DocsLead>
+<DocsLead>
+  Send each request to the cheapest model that still meets your quality bar.
+</DocsLead>
 
 A model router looks at each incoming prompt and predicts how likely each candidate model is to succeed. At runtime, it picks the cheapest model that still meets your quality bar.
 
@@ -67,7 +69,9 @@ const recipe = recipes.router({
   }),
 });
 
-const run = await grad.runs.create({ dataset, name: "support-router", recipe }).wait();
+const run = await grad.runs
+  .create({ dataset, name: "support-router", recipe })
+  .wait();
 
 console.log(run.artifact.id, run.evalReport.paretoSummary);
 ```
@@ -183,7 +187,9 @@ const grad = new Grad();
 
 await run.deploy({ fallback: "{{OPUS_MODEL}}" });
 
-const messages = [{ role: "user" as const, content: "Where is invoice #9941?" }];
+const messages = [
+  { role: "user" as const, content: "Where is invoice #9941?" },
+];
 const tools: unknown[] = [];
 
 const decision = await grad.route("support-router", { messages, tools });

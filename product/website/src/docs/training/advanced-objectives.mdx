@@ -1,6 +1,9 @@
 # Advanced objectives
 
-<DocsLead>Custom PyTorch losses and specialized training patterns built on `Trainer` and `losses.CustomLoss`.</DocsLead>
+<DocsLead>
+  Custom PyTorch losses and specialized training patterns built on `Trainer` and
+  `losses.CustomLoss`.
+</DocsLead>
 
 Start with the [Recipe guides](/docs/training/recipes/) whenever a built-in recipe fits your task. Use the patterns on this page (together with [Custom loops](/docs/training/custom-loops/) and the 50 executable [Paper reproductions](/papers/)) when you need custom PyTorch loss math, async off-policy RL, specialized model heads, uncommon adapters, or closed-form solvers.
 
@@ -8,17 +11,17 @@ Start with the [Recipe guides](/docs/training/recipes/) whenever a built-in reci
 
 `GRPORecipe` picks the loss for you with `loss="auto"` (the default): `losses.GRPO(clip_low=0.2, clip_high=0.28)` when rollouts are on-policy, and the same clipped loss with `mask_ratio=(0.5, 2.0)` when you allow stale rollouts with `max_staleness > 0`. The mask drops tokens whose probability under the current weights has moved more than 2× from the sampler's, which is what keeps stale rollouts from destabilizing training. Every run records the loss `auto` resolved to and the rule version (`auto@1`) in its config, so a later change to the rule never silently changes a rerun. Pass `loss=` to a recipe, or to `trainer.forward_backward(...)` in a [custom loop](/docs/training/custom-loops/#example-1-multi-turn-grpo-loop), to use any variant below. All of them share the same `rollout_groups()` and `forward_backward(batch, loss=...)` loop; only the `AdvantageEstimator` or the loss changes:
 
-| Method | When to use it | How to run it |
-| --- | --- | --- |
-| **GRPO** | Default synchronous RL against verifiable rubrics. | `grad.with_advantages(groups, advantage=advantages.GroupStd())` + `losses.GRPO(clip_low=0.2, clip_high=0.28)` |
-| **Dr. GRPO** | Remove std-division and length bias in reasoning RL. | `grad.with_advantages(groups, advantage=advantages.GroupMean())` + constant-denominator `CustomLoss` |
-| **DAPO** | Long reasoning or multi-turn coding where entropy collapses. | `losses.GRPO(clip_low=0.2, clip_high=0.28)` + `skip_zero_var=True` + length penalty in `Rubric` (the GRPO default already uses DAPO's higher upper clip) |
-| **Async GRPO** | Rollout pools where container workers finish 1–4 weight versions behind the trainer. | `losses.GRPO(clip_low=0.2, clip_high=0.28, mask_ratio=(0.5, 2.0))`; chosen automatically when `max_staleness > 0` |
-| **CISPO** | Experiments only. Unclipped updates on clipped importance weights can be unstable on stale rollouts, so `auto` never picks it and `runs.plan()` warns when you combine it with `max_staleness > 0`. | `losses.CISPO(clip_low=0.2, clip_high=0.28)` |
-| **PPO + Critic** | Dense per-token value baselines with GAE when group sampling is too expensive. | Attach `heads={"v": heads.Linear(dim=1, token_level=True)}` + `PPOGAELoss(CustomLoss)` |
-| **RLOO** | Small group sizes (`group_size=4`) where std-normalization is noisy. | `grad.with_advantages(groups, advantage=advantages.RLOO())` + `losses.ImportanceSampling(kl_coef=0.02)` |
-| **REINFORCE++** | Global batch stability with per-token KL shaping against a frozen reference. | Score `ref.score_logprobs(trajs).aligned_logprobs`, whiten active tokens, attach via `with_targets()` |
-| **GSPO** | MoE models or long multi-turn trajectories where token-level importance ratios diverge. | Sequence-level geometric mean ratio via `GSPOLoss(CustomLoss)` |
+| Method           | When to use it                                                                                                                                                                                      | How to run it                                                                                                                                            |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **GRPO**         | Default synchronous RL against verifiable rubrics.                                                                                                                                                  | `grad.with_advantages(groups, advantage=advantages.GroupStd())` + `losses.GRPO(clip_low=0.2, clip_high=0.28)`                                            |
+| **Dr. GRPO**     | Remove std-division and length bias in reasoning RL.                                                                                                                                                | `grad.with_advantages(groups, advantage=advantages.GroupMean())` + constant-denominator `CustomLoss`                                                     |
+| **DAPO**         | Long reasoning or multi-turn coding where entropy collapses.                                                                                                                                        | `losses.GRPO(clip_low=0.2, clip_high=0.28)` + `skip_zero_var=True` + length penalty in `Rubric` (the GRPO default already uses DAPO's higher upper clip) |
+| **Async GRPO**   | Rollout pools where container workers finish 1–4 weight versions behind the trainer.                                                                                                                | `losses.GRPO(clip_low=0.2, clip_high=0.28, mask_ratio=(0.5, 2.0))`; chosen automatically when `max_staleness > 0`                                        |
+| **CISPO**        | Experiments only. Unclipped updates on clipped importance weights can be unstable on stale rollouts, so `auto` never picks it and `runs.plan()` warns when you combine it with `max_staleness > 0`. | `losses.CISPO(clip_low=0.2, clip_high=0.28)`                                                                                                             |
+| **PPO + Critic** | Dense per-token value baselines with GAE when group sampling is too expensive.                                                                                                                      | Attach `heads={"v": heads.Linear(dim=1, token_level=True)}` + `PPOGAELoss(CustomLoss)`                                                                   |
+| **RLOO**         | Small group sizes (`group_size=4`) where std-normalization is noisy.                                                                                                                                | `grad.with_advantages(groups, advantage=advantages.RLOO())` + `losses.ImportanceSampling(kl_coef=0.02)`                                                  |
+| **REINFORCE++**  | Global batch stability with per-token KL shaping against a frozen reference.                                                                                                                        | Score `ref.score_logprobs(trajs).aligned_logprobs`, whiten active tokens, attach via `with_targets()`                                                    |
+| **GSPO**         | MoE models or long multi-turn trajectories where token-level importance ratios diverge.                                                                                                             | Sequence-level geometric mean ratio via `GSPOLoss(CustomLoss)`                                                                                           |
 
 The async tab is a complete loop. The other tabs define a loss class; use it by passing `loss=` in the GRPO loop from [Custom loops](/docs/training/custom-loops/#example-1-multi-turn-grpo-loop), or `GRPORecipe(loss=...)`.
 
@@ -191,7 +194,7 @@ with client.trainers.create(model="qwen/qwen3-4b") as trainer:
 
 ### Self-Distillation Fine-Tuning (SDFT)
 
-In SDFT, the **same base model** acts as teacher when shown the question *plus* a golden demonstration in context, while the student sees only the question. That lets you teach new skills without the model forgetting what it already knows:
+In SDFT, the **same base model** acts as teacher when shown the question _plus_ a golden demonstration in context, while the student sees only the question. That lets you teach new skills without the model forgetting what it already knows:
 
 ```python
 from grad import Grad, losses, optim
@@ -435,14 +438,14 @@ with client.trainers.create(model="qwen/qwen3-8b") as trainer:
 
 `adapters.LoRA(rank=32)` (the default) covers almost every task. Reach for these only when you have a specific reason:
 
-| Class | What gets trained | When to use it |
-| --- | --- | --- |
-| `adapters.DoRA(rank=32, alpha=32)` | Weight-decomposed LoRA (magnitude + direction). | Small accuracy gains over LoRA at the same rank, at somewhat higher step cost. |
-| `adapters.QLoRA(rank=32)` | 4-bit NF4 quantized backbone + LoRA adapters. | Self-hosted training on GPUs too small for a 16-bit backbone. On Gradiated Cloud, plain LoRA is faster and costs the same per token. |
-| `adapters.PrefixKV(num_tokens=256)` | Backbone frozen; trains only prepended KV prefix tokens. | Compressing a large fixed document into a [Cartridge](/docs/training/recipes/cartridges/). `CartridgeRecipe` sets this up for you. |
-| `adapters.LoReFT(layers=[8, 16, 24], rank=4)` | Backbone frozen; trains orthogonal low-rank residual-stream interventions. | Very small behavioural edits with a tiny parameter budget. |
-| `adapters.Eagle3Draft(fusion_layers=[2, 18, 34])` | Frozen target trunk + multi-layer speculative draft fusion head. | Training a speculative-decoding draft head to make a deployed model faster. |
-| `adapters.PartialUnfreeze(last_n_layers=1)` | Top `N` transformer layers + `ln_f` + trainable `heads`. | Classifier or reward heads that need a little more capacity than `FrozenHead()`. |
+| Class                                             | What gets trained                                                          | When to use it                                                                                                                       |
+| ------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `adapters.DoRA(rank=32, alpha=32)`                | Weight-decomposed LoRA (magnitude + direction).                            | Small accuracy gains over LoRA at the same rank, at somewhat higher step cost.                                                       |
+| `adapters.QLoRA(rank=32)`                         | 4-bit NF4 quantized backbone + LoRA adapters.                              | Self-hosted training on GPUs too small for a 16-bit backbone. On Gradiated Cloud, plain LoRA is faster and costs the same per token. |
+| `adapters.PrefixKV(num_tokens=256)`               | Backbone frozen; trains only prepended KV prefix tokens.                   | Compressing a large fixed document into a [Cartridge](/docs/training/recipes/cartridges/). `CartridgeRecipe` sets this up for you.   |
+| `adapters.LoReFT(layers=[8, 16, 24], rank=4)`     | Backbone frozen; trains orthogonal low-rank residual-stream interventions. | Very small behavioural edits with a tiny parameter budget.                                                                           |
+| `adapters.Eagle3Draft(fusion_layers=[2, 18, 34])` | Frozen target trunk + multi-layer speculative draft fusion head.           | Training a speculative-decoding draft head to make a deployed model faster.                                                          |
+| `adapters.PartialUnfreeze(last_n_layers=1)`       | Top `N` transformer layers + `ln_f` + trainable `heads`.                   | Classifier or reward heads that need a little more capacity than `FrozenHead()`.                                                     |
 
 Every adapter takes the same `client.trainers.create(model=..., adapter=...)` call and works with every loss on this page.
 

@@ -24,9 +24,24 @@ export const peftMergingSafetyPapers: PaperGuide[] = [
         "Switching adapter.kind from lora to dora in YAML enables full DoRA with zero custom Python.",
     },
     walkthrough: [
-      { title: "Select adapter.kind: dora in managed SFT YAML", explanation: "Automatically allocates learned column magnitudes alongside low-rank directional updates.", gradCall: "adapter: { kind: dora, rank: 32, alpha: 64 }" },
-      { title: "Run managed SFT with cosine warmup", explanation: "grad handles assistant-only masking and detached column-norm backprop automatically.", gradCall: "grad run papers/dora --wait" },
-      { title: "Fold into standalone weights at export", explanation: "merge_adapter: true produces zero-latency-overhead merged weights.", gradCall: "merge_adapter: true" },
+      {
+        title: "Select adapter.kind: dora in managed SFT YAML",
+        explanation:
+          "Automatically allocates learned column magnitudes alongside low-rank directional updates.",
+        gradCall: "adapter: { kind: dora, rank: 32, alpha: 64 }",
+      },
+      {
+        title: "Run managed SFT with cosine warmup",
+        explanation:
+          "grad handles assistant-only masking and detached column-norm backprop automatically.",
+        gradCall: "grad run papers/dora --wait",
+      },
+      {
+        title: "Fold into standalone weights at export",
+        explanation:
+          "merge_adapter: true produces zero-latency-overhead merged weights.",
+        gradCall: "merge_adapter: true",
+      },
     ],
     gotchas: [
       "DoRA shines most at lower ranks (r=8–32) where LoRA's coupled geometry bottlenecks most.",
@@ -37,11 +52,28 @@ export const peftMergingSafetyPapers: PaperGuide[] = [
     mode: "Managed recipe",
     entrypoint: "recipe.yaml",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~4.6M tokens", duration: "~24 min", estCost: "~$1.85" },
-      { id: "Qwen/Qwen3-4B", label: "Qwen/Qwen3-4B (fast smoke run)", estTokens: "~3.6M tokens", duration: "~12 min", estCost: "~$0.90" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~4.6M tokens",
+        duration: "~24 min",
+        estCost: "~$1.85",
+      },
+      {
+        id: "Qwen/Qwen3-4B",
+        label: "Qwen/Qwen3-4B (fast smoke run)",
+        estTokens: "~3.6M tokens",
+        duration: "~12 min",
+        estCost: "~$0.90",
+      },
     ],
     datasets: [
-      { id: "hf://zwhe99/commonsense_170k", label: "Commonsense170K", source: "Hugging Face (public)", examples: "170,420 reasoning pairs" },
+      {
+        id: "hf://zwhe99/commonsense_170k",
+        label: "Commonsense170K",
+        source: "Hugging Face (public)",
+        examples: "170,420 reasoning pairs",
+      },
     ],
     primitives: [
       { label: "SFT recipe", href: "/docs/training/recipes/sft-dpo/" },
@@ -79,7 +111,12 @@ Model     Qwen/Qwen3-8B · adapter=dora (rank=32, alpha=64) · merge_adapter=tru
 Loss      cross_entropy · AdamW lr=2.0e-4
 Estimate  ~4.6M tokens · ~24 min · ~$1.85 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Commonsense Reasoning (8 tasks)", paperReported: "+1.0% to +3.7% over LoRA across LLaMA-7B/8B with zero inference overhead", templateSetup: "Commonsense170K · DoRA rank 32" },
+      {
+        benchmark: "Commonsense Reasoning (8 tasks)",
+        paperReported:
+          "+1.0% to +3.7% over LoRA across LLaMA-7B/8B with zero inference overhead",
+        templateSetup: "Commonsense170K · DoRA rank 32",
+      },
     ],
     bibtex: `@inproceedings{liu2024dora,
   title={DoRA: Weight-Decomposed Low-Rank Adaptation},
@@ -111,9 +148,26 @@ Estimate  ~4.6M tokens · ~24 min · ~$1.85 · warnings: 0`,
         "Two entries in optim_step(param_groups=...) implement full LoRA+ with zero model patching.",
     },
     walkthrough: [
-      { title: "Run standard cross-entropy forward-backward", explanation: "Forward pass and LoRA architecture remain completely untouched.", gradCall: "trainer.forward_backward(datums, loss={'kind': 'cross_entropy'})" },
-      { title: "Pass differential param_groups to optim_step", explanation: "Match lora_A at lr_a and lora_B at 16 * lr_a alongside a cosine decay schedule.", gradCall: "trainer.optim_step(param_groups=[{'match': 'lora_A', 'lr': lr_a}, {'match': 'lora_B', 'lr': lr_a * 16}])" },
-      { title: "Export merged checkpoint", explanation: "Zero runtime overhead — merges identically to vanilla LoRA.", gradCall: "trainer.export(name='lora-plus-8b', merge_adapter=True)" },
+      {
+        title: "Run standard cross-entropy forward-backward",
+        explanation:
+          "Forward pass and LoRA architecture remain completely untouched.",
+        gradCall:
+          "trainer.forward_backward(datums, loss={'kind': 'cross_entropy'})",
+      },
+      {
+        title: "Pass differential param_groups to optim_step",
+        explanation:
+          "Match lora_A at lr_a and lora_B at 16 * lr_a alongside a cosine decay schedule.",
+        gradCall:
+          "trainer.optim_step(param_groups=[{'match': 'lora_A', 'lr': lr_a}, {'match': 'lora_B', 'lr': lr_a * 16}])",
+      },
+      {
+        title: "Export merged checkpoint",
+        explanation:
+          "Zero runtime overhead — merges identically to vanilla LoRA.",
+        gradCall: "trainer.export(name='lora-plus-8b', merge_adapter=True)",
+      },
     ],
     gotchas: [
       "Lower eta_A by 2–4x compared to your vanilla LoRA LR before multiplying eta_B by 16x.",
@@ -124,13 +178,27 @@ Estimate  ~4.6M tokens · ~24 min · ~$1.85 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.8M tokens", duration: "~14 min", estCost: "~$1.10" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~2.8M tokens",
+        duration: "~14 min",
+        estCost: "~$1.10",
+      },
     ],
     datasets: [
-      { id: "hf://tatsu-lab/alpaca", label: "Alpaca Instruction Tuning", source: "Hugging Face (public)", examples: "52,002 instruction pairs" },
+      {
+        id: "hf://tatsu-lab/alpaca",
+        label: "Alpaca Instruction Tuning",
+        source: "Hugging Face (public)",
+        examples: "52,002 instruction pairs",
+      },
     ],
     primitives: [
-      { label: "param_groups in optim_step", href: "/docs/training/custom-loops/" },
+      {
+        label: "param_groups in optim_step",
+        href: "/docs/training/custom-loops/",
+      },
       { label: "SFT recipe", href: "/docs/training/recipes/sft-dpo/" },
     ],
     codeLabel: "train.py",
@@ -171,7 +239,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=16) · param_groups 16x ratio
 Loss      cross_entropy · AdamW lora_A=5e-5, lora_B=8e-4
 Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Convergence speed & accuracy", paperReported: "Up to 2x faster convergence & +1–2% accuracy on MNLI/FLAN-v2 at identical FLOPs", templateSetup: "Alpaca · Qwen/Qwen3-8B · lambda=16" },
+      {
+        benchmark: "Convergence speed & accuracy",
+        paperReported:
+          "Up to 2x faster convergence & +1–2% accuracy on MNLI/FLAN-v2 at identical FLOPs",
+        templateSetup: "Alpaca · Qwen/Qwen3-8B · lambda=16",
+      },
     ],
     bibtex: `@inproceedings{hayou2024loraplus,
   title={LoRA+: Efficient Low Rank Adaptation of Large Models},
@@ -203,9 +276,24 @@ Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
         "Zero pyvene hook boilerplate — configure layers, rank, and prefix/suffix positions in ModelSpec.",
     },
     walkthrough: [
-      { title: "Configure LoReFT layers and rank in ModelSpec", explanation: "Target 5 middle layers with rank=4 and p7+s7 prefix/suffix positions.", gradCall: "ModelSpec(..., adapter='loreft', train_mode='loreft', params={...})" },
-      { title: "Train with standard cross-entropy at high LR (4e-3)", explanation: "Small subspace vectors expect 10–20x higher LR than LoRA.", gradCall: "trainer.optim_step(lr=4e-3)" },
-      { title: "Export sub-2 MB representation intervention artifact", explanation: "Hot-swaps cheaply onto a shared frozen base model.", gradCall: "trainer.export(name='loreft-commonsense-8b')" },
+      {
+        title: "Configure LoReFT layers and rank in ModelSpec",
+        explanation:
+          "Target 5 middle layers with rank=4 and p7+s7 prefix/suffix positions.",
+        gradCall:
+          "ModelSpec(..., adapter='loreft', train_mode='loreft', params={...})",
+      },
+      {
+        title: "Train with standard cross-entropy at high LR (4e-3)",
+        explanation:
+          "Small subspace vectors expect 10–20x higher LR than LoRA.",
+        gradCall: "trainer.optim_step(lr=4e-3)",
+      },
+      {
+        title: "Export sub-2 MB representation intervention artifact",
+        explanation: "Hot-swaps cheaply onto a shared frozen base model.",
+        gradCall: "trainer.export(name='loreft-commonsense-8b')",
+      },
     ],
     gotchas: [
       "Use a much higher LR (1e-3 to 4e-3) than LoRA.",
@@ -216,13 +304,27 @@ Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.9M tokens", duration: "~15 min", estCost: "~$1.15" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~2.9M tokens",
+        duration: "~15 min",
+        estCost: "~$1.15",
+      },
     ],
     datasets: [
-      { id: "hf://zwhe99/commonsense_170k", label: "Commonsense170K", source: "Hugging Face (public)", examples: "170,420 reasoning pairs" },
+      {
+        id: "hf://zwhe99/commonsense_170k",
+        label: "Commonsense170K",
+        source: "Hugging Face (public)",
+        examples: "170,420 reasoning pairs",
+      },
     ],
     primitives: [
-      { label: "ModelSpec loreft adapter", href: "/docs/reference/primitives/" },
+      {
+        label: "ModelSpec loreft adapter",
+        href: "/docs/reference/primitives/",
+      },
       { label: "Custom loops", href: "/docs/training/custom-loops/" },
     ],
     codeLabel: "train.py",
@@ -260,7 +362,12 @@ Model     Qwen/Qwen3-8B · adapter=loreft (5 layers, rank=4, 0.028% params)
 Loss      cross_entropy · AdamW lr=4.0e-3
 Estimate  ~2.9M tokens · ~15 min · ~$1.15 · warnings: 0`,
     benchmarks: [
-      { benchmark: "Commonsense Reasoning", paperReported: "Beats LoRA and DoRA with 15x–65x fewer trainable parameters", templateSetup: "Qwen/Qwen3-8B · 5 layers · rank=4 · p7+s7" },
+      {
+        benchmark: "Commonsense Reasoning",
+        paperReported:
+          "Beats LoRA and DoRA with 15x–65x fewer trainable parameters",
+        templateSetup: "Qwen/Qwen3-8B · 5 layers · rank=4 · p7+s7",
+      },
     ],
     bibtex: `@inproceedings{wu2024reft,
   title={ReFT: Representation Finetuning for Language Models},
@@ -292,9 +399,24 @@ Estimate  ~2.9M tokens · ~15 min · ~$1.15 · warnings: 0`,
         "Single SDK call (client.artifacts.merge) with built-in lineage tracking and zero training GPUs.",
     },
     walkthrough: [
-      { title: "Train or pin specialists sharing one base checkpoint", explanation: "Ensure all merged artifacts share the exact same base model and tokenizer.", gradCall: "artifacts=[math_id, code_id]" },
-      { title: "Sweep TIES density with zero training GPUs", explanation: "Run client.artifacts.merge(method='ties', density=d) across 0.2, 0.4, 0.6.", gradCall: "client.artifacts.merge(..., method='ties', density=0.4)" },
-      { title: "Deploy the winning multi-skill checkpoint", explanation: "Serve one merged artifact instead of K separate models.", gradCall: "client.endpoints.create(slug='math-code-merged', artifact=best.id)" },
+      {
+        title: "Train or pin specialists sharing one base checkpoint",
+        explanation:
+          "Ensure all merged artifacts share the exact same base model and tokenizer.",
+        gradCall: "artifacts=[math_id, code_id]",
+      },
+      {
+        title: "Sweep TIES density with zero training GPUs",
+        explanation:
+          "Run client.artifacts.merge(method='ties', density=d) across 0.2, 0.4, 0.6.",
+        gradCall: "client.artifacts.merge(..., method='ties', density=0.4)",
+      },
+      {
+        title: "Deploy the winning multi-skill checkpoint",
+        explanation: "Serve one merged artifact instead of K separate models.",
+        gradCall:
+          "client.endpoints.create(slug='math-code-merged', artifact=best.id)",
+      },
     ],
     gotchas: [
       "All merged artifacts MUST share the exact same base model initialization.",
@@ -305,10 +427,21 @@ Estimate  ~2.9M tokens · ~15 min · ~$1.15 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (2 specialists)", estTokens: "0 train tokens (eval only)", duration: "~6 min", estCost: "~$0.45" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (2 specialists)",
+        estTokens: "0 train tokens (eval only)",
+        duration: "~6 min",
+        estCost: "~$0.45",
+      },
     ],
     datasets: [
-      { id: "hf://openai/gsm8k", label: "GSM8K + HumanEval Multi-Skill Eval", source: "Hugging Face (public)", examples: "1,319 math + 164 code eval probes" },
+      {
+        id: "hf://openai/gsm8k",
+        label: "GSM8K + HumanEval Multi-Skill Eval",
+        source: "Hugging Face (public)",
+        examples: "1,319 math + 164 code eval probes",
+      },
     ],
     primitives: [
       { label: "Artifact merging", href: "/docs/training/custom-loops/" },
@@ -355,7 +488,12 @@ Model     Qwen/Qwen3-8B · 2 specialists -> TIES density sweep (0.2/0.4/0.6)
 Merge     client.artifacts.merge(method="ties") · 0 training tokens
 Estimate  0 train tokens · ~1.1M eval tokens (~$0.45) · warnings: 0`,
     benchmarks: [
-      { benchmark: "Multi-task merging gain", paperReported: "+4.4% to +11.2% average accuracy over Task Arithmetic and simple averaging", templateSetup: "Qwen/Qwen3-8B · math + code · TIES density sweep" },
+      {
+        benchmark: "Multi-task merging gain",
+        paperReported:
+          "+4.4% to +11.2% average accuracy over Task Arithmetic and simple averaging",
+        templateSetup: "Qwen/Qwen3-8B · math + code · TIES density sweep",
+      },
     ],
     bibtex: `@inproceedings{yadav2023ties,
   title={TIES-Merging: Resolving Interference When Merging Models},
@@ -387,9 +525,26 @@ Estimate  0 train tokens · ~1.1M eval tokens (~$0.45) · warnings: 0`,
         "return_layers=[7] in both Artifact.score_logprobs and Trainer.forward_backward_custom eliminates dual-model GPU hooks.",
     },
     walkthrough: [
-      { title: "Cache frozen retain activations at layer 7", explanation: "Fetch retain-set layer-7 activations from the frozen base Artifact.", gradCall: "ref.score_logprobs(..., return_layers=[7])['layer_refs'][7]" },
-      { title: "Compute forget misdirection + retain preservation MSE", explanation: "Drive forget activations toward c * u_rand while anchoring retain activations with alpha=1200.", gradCall: "trainer.forward_backward_custom(datums, outputs=['layers'], return_layers=[7], loss_fn=rmu_loss)" },
-      { title: "Audit WMDP drop vs. MMLU retention", explanation: "Stop around 150 steps once WMDP nears chance (~25%) and MMLU stays flat.", gradCall: "trainer.export(name='rmu-wmdp-unlearned', merge_adapter=True)" },
+      {
+        title: "Cache frozen retain activations at layer 7",
+        explanation:
+          "Fetch retain-set layer-7 activations from the frozen base Artifact.",
+        gradCall: "ref.score_logprobs(..., return_layers=[7])['layer_refs'][7]",
+      },
+      {
+        title: "Compute forget misdirection + retain preservation MSE",
+        explanation:
+          "Drive forget activations toward c * u_rand while anchoring retain activations with alpha=1200.",
+        gradCall:
+          "trainer.forward_backward_custom(datums, outputs=['layers'], return_layers=[7], loss_fn=rmu_loss)",
+      },
+      {
+        title: "Audit WMDP drop vs. MMLU retention",
+        explanation:
+          "Stop around 150 steps once WMDP nears chance (~25%) and MMLU stays flat.",
+        gradCall:
+          "trainer.export(name='rmu-wmdp-unlearned', merge_adapter=True)",
+      },
     ],
     gotchas: [
       "Target early-to-mid layers (5–8 in a 32-layer model) — late layers fail to erase latent knowledge.",
@@ -400,14 +555,31 @@ Estimate  0 train tokens · ~1.1M eval tokens (~$0.45) · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~1.7M tokens", duration: "~9 min", estCost: "~$0.70" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~1.7M tokens",
+        duration: "~9 min",
+        estCost: "~$0.70",
+      },
     ],
     datasets: [
-      { id: "hf://cais/wmdp-corpora", label: "WMDP Bio/Cyber Forget + WikiText Retain", source: "Hugging Face (public)", examples: "Forget chunks + WikiText retain pairs" },
+      {
+        id: "hf://cais/wmdp-corpora",
+        label: "WMDP Bio/Cyber Forget + WikiText Retain",
+        source: "Hugging Face (public)",
+        examples: "Forget chunks + WikiText retain pairs",
+      },
     ],
     primitives: [
-      { label: "forward_backward_custom", href: "/docs/training/custom-loops/" },
-      { label: "return_layers TensorRefs", href: "/docs/reference/primitives/" },
+      {
+        label: "forward_backward_custom",
+        href: "/docs/training/custom-loops/",
+      },
+      {
+        label: "return_layers TensorRefs",
+        href: "/docs/reference/primitives/",
+      },
     ],
     codeLabel: "train.py",
     codeLanguage: "python",
@@ -458,7 +630,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=16) · target_layer=7
 Loss      custom rmu_loss (forget MSE + 1200x retain MSE)
 Estimate  ~1.7M tokens · ~9 min · ~$0.70 · warnings: 0`,
     benchmarks: [
-      { benchmark: "WMDP-Bio / Cyber vs. MMLU", paperReported: "Drops WMDP-Bio 63.7% -> 31.0% while keeping MMLU within ~1% of base", templateSetup: "Qwen/Qwen3-8B · layer=7 · c=6.5 · alpha=1200" },
+      {
+        benchmark: "WMDP-Bio / Cyber vs. MMLU",
+        paperReported:
+          "Drops WMDP-Bio 63.7% -> 31.0% while keeping MMLU within ~1% of base",
+        templateSetup: "Qwen/Qwen3-8B · layer=7 · c=6.5 · alpha=1200",
+      },
     ],
     bibtex: `@inproceedings{li2024wmdp,
   title={The WMDP Benchmark: Measuring and Reducing Malicious Use With Unlearning},
@@ -490,9 +667,26 @@ Estimate  ~1.7M tokens · ~9 min · ~$0.70 · warnings: 0`,
         "Self-dampening NPO + retain NLL + weight_anchor compose cleanly in forward_backward_custom.",
     },
     walkthrough: [
-      { title: "Score reference logprobs on forget and retain sets", explanation: "Fetch aligned reference logprobs from the frozen starting checkpoint.", gradCall: "ref.score_logprobs(seqs)['aligned_logprobs']" },
-      { title: "Apply NPO on forget datums and NLL on retain datums", explanation: "Use role='forget' vs role='retain' inside a single combined batch.", gradCall: "trainer.forward_backward_custom(datums, outputs=['logprobs'], loss_fn=npo_loss)" },
-      { title: "Anchor weights gently via weight_anchor", explanation: "Add L2-SP anchoring to BASE_ID in optim_step() to prevent fluency drift.", gradCall: "trainer.optim_step(lr=2e-5, weight_anchor={'artifact_id': BASE_ID, 'strength': 0.01})" },
+      {
+        title: "Score reference logprobs on forget and retain sets",
+        explanation:
+          "Fetch aligned reference logprobs from the frozen starting checkpoint.",
+        gradCall: "ref.score_logprobs(seqs)['aligned_logprobs']",
+      },
+      {
+        title: "Apply NPO on forget datums and NLL on retain datums",
+        explanation:
+          "Use role='forget' vs role='retain' inside a single combined batch.",
+        gradCall:
+          "trainer.forward_backward_custom(datums, outputs=['logprobs'], loss_fn=npo_loss)",
+      },
+      {
+        title: "Anchor weights gently via weight_anchor",
+        explanation:
+          "Add L2-SP anchoring to BASE_ID in optim_step() to prevent fluency drift.",
+        gradCall:
+          "trainer.optim_step(lr=2e-5, weight_anchor={'artifact_id': BASE_ID, 'strength': 0.01})",
+      },
     ],
     gotchas: [
       "Always pair forget batches 1:1 with retain batches to keep general utility flat.",
@@ -503,13 +697,27 @@ Estimate  ~1.7M tokens · ~9 min · ~$0.70 · warnings: 0`,
     mode: "Custom loop",
     entrypoint: "train.py",
     models: [
-      { id: "Qwen/Qwen3-8B", label: "Qwen/Qwen3-8B (recommended)", estTokens: "~2.8M tokens", duration: "~14 min", estCost: "~$1.10" },
+      {
+        id: "Qwen/Qwen3-8B",
+        label: "Qwen/Qwen3-8B (recommended)",
+        estTokens: "~2.8M tokens",
+        duration: "~14 min",
+        estCost: "~$1.10",
+      },
     ],
     datasets: [
-      { id: "hf://locuslab/TOFU", label: "TOFU Fictitious Unlearning (10% forget)", source: "Hugging Face (public)", examples: "400 forget / 3,600 retain QA" },
+      {
+        id: "hf://locuslab/TOFU",
+        label: "TOFU Fictitious Unlearning (10% forget)",
+        source: "Hugging Face (public)",
+        examples: "400 forget / 3,600 retain QA",
+      },
     ],
     primitives: [
-      { label: "forward_backward_custom", href: "/docs/training/custom-loops/" },
+      {
+        label: "forward_backward_custom",
+        href: "/docs/training/custom-loops/",
+      },
       { label: "weight_anchor", href: "/docs/training/custom-loops/" },
     ],
     codeLabel: "train.py",
@@ -558,7 +766,12 @@ Model     Qwen/Qwen3-8B · adapter=lora (rank=16) · weight_anchor=0.01
 Loss      custom npo_loss (beta=0.10) + retain NLL
 Estimate  ~2.8M tokens · ~14 min · ~$1.10 · warnings: 0`,
     benchmarks: [
-      { benchmark: "TOFU 10% Forget Quality vs. Utility", paperReported: "Avoids catastrophic collapse of Gradient Ascent while cutting forget accuracy sharply", templateSetup: "TOFU 10% forget · Qwen/Qwen3-8B · beta=0.1" },
+      {
+        benchmark: "TOFU 10% Forget Quality vs. Utility",
+        paperReported:
+          "Avoids catastrophic collapse of Gradient Ascent while cutting forget accuracy sharply",
+        templateSetup: "TOFU 10% forget · Qwen/Qwen3-8B · beta=0.1",
+      },
     ],
     bibtex: `@article{zhang2024npo,
   title={Negative Preference Optimization: From Catastrophic Collapse to Effective Unlearning},

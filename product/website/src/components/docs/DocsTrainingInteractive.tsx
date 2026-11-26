@@ -96,8 +96,8 @@ const PRIMITIVES: PrimitiveNode[] = [
     name: "Trajectory",
     role: "Data & traces",
     href: "/docs/training/trajectories/",
-    summary: "One model-agnostic schema (grad.trajectory/1) for traces, labels, and RL rollouts.",
-    ops: ["trajectories.push()", "import_file()", "sources.create()", "traj.to_datum()"],
+    summary: "One model-agnostic schema (grad.trajectory/1) stored in first-class Datasets for traces, labels, and RL rollouts.",
+    ops: ["dataset.push()", "dataset.import_file()", "dataset.filter()", "dataset.add_source()", "traj.to_datum()"],
     detail: "Populated automatically from Gradiated inference, pushed from your DB, or synced from OTel, Langfuse, and Braintrust.",
   },
   {
@@ -116,9 +116,9 @@ const PRIMITIVES: PrimitiveNode[] = [
     name: "Trainer",
     role: "Weight updates",
     href: "/docs/training/custom-loops/",
-    summary: "Remote CPU or GPU compute driven by a managed Recipe or your own PyTorch loop.",
-    ops: ["runs.create()", "forward_backward()", "forward_backward_custom()", "optim_step()", "snapshot()"],
-    detail: "Pipelines forward + backward + optimizer in one RTT and lets you write bit-exact custom PyTorch losses client-side.",
+    summary: "Remote training engine (billed per million tokens) driven by a composable Recipe or your own PyTorch loop.",
+    ops: ["runs.create()", "forward_backward()", "optim_step()", "save_state()", "snapshot()"],
+    detail: "Pipelines forward + backward + optimizer in one RTT and accepts both built-in Loss classes and custom PyTorch CustomLoss subclasses.",
   },
   {
     id: "artifact",
@@ -126,9 +126,9 @@ const PRIMITIVES: PrimitiveNode[] = [
     name: "Artifact",
     role: "1 immutable model",
     href: "/docs/training/endpoints/",
-    summary: "A versioned .grad bundle (weights, tokenizer, manifest, eval_report) or live RL snapshot.",
+    summary: "A versioned .grad bundle (subclassing Model) with weights, tokenizer, manifest, and eval_report, or a live RL snapshot.",
     ops: ["infer_batch()", "sample()", "score_logprobs()", "embed()", "artifacts.merge()"],
-    detail: "Always one concrete, immutable model. Rollbacks never mutate weights; merges combine checkpoints with zero GPU.",
+    detail: "Always one concrete, immutable model. Rollbacks never mutate weights; merges combine checkpoints with zero train tokens.",
   },
   {
     id: "endpoint",
@@ -136,7 +136,7 @@ const PRIMITIVES: PrimitiveNode[] = [
     name: "Endpoint",
     role: "Live traffic + loop",
     href: "/docs/training/endpoints/",
-    summary: "Mutable production slot over 1+ artifacts with guardrails, canaries, and feedback capture.",
+    summary: "Mutable production slot over 1+ artifacts with extensible Strategy guardrails, canaries, and feedback capture.",
     ops: ["run.deploy()", "endpoints.create()", "endpoint.infer()", "feedback.record()"],
     detail: "Every live inference writes back to capture_dataset with an inference_id, feeding the next training run automatically.",
   },
@@ -216,7 +216,7 @@ type RecipeChoice = {
   id: string;
   goal: string;
   recipe: string;
-  compute: string;
+  profile: string;
   typicalWin: string;
   dataNeeded: string;
   href: string;
@@ -227,100 +227,111 @@ const RECIPE_CHOICES: RecipeChoice[] = [
   {
     id: "router",
     goal: "Cut LLM spend without losing quality",
-    recipe: "router",
-    compute: "cpu (< 10 ms serving)",
+    recipe: "RouterRecipe",
+    profile: "Frozen encoder (< 10 ms serving)",
     typicalWin: "45–70% cost drop within 2% quality SLA",
     dataNeeded: "Multi-model traces with scores + metrics.cost_usd",
     href: "/docs/training/recipes/router/",
-    snippet: `run = client.runs.create(
-    dataset="support-traces",
+    snippet: `dataset = client.datasets.get("support-traces")
+run = client.runs.create(
+    dataset=dataset,
     name="support-router",
-    recipe="router",
-    calibration={"max_quality_drop": 0.02},
+    recipe=RouterRecipe(calibration=calibration.SLA(max_quality_drop=0.02)),
 ).wait()
 endpoint = run.deploy(canary=0.10)`,
   },
   {
     id: "classifier",
     goal: "Predict effort, intent, or safety gates",
-    recipe: "classifier",
-    compute: "cpu (< 8 ms serving)",
+    recipe: "ClassifierRecipe",
+    profile: "Frozen encoder (< 8 ms serving)",
     typicalWin: "Calibrated confidence + automatic safe fallback",
     dataNeeded: "Labeled messages (expected_output.label)",
     href: "/docs/training/recipes/classifier/",
-    snippet: `run = client.runs.create(
-    dataset="coding-effort",
+    snippet: `dataset = client.datasets.get("coding-effort")
+run = client.runs.create(
+    dataset=dataset,
     name="coding-effort",
-    recipe="classifier",
-    labels=["low", "medium", "high"],
-    loss={"kind": "ordinal_bce"},
+    recipe=ClassifierRecipe(
+        labels=["low", "medium", "high"],
+        loss=losses.OrdinalBCE(),
+    ),
 ).wait()`,
   },
   {
     id: "sft-dpo",
     goal: "Fine-tune a fast 8B specialist (SFT → DPO)",
-    recipe: "sft + dpo",
-    compute: "gpu (LoRA or full)",
+    recipe: "SFTRecipe + DPORecipe",
+    profile: "LoRA or full weights",
     typicalWin: "5–10x lower latency on structured edits & SQL",
     dataNeeded: "Verified passing outputs (or chosen/rejected pairs)",
     href: "/docs/training/recipes/sft-dpo/",
-    snippet: `sft = client.runs.create(
-    dataset="diff-merge-prod",
+    snippet: `dataset = client.datasets.get("diff-merge-prod").filter(
+    filters.MinScore(tests_passed=1.0),
+)
+sft = client.runs.create(
+    dataset=dataset,
     name="fast-diff-merge",
-    recipe="sft",
-    base="Qwen/Qwen3-8B",
-    filter={"min_score": {"tests_passed": 1.0}},
+    recipe=SFTRecipe(model=Model("Qwen/Qwen3-8B")),
 ).wait()`,
   },
   {
     id: "grpo",
     goal: "RL-train an agent against real tests or tools",
-    recipe: "grpo",
-    compute: "gpu + your CPU/Docker env",
+    recipe: "GRPORecipe",
+    profile: "LoRA + webhook or Docker env",
     typicalWin: "Learns error recovery & multi-turn tool use",
-    dataNeeded: "Task prompts + webhook grader or Environment",
+    dataNeeded: "Task prompts + WebhookRubric or Environment",
     href: "/docs/training/recipes/rl-agents/",
-    snippet: `run = client.runs.create(
-    dataset="sql-tasks",
+    snippet: `dataset = client.datasets.get("sql-tasks")
+sft_art = client.artifacts.get("sql-agent@sft-v1")
+secret = client.secrets.get("eval-webhook-token")
+run = client.runs.create(
+    dataset=dataset,
     name="sql-agent",
-    recipe="grpo",
-    init_from="sql-agent@sft-v1",
-    rubric={"kind": "webhook", "url": "https://eval.internal/grade"},
-    group_size=8,
+    recipe=GRPORecipe(
+        model=sft_art,
+        rubric=WebhookRubric(url="https://eval.internal/grade", secret=secret),
+        group_size=8,
+    ),
 ).wait()`,
   },
   {
     id: "distill",
     goal: "Shrink a 32B/frontier teacher into a 4B student",
-    recipe: "distill",
-    compute: "gpu (on-policy top-k KL)",
+    recipe: "DistillRecipe",
+    profile: "On-policy top-k KL distillation",
     typicalWin: "Matches teacher quality on your prompts only",
     dataNeeded: "1,000+ unlabelled prompts (no gold answers needed)",
     href: "/docs/training/recipes/distillation/",
-    snippet: `run = client.runs.create(
-    dataset="support-prompts",
+    snippet: `dataset = client.datasets.get("support-prompts")
+run = client.runs.create(
+    dataset=dataset,
     name="support-4b",
-    recipe="distill",
-    base="Qwen/Qwen3-4B",
-    teacher="Qwen/Qwen3-32B",
-    mode="on_policy",
+    recipe=DistillRecipe(
+        model=Model("Qwen/Qwen3-4B"),
+        teacher=Model("Qwen/Qwen3-32B"),
+        mode="on_policy",
+    ),
 ).wait()`,
   },
   {
     id: "cartridge",
     goal: "Eliminate a 50k-token repeated system prompt",
-    recipe: "cartridge",
-    compute: "gpu (prefix_kv, frozen base)",
+    recipe: "CartridgeRecipe",
+    profile: "adapters.PrefixKV (frozen base)",
     typicalWin: "Pay to encode docs once; swap per tenant",
     dataNeeded: "Static docs corpus (context_ref) + QA prompts",
     href: "/docs/training/recipes/distillation/",
-    snippet: `run = client.runs.create(
-    dataset="api-docs-qa",
+    snippet: `dataset = client.datasets.get("api-docs-qa")
+run = client.runs.create(
+    dataset=dataset,
     name="api-docs-cartridge",
-    recipe="cartridge",
-    base="Qwen/Qwen3-8B",
-    context_ref="s3://my-bucket/api-docs.md",
-    adapter={"kind": "prefix_kv", "num_tokens": 256},
+    recipe=CartridgeRecipe(
+        model=Model("Qwen/Qwen3-8B"),
+        context_ref="s3://my-bucket/api-docs.md",
+        adapter=adapters.PrefixKV(num_tokens=256),
+    ),
 ).wait()`,
   },
 ];
@@ -376,8 +387,8 @@ export const DocsRecipeChooser = (): ReactElement => {
             <code className="gr-doc-spec-v">{current.recipe}</code>
           </div>
           <div>
-            <span className="gr-doc-spec-k">Default compute</span>
-            <span className="gr-doc-spec-v">{current.compute}</span>
+            <span className="gr-doc-spec-k">Profile</span>
+            <span className="gr-doc-spec-v">{current.profile}</span>
           </div>
           <div>
             <span className="gr-doc-spec-k">Typical result</span>
@@ -744,31 +755,31 @@ type StrategyView = {
 const STRATEGIES: StrategyView[] = [
   {
     id: "sla_lagrangian",
-    label: "sla_lagrangian",
-    artifacts: "1 router artifact + fallback LLM",
-    path: ["Request", "Router (<10ms CPU)", "Cheap model (64%) / Frontier (36%)", "10% fallback probe", "feedback.record()"],
+    label: "SLALagrangian",
+    artifacts: "1 router artifact + fallback Model",
+    path: ["Request", "Router (<10ms)", "Cheap model (64%) / Frontier (36%)", "10% fallback probe", "feedback.record()"],
     guardrail: "Online dual λ holds quality drop <= 2%; hard-stop circuit breaker shifts 100% to fallback at 5%.",
     useCase: "Model routers cutting frontier spend with unbiased online SLA monitoring.",
   },
   {
     id: "cascade",
-    label: "cascade",
-    artifacts: "Fast 8B draft + Verifier + Frontier",
+    label: "Cascade",
+    artifacts: "Fast 8B draft + Verifier Artifact + Frontier Model",
     path: ["Request", "8B specialist draft", "Verifier score >= 0.75?", "Return draft (82%) / Escalate 32B (18%)", "capture_dataset"],
     guardrail: "Only uncertain drafts pay frontier cost; every escalation becomes a hard training example.",
     useCase: "RL-tuned 4B–8B SQL, code, and agent models paired with a trained reward model.",
   },
   {
     id: "syntax_fallback",
-    label: "syntax_fallback",
-    artifacts: "Fine-tuned specialist + fallback LLM",
+    label: "SyntaxFallback",
+    artifacts: "Fine-tuned specialist + fallback Model",
     path: ["Request", "Fine-tuned 8B", "JSON Schema / AST check", "Valid -> return / Invalid -> retry fallback", "capture_dataset"],
     guardrail: "Zero broken JSON or unparseable diffs reach production; invalid outputs auto-log for DPO.",
     useCase: "Structured extraction, SQL, and fast diff-merge models trained with SFT & DPO.",
   },
   {
     id: "canary",
-    label: "shadow / canary",
+    label: "Shadow / Canary",
     artifacts: "Active @v1 + Candidate @v2",
     path: ["Traffic", "90% @v1 active", "10% @v2 canary (or 0% shadow)", "Compare live quality & cost", "Promote or instant rollback"],
     guardrail: "Immutable .grad artifacts mean rolling back to @v1 is a single pointer flip with zero redeploy.",

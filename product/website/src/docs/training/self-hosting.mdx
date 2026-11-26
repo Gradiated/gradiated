@@ -55,7 +55,7 @@ api:
         hosts:
           - grad.internal.example
 
-# Reference a Kubernetes Secret holding API_KEY_HASH, DATABASE_URL, and S3 credentials
+# Reference a Kubernetes Secret holding ADMIN_API_KEY_HASH, DATABASE_URL, and S3 credentials
 auth:
   existingSecret: grad-secrets
 
@@ -103,6 +103,37 @@ judge:
 ```
 
 On-policy logprob distillation (`TopKKLDistill`) loads open teacher weights (such as `qwen/qwen3-32b`) directly from `models.mirrorUri` onto your own trainer GPUs, so it never needs an external API call.
+
+### Authentication & API keys
+
+Self-hosted authentication is 100% local to your cluster (it never phones home to Gradiated Cloud) while keeping the same `GRADIATED_API_KEY` environment variable and `Authorization: Bearer` header as Cloud:
+
+- **Local dev (`grad local up`):** authentication is off by default on `localhost:8787`.
+- **Scoped API keys (default in Kubernetes):** set `ADMIN_API_KEY_HASH` in `grad-secrets` (synced from AWS Secrets Manager, Vault, or External Secrets) to bootstrap your cluster. Use that key directly or mint scoped per-pipeline keys stored as SHA-256 hashes in your own Postgres:
+
+```bash
+export GRAD_BASE_URL=https://grad.internal.example
+export GRADIATED_API_KEY=<bootstrap-admin-key>
+
+# Mint a least-privilege key for nightly training jobs
+grad keys create --name ci-nightly --scopes datasets:write,runs:write,artifacts:read
+
+# Or an artifacts-only key for your vLLM / SGLang deployment pipeline
+grad keys create --name inference-cd --scopes artifacts:read
+
+grad keys list
+grad keys revoke key_01j...
+```
+
+- **OIDC / short-lived JWTs (optional):** if your org bans static keys, add `auth.oidc` in `values.yaml` so `grad-server` accepts JWTs from GitHub Actions OIDC, Kubernetes ServiceAccounts, or Okta/Entra in the same `Authorization: Bearer` header:
+
+```yaml
+auth:
+  existingSecret: grad-secrets
+  oidc:
+    issuer: https://token.actions.githubusercontent.com
+    audience: https://grad.internal.example
+```
 
 ## Connect SDKs and CLI
 

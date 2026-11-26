@@ -1053,3 +1053,26 @@
     animation: none;
   }
 }
+
+/* The rail's scroll areas (the docs nav, the menu's reveal) only scroll on
+   short windows. Where the OS shows classic scrollbars (Windows, macOS with
+   a mouse attached), that drew a bright bar on the black rail. The bar is
+   hidden; wheel, touch and keyboard scrolling are unchanged, and the docs
+   nav fades at its foot when there is more below. */
+.gr-rail-docnav,
+.gr-rail-under,
+.gr-rail-menu,
+.gr-docrail {
+  scrollbar-width: none;
+}
+
+.gr-rail-docnav::-webkit-scrollbar,
+.gr-rail-under::-webkit-scrollbar,
+.gr-rail-menu::-webkit-scrollbar,
+.gr-docrail::-webkit-scrollbar {
+  display: none;
+}
+
+.gr-rail-docnav[data-overflow] {
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 48px), transparent);
+}

@@ -387,7 +387,7 @@ merge_rubric = Rubric([
     ),
 ])
 
-# Stage 2 queues behind Stage 1 on the server and auto-cancels if Stage 1 fails.
+# GRPO starts automatically when SFT finishes and cancels if SFT fails.
 run = (
     client.runs.create(
         dataset=gold_ds,
@@ -413,7 +413,7 @@ run = (
 gold_ds = client.datasets.get("diff-merge-gold")
 tasks_ds = client.datasets.get("diff-merge-tasks")
 
-# Omit .wait() here to queue Stage 2 server-side, or call .wait() to inspect sft.eval_report first.
+# Omit .wait() here so GRPO queues behind SFT, or call .wait() to inspect sft.eval_report first.
 sft = client.runs.create(
     dataset=gold_ds,
     name="fast-diff-merge",

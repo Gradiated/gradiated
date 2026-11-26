@@ -30,7 +30,7 @@ Use **`DPORecipe`** after [Supervised fine-tuning (SFT)](/docs/training/recipes/
 
 ## Train with `DPORecipe`
 
-Pass an existing SFT [`Artifact`](/docs/training/artifacts/) directly as `model=`, or chain `SFTRecipe` into `DPORecipe` in one expression with `.then(...)` so Stage 2 starts automatically on the server when Stage 1 finishes:
+Pass an existing SFT [`Artifact`](/docs/training/artifacts/) directly as `model=`, or chain `SFTRecipe` into `DPORecipe` with `.then(...)` so DPO starts automatically when SFT finishes:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="From an SFT artifact">

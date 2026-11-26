@@ -29,7 +29,7 @@ recipe = SFTRecipe(model="qwen/qwen3-8b")
 print(client.runs.plan(dataset=dataset, name="sql-helper", recipe=recipe))
 
 run = client.runs.create(dataset=dataset, name="sql-helper", recipe=recipe, max_cost_usd=5).wait()
-run.deploy(canary=0.10)  # Or download LoRA weights for vLLM / SGLang
+run.deploy()  # Or download LoRA weights for vLLM / SGLang
 ```
 
 Two examples are enough to see the whole loop, and the plan will warn that they are too few to train a useful model. For a real run, pass a file or a Hugging Face dataset instead of a list: `client.datasets.push("sql", "./train.jsonl")` or `client.datasets.from_hf("HuggingFaceH4/ultrachat_200k", split="train_sft")`.
@@ -46,7 +46,7 @@ dataset = client.datasets.create("support-prod")
 dataset.import_file("./support_traces.jsonl").wait()
 
 run = client.runs.create(dataset=dataset, name="support-router", recipe=RouterRecipe()).wait()
-run.deploy(canary=0.10)
+run.deploy()
 ```
 
   </DocsCodeTab>
@@ -62,7 +62,7 @@ await dataset.importFile("./support_traces.jsonl").wait();
 const run = await grad.runs
   .create({ dataset, name: "support-router", recipe: recipes.router() })
   .wait();
-await run.deploy({ canary: 0.1 });
+await run.deploy();
 ```
 
   </DocsCodeTab>
@@ -78,7 +78,7 @@ run, _ := client.Runs.Create(ctx, grad.RunParams{
 	Name:    "support-router",
 	Recipe:  grad.RouterRecipe{},
 }).Wait(ctx)
-_, _ = run.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
+_, _ = run.Deploy(ctx)
 ```
 
   </DocsCodeTab>
@@ -89,7 +89,7 @@ grad login
 grad import ./support_traces.jsonl --dataset support-prod
 grad train --dataset support-prod --name support-router --recipe router --dry-run
 grad train --dataset support-prod --name support-router --recipe router --wait
-grad deploy support-router@latest --canary 0.10
+grad deploy support-router@latest
 ```
 
   </DocsCodeTab>
@@ -98,7 +98,7 @@ grad deploy support-router@latest --canary 0.10
 Already sending inference requests through Gradiated with the `x-gradiated-task` header? Skip `import`: your dataset is populated automatically, so you go straight to training and deploying.
 
 <DocsTerminal
-  title="Live training & canary readout"
+  title="Live training readout"
   command="grad train --dataset support-prod --name support-router --recipe router --wait"
 >
 
@@ -114,7 +114,7 @@ Already sending inference requests through Gradiated with the `x-gradiated-task`
     Calibration ECE  : 0.017
 
 ✓ Exported artifact support-router@2026-11-26-1
-  Next: grad deploy support-router@2026-11-26-1 --canary 0.10
+  Next: grad deploy support-router@2026-11-26-1
 ```
 
 </DocsTerminal>
@@ -256,7 +256,7 @@ raw = oai.chat.completions.with_raw_response.create(
 inference_id = raw.headers["x-gradiated-inference-id"]
 sql = raw.parse().choices[0].message.content
 
-# Log the real outcome: it drives live canary metrics and becomes data for your next run
+# Log the real outcome: it updates deployment quality metrics and becomes data for your next run
 query_succeeded = sql.strip().upper().startswith("SELECT")  # replace with your own check, e.g. the query ran
 client.feedback.record(
     inference_id=inference_id,
@@ -342,11 +342,11 @@ if err := decision.RecordFeedback(ctx, grad.Feedback{Score: score}); err != nil 
   <DocsCodeTab label="CLI">
 
 ```bash
-# Watch live canary quality and cost savings on Gradiated Cloud
-grad deployments status support-router --watch
+# Check active deployment quality and cost savings on Gradiated Cloud
+grad deployments status support-router
 
-# Promote to 100% when metrics hold, or roll back in one command
-grad deploy support-router@2026-11-25-1 --active
+# Roll back to an earlier version in one command
+grad deploy support-router@2026-11-25-1
 ```
 
   </DocsCodeTab>
@@ -396,7 +396,7 @@ Read https://gradiated.com/docs/training/recipes/router.md and integrate a Gradi
 1. Find where we call LLMs and inspect how we log or store completed requests and outcomes.
 2. Push or import historical traces into a Gradiated dataset using GRADIATED_API_KEY from env.
 3. Run `grad train --dataset <name> --name <router> --recipe router --dry-run --json` first and fix any data warnings.
-4. Train the router, verify `eval_report.pareto_summary.quality_drop_ci95` stays inside 2%, and deploy with `grad deploy <router>@latest --canary 0.10`.
+4. Train the router, verify `eval_report.pareto_summary.quality_drop_ci95` stays inside 2%, and deploy with `grad deploy <router>@latest`.
 5. Wire `client.route("<router>", ...)` (or pass `model="your-org/<router>"` to the OpenAI/Anthropic SDK) and `client.feedback.record(...)` with idempotency keys.
 ```
 
@@ -408,7 +408,7 @@ Read https://gradiated.com/docs/training/recipes/sft.md (and https://gradiated.c
 1. Export verified passing examples as plain chat records (`{"messages": [...]}`, last assistant turn is the target) and push them with `client.datasets.push(name, records_or_jsonl_path)`.
 2. Score the dataset with a `Judge` (`dataset.score(judge).wait()`), keep high scorers with `dataset.filter(scores={"clean": ">=0.8"})`, and configure `SFTRecipe(model="qwen/qwen3-8b")` with its defaults (chain into `DPORecipe` with `.then(...)` if needed). Don't hand-set `lr`; the default `lr="auto"` is calibrated per model.
 3. Run `grad render <dataset> --model qwen/qwen3-8b --limit 3` to check the chat template and loss mask, then `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json` and fix every warning.
-4. Start the run with `max_cost_usd=` set, deploy with `run.deploy(canary=0.10)` (or download the LoRA for vLLM/SGLang), and wire `feedback.record()` so human fixes are captured as `expected_output`.
+4. Start the run with `max_cost_usd=` set, deploy with `run.deploy()` (or download the LoRA for vLLM/SGLang), and wire `feedback.record()` so human fixes are captured as `expected_output`.
 ```
 
   </DocsCodeTab>
@@ -429,7 +429,7 @@ Read https://gradiated.com/docs/training/environments.md and https://gradiated.c
 Read https://gradiated.com/docs/training/recipes/distillation.md (or https://gradiated.com/docs/training/recipes/cartridges.md):
 1. Identify our high-volume frontier prompts or repeated long system prompts.
 2. Configure `DistillRecipe` (32B teacher -> 4B/8B student) or `CartridgeRecipe` (`adapters.PrefixKV` over our static context).
-3. Validate with `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json`, run training, compare `eval_report` against the baseline, and deploy with `--shadow` first.
+3. Validate with `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json`, run training, compare `eval_report` against the baseline, and deploy with `grad deploy`.
 ```
 
   </DocsCodeTab>

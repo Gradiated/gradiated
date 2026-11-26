@@ -101,7 +101,7 @@ fmt.Println(run.Artifact.ID, run.EvalReport)
 ```bash
 grad train --dataset support-traces --name support-router --recipe router --dry-run   # $0 estimate
 grad train --dataset support-traces --name support-router --recipe router --wait
-grad deploy support-router@latest --canary 0.10
+grad deploy support-router@latest
 ```
 
   </DocsCodeTab>
@@ -148,7 +148,7 @@ Before deploying, check `run.eval_report`:
 
 ## Deploy the router
 
-Deploy your trained [`Artifact`](/docs/training/artifacts/) to Gradiated Cloud in one line. Set your `fallback` model and a rollback guardrail on `deploy()`:
+Deploy your trained [`Artifact`](/docs/training/artifacts/) to Gradiated Cloud in one line with a `fallback` model:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -159,11 +159,7 @@ from grad import Grad
 client = Grad()
 
 # Host under your-org/support-router on Gradiated Cloud
-run.deploy(
-    fallback="{{OPUS_MODEL}}",
-    rollback_if_quality_drop=0.05,  # send all traffic to fallback past a 5% live drop
-    canary=0.10,
-)
+run.deploy(fallback="{{OPUS_MODEL}}")
 
 messages = [{"role": "user", "content": "Where is invoice #9941?"}]
 tools = []  # the tool definitions you send with the request, if any
@@ -185,11 +181,7 @@ import { Grad } from "@gradiated/grad";
 
 const grad = new Grad();
 
-await run.deploy({
-  fallback: "{{OPUS_MODEL}}",
-  rollbackIfQualityDrop: 0.05,
-  canary: 0.1,
-});
+await run.deploy({ fallback: "{{OPUS_MODEL}}" });
 
 const messages = [{ role: "user" as const, content: "Where is invoice #9941?" }];
 const tools: unknown[] = [];
@@ -231,9 +223,9 @@ curl https://api.gradiated.com/v1/chat/completions \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-As feedback comes in, Gradiated tracks live quality against the `max_quality_drop` target the router was trained for, and automatically routes all traffic back to your `fallback` model if the live drop passes `rollback_if_quality_drop`.
+As feedback comes in, Gradiated tracks live quality against the `max_quality_drop` target the router was trained for and stores it for your next retrain.
 
-If you already call models through Gradiated with the [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/), you can skip `client.route(...)` and pass `"model": "your-org/support-router"` directly to your chat completion call. See [Deploying](/docs/training/deploying/) for canary rollouts and self-hosting options.
+If you already call models through Gradiated with the [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/), you can skip `client.route(...)` and pass `"model": "your-org/support-router"` directly to your chat completion call. See [Deploying](/docs/training/deploying/) for updates, rollbacks, and self-hosting options.
 
 ## Want more control?
 

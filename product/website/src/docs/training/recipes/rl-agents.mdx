@@ -127,7 +127,7 @@ Every other setting has a default; see the [training parameters reference](/docs
 
 ## Deploy and call your agent
 
-Deploy the trained [`Artifact`](/docs/training/artifacts/) to Gradiated Cloud with `run.deploy(canary=0.10)` and call `"your-org/gsm8k-calculator"` through the standard [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/), or download the LoRA weights to run on your own vLLM or SGLang servers (see [Deploying](/docs/training/deploying/)):
+Deploy the trained [`Artifact`](/docs/training/artifacts/) to Gradiated Cloud with `run.deploy()` and call `"your-org/gsm8k-calculator"` through the standard [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/), or download the LoRA weights to run on your own vLLM or SGLang servers (see [Deploying](/docs/training/deploying/)):
 
 ```python
 import os
@@ -135,7 +135,7 @@ from grad import Grad
 from openai import OpenAI
 
 run = Grad().runs.get("gsm8k-calculator")
-run.deploy(canary=0.10)
+run.deploy()
 
 oai = OpenAI(
     base_url="https://api.gradiated.com/v1",

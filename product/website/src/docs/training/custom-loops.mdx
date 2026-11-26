@@ -406,7 +406,6 @@ Routers, linear probes, and steering vectors that don't need SGD can be solved i
 | Class | What gets trained |
 | --- | --- |
 | `adapters.LoRA(rank=32, alpha=32)` | Low-rank adapters plus any trainable `heads`. The default. `alpha` stays fixed at 32 when you change `rank`, so the right learning rate doesn't move. Ranks 8–16 are enough for RL and small datasets; SFT on more than 50k records benefits from 64–128. |
-| `adapters.Full()` | All backbone parameters plus trainable `heads`. Use about a tenth of the LoRA learning rate. |
 | `adapters.FrozenHead()` | Backbone frozen; trains only attached `heads`. |
 
 DoRA, QLoRA, prefix tuning (`PrefixKV`, used by Cartridges), LoReFT, EAGLE-3 draft heads, and partial unfreezing are covered in [Advanced adapters](/docs/training/advanced-objectives/#advanced-adapters).

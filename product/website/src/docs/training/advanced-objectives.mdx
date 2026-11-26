@@ -377,7 +377,6 @@ batch = [
 client = Grad()
 with client.trainers.create(
     model="baai/bge-reranker-base",
-    adapter=adapters.Full(),
     heads={"rel": heads.Linear(dim=1)},
 ) as trainer:
     for epoch in range(3):
@@ -434,7 +433,7 @@ with client.trainers.create(model="qwen/qwen3-8b") as trainer:
 
 ## Advanced adapters
 
-`adapters.LoRA(rank=32)` (the default) and `adapters.Full()` cover almost every task. Reach for these only when you have a specific reason:
+`adapters.LoRA(rank=32)` (the default) covers almost every task. Reach for these only when you have a specific reason:
 
 | Class | What gets trained | When to use it |
 | --- | --- | --- |

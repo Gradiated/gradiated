@@ -16,18 +16,16 @@ Typical resolved values for `qwen/qwen3-8b` with the default `adapters.LoRA(rank
 
 | Objective | Typical `lr` | Notes |
 | --- | --- | --- |
-| **SFT** (LoRA) | `5e-4` | LoRA needs roughly 10x the learning rate of full fine-tuning. |
-| **SFT** (`adapters.Full()`) | `3e-5` | |
+| **SFT** (LoRA) | `5e-4` | |
 | **DPO** | `2e-5` | With `losses.DPO(beta=0.1)`. Much lower than SFT, so the model keeps the formatting SFT taught it. |
 | **RL** (GRPO) | `5e-5` | Per step of `batch_size=32` prompts × `group_size=8` attempts. |
 | **On-policy distillation** | `2e-4` | |
 | **Reward models** | `1e-4` | |
 | **Context Cartridges** | `1e-2` | Prefix KV tokens need a far higher LR than LoRA weights. |
-| **Embeddings** (`adapters.Full()`) | `2e-5` | Small encoders train fast with full weights and a low LR. |
+| **Embeddings** (encoder) | `2e-5` | Small encoders train fast end-to-end with a low LR. |
 
 Rules of thumb behind `"auto"`:
 
-- **Adapter:** LoRA wants about 10x the learning rate of full fine-tuning on the same model.
 - **Batch size:** the learning rate scales with the square root of the batch size. Doubling `batch_size` raises the resolved `lr` by about 1.4x.
 - **Model size:** smaller models in a family want a higher learning rate than larger ones.
 - **Rank:** `alpha` is fixed at `32`, so the right learning rate stays the same when you change `rank`.
@@ -75,8 +73,7 @@ Keep the best one, then sweep again around it only if the best was at the edge o
 The default is `adapters.LoRA(rank=32)`. Rank has little effect on cost, so you rarely need to go lower.
 
 - **RL and small datasets** (under ~5k records): ranks of `8`–`16` learn as well as `32`. RL updates carry little information per step.
-- **SFT on large datasets** (over ~50k records): try `64`–`128`. Low ranks can underfit and plateau above full fine-tuning's loss.
-- **Full fine-tuning** (`adapters.Full()`): only for small models (up to 4B), or when you need to change the model's behavior across many tasks at once.
+- **SFT on large datasets** (over ~50k records): try `64`–`128`. Low ranks can underfit on broad, high-volume tasks.
 
 ## Batch size and number of steps
 

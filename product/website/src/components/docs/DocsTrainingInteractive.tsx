@@ -130,7 +130,7 @@ const PRIMITIVES: PrimitiveNode[] = [
     href: "/docs/training/deploying/",
     summary: "A versioned .grad artifact (PEFT LoRA or merged Safetensors) you can host on Gradiated Cloud or download for vLLM / SGLang.",
     ops: ["run.deploy()", "grad artifacts download", "artifacts.merge()", "feedback.record()"],
-    detail: "Deploy on Gradiated Cloud with canary rollouts via the OpenAI, Anthropic, or SystemOne SDK, or serve the LoRA weights on your own GPUs.",
+    detail: "Deploy on Gradiated Cloud in one command via the OpenAI, Anthropic, or SystemOne SDK, or serve the LoRA weights on your own GPUs.",
   },
 ];
 
@@ -234,7 +234,7 @@ run = client.runs.create(
         max_quality_drop=0.02,
     ),
 ).wait()
-endpoint = run.deploy(canary=0.10)`,
+endpoint = run.deploy()`,
   },
   {
     id: "decision-model",
@@ -256,7 +256,7 @@ endpoint = run.deploy()`,
     id: "sft-dpo",
     goal: "Fine-tune a fast 8B specialist (SFT → DPO)",
     recipe: "SFTRecipe + DPORecipe",
-    profile: "LoRA or full weights",
+    profile: "LoRA adapter (rank 32)",
     typicalWin: "5–10x lower latency on structured edits & SQL",
     dataNeeded: "Logs filtered with a Judge (or chosen/rejected pairs)",
     href: "/docs/training/recipes/sft/",
@@ -754,8 +754,8 @@ const DEPLOY_OPTIONS: DeployOption[] = [
     id: "cloud",
     label: "Gradiated Cloud",
     where: "Managed GPUs + gateway",
-    path: ["Artifact (@v2)", "run.deploy(canary=0.10)", "OpenAI / Anthropic / SystemOne SDK", "90% @v1 / 10% @v2", "Auto capture + feedback"],
-    detail: "Call your-org/<name> from your existing SDK with zero GPU management, shadow/canary rollouts, and 1-command rollback.",
+    path: ["Artifact (@v2)", "run.deploy()", "OpenAI / Anthropic / SystemOne SDK", "Active @v2 (1-cmd rollback)", "Auto capture + feedback"],
+    detail: "Call your-org/<name> from your existing SDK with zero GPU management and 1-command rollback.",
     useCase: "Teams that want hosted serving, automatic trace capture, and safe rollouts out of the box.",
   },
   {

@@ -150,10 +150,10 @@ When `model=` is an SFT artifact, DPO keeps training that same adapter, and the 
 
 ## Deploy
 
-Roll out the updated [`Artifact`](/docs/training/artifacts/) on Gradiated Cloud at 10% traffic first so you can compare it directly against your SFT version (or download the LoRA adapter for your own vLLM / SGLang servers; see [Deploying](/docs/training/deploying/)):
+Publish the updated [`Artifact`](/docs/training/artifacts/) on Gradiated Cloud in one line (or download the LoRA adapter for your own vLLM / SGLang servers; see [Deploying](/docs/training/deploying/)):
 
 ```python
-dpo.deploy(canary=0.10)
+dpo.deploy()
 ```
 
 ## Want more control?

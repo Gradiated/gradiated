@@ -48,7 +48,7 @@ The best and final checkpoints never expire; other checkpoints are kept for 30 d
 
 ## Deploy on Gradiated Cloud or download weights
 
-Every artifact can either be hosted directly on Gradiated Cloud (with canary rollouts and standard OpenAI / Anthropic / SystemOne SDK calls) or downloaded as standard weights to run on your own vLLM or SGLang servers:
+Every artifact can either be hosted directly on Gradiated Cloud (callable via the standard OpenAI / Anthropic / SystemOne SDKs) or downloaded as standard weights to run on your own vLLM or SGLang servers:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Gradiated Cloud">
@@ -58,9 +58,9 @@ from grad import Grad
 
 client = Grad()
 
-# Publish under your-org/fast-diff-merge (or roll out at 10% canary).
-# From a finished run, `run.deploy(canary=0.10)` does the same.
-client.artifacts.get("fast-diff-merge@2026-11-26-1").deploy(canary=0.10)
+# Publish under your-org/fast-diff-merge.
+# From a finished run, `run.deploy()` does the same.
+client.artifacts.get("fast-diff-merge@2026-11-26-1").deploy()
 ```
 
   </DocsCodeTab>
@@ -79,13 +79,13 @@ vllm serve Qwen/Qwen3-8B --enable-lora --lora-modules fast-diff-merge=./fast-dif
 
 ```bash
 grad artifacts inspect fast-diff-merge@2026-11-26-1 --json
-grad deploy fast-diff-merge@2026-11-26-1 --canary 0.10
+grad deploy fast-diff-merge@2026-11-26-1
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
 
-See [Deploying](/docs/training/deploying/) for canary rollouts, rollbacks, calling deployed models with the OpenAI / Anthropic / SystemOne SDKs, and self-hosting details.
+See [Deploying](/docs/training/deploying/) for updates, rollbacks, calling deployed models with the OpenAI / Anthropic / SystemOne SDKs, and self-hosting details.
 
 ## Merge artifacts without retraining
 

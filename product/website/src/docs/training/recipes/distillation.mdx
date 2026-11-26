@@ -87,10 +87,10 @@ Every other setting has a default; see the [training parameters reference](/docs
 
 ## Deploy and serve
 
-Distilled checkpoints export as standard `.grad` [`Artifact`](/docs/training/artifacts/)s. Host on Gradiated Cloud with `run.deploy(canary=0.10)` and call `"your-org/support-4b-distilled"` via the OpenAI or Anthropic SDK, or download the LoRA weights for vLLM / SGLang (see [Deploying](/docs/training/deploying/)):
+Distilled checkpoints export as standard `.grad` [`Artifact`](/docs/training/artifacts/)s. Host on Gradiated Cloud with `run.deploy()` and call `"your-org/support-4b-distilled"` via the OpenAI or Anthropic SDK, or download the LoRA weights for vLLM / SGLang (see [Deploying](/docs/training/deploying/)):
 
 ```python
-run.deploy(canary=0.10)
+run.deploy()
 ```
 
 ## Want more control?

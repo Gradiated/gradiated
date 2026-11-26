@@ -1,6 +1,6 @@
 # Deploying
 
-<DocsLead>Host trained artifacts on Gradiated Cloud with canary rollouts, or download standard weights to run on your own vLLM or SGLang servers.</DocsLead>
+<DocsLead>Host trained artifacts on Gradiated Cloud in one command, or download standard weights to run on your own vLLM or SGLang servers.</DocsLead>
 
 Every training run produces a versioned [`Artifact`](/docs/training/artifacts/) (such as `fast-diff-merge@2026-11-26-1`). From there, pick whichever serving path fits your stack:
 
@@ -22,10 +22,10 @@ import os
 from openai import OpenAI
 from grad import Grad
 
-# 1. Deploy your trained artifact (or promote a new version at 10% canary)
+# 1. Deploy your trained artifact
 client = Grad()
 artifact = client.artifacts.get("fast-diff-merge@2026-11-26-1")
-artifact.deploy(canary=0.10)
+artifact.deploy()
 
 # 2. Call it with the standard OpenAI SDK (only `model` changes)
 oai = OpenAI(
@@ -46,10 +46,10 @@ print(res.choices[0].message.content)
 import OpenAI from "openai";
 import { Grad } from "@gradiated/grad";
 
-// 1. Deploy your trained artifact (or promote a new version at 10% canary)
+// 1. Deploy your trained artifact
 const grad = new Grad();
 const artifact = await grad.artifacts.get("fast-diff-merge@2026-11-26-1");
-await artifact.deploy({ canary: 0.1 });
+await artifact.deploy();
 
 // 2. Call it with the standard OpenAI SDK (only `model` changes)
 const oai = new OpenAI({
@@ -68,7 +68,7 @@ console.log(res.choices[0].message.content);
 
 ```go
 artifact, _ := client.Artifacts.Get(ctx, "fast-diff-merge@2026-11-26-1")
-_, _ = artifact.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
+_, _ = artifact.Deploy(ctx)
 // Then pass "your-org/fast-diff-merge" as `model` in your OpenAI or Anthropic client.
 ```
 
@@ -79,12 +79,10 @@ _, _ = artifact.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
 # First deploy (publishes your-org/fast-diff-merge)
 grad deploy fast-diff-merge@2026-11-26-1
 
-# Next retrain: shadow, 10% canary, promote to 100%, or roll back in one command
-grad deploy fast-diff-merge@2026-12-03-1 --shadow
-grad deploy fast-diff-merge@2026-12-03-1 --canary 0.10 --rollback-if-quality-drop 0.02
-grad deployments status fast-diff-merge --watch
-grad deploy fast-diff-merge@2026-12-03-1 --active
-grad deploy fast-diff-merge@2026-11-26-1 --active
+# Next retrain: deploy the new version, check status, or roll back in one command
+grad deploy fast-diff-merge@2026-12-03-1
+grad deployments status fast-diff-merge
+grad deploy fast-diff-merge@2026-11-26-1
 ```
 
   </DocsCodeTab>
@@ -92,29 +90,27 @@ grad deploy fast-diff-merge@2026-11-26-1 --active
 
 For [Decision models](/docs/training/recipes/decision-model/), pass `"your-org/<name>"` straight to `TypeSafeClient` (`/v1/systemone`). For [Embeddings](/docs/training/recipes/embeddings/), pass it to `openai.embeddings.create(model="your-org/<name>", ...)`. For [Model routers](/docs/training/recipes/router/), pass it to the OpenAI or Anthropic SDK, or call `client.route("support-router", ...)` if you dispatch to your own providers.
 
-### Shadow, canary, and rollback
+### Updates and rollback
 
 Because every [`Artifact`](/docs/training/artifacts/) is a fixed version, rolling forward or rolling back on Gradiated Cloud is a single pointer update with no app redeploy:
 
 <DocsTerminal
-  title="Live canary telemetry"
-  command="grad deployments status fast-diff-merge --watch"
+  title="Deployment status"
+  command="grad deployments status fast-diff-merge"
 >
 
 ```text
 Model    your-org/fast-diff-merge
-Active   fast-diff-merge@2026-11-26-1  (90% traffic · 18,412 req/hr · p50 380ms)
-Canary   fast-diff-merge@2026-12-03-1  (10% traffic ·  2,044 req/hr · p50 365ms)
+Active   fast-diff-merge@2026-12-03-1  (20,456 req/hr · p50 365ms)
 
   Last 24h feedback
-    Active quality : 91.4%
-    Canary quality : 94.1%  (+2.7% vs. active)
+    Active quality : 94.1%
     Feedback rate  : 94.2% of requests
 ```
 
 </DocsTerminal>
 
-Pass `rollback_if_quality_drop=0.02` to `deploy()` (`--rollback-if-quality-drop 0.02` in the CLI) to make rollback automatic: if live canary quality falls more than that much below the active version (`0.02` is 2 points) once enough feedback has arrived to tell, Gradiated moves all traffic back to the active version and marks the canary `rolled_back`. Without it, the canary stays at its traffic share until you promote or roll back. This is a deployment guardrail. It's separate from a router's `max_quality_drop`, which sets how much quality the [router](/docs/training/recipes/router/) may trade for cost during training.
+Deploying a new version qualifies the adapter on a serving replica first, then atomically switches `your-org/fast-diff-merge` to the new version. If anything looks wrong, roll back in one command by deploying the previous artifact (`grad deploy fast-diff-merge@2026-11-26-1`).
 
 ### Log feedback for the next training run
 
@@ -209,11 +205,11 @@ curl https://api.gradiated.com/v1/feedback \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Duplicate submissions with the same `idempotency_key` are ignored safely. Feedback updates live canary metrics right away and attaches to the saved `Trajectory` for your next training run.
+Duplicate submissions with the same `idempotency_key` are ignored safely. Feedback updates deployment quality metrics and attaches to the saved `Trajectory` for your next training run.
 
 ## Option 2: Run on your own vLLM or SGLang
 
-If you already run your own inference infrastructure (or self-host training in your VPC), download the trained artifact directly. LoRA runs export standard HuggingFace PEFT weights (`adapter_config.json` and `adapter_model.safetensors`), and `merge_on_export=True` or full fine-tunes export standalone Safetensors weights.
+If you already run your own inference infrastructure (or self-host training in your VPC), download the trained artifact directly. LoRA runs export standard HuggingFace PEFT weights (`adapter_config.json` and `adapter_model.safetensors`), and `merge_on_export=True` exports standalone merged Safetensors weights.
 
 <DocsCodeTabs>
   <DocsCodeTab label="vLLM">

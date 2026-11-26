@@ -28,7 +28,7 @@ Live metrics from `run.metrics(follow=True)` include `step`, `loss`, `grad_norm`
 | --- | --- | --- |
 | `lr` | `"auto"` | Looked up per base model and objective, then scaled for your adapter and batch size. See [How "auto" values resolve](#how-auto-values-resolve). Pass a float to override. |
 | `lr_scale` | `1.0` | Multiplies whatever `"auto"` resolved to. Sweep `0.5`, `1.0` and `2.0` to tune without picking raw numbers. |
-| `adapter` | `adapters.LoRA(rank=32)` (`adapters.Full()` for `EmbeddingRecipe`) | `alpha` is fixed at `32`, so changing `rank` doesn't change the right learning rate. Ranks `8`–`16` are enough for RL and datasets under about 5,000 records; use `64`–`128` for SFT on more than about 50,000. `adapters.Full()` trains every weight and is worth it only once LoRA stops improving on 10,000+ examples. |
+| `adapter` | `adapters.LoRA(rank=32)` | `alpha` is fixed at `32`, so changing `rank` doesn't change the right learning rate. Ranks `8`–`16` are enough for RL and datasets under about 5,000 records; use `64`–`128` for SFT on more than about 50,000. |
 | `optimizer` | `optim.AdamW(lr="auto", betas=(0.9, 0.95), weight_decay=0.0, grad_clip=1.0)` | Standard settings for LoRA and RL. |
 | `schedule`, `warmup` | `"linear"`, `0.03` | Linear decay to zero after a 3% warmup. |
 | `batch_size` | `128` examples (SFT records, DPO pairs, distillation, reward models); `32` prompts for GRPO | Examples per optimizer step. |
@@ -79,7 +79,7 @@ Built-in specs (`Rubric` checks, `Judge`, `validators.*` and built-in environmen
 | Parameter | Default | What it does |
 | --- | --- | --- |
 | `model` | `"qwen/qwen3-8b"` | Base model or a previous `Artifact`. |
-| `adapter`, `lr` | `adapters.LoRA(rank=32)`, `"auto"` (about `5e-4`; about `3e-5` with `adapters.Full()`) | See [Optimization](#optimization). |
+| `adapter`, `lr` | `adapters.LoRA(rank=32)`, `"auto"` (about `5e-4`) | See [Optimization](#optimization). |
 | `train_on`, `thinking`, `reduction` | `"last"`, `"auto"`, `"per_example"` | See [Data and chat templates](#data-and-chat-templates). |
 | `merge_on_export` | `False` | Exports a standalone merged checkpoint instead of a LoRA adapter. |
 
@@ -167,7 +167,7 @@ Pairs stay on the same side of the split. Best checkpoint by held-out pair accur
 | Parameter | Default | What it does |
 | --- | --- | --- |
 | `model` | `baai/bge-small-en-v1.5`, chosen by the recipe | Compact encoder with sub-10 ms inference. |
-| `adapter` | `adapters.Full()` | Encoders are small, so full training is fast and usually beats LoRA. |
+| Weights trained | All encoder weights (managed by the recipe) | Small encoders (33M params) train fast end-to-end and usually beat LoRA. |
 | `pool` | `pooling.Mean()` | Averages token vectors into one vector. Stored on the artifact, so `artifact.embed(...)` uses it automatically. |
 | `loss` | `losses.InfoNCE(temp=0.05)` | Lower `temp` (`0.03`) sharpens rankings when negatives are near-duplicates. Without `negatives`, other documents in the batch serve as negatives. |
 | `lr` | `"auto"` (about `2e-5`) | |
@@ -228,14 +228,13 @@ For `client.evals.create(...)`.
 
 ## Deploy
 
-For `run.deploy(...)` and `grad deploy`.
+For `run.deploy(...)`, `artifact.deploy(...)`, and `grad deploy`.
 
 | Parameter | Default | What it does |
 | --- | --- | --- |
-| `canary` | none (full rollout) | Share of traffic sent to the new version, such as `0.10`. |
-| `shadow` | `False` | Mirrors traffic to the new version without serving its responses. |
-| `rollback_if_quality_drop` | none | Rolls back automatically when live quality falls more than this below the active version (`0.02` is 2 points) once there's enough feedback, and marks the canary `rolled_back`. Without it, the canary stays at its share until you promote or roll it back. For routers, traffic goes to `fallback`. This is separate from the router's training target, `max_quality_drop`. |
-| `fallback` (routers) | none | The model that receives traffic when a router rolls back. |
+| `fallback` (routers) | none | The model that receives traffic when a router cannot serve or is rolled back. |
+
+Deploying points `your-org/<name>` at the new artifact version after qualification. To roll back, deploy an earlier version (`grad deploy <name>@<prev-version>`).
 
 ## How "auto" values resolve
 
@@ -251,13 +250,12 @@ Typical resolved learning rates for `qwen/qwen3-8b` at the defaults:
 | Objective | `lr` |
 | --- | --- |
 | SFT (LoRA) | `5e-4` |
-| SFT (`adapters.Full()`) | `3e-5` |
 | DPO | `2e-5` |
 | RL (GRPO) | `5e-5` |
 | On-policy distillation | `2e-4` |
 | Reward models | `1e-4` |
 | Context Cartridges | `1e-2` |
-| Embeddings (`adapters.Full()`) | `2e-5` |
+| Embeddings (encoder) | `2e-5` |
 
 **Rule versions.** Each `auto` rule is versioned, and the run config records the version it used (for example `loss: auto@1 -> GRPO(clip_low=0.2, clip_high=0.28)`). If we change what a rule resolves to, it gets a new version, existing run configs keep the old one, and the dry run shows both values on your first run after the change.
 

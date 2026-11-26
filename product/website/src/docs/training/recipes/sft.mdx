@@ -155,7 +155,7 @@ If your logs already include a deterministic score (like `tests_passed` from CI)
 
 ### Parameters you might change
 
-- **`adapter`:** LoRA by default. For large datasets (50,000+ records), `adapters.LoRA(rank=64)` or higher can help; `adapters.Full()` is only worth it once LoRA stops improving.
+- **`adapter`:** LoRA (`rank=32`) by default. For large datasets (50,000+ records), `adapters.LoRA(rank=64)` or `128` can help.
 - **`train_on`:** trains only the final assistant turn by default. Use `train_on="all_assistant"` for multi-turn agent traces.
 - **`epochs`:** one pass by default. The dry run suggests a second epoch when a small dataset gives too few training steps.
 
@@ -163,7 +163,7 @@ Every other setting has a default; see the [training parameters reference](/docs
 
 ## Deploy and call your model
 
-Host the trained [`Artifact`](/docs/training/artifacts/) on Gradiated Cloud with `sft.deploy(canary=0.10)` (or download the LoRA weights to run on your own vLLM / SGLang server; see [Deploying](/docs/training/deploying/)).
+Host the trained [`Artifact`](/docs/training/artifacts/) on Gradiated Cloud with `sft.deploy()` (or download the LoRA weights to run on your own vLLM / SGLang server; see [Deploying](/docs/training/deploying/)).
 
 Call it through the standard [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/). For structured JSON, SQL, or code edits, you can validate the output in a few lines of app code and retry on a larger model if syntax fails:
 
@@ -175,7 +175,7 @@ import os
 from openai import OpenAI
 from grad import Grad, validators
 
-sft.deploy(canary=0.10)
+sft.deploy()
 
 messages = [
     {"role": "system", "content": "Apply the edit snippet to the original file. Return only the merged file."},
@@ -216,7 +216,7 @@ Grad().feedback.record(
 import OpenAI from "openai";
 import { Grad, validators } from "@gradiated/grad";
 
-await sft.deploy({ canary: 0.1 });
+await sft.deploy();
 
 const messages = [
   { role: "system" as const, content: "Apply the edit snippet to the original file. Return only the merged file." },

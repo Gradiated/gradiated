@@ -16,7 +16,7 @@ chrono = { version = "0.4.41", features = ["serde"] }
 deadpool-postgres = "0.14.2"
 envy = "0.4.2"
 object_store = { version = "=0.14.2", default-features = false, features = ["aws", "fs"] }
-prometheus-client = "=0.25.0"
+prometheus-client = "=0.26.0"
 rustls = { version = "=0.23.45", default-features = false, features = ["aws_lc_rs"] }
 rustls-pemfile = "2.2.0"
 serde = { version = "1.0.219", features = ["derive"] }

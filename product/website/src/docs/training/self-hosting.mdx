@@ -80,7 +80,29 @@ trainer:
         effect: NoSchedule
 ```
 
-For air-gapped or private VPC deployments, mirror `ghcr.io/gradiated/grad-server` and `ghcr.io/gradiated/grad-trainer` to your internal registry and set `image.registry`. You can also point `Judge` and distillation teacher calls at your own internal OpenAI-compatible inference URL (such as internal vLLM, Bedrock, or Azure OpenAI) so judging stays private too.
+### Private VPC & air-gapped setup
+
+To keep container pulls, base model downloads, and `Judge` calls completely inside your VPC, add three blocks to `values.yaml`:
+
+```yaml
+# Mirror ghcr.io/gradiated/grad-server and grad-trainer to your internal registry
+image:
+  registry: 123456789012.dkr.ecr.us-east-1.amazonaws.com/gradiated
+  pullSecrets:
+    - name: ecr-creds
+
+# Load base models and open distillation teachers from your internal bucket instead of Hugging Face
+models:
+  mirrorUri: s3://my-org-approved-models/
+  offline: true
+
+# Route Judge calls (and off-policy text distillation) to your internal OpenAI-compatible gateway
+judge:
+  baseUrl: https://llm-gateway.internal.example/v1
+  existingSecret: internal-llm-creds
+```
+
+On-policy logprob distillation (`TopKKLDistill`) loads open teacher weights (such as `qwen/qwen3-32b`) directly from `models.mirrorUri` onto your own trainer GPUs, so it never needs an external API call.
 
 ## Connect SDKs and CLI
 

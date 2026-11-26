@@ -24,11 +24,12 @@ rubric = Rubric([
 ])
 ```
 
-| Scorer class | Function signature | Use it for |
+| Scorer class | Subclasses / signature | Use it for |
 | --- | --- | --- |
-| **`Scorer`** | `(traj: Trajectory) -> float` | Deterministic checks (AST/JSON validation, exact match) or single-trajectory LLM judges. |
-| **`StatefulScorer`** | `(traj: Trajectory, handle: Handle) -> float` | Checks that inspect live Postgres rows, Redis keys, API responses, or files before teardown. |
-| **`GroupScorer`** | `(group: list[Trajectory]) -> list[float]` | Comparing all `G` rollouts for the same prompt side by side (comparative judges, pairwise win rates). |
+| **`Scorer`** | `(traj: Trajectory) -> float` | Deterministic checks (AST/JSON validation, exact match) or custom single-trajectory scoring functions. |
+| **`Judge(Scorer)`** | `Judge(name, model, prompt=...)` | Prompted frontier-model judges (`Model("claude-sonnet-4-6")`) or trained reward-model / GenRM `Artifact`s — works in both `Rubric`s and `dataset.score(judge)`. |
+| **`StatefulScorer(Scorer)`** | `(traj: Trajectory, handle: Handle) -> float` | Checks that inspect live Postgres rows, Redis keys, API responses, or files before teardown. |
+| **`GroupScorer`** | `(group: list[Trajectory]) -> list[float]` | Comparing all `G` rollouts for the same prompt side by side (comparative/pairwise judges such as `PairwiseJudge(GroupScorer)`). |
 
 To reuse scores already attached to imported production traces, pass `Scorer.from_score("task_success", weight=1.0)`. For managed `GRPORecipe` runs graded by an HTTP endpoint, pass `WebhookRubric(url="...", secret=client.secrets.get("eval-webhook-token"))`.
 

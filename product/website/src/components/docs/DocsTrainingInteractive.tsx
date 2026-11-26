@@ -97,7 +97,7 @@ const PRIMITIVES: PrimitiveNode[] = [
     role: "Data & traces",
     href: "/docs/training/trajectories/",
     summary: "One model-agnostic schema (grad.trajectory/1) stored in first-class Datasets for traces, labels, and RL rollouts.",
-    ops: ["dataset.push()", "dataset.import_file()", "dataset.filter()", "dataset.add_source()", "traj.to_datum()"],
+    ops: ["dataset.push()", "dataset.import_file()", "dataset.score()", "dataset.filter()", "dataset.add_source()"],
     detail: "Populated automatically from Gradiated inference, pushed from your DB, or synced from OTel, Langfuse, and Braintrust.",
   },
   {

@@ -151,17 +151,28 @@ curl https://api.gradiated.com/v1/trajectories/imports \
 
 The import result lists how many trajectories were parsed, how many were dropped, and every `scores` key detected in the file so you can check target coverage before training.
 
-## Filter and slice datasets
+## Score and filter datasets
 
-Filter a `Dataset` with any predicate function `(Trajectory) -> bool` before passing it to a training run — `dataset.filter(...)` returns a reusable `Dataset` view so data selection stays separate from your `Recipe` hyperparameters:
+Filter a `Dataset` with any predicate function `(Trajectory) -> bool` — `dataset.filter(...)` returns a reusable `Dataset` view so data selection stays separate from your `Recipe` hyperparameters.
+
+When you want to filter by a model-graded criterion (e.g. "did the assistant resolve the user's request without hallucinating?"), score the dataset once with a [`Judge`](/docs/training/environments/) (`Judge` subclasses `Scorer` and accepts either a catalog `Model` + `prompt` or a trained verifier `Artifact`). `dataset.score(...)` runs batched on the server, skips already-scored trajectories, and persists results to `trajectory.scores` so you can adjust filter thresholds or reuse scores across runs without re-judging:
 
 ```python
-from grad import Grad
+from grad import Grad, Judge, Model
 
 client = Grad()
-dataset = client.datasets.get("diff-merge-prod")
+dataset = client.datasets.get("support-prod")
 
-passing = dataset.filter(lambda t: t.scores.get("tests_passed") == 1.0)
+# Score once (batched server-side, persisted into `trajectory.scores["resolved"]`)
+judge = Judge(
+    name="resolved",
+    model=Model("claude-sonnet-4-6"),
+    prompt="Did the assistant accurately resolve the user's request without hallucinating?",
+)
+scored = dataset.score(judge).wait()
+
+# Filter cheaply with a plain predicate (tweak thresholds or reuse across runs for $0)
+passing = scored.filter(lambda t: t.scores["resolved"] >= 0.8)
 print(passing.count())
 ```
 
@@ -272,7 +283,7 @@ Every trajectory needs an `input` (usually `input.messages`). Beyond that, inclu
 | **Model router (`RouterRecipe`)** | `scores` (e.g. `task_success`), `metrics.cost_usd`, and `metadata.model` |
 | **Fine-tune (`SFTRecipe`) or classifier (`ClassifierRecipe`)** | `expected_output` (the gold response or target label) |
 | **Preference alignment (`DPORecipe`)** | Paired records sharing a `group_id` with `role="chosen"` and `role="rejected"` |
-| **Multi-turn conversations** *(recommended)* | `session_id` so turns from the same conversation stay together across train and eval splits |
+| **Multi-turn conversations** | `session_id` so turns from the same conversation stay together across train and eval splits |
 
 Need images, audio, tools, or the full JSON field list? See the [Primitives reference](/docs/reference/primitives/).
 

@@ -213,11 +213,6 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Run your agent against your own tools, databases, Harbor tasks, or Docker containers during reinforcement learning.",
   },
-  "/docs/training/traces-to-environments/": {
-    title: "Building an environment from traces",
-    description:
-      "Turn existing production logs into an RL environment, starting simple and adding containers only when you need them.",
-  },
   "/docs/training/artifacts/": {
     title: "Artifacts",
     description:
@@ -267,6 +262,11 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     title: "RL for agents guide",
     description:
       "Train a model with reinforcement learning by grading its answers with code or another model.",
+  },
+  "/docs/training/recipes/traces-to-environments/": {
+    title: "Traces to environments guide",
+    description:
+      "Turn existing production logs into an RL environment, starting simple and adding containers only when you need them.",
   },
   "/docs/training/recipes/distillation/": {
     title: "Model distillation guide",

@@ -13,7 +13,7 @@ Environments run **on your own machines** (a laptop or Kubernetes) and talk to G
 | **[`Rubric`](/docs/training/rubrics/)** | Grades how well the agent did using `Scorer`s, `Judge`s, `StatefulScorer`s, or `GroupScorer`s and writes results into `trajectory.scores`. | Passed into the `Environment` (or paired with per-task test scripts like Harbor's `tests/test.sh`). |
 
 <DocsCallout label="Starting from production logs?" tone="tip">
-You don't need to build a simulator from scratch to use RL. See [Traces to environments](/docs/training/traces-to-environments/) to turn an existing [`Dataset`](/docs/training/trajectories/) into simple tasks, mock tool sandboxes, or Harbor containers.
+You don't need to build a simulator from scratch to use RL. See [Traces to environments](/docs/training/recipes/traces-to-environments/) to turn an existing [`Dataset`](/docs/training/trajectories/) into simple tasks, mock tool sandboxes, or Harbor containers.
 </DocsCallout>
 
 ## Built-in adapters (`environments.*`)
@@ -164,12 +164,12 @@ Every run handles three things automatically:
 - **Timeout cleanup:** runs that hit `timeout_s` are cancelled, get a score of `0.0`, and still run `teardown()`.
 
 <DocsNext>
-  <a href="/docs/training/traces-to-environments/">
+  <a href="/docs/training/artifacts/">
     <small>Next</small>
-    <strong>Traces to environments</strong>
+    <strong>Artifacts</strong>
   </a>
-  <a href="/docs/training/rubrics/">
-    <small>Grading</small>
-    <strong>Rubrics</strong>
+  <a href="/docs/training/recipes/traces-to-environments/">
+    <small>Recipe guide</small>
+    <strong>Traces to environments</strong>
   </a>
 </DocsNext>

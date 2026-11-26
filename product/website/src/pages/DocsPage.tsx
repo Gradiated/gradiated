@@ -53,7 +53,6 @@ import DocsTrainingOverview from "../docs/training/index.mdx";
 import DocsTrainingRecipes from "../docs/training/recipes.mdx";
 import DocsTrainingRubrics from "../docs/training/rubrics.mdx";
 import DocsTrainingSelfHosting from "../docs/training/self-hosting.mdx";
-import DocsTrainingTracesToEnvironments from "../docs/training/traces-to-environments.mdx";
 import DocsRecipeCartridges from "../docs/training/recipes/cartridges.mdx";
 import DocsRecipeDecisionModel from "../docs/training/recipes/decision-model.mdx";
 import DocsRecipeDistillation from "../docs/training/recipes/distillation.mdx";
@@ -63,6 +62,7 @@ import DocsRecipeRewardModels from "../docs/training/recipes/reward-models.mdx";
 import DocsRecipeRlAgents from "../docs/training/recipes/rl-agents.mdx";
 import DocsRecipeRouter from "../docs/training/recipes/router.mdx";
 import DocsRecipeSft from "../docs/training/recipes/sft.mdx";
+import DocsRecipeTracesToEnvironments from "../docs/training/recipes/traces-to-environments.mdx";
 import DocsTrainingTrajectories from "../docs/training/trajectories.mdx";
 
 type DocsDocument = {
@@ -152,11 +152,6 @@ export const documents = {
     path: "/docs/training/environments/",
     Component: DocsTrainingEnvironments,
   },
-  "training-traces-to-environments": {
-    title: "Traces to environments",
-    path: "/docs/training/traces-to-environments/",
-    Component: DocsTrainingTracesToEnvironments,
-  },
   "training-artifacts": {
     title: "Artifacts",
     path: "/docs/training/artifacts/",
@@ -206,6 +201,11 @@ export const documents = {
     title: "RL for agents",
     path: "/docs/training/recipes/rl-agents/",
     Component: DocsRecipeRlAgents,
+  },
+  "recipe-traces-to-environments": {
+    title: "Traces to environments",
+    path: "/docs/training/recipes/traces-to-environments/",
+    Component: DocsRecipeTracesToEnvironments,
   },
   "recipe-distillation": {
     title: "Model distillation",
@@ -264,7 +264,6 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
       "training-recipes",
       "training-rubrics",
       "training-environments",
-      "training-traces-to-environments",
       "training-artifacts",
       "training-deploying",
     ],
@@ -277,6 +276,7 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
       "recipe-sft",
       "recipe-dpo",
       "recipe-rl-agents",
+      "recipe-traces-to-environments",
       "recipe-distillation",
       "recipe-cartridges",
       "recipe-reward-models",
@@ -305,6 +305,8 @@ export const legacyPaths: Record<string, string> = {
   "/docs/training/endpoints/": documents["training-deploying"].path,
   "/docs/training/recipes/classifier/": documents["recipe-decision-model"].path,
   "/docs/training/recipes/sft-dpo/": documents["recipe-sft"].path,
+  "/docs/training/traces-to-environments/":
+    documents["recipe-traces-to-environments"].path,
   "/docs/usage/": documents.index.path,
 };
 

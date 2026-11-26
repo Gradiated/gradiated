@@ -504,6 +504,24 @@ func checkQualification(selector string) error {
 	}
 }
 
+const (
+	// One controller process drives every virtual GPU node (reflectors, node
+	// heartbeats, pod status patches, and leader election) through a shared
+	// client. Raising client-go's 5 QPS / 10 Burst default avoids starving
+	// heartbeats during restarts and steady-state polling.
+	kubernetesClientQPS   float32 = 50
+	kubernetesClientBurst         = 100
+)
+
+func configureClientRateLimit(config *rest.Config) {
+	if config.QPS == 0 {
+		config.QPS = kubernetesClientQPS
+	}
+	if config.Burst == 0 {
+		config.Burst = kubernetesClientBurst
+	}
+}
+
 func main() {
 	check := flag.String("check-qualification", "", "wait for SDK-qualified pods matching this selector")
 	path := flag.String("config", "/etc/gpu-controller/hosts.json", "host configuration")
@@ -534,6 +552,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	configureClientRateLimit(clientConfig)
 	client, err := kubernetes.NewForConfig(clientConfig)
 	if err != nil {
 		log.Fatal(err)

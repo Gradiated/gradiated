@@ -73,7 +73,7 @@ entrypoint: recipe.yaml`,
 Dataset   hf://lmsys/chatbot_arena_conversations (28,050 train / 4,950 eval · public)
 Model     BAAI/bge-small-en-v1.5 (frozen) + dual_head_kernel_lbfgs
 Guardrail sla_lagrangian · target quality drop <= 2.0% · 10% fallback probes
-Estimate  CPU · ~6 sec · $0.00 train tokens · warnings: 0`,
+Estimate  ~0.8M embed tokens · $0.00 train tokens · warnings: 0`,
     benchmarks: [
       { benchmark: "Cost reduction at >=95% strong quality", paperReported: "2x–3.66x lower API spend on MT-Bench, MMLU, and GSM8K", templateSetup: "Chatbot Arena · BAAI/bge-small-en-v1.5 · 6s CPU fit" },
     ],

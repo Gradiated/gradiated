@@ -303,7 +303,7 @@ entrypoint: train.py`,
     dryRunOutput: `Template  papers/setfit (arXiv:2209.11055)
 Dataset   hf://SetFit/sst2 (8 shots/class -> 112 contrastive pairs · public)
 Model     BAAI/bge-small-en-v1.5 · Stage 1 InfoNCE (GPU) -> Stage 2 L-BFGS (CPU)
-Estimate  ~2 min total · ~$0.15 · warnings: 0`,
+Estimate  ~600K train tokens (~$0.15) · warnings: 0`,
     benchmarks: [
       { benchmark: "8-shot RAFT / SST-2 accuracy", paperReported: "Matches GPT-3 175B few-shot accuracy at 1,600x smaller model size", templateSetup: "SST-2 8-shot · BGE-small · InfoNCE + CPU L-BFGS" },
     ],

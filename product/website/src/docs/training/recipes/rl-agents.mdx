@@ -106,7 +106,7 @@ with client.trainers.create(
     artifact = trainer.export(name="support-agent", merge_adapter=True)
 ```
 
-## Practical checks that prevent wasted GPU hours
+## Practical checks that prevent wasted training tokens
 
 1. **Verify observation masking:** Tool responses, retrieved docs, and error tracebacks must have `loss_mask = 0.0`. Using `Environment.step()` returning `Observation(text=...)` or `traj.append_env_tokens()` enforces this automatically.
 2. **Watch zero-variance group rate:** If >70% of prompt groups get all `0.0` (too hard) or all `1.0` (too easy), add partial-credit rubric terms or filter your task pool to medium-difficulty prompts.

@@ -353,7 +353,7 @@ entrypoint: train.py`,
 Dataset   hf://openai/gsm8k + hf://bigcode/humanevalpack (eval · public)
 Model     Qwen/Qwen3-8B · 2 specialists -> TIES density sweep (0.2/0.4/0.6)
 Merge     client.artifacts.merge(method="ties") · 0 training tokens
-Estimate  CPU merge + eval · ~6 min · ~$0.45 · warnings: 0`,
+Estimate  0 train tokens · ~1.1M eval tokens (~$0.45) · warnings: 0`,
     benchmarks: [
       { benchmark: "Multi-task merging gain", paperReported: "+4.4% to +11.2% average accuracy over Task Arithmetic and simple averaging", templateSetup: "Qwen/Qwen3-8B · math + code · TIES density sweep" },
     ],

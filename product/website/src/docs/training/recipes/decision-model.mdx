@@ -1,75 +1,93 @@
 # Decision models
 
-<DocsLead>Train your own fast decision model for categories, yes/no checks, or ordered ratings — with a fallback when it isn't sure.</DocsLead>
+<DocsLead>Train your own fast decision model and call it directly through the SystemOne / TypeSafe SDK.</DocsLead>
 
-Use **`DecisionModelRecipe`** whenever you want a model to pick a label, return a yes/no probability, or rate an input on a scale instead of generating free-form text: effort levels (`low / medium / high`), support triage, safety checks, or routing flags.
+A **decision model** takes a `state` (text, JSON, or a chat transcript) and answers one or more named `questions` in a single request — returning choices, probabilities, and scores instead of free-form text.
 
-If you already use [`gradiated/linden-1`](/docs/systemone-sdk/) through the SystemOne SDK and want a faster or more accurate model tuned specifically to your own traffic, this is how you train your own decision model.
+Use **`DecisionModelRecipe`** when you already use [`gradiated/linden-1`](/docs/systemone-sdk/) (or Jev) through the TypeSafe SDK and want a faster, more accurate model trained on your own traffic. Once deployed, your trained model drops straight into `TypeSafeClient` by changing only the `model` name.
+
+## Question types
+
+Every decision model supports the three [SystemOne](/docs/systemone-sdk/) question types, and can answer multiple questions in a single call:
+
+- **`Choice`** — pick one category from a fixed list (`billing`, `technical`, `other`). Returns the chosen option, probabilities for every option, and a `confidence` score.
+- **`Noul`** — a yes/no probability from `0` to `1` (`"Does this need immediate attention?"`). Apply your own threshold in code.
+- **`Score`** — an ordered rating across criteria (`["Can wait", "Needs attention today", "Needs immediate attention"]`), so confusing the two extremes costs more than mixing up neighboring levels.
 
 ## What data you need
 
-- **Minimum volume:** ~200 labeled [trajectories](/docs/training/trajectories/) per label to start (1,000+ for harder or nuanced decisions).
-- **Required fields:** `input.messages` (plus optional `input.features` like user tier, file count, or retry count) and `expected_output.label`.
-- **Don't have labels yet?** Score an unlabeled dataset first with a [`Judge`](/docs/training/rubrics/) (using a frontier model or `gradiated/linden-1`), review a sample, and train on those labels.
+- **Already calling `gradiated/linden-1`?** Requests sent with the `x-gradiated-task` header are captured in the right format automatically, so you can go straight to scoring or training.
+- **Pushing your own data?** Store examples in a [`Dataset`](/docs/training/trajectories/) with `state` and `questions` in `input.payload` and the expected answers in `expected_output`. Plan for ~200 examples per option to start (1,000+ for harder decisions).
+- **Don't have labels yet?** Score an unlabeled dataset first with a [`Judge`](/docs/training/rubrics/) (or `gradiated/linden-1`), review a sample, and train on those answers.
 
 ```python
 from grad import Grad, Trajectory, TrajectoryInput
 
 client = Grad()
-dataset = client.datasets.create("coding-effort")
+dataset = client.datasets.create("ticket-triage")
 
 dataset.push([
     Trajectory(
-        session_id="issue_104",
+        session_id="ticket_104",
         input=TrajectoryInput(
-            messages=[{"role": "user", "content": "Rename foo to bar in utils.ts"}],
-            features={"file_count": 1, "diff_lines": 4},
+            payload={
+                "state": {"ticket": "I was charged twice. Please fix this today."},
+                "questions": {
+                    "category": {
+                        "type": "choice",
+                        "instructions": "Choose the department for this ticket.",
+                        "criteria": {
+                            "billing": "Charges or payments",
+                            "technical": "Something is broken",
+                            "other": "Anything else",
+                        },
+                    },
+                    "urgent": {
+                        "type": "noul",
+                        "instructions": "Does this need immediate attention?",
+                    },
+                    "effort": {
+                        "type": "score",
+                        "instructions": "Rate how urgently this ticket needs attention.",
+                        "criteria": ["Can wait", "Needs attention today", "Needs immediate attention"],
+                    },
+                },
+            },
         ),
-        expected_output={"label": "low"},
-    ),
-    Trajectory(
-        session_id="issue_105",
-        input=TrajectoryInput(
-            messages=[{"role": "user", "content": "Refactor auth middleware for multi-tenant OAuth"}],
-            features={"file_count": 14, "diff_lines": 420},
-        ),
-        expected_output={"label": "high"},
+        expected_output={
+            "category": "billing",
+            "urgent": 1.0,
+            "effort": 2,
+        },
     ),
 ])
 ```
 
 ## Train the decision model
 
-Choose the `losses.*` class that matches your label structure:
-
-- **`losses.CrossEntropy()`** for unordered categories (`billing`, `bug`, `feature_request`).
-- **`losses.OrdinalBCE()`** for ordered tiers (`low < medium < high`), so confusing `low` with `high` costs more than confusing `low` with `medium`.
-- **`losses.BCEWithLogits()`** for yes/no checks or multi-label tags.
+`DecisionModelRecipe` picks the right loss automatically for each question type (`losses.CrossEntropy()` for `choice`, `losses.BCEWithLogits()` for `noul`, and `losses.OrdinalBCE()` for `score`).
 
 Choose your base `model`:
 
-- **`Model("Qwen/Qwen3-0.6B")`** *(default)* — strong general starting point for text, code, and multi-turn conversations.
-- **`Model("gradiated/linden-1")`** — great starting point if you already use [SystemOne](/docs/systemone-sdk/) and want to specialize `linden-1` on your own questions.
-- **`Model("BAAI/bge-small-en-v1.5")`** — smallest option if you only need ultra-fast CPU inference on short text.
+- **`Model("gradiated/linden-1")`** *(default)* — best starting point when you want to specialize `linden-1` on your own questions and state format.
+- **`Model("Qwen/Qwen3-0.6B")`** — smallest general open model if you want to train a lightweight decision model from scratch.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Model, losses, splits
+from grad import Grad, Model, splits
 from grad.recipes import DecisionModelRecipe
 
 client = Grad()
-dataset = client.datasets.get("coding-effort")
+dataset = client.datasets.get("ticket-triage")
 
 recipe = DecisionModelRecipe(
-    model=Model("Qwen/Qwen3-0.6B"),
-    labels=["low", "medium", "high"],
-    loss=losses.OrdinalBCE(),
+    model=Model("gradiated/linden-1"),
     split=splits.BySession(eval_fraction=0.15),
 )
 
-run = client.runs.create(dataset=dataset, name="coding-effort", recipe=recipe).wait()
+run = client.runs.create(dataset=dataset, name="ticket-triage", recipe=recipe).wait()
 
 print(run.artifact.id)
 print(run.eval_report)
@@ -79,20 +97,18 @@ print(run.eval_report)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Model, losses, recipes, splits } from "@gradiated/grad";
+import { Grad, Model, recipes, splits } from "@gradiated/grad";
 
 const grad = new Grad();
-const dataset = await grad.datasets.get("coding-effort");
+const dataset = await grad.datasets.get("ticket-triage");
 
 const recipe = recipes.decisionModel({
-  model: new Model("Qwen/Qwen3-0.6B"),
-  labels: ["low", "medium", "high"],
-  loss: losses.ordinalBCE(),
+  model: new Model("gradiated/linden-1"),
   split: splits.bySession({ evalFraction: 0.15 }),
 });
 
 const run = await grad.runs
-  .create({ dataset, name: "coding-effort", recipe })
+  .create({ dataset, name: "ticket-triage", recipe })
   .wait();
 
 console.log(run.artifact.id, run.evalReport);
@@ -102,16 +118,14 @@ console.log(run.artifact.id, run.evalReport);
   <DocsCodeTab label="Go">
 
 ```go
-dataset, _ := client.Datasets.Get(ctx, "coding-effort")
+dataset, _ := client.Datasets.Get(ctx, "ticket-triage")
 
 run, _ := client.Runs.Create(ctx, grad.RunParams{
 	Dataset: dataset,
-	Name:    "coding-effort",
+	Name:    "ticket-triage",
 	Recipe: grad.DecisionModelRecipe{
-		Model:  grad.Model("Qwen/Qwen3-0.6B"),
-		Labels: []string{"low", "medium", "high"},
-		Loss:   grad.OrdinalBCELoss{},
-		Split:  grad.BySessionSplit{EvalFraction: 0.15},
+		Model: grad.Model("gradiated/linden-1"),
+		Split: grad.BySessionSplit{EvalFraction: 0.15},
 	},
 }).Wait(ctx)
 fmt.Println(run.Artifact.ID, run.EvalReport)
@@ -121,8 +135,8 @@ fmt.Println(run.Artifact.ID, run.EvalReport)
   <DocsCodeTab label="CLI">
 
 ```bash
-grad train --dataset coding-effort --name coding-effort --recipe decision-model --wait
-grad deploy coding-effort@latest
+grad train --dataset ticket-triage --name ticket-triage --recipe decision-model --wait
+grad deploy ticket-triage@latest
 ```
 
   </DocsCodeTab>
@@ -132,121 +146,136 @@ grad deploy coding-effort@latest
 
 Check `run.eval_report` before shipping:
 
-- **Per-label precision, recall, and F1:** check rare labels (like `high` effort or safety flags) — overall accuracy can look fine even when rare classes are missed.
-- **Confusion matrix:** for ordered tiers, mistakes should stay next door (`low ↔ medium`), not jump from `low` to `high`.
-- **Calibration error (`ece`):** lower means your `min_conf` threshold works more predictably in production.
+- **Check each option separately, not just overall accuracy:** if 95% of your tickets are `"other"` and 5% are `"billing"`, a broken model that always picks `"other"` still scores 95% overall. Look at the per-option numbers in `run.eval_report` to make sure rare options (like escalations or safety flags) are actually caught rather than missed.
+- **Look at which mistakes happen (`confusion_matrix`):** for ordered `score` questions (`0 / 1 / 2`), mixing up neighbors (`0` vs `1`) is normal. If the model frequently confuses `0` with `2`, add more examples of those edge cases.
+- **Check if confidence scores are honest (`ece`):** this measures how closely the model's confidence matches reality — when it says 80% confident, it should be right around 80% of the time. Aim for under `0.05` so confidence checks in your app code behave predictably.
 
-## Deploy with a confidence fallback
+## Deploy and call from the TypeSafe SDK
 
-Confidence scores are calibrated automatically during training so they match real accuracy. Attach the [`Artifact`](/docs/training/artifacts/) to an [endpoint](/docs/training/endpoints/) with `strategies.ConfidenceFallback` so any prediction below `min_conf` returns your safe fallback label (like `"high"` effort so hard tasks don't get rushed).
+Deploy the trained [`Artifact`](/docs/training/artifacts/) to an [`Endpoint`](/docs/training/endpoints/) in one line:
+
+```python
+endpoint = run.deploy()
+```
+
+Your endpoint is immediately callable through the [SystemOne SDK](/docs/systemone-sdk/) (`TypeSafeClient`) by passing `"<org>/ticket-triage"` as the `model`.
+
+Confidence scores are calibrated automatically during training, so you can fall back in your own code whenever the model isn't sure enough (for example, escalating a ticket or calling `gradiated/linden-1` when confidence is below `0.75`):
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, strategies
+import os
+from typesafe_sdk import Choice, Noul, Score, TypeSafeClient
 
-client = Grad()
-capture = client.datasets.get("coding-effort")
-
-endpoint = client.endpoints.create(
-    slug="coding-effort",
-    artifact=run.artifact,
-    capture_dataset=capture,
-    strategy=strategies.ConfidenceFallback(
-        min_conf=0.75,
-        fallback="high",
-    ),
-)
-
-effort = endpoint.infer(messages=messages)
-
-if not tests_passed:
-    effort.record_feedback(
-        score=0.0,
-        expected_output={"label": "high"},
+with TypeSafeClient(
+    base_url="https://api.gradiated.com",
+    api_key=os.environ["GRADIATED_API_KEY"],
+    model="<org>/ticket-triage",
+) as ts_client:
+    response = ts_client.system_one(
+        state={"ticket": "I was charged twice. Please fix this today."},
+        questions={
+            "category": Choice(
+                instructions="Choose the department for this ticket.",
+                criteria={
+                    "billing": "Charges or payments",
+                    "technical": "Something is broken",
+                    "other": "Anything else",
+                },
+            ),
+            "urgent": Noul(instructions="Does this need immediate attention?"),
+            "effort": Score(
+                instructions="Rate how urgently this ticket needs attention.",
+                criteria=["Can wait", "Needs attention today", "Needs immediate attention"],
+            ),
+        },
     )
+
+cat = response.choices["category"]
+# Fall back in your own code when the model isn't confident enough
+department = cat.choice if cat.confidence >= 0.75 else "human_review"
+is_urgent = response.nouls["urgent"].noul >= 0.5
+urgency = response.scores["effort"].score
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="TypeScript">
+  <DocsCodeTab label="Node">
 
-```ts
-import { Grad, strategies } from "@gradiated/grad";
+```javascript
+import { choice, noul, score, TypeSafeClient } from "@typesafe-ai/sdk";
 
-const grad = new Grad();
-const capture = await grad.datasets.get("coding-effort");
-
-const endpoint = await grad.endpoints.create({
-  slug: "coding-effort",
-  artifact: run.artifact,
-  captureDataset: capture,
-  strategy: strategies.confidenceFallback({
-    minConf: 0.75,
-    fallback: "high",
-  }),
+const tsClient = new TypeSafeClient({
+  baseURL: "https://api.gradiated.com",
+  apiKey: process.env.GRADIATED_API_KEY,
+  defaultModel: "<org>/ticket-triage",
 });
 
-const effort = await endpoint.infer<{
-  label: "low" | "medium" | "high";
-  confidence: number;
-  fallbackUsed: boolean;
-}>({ messages });
+const response = await tsClient.systemOne({
+  state: { ticket: "I was charged twice. Please fix this today." },
+  questions: {
+    category: choice("Choose the department for this ticket.", {
+      billing: "Charges or payments",
+      technical: "Something is broken",
+      other: "Anything else",
+    }),
+    urgent: noul("Does this need immediate attention?"),
+    effort: score("Rate how urgently this ticket needs attention.", [
+      "Can wait",
+      "Needs attention today",
+      "Needs immediate attention",
+    ]),
+  },
+});
 
-// Send back a correction when a "low" effort attempt fails tests
-if (!testsPassed) {
-  await effort.recordFeedback({
-    score: 0.0,
-    expectedOutput: { label: "high" },
-  });
-}
-```
-
-  </DocsCodeTab>
-  <DocsCodeTab label="Go">
-
-```go
-type EffortOut struct {
-	Label      string  `json:"label"`
-	Confidence float64 `json:"confidence"`
-}
-endpoint, _ := client.Endpoints.Get(ctx, "coding-effort")
-effort, _ := grad.InferAs[EffortOut](ctx, endpoint, grad.InferInput{Messages: messages})
-
-if !testsPassed {
-	_ = effort.RecordFeedback(ctx, grad.Feedback{
-		Score:          0.0,
-		ExpectedOutput: map[string]any{"label": "high"},
-	})
-}
+const cat = response.answers.category;
+// Fall back in your own code when the model isn't confident enough
+const department = cat.confidence >= 0.75 ? cat.choice : "human_review";
+const isUrgent = response.answers.urgent.noul >= 0.5;
+const urgency = response.answers.effort.score;
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="cURL">
 
 ```bash
-curl https://api.gradiated.com/v1/endpoints/coding-effort/infer \
+curl https://api.gradiated.com/v1/systemone \
   -H "Authorization: Bearer $GRADIATED_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"input": {"messages": [{"role": "user", "content": "Refactor auth middleware"}]}}'
+  -d '{
+    "model": "<org>/ticket-triage",
+    "state": {"ticket": "I was charged twice. Please fix this today."},
+    "questions": {
+      "category": {
+        "type": "choice",
+        "instructions": "Choose the department for this ticket.",
+        "criteria": {
+          "billing": "Charges or payments",
+          "technical": "Something is broken",
+          "other": "Anything else"
+        }
+      }
+    }
+  }'
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Recording `expected_output` when a prediction misses turns production mistakes directly into labeled data for your next retrain.
+When a prediction turns out wrong in production, send back the right answer with `client.feedback.record(inference_id=..., expected_output={"category": "billing"})` so your next retrain learns from the mistake automatically.
 
 ## Want more control?
 
-Need dynamic choices that change per request (`candidate_tokens`) or custom PyTorch decision losses? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
+Need custom PyTorch decision losses or dynamic per-request token choices? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
 
 <DocsNext>
   <a href="/docs/training/recipes/sft/">
     <small>Next guide</small>
     <strong>Supervised fine-tuning (SFT)</strong>
   </a>
-  <a href="/docs/training/recipes/router/">
-    <small>Previous</small>
-    <strong>Model router</strong>
+  <a href="/docs/systemone-sdk/">
+    <small>SDK</small>
+    <strong>SystemOne SDK</strong>
   </a>
 </DocsNext>

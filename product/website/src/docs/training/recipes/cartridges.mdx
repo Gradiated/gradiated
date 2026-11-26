@@ -108,7 +108,7 @@ endpoint = run.deploy()
 | --- | --- |
 | `num_tokens` | Compressed KV-cache size (`128`–`256` for 10k–30k token manuals; `512`–`1024` for 100k+ token corpora). Uses `adapters.PrefixKV(num_tokens=...)` under the hood. |
 | `optim.AdamW(lr=...)` | Prefix KV tensors need a much higher learning rate (`1e-2`–`2e-2`) than LoRA adapters. |
-| `eval_report` | Compare KL divergence and task QA accuracy against the full-context model to pick the smallest `num_tokens` that holds quality. |
+| `eval_report` | Compare answer accuracy against the full-context model so you can pick the smallest `num_tokens` that still gets the same answers right. |
 
 ## Cartridge (`PrefixKV`) vs. prompt distillation into LoRA
 

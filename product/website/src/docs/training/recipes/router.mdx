@@ -140,9 +140,9 @@ Before deploying, check `run.eval_report`:
 }
 ```
 
-- **`cost_savings_pct`:** how much you save compared to sending 100% of traffic to your fallback model while staying within `max_quality_drop`.
-- **`quality_drop_ci95`:** the 95% confidence range for the quality difference. If the upper number is higher than you're comfortable with, add more examples to your dataset before shipping.
-- **`ece`:** checks whether the router's confidence scores match real win rates (lower is better).
+- **`cost_savings_pct`:** how much less you'll spend compared to sending every request to your fallback model while staying within `max_quality_drop`.
+- **`quality_drop` and `quality_drop_ci95`:** the estimated quality difference vs. your fallback model, plus a low-to-high range showing how sure we are. Look at the high end of that range — if it's larger than the drop you're okay with, add more examples to your dataset before shipping.
+- **`ece`:** how closely the router's predicted success rates match what actually happened on held-out examples (aim for under `0.05`).
 
 ## Deploy the router
 

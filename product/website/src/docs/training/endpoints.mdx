@@ -294,9 +294,8 @@ A `Strategy` controls how an endpoint picks models, checks outputs, and falls ba
 
 | Strategy class | Artifacts | What it does | Guide |
 | --- | --- | --- | --- |
-| `strategies.Direct()` | 1 | Calls the active artifact directly. | [Model distillation](/docs/training/recipes/distillation/) |
+| `strategies.Direct()` | 1 | Calls the active artifact directly (including SystemOne [decision models](/docs/training/recipes/decision-model/) and [distilled models](/docs/training/recipes/distillation/)). | [Decision models](/docs/training/recipes/decision-model/) |
 | `strategies.SLALagrangian(...)` | 1 | Routes to the cheapest model that meets your quality target, monitors live quality against your fallback, and switches back to the fallback if quality drops too far. | [Model router](/docs/training/recipes/router/) |
-| `strategies.ConfidenceFallback(...)` | 1 | Returns a safe fallback label or model whenever decision-model confidence is below your threshold. | [Decision models](/docs/training/recipes/decision-model/) |
 | `strategies.SyntaxFallback(...)` | 1–2 | Checks generated output against a JSON schema or code parser and retries on a fallback model if it is invalid. | [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) |
 | `strategies.Cascade(...)` | 2–3 | Generates a fast draft, scores it with a [reward model](/docs/training/recipes/reward-models/), and escalates to a stronger model only when the score is low. | [RL for agents](/docs/training/recipes/rl-agents/) |
 | `strategies.BestOfN(...)` / `MajorityVote(...)` | 1–2 | Generates `N` answers and returns the majority answer or the highest-scoring one. | [Reward models](/docs/training/recipes/reward-models/) |

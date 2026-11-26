@@ -7,7 +7,7 @@ Use **`SFTRecipe`** when you have good examples of what the model should produce
 ## What data you need
 
 - **Minimum volume:** 300–1,000 clean `(input, expected_output)` [trajectories](/docs/training/trajectories/) for focused tasks; 2,000+ for broader ones.
-- **Quality beats volume:** filter your `Dataset` down to verified passing examples (`dataset.filter(lambda t: t.scores.get("tests_passed") == 1.0)`) instead of training on unfiltered logs.
+- **Quality beats volume:** don't train on raw, unfiltered logs. Score your dataset with a [`Judge`](/docs/training/rubrics/) and keep only high-scoring answers (or filter on an existing score like `tests_passed` if you already log one).
 
 ```json
 {
@@ -19,25 +19,32 @@ Use **`SFTRecipe`** when you have good examples of what the model should produce
       { "role": "user", "content": "<original>...</original>\n<edit>...</edit>" }
     ]
   },
-  "expected_output": { "content": "export const retry = ..." },
-  "scores": { "tests_passed": 1.0 }
+  "expected_output": { "content": "export const retry = ..." }
 }
 ```
 
 ## Train with `SFTRecipe`
 
-Filter your `Dataset` to verified passing examples, configure a LoRA adapter (`merge_on_export=True` merges the adapter into standalone weights for lowest serving latency), and split by `session_id` so multi-turn conversations never leak into eval:
+Score your `Dataset` once with a [`Judge`](/docs/training/rubrics/) to keep only good examples, train a LoRA adapter (`merge_on_export=True` merges the adapter into standalone weights for lowest serving latency), and split by `session_id` so multi-turn conversations never leak into eval:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Model, adapters, optim, splits
+from grad import Grad, Judge, Model, adapters, optim, splits
 from grad.recipes import SFTRecipe
 
 client = Grad()
-dataset = client.datasets.get("diff-merge-prod").filter(
-    lambda t: t.scores.get("tests_passed") == 1.0,
+dataset = client.datasets.get("diff-merge-prod")
+
+# Score logs once with a Judge and keep only high-quality examples
+judge = Judge(
+    name="clean_merge",
+    model=Model("claude-sonnet-4-6"),
+    prompt="Did the assistant apply the edit accurately without breaking surrounding code?",
+)
+clean_dataset = dataset.score(judge).wait().filter(
+    lambda t: t.scores["clean_merge"] >= 0.8,
 )
 
 sft_recipe = SFTRecipe(
@@ -48,7 +55,7 @@ sft_recipe = SFTRecipe(
 )
 
 sft = client.runs.create(
-    dataset=dataset,
+    dataset=clean_dataset,
     name="fast-diff-merge",
     recipe=sft_recipe,
 ).wait(
@@ -62,16 +69,23 @@ print(sft.artifact.id)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Model, adapters, optim, recipes, splits } from "@gradiated/grad";
+import { Grad, Judge, Model, adapters, optim, recipes, splits } from "@gradiated/grad";
 
 const grad = new Grad();
-const dataset = (await grad.datasets.get("diff-merge-prod")).filter(
-  (t) => t.scores.tests_passed === 1.0,
+const dataset = await grad.datasets.get("diff-merge-prod");
+
+const judge = new Judge({
+  name: "clean_merge",
+  model: new Model("claude-sonnet-4-6"),
+  prompt: "Did the assistant apply the edit accurately without breaking surrounding code?",
+});
+const cleanDataset = (await dataset.score(judge).wait()).filter(
+  (t) => t.scores.clean_merge >= 0.8,
 );
 
 const sft = await grad.runs
   .create({
-    dataset,
+    dataset: cleanDataset,
     name: "fast-diff-merge",
     recipe: recipes.sft({
       model: new Model("Qwen/Qwen3-8B"),
@@ -94,7 +108,7 @@ dataset:
   name: diff-merge-prod
   filter:
     min_score:
-      tests_passed: 1.0
+      clean_merge: 0.8
 name: fast-diff-merge
 recipe: sft
 model: Qwen/Qwen3-8B
@@ -116,6 +130,8 @@ grad train -f sft-diff-merge.yaml --wait
 
   </DocsCodeTab>
 </DocsCodeTabs>
+
+If your logs already include a deterministic score (like `tests_passed` from CI), skip `dataset.score(judge)` and filter directly: `dataset.filter(lambda t: t.scores.get("tests_passed") == 1.0)`.
 
 ### When to use what
 

@@ -11,7 +11,7 @@ A **recipe** is a Python class that wires up a common training workflow (`Router
 | Recipe class | Guide | Expected dataset fields |
 | --- | --- | --- |
 | `RouterRecipe` | [Model router](/docs/training/recipes/router/) | Prompts (`input.messages`) + a `Judge` or existing `scores` (optional `metrics.cost_usd`) |
-| `DecisionModelRecipe` | [Decision models](/docs/training/recipes/decision-model/) | `expected_output.label` or `scores` (categories, yes/no, or ordered ratings) |
+| `DecisionModelRecipe` | [Decision models](/docs/training/recipes/decision-model/) | SystemOne `state` + `questions` (`choice`, `noul`, `score`) and `expected_output` |
 | `SFTRecipe` | [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) | `input` + `expected_output` (or filtered high-score `output`) |
 | `DPORecipe` | [Preference tuning (DPO)](/docs/training/recipes/dpo/) | Paired `group_id` trajectories with `role: chosen \| rejected` |
 | `GRPORecipe` | [RL for agents](/docs/training/recipes/rl-agents/) | Prompts + a [`Rubric`](/docs/training/rubrics/) (`Judge` / `validators.*`) or [`Environment`](/docs/training/environments/) |
@@ -179,32 +179,35 @@ run = client.runs.create(dataset=dataset, name="support-router", recipe=recipe).
   <DocsCodeTab label="Decision model">
 
 ```python
-from grad import Grad, Model, losses, splits
+from grad import Grad, Model, splits
 from grad.recipes import DecisionModelRecipe
 
 client = Grad()
-dataset = client.datasets.get("coding-effort-labels")
+dataset = client.datasets.get("ticket-triage")
 
 recipe = DecisionModelRecipe(
-    model=Model("Qwen/Qwen3-0.6B"),
-    labels=["low", "medium", "high"],
-    loss=losses.OrdinalBCE(),
-    split=splits.BySession(eval_fraction=0.10),
+    model=Model("gradiated/linden-1"),
+    split=splits.BySession(eval_fraction=0.15),
 )
 
-run = client.runs.create(dataset=dataset, name="coding-effort", recipe=recipe).wait()
+run = client.runs.create(dataset=dataset, name="ticket-triage", recipe=recipe).wait()
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="SFT">
 
 ```python
-from grad import Grad, Model, adapters, optim, splits
+from grad import Grad, Judge, Model, adapters, optim, splits
 from grad.recipes import SFTRecipe
 
 client = Grad()
-dataset = client.datasets.get("diff-merge-prod").filter(
-    lambda t: t.scores.get("tests_passed") == 1.0,
+judge = Judge(
+    name="clean_merge",
+    model=Model("claude-sonnet-4-6"),
+    prompt="Did the assistant apply the edit accurately without breaking surrounding code?",
+)
+dataset = client.datasets.get("diff-merge-prod").score(judge).wait().filter(
+    lambda t: t.scores["clean_merge"] >= 0.8,
 )
 
 recipe = SFTRecipe(

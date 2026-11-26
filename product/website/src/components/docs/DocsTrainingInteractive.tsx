@@ -246,22 +246,19 @@ endpoint = run.deploy(canary=0.10)`,
   },
   {
     id: "decision-model",
-    goal: "Train a decision model (categories, effort, safety)",
+    goal: "Train a decision model (Choice, Noul, Score)",
     recipe: "DecisionModelRecipe",
-    profile: "Qwen3-0.6B or linden-1",
-    typicalWin: "Fast decisions with a safe fallback when uncertain",
-    dataNeeded: "Labeled examples (expected_output.label)",
+    profile: "linden-1 or Qwen3-0.6B (SystemOne SDK)",
+    typicalWin: "Drop-in replacement for linden-1 in TypeSafeClient",
+    dataNeeded: "SystemOne state + questions + expected_output",
     href: "/docs/training/recipes/decision-model/",
-    snippet: `dataset = client.datasets.get("coding-effort")
+    snippet: `dataset = client.datasets.get("ticket-triage")
 run = client.runs.create(
     dataset=dataset,
-    name="coding-effort",
-    recipe=DecisionModelRecipe(
-        model=Model("Qwen/Qwen3-0.6B"),
-        labels=["low", "medium", "high"],
-        loss=losses.OrdinalBCE(),
-    ),
-).wait()`,
+    name="ticket-triage",
+    recipe=DecisionModelRecipe(model=Model("gradiated/linden-1")),
+).wait()
+endpoint = run.deploy()`,
   },
   {
     id: "sft-dpo",
@@ -269,13 +266,14 @@ run = client.runs.create(
     recipe: "SFTRecipe + DPORecipe",
     profile: "LoRA or full weights",
     typicalWin: "5–10x lower latency on structured edits & SQL",
-    dataNeeded: "Verified passing outputs (or chosen/rejected pairs)",
+    dataNeeded: "Logs filtered with a Judge (or chosen/rejected pairs)",
     href: "/docs/training/recipes/sft/",
-    snippet: `dataset = client.datasets.get("diff-merge-prod").filter(
-    lambda t: t.scores.get("tests_passed") == 1.0,
+    snippet: `judge = Judge(name="clean", model=Model("claude-sonnet-4-6"), prompt="Is this answer accurate?")
+clean = client.datasets.get("diff-merge-prod").score(judge).wait().filter(
+    lambda t: t.scores["clean"] >= 0.8,
 )
 sft = client.runs.create(
-    dataset=dataset,
+    dataset=clean,
     name="fast-diff-merge",
     recipe=SFTRecipe(model=Model("Qwen/Qwen3-8B")),
 ).wait()`,

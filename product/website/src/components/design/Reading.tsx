@@ -73,6 +73,7 @@ export const Reading = ({
   children,
   art,
   cover,
+  id,
   lede,
   links = [],
   note,
@@ -89,6 +90,7 @@ export const Reading = ({
   /** The tall crop of the piece's real artwork. Wins over `cover`. */
   art?: string;
   cover?: StoryCover;
+  id?: string;
   lede?: string;
   links?: ReadingLink[];
   note?: ReadingNote;
@@ -135,7 +137,7 @@ export const Reading = ({
   }, [children]);
 
   return (
-    <article className="gr-read">
+    <article className="gr-read" data-article={id}>
       <div className="gr-read-grid" data-focus={focus || undefined}>
         <aside className="gr-read-side">
           <span

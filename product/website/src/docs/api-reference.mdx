@@ -44,7 +44,7 @@ See the [SystemOne SDK guide](/docs/systemone-sdk/) for linden-1 examples and su
 | `GET` | `/v1/runs/{id}/metrics` | Stream step-by-step training telemetry (SSE or JSON). |
 | `POST` | `/v1/runs/{id}/cancel` | Cancel an active training run. |
 | `POST` / `DELETE` | `/v1/trainers` / `/v1/trainers/{id}` | Open or close an interactive `Trainer` session (or resume from a saved checkpoint). |
-| `POST` | `/v1/trainers/{id}/fit-batch` | Closed-form or convex fit over embeddings or datums. |
+| `POST` | `/v1/trainers/{id}/fit-batch` | Closed-form or convex fit over embeddings or `Record`s. |
 | `POST` | `/v1/trainers/{id}/forward-backward` | Run a pipelined forward and backward pass with a built-in loss. |
 | `POST` | `/v1/trainers/{id}/forward` | Run a forward pass returning requested differentiable tensors (`logprobs`, `topk_logprobs`, `embeddings`, `heads`, `layers`). |
 | `POST` | `/v1/trainers/{id}/backward-surrogate` | Apply client-computed surrogate gradients (`dLoss/dOut`) for `CustomLoss` subclasses. |
@@ -73,6 +73,6 @@ See the [SystemOne SDK guide](/docs/systemone-sdk/) for linden-1 examples and su
 | `POST` | `/v1/endpoints/{name}/infer` | Run production inference with configured guardrails and trajectory capture. |
 | `POST` | `/v1/feedback` | Record deduplicated outcomes and gold corrections by `inference_id` or `trace_id`. |
 
-See the [Primitives reference](/docs/reference/primitives/) for full JSON schemas (`Trajectory`, `Datum`, `ModelSpec`, `Artifact`, `Endpoint`).
+See the [Primitives reference](/docs/reference/primitives/) for full JSON schemas (`Trajectory`, `Record`, `Model`, `Artifact`, `Endpoint`).
 
 [View the API reference](https://api.gradiated.com/docs).

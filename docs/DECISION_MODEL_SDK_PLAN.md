@@ -24,7 +24,7 @@ Every concept in `grad` maps to one clear, non-overlapping noun:
 
 | # | Primitive | Strictly 1 or Many? | One-Sentence Mental Model | Core Operations |
 | :--- | :--- | :--- | :--- | :--- |
-| **1** | **`Trajectory`** *(in a **`Dataset`**)* | Data | Universal model-agnostic data unit covering production traces (PostHog/Langfuse/Braintrust/Gradiated), supervised `(input → expected_output)`, multimodal `media[]`, and multi-turn RL rollouts (w/ atomic `.append_env_tokens()` and `.to_datum()`). | `import`, `sync`, `split`, `append_env_tokens()`, `to_datum()` *(custom loops)* |
+| **1** | **`Trajectory(Record)`** *(in a **`Dataset`**)* | Data | Universal model-agnostic data unit covering production traces (PostHog/Langfuse/Braintrust/Gradiated), supervised `(input → expected_output)`, multimodal `media[]`, and multi-turn RL rollouts (w/ atomic `.append_env_tokens()` and `.with_targets()`). `Record` is the base training input with typed subclasses `Trajectory`, `PreferencePair`, and `Triplet`. | `push`, `import_file`, `score`, `filter`, `add_source`, `append_env_tokens()`, `with_targets()` |
 | **2** | **`Environment` + `Rubric`** | Task & Scoring | Optional stateful harness (Docker Compose stacks, seed scripts, MCP tools, sandboxes, counterfactual replay) with explicit `setup / step / evaluate(handle, traj) / teardown` lifecycle + composable scoring (pointwise `RewardFunc`, groupwise comparative rubrics, `ExistingScoreReward`). | `setup()`, `step()`, `evaluate()`, `teardown()`, `rollout_groups()` |
 | **3** | **`Trainer`** *(composed by **`Recipe`**)* | Weight Mutation | Remote engine that learns weights (metered per million tokens processed + weight storage) — either via composable `Recipe` runs (`RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`, chained via `run.then(...)` or pending `run.artifact`) or interactive custom training loops (`fit_batch`, `forward_backward` accepting both built-in `Loss` and `CustomLoss` subclasses over `forward`+`backward_surrogate`, `optim_step`, `save_state`, `trainers.resume`, `snapshot()`, `export()`). | `runs.create()`, `fit_batch()`, `forward_backward()`, `optim_step()`, `snapshot()`, `export()` |
 | **4** | **`Artifact(Model)`** *(a `.grad` bundle)* | **ALWAYS 1 immutable model** | Subclasses `Model` (`Model("Qwen/Qwen3-32B")` pure ref or `client.models.get(...)` live handle). One concrete, versioned, callable model (`support-router@2026-11-25-1` or ephemeral `trainer.snapshot()`). Owns weights + tokenizer + runtime hooks (steering/grammar) + offline `EvalReport` + lineage + `.deploy()`. | `infer()`, `infer_batch()`, `sample()`, `score_logprobs()`, `embed()`, `tokenize()`, `deploy()`, `merge()` |
@@ -264,10 +264,10 @@ Unifies base models (`Qwen/Qwen3-32B`), pinned versions (`support-router@v12`), 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
 | `POST` | `/v1/trainers` | Allocate a `Trainer` pinning `model` (`Model` ref or trained `Artifact`), `adapter` (`adapters.FrozenHead`, `adapters.LoRA`, `adapters.DoRA`, `adapters.PrefixKV`, `adapters.LoReFT`, `adapters.PartialUnfreeze`, `adapters.Full`, `adapters.Eagle3Draft`), optional `heads` (`heads.Linear(dim, token_level, trainable)`), optional `pool`, or resume state via `client.trainers.resume(ckpt)` |
-| `POST` | `/v1/trainers/{tid}/fit-batch` | Closed-form / convex / calibration fit over embeddings, `TensorRef`s, or raw token `Datum`s (`solvers.DualHeadKernelLBFGS`, `solvers.MeanDiffSteering`, etc.) |
-| `POST` | `/v1/trainers/{tid}/forward-backward` | Iterative step: grouped/paired variable-length `Datum[]` (graceful no-op on empty 0-variance batch) + any `Loss` (built-in GPU kernels or client-side `losses.CustomLoss` subclass routed via `/forward` + `/backward-surrogate`) → pipelined async future (`op_id`); RL losses automatically report `kl_sample_train` and `sample_train_max_diff` in step metrics |
-| `POST` | `/v1/trainers/{tid}/forward` | Forward pass with explicit `outputs[]` (`logprobs \| topk_logprobs \| logits \| embeddings \| heads \| layers`), optional `gather_indices` (`TensorRef`s for top-K distillation OR inline candidate token IDs for dynamic-choice decision models — never pulls 152K-vocab logits!), `return_layers`, and `retain_graph: bool` (`false` for eval/calibration to avoid GPU graph leaks) |
-| `POST` | `/v1/trainers/{tid}/backward-surrogate` | Bit-exact surrogate backward accepting client-computed `dLoss/dOut` (`dLogprobs`, `dTopkLogprobs`, `dLogits`, `dEmb`, `dHeads`, or `dHidden[layer]`) — zero untrusted code on GPU workers. Dispatched automatically when passing a `losses.CustomLoss` subclass to `trainer.forward_backward(datums, loss=...)`. |
+| `POST` | `/v1/trainers/{tid}/fit-batch` | Closed-form / convex / calibration fit over embeddings, `TensorRef`s, or `Record`s (`solvers.DualHeadKernelLBFGS`, `solvers.MeanDiffSteering`, etc.) |
+| `POST` | `/v1/trainers/{tid}/forward-backward` | Iterative step: `Record[]` (`Trajectory`, `PreferencePair`, `Triplet`, or raw `Record`; graceful no-op on empty 0-variance batch) + any `Loss` (built-in GPU kernels or client-side `losses.CustomLoss` subclass routed via `/forward` + `/backward-surrogate`) → pipelined async future (`op_id`); RL losses automatically report `kl_sample_train` and `sample_train_max_diff` in step metrics |
+| `POST` | `/v1/trainers/{tid}/forward` | Forward pass with explicit `outputs[]` (`logprobs \| topk_logprobs \| logits \| embeddings \| heads \| layers`), optional `gather_indices` (`TensorRef`s for top-K distillation OR inline candidate token IDs for dynamic-choice decision models — never pulls 152K-vocab logits!), `return_layers`, and `retain_graph: bool` (`false` via `trainer.evaluate(...)`) |
+| `POST` | `/v1/trainers/{tid}/backward-surrogate` | Bit-exact surrogate backward accepting client-computed `dLoss/dOut` (`dLogprobs`, `dTopkLogprobs`, `dLogits`, `dEmb`, `dHeads`, or `dHidden[layer]`) — zero untrusted code on GPU workers. Dispatched automatically when passing a `losses.CustomLoss` subclass to `trainer.forward_backward(records, loss=...)`. |
 | `POST` | `/v1/trainers/{tid}/optim-step` | Apply optimizer step (`optim.AdamW`, `optim.Muon`, `optim.SGD`, dynamic per-step `lr` & `optim.ParamGroup`, grad clip, optional `optim.WeightAnchor(artifact=..., strength=...)` for EWC/L2-SP continual learning) |
 | `POST` | `/v1/trainers/{tid}/snapshot` | Hot-snapshot current weights into an ephemeral callable `Artifact` handle (`artifact_id`, `weight_version`) for sync/async RL rollouts & live evals |
 | `POST` | `/v1/trainers/{tid}/save-state` | Checkpoint trainer + optimizer state for `client.trainers.resume(ckpt)` (stage chaining passes an `Artifact` as `model=` with a fresh optimizer) |
@@ -287,7 +287,7 @@ Unifies base models (`Qwen/Qwen3-32B`), pinned versions (`support-router@v12`), 
 
 ---
 
-## 5. Stateful Environments, `Datum` Invariants & Composable Recipes
+## 5. Stateful Environments, `Record` Invariants & Composable Recipes
 
 ### 5.1 Stateful `Environment` Lifecycle (Complex Docker Compose Stacks & Seed Scripts)
 
@@ -315,7 +315,7 @@ class DockerComposeEnv(Environment):
         ...
 ```
 
-### 5.2 `Datum` & Universal 1:1 Token-Alignment Invariant
+### 5.2 `Record` & Universal 1:1 Token-Alignment Invariant
 
 For any `tokens` sequence of length `T`, **every** per-token array (`loss_mask`, `sampling_logprobs`, `ref_logprobs`, `advantages`, `step_rewards`, and returned `forward.logprobs`) has **exact length `T`**, where index `i` is the prediction of `tokens[i]` given `tokens[:i]` (index `0` is always `0.0` / masked):
 

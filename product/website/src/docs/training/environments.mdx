@@ -174,8 +174,7 @@ with snap.openai_client() as (openai_client, recorder):
     # Pass `openai_client` into your existing agent with zero agent rewrite
     result = await my_existing_agent.run(task, client=openai_client)
 
-traj = recorder.to_trajectory(scores={"reward": grade(result, task)})
-datum = traj.to_datum(advantage=adv)
+traj = recorder.to_trajectory(scores={"reward": grade(result, task)}).with_targets(advantage=adv)
 ```
 
 <DocsCallout label="Zero rewrite, exact RL numerics" tone="note">

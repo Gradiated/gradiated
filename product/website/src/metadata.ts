@@ -271,7 +271,7 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/docs/reference/primitives/": {
     title: "Primitives reference",
     description:
-      "Schemas, field definitions, and enums for Trajectory, Datum, ModelSpec, Artifact, and Endpoint.",
+      "Schemas, entities, and extensible interfaces for Record, Trajectory, Task, Environment, Trainer, Model, Artifact, and Endpoint.",
   },
   "/privacy/": {
     title: "Privacy",

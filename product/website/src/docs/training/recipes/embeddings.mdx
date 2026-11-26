@@ -16,19 +16,20 @@ Group each query with its positive document and one or more hard negatives using
 Train a mean-pooled encoder with `losses.InfoNCE`, then extract normalized embeddings directly from the exported [Artifact](/docs/training/endpoints/):
 
 ```python
-from grad import Datum, Grad, ModelInput, adapters, losses, optim, pooling
+from grad import Grad, Model, Record, Triplet, adapters, losses, optim, pooling
 
 client = Grad()
-base = client.models.get("BAAI/bge-small-en-v1.5")
 
-datums = [
-    Datum(ModelInput(tokens=base.tokenize("how to rotate api keys")), group_id="q0", role="anchor"),
-    Datum(ModelInput(tokens=base.tokenize("API key rotation procedure and revocation")), group_id="q0", role="positive"),
-    Datum(ModelInput(tokens=base.tokenize("Configuring OAuth redirect URIs")), group_id="q0", role="negative"),
+triplets = [
+    Triplet(
+        anchor="how to rotate api keys",
+        positive="API key rotation procedure and revocation",
+        negatives=["Configuring OAuth redirect URIs"],
+    ),
 ]
 
 with client.trainers.create(
-    model=base,
+    model=Model("BAAI/bge-small-en-v1.5"),
     adapter=adapters.Full(),
     pool=pooling.Mean(),
 ) as trainer:
@@ -39,7 +40,7 @@ with client.trainers.create(
     embed_artifact = trainer.export(name="docs-embedder")
 
 vectors = embed_artifact.embed(
-    [ModelInput(tokens=embed_artifact.tokenize("rotate api keys"))],
+    [Record(text="rotate api keys")],
     pool=pooling.Mean(),
 ).embeddings
 ```
@@ -60,9 +61,9 @@ class MatryoshkaColBERTLoss(losses.CustomLoss):
     def __init__(self, dims: tuple[int, ...] = (128, 256, 384)):
         self.dims = dims
 
-    def compute(self, datums, out) -> torch.Tensor:
+    def compute(self, records, out) -> torch.Tensor:
         terms = []
-        for g in grad.by_group(datums, out):
+        for g in grad.by_group(records, out):
             q_tok, p_tok, n_tok = g["anchor"].embeddings, g["positive"].embeddings, g["negative"].embeddings
             qm, pm, nm = q_tok.mean(0), p_tok.mean(0), n_tok.mean(0)
             mrl = sum(
@@ -99,9 +100,9 @@ from grad import Grad, Model, adapters, heads, losses, optim
 class ListNetRerankLoss(losses.CustomLoss):
     outputs = ("heads",)
 
-    def compute(self, datums, out) -> torch.Tensor:
+    def compute(self, records, out) -> torch.Tensor:
         terms = []
-        for g in grad.by_group(datums, out):
+        for g in grad.by_group(records, out):
             pos = g["positive"].heads["rel"][0]
             negs = [v.heads["rel"][0] for role, v in g.items() if role.startswith("negative")]
             terms.append(F.cross_entropy(torch.stack([pos, *negs]).unsqueeze(0), torch.tensor([0])))

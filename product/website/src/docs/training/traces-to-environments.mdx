@@ -179,8 +179,8 @@ with client.trainers.create(
             max_concurrency=8,
             timeout_s=180,
         )
-        datums = grad.group_datums(groups, advantage=advantages.GroupStd(), skip_zero_var=True)
-        fb = trainer.forward_backward(datums, loss=losses.GRPO(clip_low=0.2, clip_high=0.28))
+        batch = grad.with_advantages(groups, advantage=advantages.GroupStd(), skip_zero_var=True)
+        fb = trainer.forward_backward(batch, loss=losses.GRPO(clip_low=0.2, clip_high=0.28))
         opt = trainer.optim_step(optim.AdamW(lr=2e-5, grad_clip=1.0))
         fb.result()
         opt.result()

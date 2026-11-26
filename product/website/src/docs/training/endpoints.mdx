@@ -15,10 +15,10 @@ Separating raw model weights from live traffic slots keeps rollbacks instant and
 You can call a pinned `Artifact` directly during evaluation, calibration, or hard-negative mining, including batched calls via `artifact.infer_batch(inputs)`. Multi-head models always populate `res.heads` (respecting `token_level=True` heads) alongside `res.logits` for single-head models:
 
 ```python
-from grad import ModelInput
+from grad import Record
 
 art = client.artifacts.get("coding-effort@2026-11-25-1")
-preds = art.infer_batch([ModelInput(messages=m) for m in eval_messages])
+preds = art.infer_batch([Record(messages=m) for m in eval_messages])
 print(preds[0].logits)
 ```
 

@@ -18,11 +18,11 @@ pip install "grad-sdk[torch]"
 
 ## Universal 1:1 token alignment
 
-Most training APIs force you to shift `input[:-1]` against `targets[1:]` and pad prompts manually — a single off-by-one mistake silently trains on the wrong tokens. In `grad`, every per-token array on a `Datum` (`loss_mask`, `sampling_logprobs`, `ref_logprobs`, `advantages`, and `out.logprobs`) has the **exact same length `T` as `tokens`**:
+Most training APIs force you to shift `input[:-1]` against `targets[1:]` and pad prompts manually — a single off-by-one mistake silently trains on the wrong tokens. In `grad`, every per-token array on a `Record` or `Trajectory` (`loss_mask`, `sampling_logprobs`, `ref_logprobs`, `advantages`, and `out.logprobs`) has the **exact same length `T` as `tokens`**:
 
 <DocsTokenAlignment />
 
-`Artifact.sample()`, `Artifact.score_logprobs()`, `Artifact.to_datum()`, [`Trajectory.append_env_tokens()`](/docs/reference/primitives/), and [`Trajectory.to_datum()`](/docs/reference/primitives/) all preserve this invariant automatically.
+`Artifact.sample()`, `Artifact.score_logprobs()`, [`Trajectory.append_env_tokens()`](/docs/reference/primitives/), and `Record(messages=...)` all preserve this invariant automatically.
 
 ### Pipelining execution in one RTT
 
@@ -32,12 +32,12 @@ Queue `forward_backward()` and `optim_step()` before calling `.result()` so forw
 
 ### Chat templates and assistant-only masking
 
-For multi-turn chat or tool-use SFT, let the server render the model's exact chat template and attach `loss_mask` (`0.0` on system, user, and tool turns; `1.0` on assistant turns) in one call via `base.to_datum()`:
+Pass `Record(messages=..., tools=...)` directly to `trainer.forward_backward()` — the trainer renders its model's exact chat template and attaches assistant-only `loss_mask` (`0.0` on system, user, and tool turns; `1.0` on assistant turns) automatically on the server:
 
 ```python
-base = client.models.get("Qwen/Qwen3-8B")
+from grad import Record
 
-datum = base.to_datum(
+record = Record(
     messages=[
         {"role": "system", "content": "You are a concise SQL assistant."},
         {"role": "user", "content": "Count active users from yesterday."},
@@ -49,7 +49,7 @@ datum = base.to_datum(
 
 ## Example 1: Multi-turn GRPO loop
 
-This loop runs rollouts in a [stateful environment](/docs/training/environments/), computes group-normalized advantages via `grad.group_datums()` with an extensible `AdvantageEstimator` (skipping zero-variance groups automatically), updates LoRA weights with `losses.GRPO`, and exports a merged artifact. See the [RL for agents guide](/docs/training/recipes/rl-agents/) for swapping in DAPO, Dr. GRPO (`advantages.GroupMean()`), RLOO (`advantages.RLOO()`), async CISPO, or sequence-level GSPO.
+This loop runs rollouts in a [stateful environment](/docs/training/environments/), computes group-normalized advantages via `grad.with_advantages()` with an extensible `AdvantageEstimator` (skipping zero-variance groups automatically), updates LoRA weights with `losses.GRPO`, and exports a merged artifact. See the [RL for agents guide](/docs/training/recipes/rl-agents/) for swapping in DAPO, Dr. GRPO (`advantages.GroupMean()`), RLOO (`advantages.RLOO()`), async CISPO, or sequence-level GSPO.
 
 ```python
 import grad
@@ -73,10 +73,10 @@ with client.trainers.create(
         )
 
         # Group-normalize rewards with an AdvantageEstimator (GroupStd | GroupMean | RLOO | custom)
-        datums = grad.group_datums(groups, advantage=advantages.GroupStd(), skip_zero_var=True)
+        batch = grad.with_advantages(groups, advantage=advantages.GroupStd(), skip_zero_var=True)
 
         # Queue both calls before waiting to pipeline execution across one RTT.
-        fb = trainer.forward_backward(datums, loss=losses.GRPO(clip_low=0.2, clip_high=0.28))
+        fb = trainer.forward_backward(batch, loss=losses.GRPO(clip_low=0.2, clip_high=0.28))
         opt = trainer.optim_step(optim.AdamW(lr=2e-5, grad_clip=1.0))
 
         metrics = fb.result()
@@ -91,21 +91,21 @@ with client.trainers.create(
 On every `losses.GRPO`, `losses.CISPO`, or `losses.ImportanceSampling` step, `fb.result().metrics` reports `kl_sample_train` and `sample_train_max_diff` — comparing the sampler's exact `sampling_logprobs` against the trainer's recomputed logprobs so you spot off-policy staleness or tokenizer mismatches immediately.
 </DocsCallout>
 
-Passing an empty `datums` list (when every group in a batch has identical rewards) is a safe no-op.
+Passing an empty `batch` list (when every group in a batch has identical rewards) is a safe no-op.
 
 ## Example 2: Custom objectives via `losses.CustomLoss`
 
-You do not need a separate API method or a server-side enum to test a new objective. Subclass `losses.CustomLoss` (declaring which `outputs` you need and implementing `compute(self, datums, out)`), and pass it to the **exact same `trainer.forward_backward(datums, loss=...)`** — or inject it into any `Recipe`!
+You do not need a separate API method or a server-side enum to test a new objective. Subclass `losses.CustomLoss` (declaring which `outputs` you need and implementing `compute(self, records, out)`), and pass it to the **exact same `trainer.forward_backward(records, loss=...)`** — or inject it into any `Recipe`!
 
 Under the hood, `Trainer` fetches only the declared differentiable outputs from `/forward`, pre-populates aligned PyTorch views (`out.masks` with `mask[0] == 0.0`, `out.sampling_logprobs`, `out.ref_logprobs`, `out.advantages`, `out.turn_ids`, and auto-batched `out.teacher_topk_logprobs`), runs `compute()` locally, and sends exact gradients back to `/backward-surrogate`. No untrusted user code runs on GPU workers, and gradients match native PyTorch `.backward()` bit-for-bit.
 
-Here is shuffle-safe, reference-free SimPO using `grad.by_group()` and `grad.masked_mean()`:
+Here is reference-free SimPO using `PreferencePair` (no manual `group_id` or `role` strings needed), `grad.by_group()`, and `grad.masked_mean()`:
 
 ```python
 import torch
 import torch.nn.functional as F
 import grad
-from grad import Grad, adapters, losses, optim
+from grad import Grad, Model, PreferencePair, adapters, losses, optim
 
 class SimPOLoss(losses.CustomLoss):
     outputs = ("logprobs",)
@@ -114,38 +114,26 @@ class SimPOLoss(losses.CustomLoss):
         self.beta = beta
         self.gamma = gamma
 
-    def compute(self, datums, out) -> torch.Tensor:
+    def compute(self, records, out) -> torch.Tensor:
         terms = []
-        for g in grad.by_group(datums, out):
+        for g in grad.by_group(records, out):
             c, r = g["chosen"], g["rejected"]
             margin = grad.masked_mean(c.logprobs, c.mask) - grad.masked_mean(r.logprobs, r.mask)
             terms.append(-F.logsigmoid(self.beta * margin - self.gamma))
         return torch.stack(terms).mean()
 
 client = Grad()
-base = client.models.get("Qwen/Qwen3-8B")
 
-preference_pairs = [
-    base.to_datum(
-        messages=[
-            {"role": "user", "content": "Explain tail latency in one sentence."},
-            {"role": "assistant", "content": "Tail latency is the response time of the slowest few percent of requests."},
-        ],
-        group_id="p0",
-        role="chosen",
-    ),
-    base.to_datum(
-        messages=[
-            {"role": "user", "content": "Explain tail latency in one sentence."},
-            {"role": "assistant", "content": "Latency is when computers wait a long time for packets to arrive."},
-        ],
-        group_id="p0",
-        role="rejected",
+pairs = [
+    PreferencePair(
+        prompt=[{"role": "user", "content": "Explain tail latency in one sentence."}],
+        chosen="Tail latency is the response time of the slowest few percent of requests.",
+        rejected="Latency is when computers wait a long time for packets to arrive.",
     ),
 ]
 
-with client.trainers.create(model=base, adapter=adapters.LoRA(rank=32)) as trainer:
-    fb = trainer.forward_backward(preference_pairs, loss=SimPOLoss(beta=2.0, gamma=0.5))
+with client.trainers.create(model=Model("Qwen/Qwen3-8B"), adapter=adapters.LoRA(rank=32)) as trainer:
+    fb = trainer.forward_backward(pairs, loss=SimPOLoss(beta=2.0, gamma=0.5))
     trainer.optim_step(optim.AdamW(lr=5e-5)).result()
     print(fb.result().loss)
 ```
@@ -163,14 +151,14 @@ t_refs = teacher.score_logprobs(
     top_k=32,
 ).topk_refs
 
-fb = trainer.forward_backward(datums, loss=SkewKLLoss(alpha=0.1), gather_indices=t_refs)
+fb = trainer.forward_backward(records, loss=SkewKLLoss(alpha=0.1), gather_indices=t_refs)
 ```
 
-For multi-turn trajectories with no single prompt/response boundary, pass the `Trajectory` list directly to `score_logprobs`:
+For multi-turn trajectories with no single prompt/response boundary, pass the `Trajectory` list directly to `score_logprobs` and attach targets via `with_targets()`:
 
 ```python
 ref_lps = ref_artifact.score_logprobs(trajectories).aligned_logprobs
-datums = [t.to_datum(advantage=a, ref_logprobs=r) for t, a, r in zip(trajectories, advs, ref_lps)]
+batch = [t.with_targets(advantage=a, ref_logprobs=r) for t, a, r in zip(trajectories, advs, ref_lps)]
 ```
 
 ### Pause, resume, and stage transitions
@@ -207,7 +195,7 @@ trainer.optim_step(optim.AdamW(lr=cosine_lr(step, total_steps), grad_clip=1.0)).
 mean_loss = sum(f.result().loss for f in futs) / len(futs)
 
 # Run held-out eval without retaining autograd graphs on the GPU
-eval_out = trainer.evaluate(val_datums, outputs=("logprobs",))
+eval_out = trainer.evaluate(val_records, outputs=("logprobs",))
 ```
 
 ### High-concurrency async rollouts (`AsyncGrad`)
@@ -227,9 +215,9 @@ async def train_async(batches):
                 groups = await asyncio.gather(
                     *(run_async_group(snap, task) for task in task_batch)
                 )
-                datums = grad.group_datums(groups, advantage=advantages.GroupStd())
+                batch = grad.with_advantages(groups, advantage=advantages.GroupStd())
 
-                fb = await trainer.forward_backward(datums, loss=losses.GRPO())
+                fb = await trainer.forward_backward(batch, loss=losses.GRPO())
                 opt = await trainer.optim_step(optim.AdamW(lr=2e-5, grad_clip=1.0))
                 metrics, _ = await asyncio.gather(fb.result(), opt.result())
                 print(metrics.loss)
@@ -237,13 +225,13 @@ async def train_async(batches):
 
 ### Multimodal (VLM and audio) inputs
 
-Pass image or audio `MediaRef`s directly to `base.to_datum()` — the server handles model-specific vision/audio preprocessing and special token expansion so you never need a client-side image processor:
+Attach image or audio `MediaRef`s directly on a `Record` — the trainer handles model-specific vision/audio preprocessing and special token expansion on the server so you never need a client-side image processor:
 
 ```python
-from grad import MediaRef
+from grad import MediaRef, Record
 
 img = MediaRef.image("s3://my-bucket/screens/checkout_step2.png")
-vlm_datum = base.to_datum(
+vlm_record = Record(
     messages=[
         {"role": "user", "content": "What button should the user click to complete checkout?"},
         {"role": "assistant", "content": "Click 'Pay $49.00' in the bottom-right panel."},
@@ -273,7 +261,7 @@ with client.trainers.create(
         "gate": gate_head,
     },
 ) as trainer:
-    trainer.forward_backward(datums, loss=GatingBTLoss()).result()
+    trainer.forward_backward(records, loss=GatingBTLoss()).result()
     trainer.optim_step(
         optim.AdamW(
             param_groups=[optim.ParamGroup(target=gate_head, lr=5e-3)],
@@ -296,23 +284,23 @@ merged = client.artifacts.merge(
 Routers, linear probes, and representation steering vectors do not need SGD. Extract cached embeddings once with `Model.embed()` and solve in a single `fit_batch()` call with a typed `Solver`:
 
 ```python
-from grad import Datum, DatumTargets, Grad, ModelInput, adapters, pooling, solvers
+from grad import Grad, Record, adapters, pooling, solvers
 
 client = Grad()
 encoder = client.models.get("BAAI/bge-small-en-v1.5")
 
 embeddings = encoder.embed(inputs, pool=pooling.Mean()).embeddings
-embedding_datums = [
-    Datum(
-        ModelInput(embedding=emb.tolist()),
-        DatumTargets(scalar=label),
+embedding_records = [
+    Record(
+        embedding=emb.tolist(),
+        scalar=label,
         metadata={"action_id": model_id},
     )
     for emb, label, model_id in zip(embeddings, labels, model_ids)
 ]
 
 with client.trainers.create(model=encoder, adapter=adapters.FrozenHead()) as trainer:
-    trainer.fit_batch(embedding_datums, solver=solvers.DualHeadKernelLBFGS(l2=0.1))
+    trainer.fit_batch(embedding_records, solver=solvers.DualHeadKernelLBFGS(l2=0.1))
     router_artifact = trainer.export(name="support-router")
 ```
 

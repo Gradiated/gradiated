@@ -75,14 +75,14 @@ with client.trainers.create(
         )
 
         # Group-normalize rewards with an AdvantageEstimator and skip zero-variance groups
-        datums = grad.group_datums(groups, advantage=advantages.GroupStd(), skip_zero_var=True)
+        batch = grad.with_advantages(groups, advantage=advantages.GroupStd(), skip_zero_var=True)
 
-        fb = trainer.forward_backward(datums, loss=losses.GRPO(clip_low=0.2, clip_high=0.28))
+        fb = trainer.forward_backward(batch, loss=losses.GRPO(clip_low=0.2, clip_high=0.28))
         opt = trainer.optim_step(optim.AdamW(lr=2e-5, grad_clip=1.0))
         m = fb.result()
         opt.result()
 
-        print(f"step={step} datums={len(datums)} loss={m.loss:.4f} kl_st={m.metrics['kl_sample_train']:.5f}")
+        print(f"step={step} records={len(batch)} loss={m.loss:.4f} kl_st={m.metrics['kl_sample_train']:.5f}")
 
     artifact = trainer.export(name="support-agent")
 ```
@@ -100,17 +100,17 @@ You do not need to rewrite your agent loop to call `artifact.sample()`. Wrap `tr
 
 ## Choosing an RL method for your environment
 
-All modern policy-gradient methods share the same rollout loop and `trainer.forward_backward(datums, loss=...)` call — only the advantage normalization or `Loss` class changes.
+All modern policy-gradient methods share the same rollout loop and `trainer.forward_backward(batch, loss=...)` call — only the advantage normalization or `Loss` class changes.
 
 | Method | When to use it | How to run it |
 | --- | --- | --- |
-| **GRPO** | Default synchronous RL against verifiable rubrics. | `grad.group_datums(groups, advantage=advantages.GroupStd())` + `losses.GRPO(clip_low=0.2, clip_high=0.2)` |
-| **Dr. GRPO** | Remove std-division and length bias in reasoning RL. | `grad.group_datums(groups, advantage=advantages.GroupMean())` + constant-denominator `CustomLoss` |
+| **GRPO** | Default synchronous RL against verifiable rubrics. | `grad.with_advantages(groups, advantage=advantages.GroupStd())` + `losses.GRPO(clip_low=0.2, clip_high=0.2)` |
+| **Dr. GRPO** | Remove std-division and length bias in reasoning RL. | `grad.with_advantages(groups, advantage=advantages.GroupMean())` + constant-denominator `CustomLoss` |
 | **DAPO** | Long reasoning or multi-turn coding where standard clipping collapses entropy. | `losses.GRPO(clip_low=0.2, clip_high=0.28)` + `skip_zero_var=True` + length penalty in `Rubric` |
 | **CISPO** | Async rollout pools where Docker Compose workers finish 1–4 weight versions behind the trainer. | `losses.CISPO(clip_low=0.2, clip_high=0.28)` — stable under off-policy lag |
 | **PPO + Critic** | Dense per-token value baselines with GAE when group sampling is too expensive. | Attach `heads={"v": heads.Linear(dim=1, token_level=True)}` + `PPOGAELoss(CustomLoss)` |
-| **RLOO** | Small group sizes (`group_size=4`) where std-normalization is noisy. | `grad.group_datums(groups, advantage=advantages.RLOO())` + `losses.ImportanceSampling(kl_beta=0.02)` |
-| **REINFORCE++** | Global batch stability with per-token KL shaping against a frozen reference. | Score `ref.score_logprobs(trajs).aligned_logprobs`, whiten active tokens, pass `advantages=[...]` to `to_datum()` |
+| **RLOO** | Small group sizes (`group_size=4`) where std-normalization is noisy. | `grad.with_advantages(groups, advantage=advantages.RLOO())` + `losses.ImportanceSampling(kl_beta=0.02)` |
+| **REINFORCE++** | Global batch stability with per-token KL shaping against a frozen reference. | Score `ref.score_logprobs(trajs).aligned_logprobs`, whiten active tokens, attach `advantages=[...]` via `with_targets()` |
 | **GSPO** | MoE models or long multi-turn agent trajectories where token-level importance ratios diverge. | Sequence-level geometric mean ratio in 7 lines via `GSPOLoss(CustomLoss)` |
 
 ### Example: swapping RL algorithms or running async rollouts
@@ -132,8 +132,8 @@ with ThreadPoolExecutor(max_workers=1) as pool:
         if step + 1 < len(batches):
             next_rollouts = pool.submit(env.rollout_groups, trainer.snapshot(), batches[step + 1], group_size=8, max_turns=6)
 
-        datums = grad.group_datums(groups, advantage=advantages.GroupStd())
-        trainer.forward_backward(datums, loss=losses.CISPO(clip_low=0.2, clip_high=0.28)).result()
+        batch = grad.with_advantages(groups, advantage=advantages.GroupStd())
+        trainer.forward_backward(batch, loss=losses.CISPO(clip_low=0.2, clip_high=0.28)).result()
         trainer.optim_step(optim.AdamW(lr=2e-5, grad_clip=1.0)).result()
 ```
 
@@ -152,10 +152,10 @@ class PPOGAELoss(losses.CustomLoss):
     def __init__(self, eps: float = 0.2, vf_coef: float = 0.5):
         self.eps, self.vf_coef = eps, vf_coef
 
-    def compute(self, datums, out) -> torch.Tensor:
+    def compute(self, records, out) -> torch.Tensor:
         terms = []
-        for lp, old_lp, v, mask, d in zip(out.logprobs, out.sampling_logprobs, out.heads["v"], out.masks, datums):
-            ret = torch.full_like(v[:, 0], float(d.targets.scalar))
+        for lp, old_lp, v, mask, rec in zip(out.logprobs, out.sampling_logprobs, out.heads["v"], out.masks, records):
+            ret = torch.full_like(v[:, 0], float(rec.scalar))
             adv = ret - v[:, 0].detach()
             r = torch.exp(lp - old_lp)
             pg = -torch.minimum(r * adv, r.clamp(1.0 - self.eps, 1.0 + self.eps) * adv)
@@ -163,7 +163,7 @@ class PPOGAELoss(losses.CustomLoss):
             terms.append(grad.masked_mean(pg + self.vf_coef * vf, mask))
         return torch.stack(terms).mean()
 
-trainer.forward_backward(datums, loss=PPOGAELoss()).result()
+trainer.forward_backward(batch, loss=PPOGAELoss()).result()
 trainer.optim_step(optim.AdamW(lr=2e-5, grad_clip=1.0)).result()
 ```
 
@@ -181,7 +181,7 @@ class GSPOLoss(losses.CustomLoss):
     def __init__(self, eps_low: float = 3e-4, eps_high: float = 4e-4):
         self.eps_low, self.eps_high = eps_low, eps_high
 
-    def compute(self, datums, out) -> torch.Tensor:
+    def compute(self, records, out) -> torch.Tensor:
         terms = []
         for lp, old_lp, adv, mask in zip(out.logprobs, out.sampling_logprobs, out.advantages, out.masks):
             # Geometric-mean importance ratio over generated tokens only (env tokens masked out)
@@ -190,7 +190,7 @@ class GSPOLoss(losses.CustomLoss):
             terms.append(-torch.minimum(s * a_seq, s.clamp(1.0 - self.eps_low, 1.0 + self.eps_high) * a_seq))
         return torch.stack(terms).mean()
 
-fb = trainer.forward_backward(datums, loss=GSPOLoss())
+fb = trainer.forward_backward(batch, loss=GSPOLoss())
 trainer.optim_step(optim.AdamW(lr=2e-5, grad_clip=1.0)).result()
 ```
 
@@ -202,14 +202,14 @@ import torch
 import grad
 from grad import advantages, losses, optim
 
-# `turn_ids` on each Datum identifies which turn generated each token.
+# `turn_ids` on each Trajectory identifies which turn generated each token.
 ref_lps = ref_artifact.score_logprobs(trajectories).aligned_logprobs
-datums = grad.group_datums(groups, advantage=advantages.GroupMean(), ref_logprobs=ref_lps)
+batch = grad.with_advantages(groups, advantage=advantages.GroupMean(), ref_logprobs=ref_lps)
 
 class PerTurnKLLoss(losses.CustomLoss):
     outputs = ("logprobs",)
 
-    def compute(self, datums, out) -> torch.Tensor:
+    def compute(self, records, out) -> torch.Tensor:
         terms = []
         for lp, old_lp, rlp, adv, mask, tids in zip(
             out.logprobs, out.sampling_logprobs, out.ref_logprobs, out.advantages, out.masks, out.turn_ids,
@@ -220,7 +220,7 @@ class PerTurnKLLoss(losses.CustomLoss):
             terms.append(grad.masked_mean(-w * adv * lp + kl_beta * kl, mask))
         return torch.stack(terms).mean()
 
-fb = trainer.forward_backward(datums, loss=PerTurnKLLoss())
+fb = trainer.forward_backward(batch, loss=PerTurnKLLoss())
 trainer.optim_step(optim.AdamW(lr=2e-5)).result()
 ```
 

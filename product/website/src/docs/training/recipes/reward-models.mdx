@@ -25,10 +25,10 @@ from grad import Grad, Model, adapters, heads, losses, optim
 class BradleyTerryLoss(losses.CustomLoss):
     outputs = ("heads",)
 
-    def compute(self, datums, out) -> torch.Tensor:
+    def compute(self, records, out) -> torch.Tensor:
         terms = [
             -F.logsigmoid(g["chosen"].heads["rm"][0] - g["rejected"].heads["rm"][0])
-            for g in grad.by_group(datums, out)
+            for g in grad.by_group(records, out)
         ]
         return torch.stack(terms).mean()
 
@@ -47,7 +47,7 @@ with client.trainers.create(
     rm_artifact = trainer.export(name="sql-verifier")
 ```
 
-Score candidate rollouts (passing `Trajectory` or `ModelInput` lists directly) offline or inside a rubric using batched inference:
+Score candidate rollouts (passing `Trajectory` or `Record` lists directly) offline or inside a rubric using batched inference:
 
 ```python
 scores = [
@@ -61,17 +61,15 @@ scores = [
 Attach a `token_level=True` head and label only the end-of-step token positions using the built-in `losses.BCESparsePositions` loss:
 
 ```python
-from grad import Datum, DatumTargets, Grad, Model, ModelInput, adapters, heads, losses, optim
+from grad import Grad, Model, Record, adapters, heads, losses, optim
 
 client = Grad()
 
-datums = [
-    Datum(
-        ModelInput(tokens=step_traj_tokens),
-        DatumTargets(
-            positions=[42, 98, 151],     # token indices ending steps 1, 2, 3
-            labels=[1.0, 1.0, 0.0],      # step 3 introduced an error
-        ),
+records = [
+    Record(
+        tokens=step_traj_tokens,
+        positions=[42, 98, 151],     # token indices ending steps 1, 2, 3
+        labels=[1.0, 1.0, 0.0],      # step 3 introduced an error
     ),
 ]
 
@@ -80,7 +78,7 @@ with client.trainers.create(
     adapter=adapters.LoRA(rank=32),
     heads={"prm": heads.Linear(dim=1, token_level=True)},
 ) as trainer:
-    m = trainer.forward_backward(datums, loss=losses.BCESparsePositions(head="prm")).result()
+    m = trainer.forward_backward(records, loss=losses.BCESparsePositions(head="prm")).result()
     trainer.optim_step(optim.AdamW(lr=1e-4)).result()
     prm_artifact = trainer.export(name="reasoning-prm")
 ```

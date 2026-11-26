@@ -1,0 +1,38 @@
+{
+  "model": "thinkingmachines/Inkling-2-Mini",
+  "revision": "6e7c8248f75265bdd4fbab5273304243b5d8c2cb",
+  "files": [
+    {
+      "file": "chat_template.jinja",
+      "bytes": 6868,
+      "sha256": "53a9035f3255945704b5857657cfb00c1165090c0641c4f782a0cbf268cc16dc"
+    },
+    {
+      "file": "config.json",
+      "bytes": 2699,
+      "sha256": "8216dd43157f5474cfff88f486a1e433fef703c674f694e485a86a761c412b1e"
+    },
+    {
+      "file": "special_tokens_map.json",
+      "bytes": 529,
+      "sha256": "c16f44b3594563d82743ddb0417a2be1bfe3e2000dfad2da4b8f32554593e1a0"
+    },
+    {
+      "file": "tiktoken/tokenizer.model",
+      "bytes": 3386494,
+      "sha256": "f170372dd655728909228220d77cf6b8104a59f38a91262a7d2c4027906ec0d8"
+    },
+    {
+      "file": "tokenizer.json",
+      "bytes": 26178678,
+      "sha256": "7f332727f9a3f093dd452a39cc978e6757627e5dad1b0673aa4e75174f236dd6"
+    },
+    {
+      "file": "tokenizer_config.json",
+      "bytes": 13235,
+      "sha256": "bf09342d285139fd37ce10c70878af1d52cb390e9901e10248654293a80ee636"
+    }
+  ],
+  "prompt": "native-chat-none-letter-v1",
+  "prompting_sha256": "068929b2391e31642fcfc31fb1fe79fbec6d6272a94a0ae3c1eb442bd321ea88"
+}

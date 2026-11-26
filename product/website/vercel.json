@@ -7,6 +7,8 @@
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . && node scripts/ashby-jobs-unchanged.ts",
   "trailingSlash": true,
   "redirects": [
+    { "source": "/hardware", "destination": "/", "permanent": true },
+    { "source": "/hardware/", "destination": "/", "permanent": true },
     {
       "source": "/library/",
       "has": [

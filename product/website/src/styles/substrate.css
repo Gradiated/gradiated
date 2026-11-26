@@ -613,11 +613,16 @@
   color: var(--color-interactive);
 }
 
-/* Below the wide tier the valley cannot hold: the mark takes its own row and
-   the links fall to two columns. */
-.gr-root[data-tier]:not([data-tier="wide"]) .gr-footer-top {
-  grid-template-columns: repeat(2, 1fr);
-  row-gap: calc(2 * var(--u));
+/* The footer stacks only when its own width runs out, not at the page tier. */
+.gr-footer {
+  container: gr-footer / inline-size;
+}
+
+@container gr-footer (max-width: 52rem) {
+  .gr-footer-top {
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: calc(2 * var(--u));
+  }
 }
 
 /* Both of the footer's big vertical measures come in on a phone.
@@ -644,12 +649,14 @@
  * it. Which is why the footer came out three tracks wide with Product sitting
  * to the right of Developers and Company, and Legal alone underneath: the
  * links were in neither document order nor a 2x2. */
-.gr-root[data-tier]:not([data-tier="wide"]) .gr-footer-top nav:first-of-type {
-  grid-column-start: auto;
-}
+@container gr-footer (max-width: 52rem) {
+  .gr-footer-top nav:first-of-type {
+    grid-column-start: auto;
+  }
 
-.gr-root[data-tier]:not([data-tier="wide"]) .gr-footer-mark {
-  grid-column: 1 / -1;
+  .gr-footer-mark {
+    grid-column: 1 / -1;
+  }
 }
 
 /* Spacing above comes from the .gr-label + * rule in base.css, so every caps

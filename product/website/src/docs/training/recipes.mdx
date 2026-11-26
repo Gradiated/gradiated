@@ -179,7 +179,7 @@ run = client.runs.create(dataset=dataset, name="support-router", recipe=recipe).
   <DocsCodeTab label="Decision model">
 
 ```python
-from grad import Grad, Model, calibration, losses, splits
+from grad import Grad, Model, losses, splits
 from grad.recipes import DecisionModelRecipe
 
 client = Grad()
@@ -189,7 +189,6 @@ recipe = DecisionModelRecipe(
     model=Model("Qwen/Qwen3-0.6B"),
     labels=["low", "medium", "high"],
     loss=losses.OrdinalBCE(),
-    calibration=calibration.Temperature(),
     split=splits.BySession(eval_fraction=0.10),
 )
 

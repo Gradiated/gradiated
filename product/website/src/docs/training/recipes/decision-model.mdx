@@ -56,7 +56,7 @@ Choose your base `model`:
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Model, calibration, losses, splits
+from grad import Grad, Model, losses, splits
 from grad.recipes import DecisionModelRecipe
 
 client = Grad()
@@ -66,7 +66,6 @@ recipe = DecisionModelRecipe(
     model=Model("Qwen/Qwen3-0.6B"),
     labels=["low", "medium", "high"],
     loss=losses.OrdinalBCE(),
-    calibration=calibration.Temperature(),
     split=splits.BySession(eval_fraction=0.15),
 )
 
@@ -80,7 +79,7 @@ print(run.eval_report)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Model, calibration, losses, recipes, splits } from "@gradiated/grad";
+import { Grad, Model, losses, recipes, splits } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("coding-effort");
@@ -89,7 +88,6 @@ const recipe = recipes.decisionModel({
   model: new Model("Qwen/Qwen3-0.6B"),
   labels: ["low", "medium", "high"],
   loss: losses.ordinalBCE(),
-  calibration: calibration.temperature(),
   split: splits.bySession({ evalFraction: 0.15 }),
 });
 
@@ -110,11 +108,10 @@ run, _ := client.Runs.Create(ctx, grad.RunParams{
 	Dataset: dataset,
 	Name:    "coding-effort",
 	Recipe: grad.DecisionModelRecipe{
-		Model:       grad.Model("Qwen/Qwen3-0.6B"),
-		Labels:      []string{"low", "medium", "high"},
-		Loss:        grad.OrdinalBCELoss{},
-		Calibration: grad.TemperatureCalibration{},
-		Split:       grad.BySessionSplit{EvalFraction: 0.15},
+		Model:  grad.Model("Qwen/Qwen3-0.6B"),
+		Labels: []string{"low", "medium", "high"},
+		Loss:   grad.OrdinalBCELoss{},
+		Split:  grad.BySessionSplit{EvalFraction: 0.15},
 	},
 }).Wait(ctx)
 fmt.Println(run.Artifact.ID, run.EvalReport)
@@ -131,11 +128,6 @@ grad deploy coding-effort@latest
   </DocsCodeTab>
 </DocsCodeTabs>
 
-### Calibration options
-
-- **`calibration.Temperature()`** *(default)* — adjusts confidence scores on the eval split so a `0.85` score really means ~85% accuracy.
-- **`calibration.Conformal(alpha=0.10)`** — picks a confidence cutoff automatically so the model falls back whenever error would exceed `alpha`.
-
 ## Read the evaluation report
 
 Check `run.eval_report` before shipping:
@@ -146,7 +138,7 @@ Check `run.eval_report` before shipping:
 
 ## Deploy with a confidence fallback
 
-Attach the [`Artifact`](/docs/training/artifacts/) to an [endpoint](/docs/training/endpoints/) using `strategies.ConfidenceFallback`. Whenever confidence is below `min_conf`, the endpoint returns your safe fallback label (like `"high"` effort so hard tasks don't get rushed).
+Confidence scores are calibrated automatically during training so they match real accuracy. Attach the [`Artifact`](/docs/training/artifacts/) to an [endpoint](/docs/training/endpoints/) with `strategies.ConfidenceFallback` so any prediction below `min_conf` returns your safe fallback label (like `"high"` effort so hard tasks don't get rushed).
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">

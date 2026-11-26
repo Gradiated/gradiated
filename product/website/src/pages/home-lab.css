@@ -1,0 +1,1046 @@
+/* -- the hero: the statement on the lab's desk ------------------------------
+   Built from the Figma design ("New Home", node 1234:202489). The statement
+   holds the upper right; the collage (HeroCollage.tsx) is laid around it and
+   runs on down the page into the roadmap.
+
+   ONE UNIT. The design is drawn on a 1728px frame whose sheet, right of the
+   264px rail, is 1464px wide. --px is one of those design pixels at the
+   current sheet width, so every position and size below is the design's own
+   number times --px, and the composition scales as one piece instead of
+   being re-laid at each width. Body copy and buttons stay at their real
+   sizes: they are for reading, not part of the picture. */
+
+.gr-lab-stage {
+  --px: calc(var(--bleed-w, 100vw) / 1464);
+
+  /* How far the Thesis stack drops below its design position. The copy keeps
+     its real size while the desk scales, so under about 1600px the column
+     reaches further down the desk than the design's does and the stack
+     makes room: nothing at 1600 and up, 120px at most. */
+  --lab-dy: clamp(0px, (1600px - 100vw) * 0.45, 120px);
+
+  position: relative;
+  /* The design's desk ends at about 1440: the stickers' lower edge. */
+  min-height: calc(1440 * var(--px) + var(--lab-dy));
+}
+
+/* The homepage sits on a cool grey a step below the site's ground, so the
+   desk's pieces read as objects laid on a surface. The whole page, not just
+   the fold, so the scatter can taper into the roadmap without a seam. Dark
+   keeps the site's own ground. */
+:is(.gr-rail-sheet, .gr-substrate):has(.gr-lab-stage):not(
+    [data-theme="dark"] *
+  ) {
+  --color-substrate: #e6e7e9;
+}
+
+/* On the grey ground the secondary button's grey fill sits a step from the
+   page; on hover it lifts to white rather than fading, so it reads as
+   rising off the surface. Every secondary button on the page (View Docs, the
+   roadmap's links and votes), light theme only. */
+:is(.gr-rail-sheet, .gr-substrate):has(.gr-lab-stage):not([data-theme="dark"] *)
+  .gr-button--secondary:hover {
+  opacity: 1;
+  background: #fff;
+}
+
+/* One continuous page: the homepage's sections don't draw the site's
+   section dividers (each module's top rule, and the bottom rule of the last
+   in a band), so the grey ground runs unbroken from the hero to the footer.
+   The footer keeps its own rule. */
+:is(.gr-rail-sheet, .gr-substrate):has(.gr-lab-stage)
+  .gr-module:not(.gr-footer)::before,
+:is(.gr-rail-sheet, .gr-substrate):has(.gr-lab-stage)
+  .gr-module:last-child::after {
+  display: none;
+}
+
+/* The statement, at the design's x 750 on the sheet. The stage sits inside
+   the band's margin, so the offset is measured from the sheet's edge. */
+.gr-root .gr-lab-hero {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: start;
+  gap: clamp(1rem, 2.4vw, 1.75rem);
+  width: calc(660 * var(--px));
+  min-width: min(30rem, 100%);
+  margin-inline-start: calc(
+    750 * var(--px) - (var(--bleed-w, 100vw) - 100%) / 2
+  );
+  /* Vertically centred in the first screen, so the space above the
+     headline's capitals equals the space below the buttons at any window
+     height. (The design's y 146 only balances on its own 1728x1117 frame.)
+     A screen too short for the block just lets it run on, with a margin. */
+  align-content: center;
+  min-height: 100svh;
+  padding-block: calc(2 * var(--u));
+  text-align: left;
+}
+
+/* Instrument Sans Bold, 149.48 on the 1728 frame, -3% tracking, 0.98
+   leading; three lines at the design's 660 measure. */
+.gr-root .gr-lab-hero .gr-home-title {
+  display: grid;
+  max-width: none;
+  margin: 0;
+  font-size: calc(149.48 * var(--px));
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  /* Trim the line box to the capitals and the baseline, as Figma does, so
+     the centring is measured from the letters you see rather than from
+     the leading above them. */
+  text-box: trim-both cap alphabetic;
+}
+
+.gr-root .gr-lab-hero .gr-lab-lede {
+  /* The design's 478, but never past the right-edge pieces (the map at x 1259): the copy
+     keeps its real size while the desk scales, so at smaller sheets the
+     measure has to give way instead. */
+  max-width: min(30rem, calc(500 * var(--px)));
+  margin: calc(5 * var(--u)) 0 0;
+  color: var(--color-text);
+  /* Temporarily fixed at 18px for review; was clamp(1.0625rem, 1.3vw, 1.25rem). */
+  font: 400 1.125rem/1.55 var(--font-body);
+}
+
+/* In dark the copy steps back from the headline: full white for both made
+   them one weight. Light keeps the design's near-black. */
+[data-theme="dark"] .gr-lab-hero .gr-lab-lede {
+  color: color-mix(in srgb, var(--color-text) 68%, transparent);
+}
+
+.gr-root .gr-lab-hero .gr-home-actions {
+  justify-content: flex-start;
+  margin: 0;
+}
+
+/* -- the desk ------------------------------------------------------------- */
+
+/* Spans the whole sheet, edge to edge, so the right-hand pieces can run off
+   it as they do in the design. */
+.gr-lab-collage {
+  /* One shadow for every coded piece, lit from straight above: no sideways
+     offset, six stacked layers doubling in reach (contact shadow to ambient)
+     at low opacity each, in an ink drawn from the cool grey ground rather
+     than neutral grey. In design px, so it scales with the desk. */
+  --lab-ink: 222deg 18% 22%;
+  --lab-shadow:
+    0 calc(0.5 * var(--px)) calc(1 * var(--px)) hsl(var(--lab-ink) / 0.08),
+    0 calc(1 * var(--px)) calc(2 * var(--px)) hsl(var(--lab-ink) / 0.07),
+    0 calc(2 * var(--px)) calc(4 * var(--px)) hsl(var(--lab-ink) / 0.06),
+    0 calc(4 * var(--px)) calc(8 * var(--px)) hsl(var(--lab-ink) / 0.06),
+    0 calc(8 * var(--px)) calc(16 * var(--px)) hsl(var(--lab-ink) / 0.06),
+    0 calc(16 * var(--px)) calc(32 * var(--px)) hsl(var(--lab-ink) / 0.07);
+  /* A hairline where the piece meets the light: a faint dark ring on pale
+     cards, a faint inner light on dark glass. */
+  --lab-edge-light: 0 0 0 calc(0.5 * var(--px)) hsl(var(--lab-ink) / 0.08);
+  --lab-edge-dark: inset 0 0 0 calc(0.75 * var(--px)) rgb(255 255 255 / 0.07);
+
+  position: absolute;
+  inset-block: 0;
+  inset-inline: calc((100% - var(--bleed-w, 100vw)) / 2);
+  z-index: 1;
+  overflow: hidden;
+  overflow: clip;
+  /* Real depth for the entrance and the parallax: pieces lifted toward the
+     viewer project larger, and tilts foreshorten. */
+  perspective: 1400px;
+  perspective-origin: 50% 35%;
+}
+
+.gr-lab-piece {
+  position: absolute;
+  left: calc(var(--x) * var(--px));
+  top: calc(var(--y) * var(--px));
+  width: calc(var(--w) * var(--px));
+  /* Decorative: nothing here takes a pointer, so it never feels clickable. */
+  pointer-events: none;
+  /* How near the viewer the piece sits, 0 (on the desk) to 1 (nearest): the
+     parallax moves near pieces more. Set per piece below. */
+  --depth: 0.6;
+  /* Which way the piece is skewed as it floats in; alternates. */
+  --lab-skew: -1;
+
+  /* Parallax, driven by HeroCollage.tsx's --mx, --my, --sy and --par.
+     Pointer: near pieces slide against it and tilt a few degrees. Scroll:
+     near pieces rise faster than the page. --par is 0 until the entrance has
+     landed, so both rest at zero and the entrance hands over without a
+     jump (it fills backwards only, then these take over). */
+  translate: calc(var(--mx, 0) * var(--depth) * var(--par, 0) * -18px)
+    calc(
+      (var(--my, 0) * -12px - var(--sy, 0) * 0.09px) * var(--depth) *
+        var(--par, 0)
+    );
+  transform: rotateX(calc(var(--my, 0) * var(--depth) * var(--par, 0) * 4deg))
+    rotateY(calc(var(--mx, 0) * var(--depth) * var(--par, 0) * -5deg));
+  will-change: translate, transform;
+  animation: gr-lab-in 1.8s cubic-bezier(0.16, 1, 0.3, 1)
+    calc(0.15s + var(--i) * 90ms) backwards;
+}
+
+.gr-lab-piece:nth-child(even) {
+  --lab-skew: 1;
+}
+
+/* Depths: the dense interface pieces and the stickers nearest, the papers
+   and the screen at the edge lying flattest. */
+.gr-lab-support {
+  --depth: 0.95;
+}
+.gr-lab-code {
+  --depth: 0.75;
+}
+.gr-lab-heatmap {
+  --depth: 0.85;
+}
+.gr-lab-chart {
+  --depth: 0.55;
+}
+.gr-lab-magazine {
+  --depth: 0.45;
+}
+.gr-lab-chip {
+  --depth: 0.6;
+}
+.gr-lab-sticker-joules {
+  --depth: 0.9;
+}
+.gr-lab-sticker-g {
+  --depth: 1;
+}
+.gr-lab-thesis-map {
+  --depth: 0.35;
+}
+.gr-lab-thesis {
+  --depth: 0.55;
+}
+.gr-lab-paper-map {
+  --depth: 0.3;
+}
+.gr-lab-paper {
+  --depth: 0.4;
+}
+.gr-lab-screen {
+  --depth: 0.25;
+}
+
+.gr-lab-render img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.gr-lab-thesis,
+.gr-lab-thesis-map {
+  top: calc(var(--y) * var(--px) + var(--lab-dy, 0px));
+}
+
+/* The pieces Figma clips at the frame's right edge. Pinned to the sheet's
+   edge rather than placed from the left, so they stay cut by it. */
+.gr-lab-edge {
+  right: 0;
+  left: auto;
+}
+
+/* -- the coded pieces -------------------------------------------------------
+   Figma's sizes, in design px like everything else on the desk, so they
+   scale with it. Their animations play once on load, after the desk's own
+   entrance (--i), except the waveform and the tracking footage, which run. */
+
+/* support_call.wav, on a slowly moving gradient: soft violet, magenta and
+   lilac fields drifting under a pale top edge, so the black filename reads
+   and the card never sits still. */
+.gr-lab-support {
+  height: calc(var(--h) * var(--px));
+  overflow: hidden;
+  isolation: isolate;
+  background: #9b5cff;
+  border-radius: calc(29.088 * var(--px));
+  box-shadow: var(--lab-shadow);
+}
+
+.gr-lab-support::before,
+.gr-lab-support::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.gr-lab-support::before {
+  inset: -50%;
+  background:
+    radial-gradient(40% 35% at 30% 35%, #ff8ae2 0%, transparent 70%),
+    radial-gradient(45% 40% at 70% 40%, #c9a4ff 0%, transparent 70%),
+    radial-gradient(40% 40% at 45% 70%, #7a3cff 0%, transparent 70%),
+    radial-gradient(35% 30% at 75% 70%, #e45cf0 0%, transparent 70%),
+    linear-gradient(160deg, #d6a8ff, #8a4dff);
+  filter: blur(calc(12 * var(--px)));
+  animation: gr-lab-gradient 14s ease-in-out infinite alternate;
+}
+
+/* The pale top edge the filename sits on. */
+.gr-lab-support::after {
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 0.85) 0%,
+    rgb(255 240 255 / 0.4) 24%,
+    transparent 48%
+  );
+}
+
+.gr-lab-support-head {
+  position: absolute;
+  top: calc(23.27 * var(--px));
+  left: calc(23.27 * var(--px));
+  display: flex;
+  align-items: center;
+  gap: calc(31.997 * var(--px));
+}
+
+.gr-lab-support-name {
+  color: #000;
+  font: 500 calc(13.09 * var(--px)) / 1.27 var(--font-body);
+  letter-spacing: -0.03em;
+}
+
+.gr-lab-support-tag {
+  padding: calc(5.818 * var(--px)) calc(6.545 * var(--px));
+  color: #fff;
+  background: #000;
+  border-radius: 999px;
+  font-size: calc(7.272 * var(--px));
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* The voice: SupportWave.tsx draws into this box, the design's waveform
+   band, full card width. */
+.gr-lab-support-wave {
+  position: absolute;
+  top: calc(63.27 * var(--px));
+  left: 0;
+  width: 100%;
+  height: calc(101.808 * var(--px));
+}
+
+.gr-lab-support-quote {
+  position: absolute;
+  top: calc(180 * var(--px));
+  left: calc(24.91 * var(--px));
+  width: calc(168.71 * var(--px));
+  color: #fff;
+  font: 400 calc(12.726 * var(--px)) / 1.4 var(--font-body);
+  letter-spacing: -0.02em;
+}
+
+/* The one-line switch: the base_url line types itself in, then the caret
+   blinks. */
+.gr-lab-code {
+  padding: calc(25.6 * var(--px));
+  background: rgb(0 0 0 / 0.82);
+  border-radius: calc(19.2 * var(--px));
+  box-shadow: var(--lab-shadow), var(--lab-edge-dark);
+}
+
+.gr-lab-code-lines {
+  display: grid;
+  justify-items: start;
+  color: #f2f2f2;
+  font-size: calc(12 * var(--px));
+  line-height: 1.5;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+}
+
+.gr-lab-code-add {
+  position: relative;
+  overflow: hidden;
+  /* 36 characters, less the -0.03em tracking each one carries. */
+  width: calc(36 * (1ch - 0.03em));
+  color: #6bc89f;
+  animation: gr-lab-type 1.5s steps(36, end) calc(1.3s + var(--i) * 90ms) both;
+}
+
+.gr-lab-code-add::after {
+  content: "";
+  position: absolute;
+  top: 0.2em;
+  right: 0;
+  width: 0.55ch;
+  height: 1.1em;
+  background: #6bc89f;
+  /* Blinks while the line lands, then goes, as the design has no caret. */
+  animation: gr-lab-caret 1s steps(1) calc(1.3s + var(--i) * 90ms) 4.5 both;
+}
+
+/* The eval cards: SVG in design px. */
+.gr-lab-chart,
+.gr-lab-heatmap {
+  display: block;
+}
+
+.gr-lab-chart svg,
+.gr-lab-heatmap svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+.gr-lab-chart svg {
+  background: #111216;
+  border-radius: calc(19.5 * var(--px));
+  box-shadow: var(--lab-shadow), var(--lab-edge-dark);
+}
+
+.gr-lab-chart-label {
+  fill: #e8e8ea;
+  font-size: 5.6px;
+}
+
+/* Both cards' titles: the site's display face, a size up from the design. */
+.gr-lab-chart-title,
+.gr-lab-heatmap-title {
+  font-family: var(--font-title);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.gr-lab-chart-title {
+  fill: #fff;
+}
+
+.gr-lab-chart-muted {
+  fill: #c3c4c8;
+}
+
+.gr-lab-chart-figure {
+  fill: #fff;
+  font-size: 10.4px;
+  font-weight: 600;
+}
+
+.gr-lab-chart-delta {
+  fill: #8fdcae;
+  font-size: 5.6px;
+}
+
+.gr-lab-chart-axis {
+  fill: #7d7f86;
+  font-size: 6.2px;
+}
+
+.gr-lab-chart-grid {
+  stroke: #34363c;
+  stroke-width: 0.4;
+  stroke-dasharray: 2.4 2.4;
+}
+
+.gr-lab-chart-area {
+  fill: url("#gr-lab-chart-fill");
+  animation: gr-lab-fade 1s ease calc(2s + var(--i) * 90ms) both;
+}
+
+/* Draws left to right; the dots land as the line reaches them. */
+.gr-lab-chart-line {
+  fill: none;
+  stroke: #8fdcae;
+  stroke-width: 1.25;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  animation: gr-lab-draw 1.5s cubic-bezier(0.4, 0, 0.2, 1)
+    calc(1.2s + var(--i) * 90ms) both;
+}
+
+.gr-lab-chart-dot {
+  fill: #8fdcae;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: gr-lab-pop 0.35s cubic-bezier(0.3, 1.6, 0.6, 1)
+    calc(1.2s + var(--i) * 90ms + var(--n) * 125ms) both;
+}
+
+.gr-lab-chart-regression {
+  animation: gr-lab-fade 0.5s ease calc(1.2s + var(--i) * 90ms + 1.15s) both;
+}
+
+.gr-lab-chart-flag {
+  fill: #e6876a;
+}
+
+.gr-lab-chart-ring {
+  fill: rgb(230 135 106 / 0.12);
+  stroke: rgb(230 135 106 / 0.55);
+  stroke-width: 0.5;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: gr-lab-ping 2.4s ease-out 2.6s infinite;
+}
+
+.gr-lab-chart-flag-label {
+  fill: #e6876a;
+  font-size: 7px;
+  font-weight: 500;
+}
+
+.gr-lab-heatmap svg {
+  background: #fffdf9;
+  border-radius: calc(12.5 * var(--px));
+  box-shadow: var(--lab-shadow), var(--lab-edge-light);
+}
+
+.gr-lab-heatmap-title {
+  fill: #111;
+}
+
+.gr-lab-heatmap-sub {
+  fill: #8b8c92;
+  font-size: 4.8px;
+}
+
+.gr-lab-heatmap-col {
+  fill: #9a9ba1;
+  font-size: 6px;
+}
+
+.gr-lab-heatmap-col--now {
+  fill: #111;
+  font-weight: 700;
+}
+
+.gr-lab-heatmap-row {
+  fill: #4a4b52;
+  font-size: 6.6px;
+}
+
+/* Fills in version by version, a column at a time. */
+.gr-lab-heatmap-cell {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: gr-lab-pop 0.4s cubic-bezier(0.3, 1.4, 0.6, 1)
+    calc(1.1s + var(--i) * 90ms + var(--c) * 75ms + var(--r) * 22ms) both;
+}
+
+.gr-lab-heatmap-flag {
+  fill: none;
+  stroke: #d4785a;
+  stroke-width: 0.55;
+  stroke-dasharray: 0.0068 0.0048;
+  animation: gr-lab-fade 0.5s ease calc(1.1s + var(--i) * 90ms + 1.25s) both;
+}
+
+/* The tracking screen: a portrait display with the footage turned on its
+   side. The video is laid out landscape (607.6 x 341.8, 16:9) and rotated
+   a quarter turn, so its left edge runs along the display's foot. */
+.gr-lab-screen {
+  height: calc(var(--h) * var(--px));
+  overflow: hidden;
+  background: #161618;
+  border-radius: calc(18 * var(--px));
+  box-shadow: var(--lab-shadow), var(--lab-edge-dark);
+}
+
+.gr-lab-screen-video {
+  position: absolute;
+  top: calc((-48 + 607.6 / 2) * var(--px));
+  left: calc((-65 + 341.8 / 2) * var(--px));
+  width: calc(607.6 * var(--px));
+  height: calc(341.8 * var(--px));
+  max-width: none;
+  object-fit: cover;
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
+
+/* Floating in, in three dimensions: each piece starts below its place and
+   lifted toward the viewer on z (so it projects larger and out of focus),
+   tilted back and skewed a little, then rises and settles flat onto the
+   desk's surface. Opacity arrives early so the flight is seen, not a fade. */
+@keyframes gr-lab-in {
+  0% {
+    opacity: 0;
+    filter: blur(8px);
+    translate: 0 calc(170 * var(--px)) 360px;
+    rotate: 1 calc(0.45 * var(--lab-skew)) calc(0.18 * var(--lab-skew)) 26deg;
+  }
+  40% {
+    opacity: 1;
+  }
+  75% {
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    filter: none;
+    translate: 0 0 0;
+    rotate: 1 0 0 0deg;
+  }
+}
+
+@keyframes gr-lab-gradient {
+  0% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translate(-8%, 6%) rotate(40deg) scale(1.1);
+  }
+  100% {
+    transform: translate(6%, -4%) rotate(-30deg) scale(1);
+  }
+}
+
+@keyframes gr-lab-type {
+  from {
+    width: 0;
+  }
+}
+
+@keyframes gr-lab-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes gr-lab-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes gr-lab-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+@keyframes gr-lab-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes gr-lab-ping {
+  0% {
+    transform: scale(0.6);
+    opacity: 1;
+  }
+  70%,
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* -- the screen beside the headline (stacked layout only) --------------------
+   HeroCollage.tsx's HeadlineScreen, inside the h1 so it spans exactly the
+   headline's height. Its left edge sits 16vw in from the screen's right
+   edge, clear of "Source", and the rest runs off; the sheet clips it. The
+   footage is turned on its side, as on the wide layout's screen. */
+.gr-lab-title-screen {
+  display: none;
+}
+
+@media (max-width: 75rem) {
+  /* Full column width, so the screen's offset is measured from the
+     column's edge rather than from the end of "Source". */
+  .gr-root .gr-lab-hero .gr-home-title {
+    position: relative;
+    justify-self: stretch;
+  }
+
+  .gr-lab-title-screen {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(100% + (var(--bleed-w, 100vw) - 100%) / 2 - 16vw);
+    display: block;
+    aspect-ratio: 216 / 549;
+    overflow: hidden;
+    background: #161618;
+    border-radius: 0.75rem;
+    box-shadow:
+      0 1px 2px hsl(222deg 18% 22% / 0.08),
+      0 8px 16px hsl(222deg 18% 22% / 0.1),
+      0 16px 32px hsl(222deg 18% 22% / 0.08);
+    animation: gr-lab-title-screen-in 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.5s
+      backwards;
+  }
+
+  .gr-lab-title-video {
+    display: block;
+    width: auto;
+    height: 100%;
+    max-width: none;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    transform-origin: 0 0;
+    transform: rotate(-90deg) translateX(-100%);
+  }
+
+  /* The sheet clips what runs past the screen's edge, so it never scrolls
+     sideways. */
+  .gr-rail-sheet:has(.gr-lab-title-screen) {
+    overflow-x: clip;
+  }
+}
+
+/* The narrowest phones: "Source" reaches the edge. */
+@media (max-width: 23.4rem) {
+  .gr-lab-title-screen {
+    display: none;
+  }
+}
+
+@keyframes gr-lab-title-screen-in {
+  from {
+    opacity: 0;
+    translate: 40px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-lab-title-screen {
+    animation: none;
+  }
+}
+
+/* Phones and small tablets: the statement first, at a readable size, and
+   the desk's left-hand cluster below it, scaled to fit the width. The
+   right-edge pieces need the wide sheet to read as running off it. */
+@media (max-width: 75rem) {
+  .gr-lab-stage {
+    --lab-dy: 0px;
+
+    min-height: 0;
+  }
+
+  .gr-root .gr-lab-hero {
+    width: auto;
+    min-width: 0;
+    margin-inline-start: 0;
+    /* The first screen is the statement's alone, centred in it with equal
+       room above and below; the desk follows on the second screen. */
+    min-height: 100svh;
+    padding-block: calc(2 * var(--u));
+  }
+
+  /* The buttons side by side, as on the wide layout, rather than stacked,
+     with room to breathe from the copy and from each other. */
+  .gr-root .gr-lab-hero .gr-home-actions {
+    flex-wrap: nowrap;
+    gap: 0.875rem;
+    margin-block-start: 1.75rem;
+  }
+
+  /* The desk is on the second screen here: its entrance (and the cards'
+     own load animations) hold until it scrolls into view. HeroCollage.tsx
+     sets data-seen then. */
+  .gr-lab-collage:not([data-seen]) .gr-lab-piece,
+  .gr-lab-collage:not([data-seen]) .gr-lab-piece *,
+  .gr-lab-collage:not([data-seen]) .gr-lab-piece *::before,
+  .gr-lab-collage:not([data-seen]) .gr-lab-piece *::after {
+    animation-play-state: paused;
+  }
+
+  /* Taller buttons on touch screens: a comfortable target, and less flat. */
+  .gr-root .gr-lab-hero .gr-button {
+    min-height: 3rem;
+    padding-inline: calc(0.75 * var(--u));
+    white-space: nowrap;
+  }
+
+  .gr-root .gr-lab-hero .gr-home-title {
+    /* Large, a step short of filling the line. */
+    font-size: clamp(3.75rem, 17vw, 6.25rem);
+  }
+
+  .gr-root .gr-lab-hero .gr-lab-lede {
+    max-width: 30rem;
+    /* Clear air under the headline: the copy and buttons read as their own
+       group beneath it. */
+    margin-block-start: calc(2.75 * var(--u));
+  }
+
+  .gr-lab-stage {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Below the statement, the design's left-hand cluster: x 0 to 740 (the
+     Joules badge's right edge), y 0 to 1440. Measured against the collage's
+     own width, as a container, because the phone's rail strip is not part of
+     --bleed-w. */
+  .gr-lab-collage {
+    --px: calc(100cqw / 740);
+
+    container-type: inline-size;
+    position: relative;
+    inset: auto;
+    order: 1;
+    width: var(--bleed-w, 100vw);
+    max-width: 100vw;
+    aspect-ratio: 740 / 1440;
+    margin-inline: calc((100% - var(--bleed-w, 100vw)) / 2);
+    margin-block-start: 0;
+  }
+
+  .gr-lab-edge,
+  .gr-lab-screen,
+  .gr-lab-thesis,
+  .gr-lab-thesis-map {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-lab-piece,
+  .gr-lab-piece *,
+  .gr-lab-piece *::after {
+    animation: none;
+  }
+}
+
+/* Wider than the old 43ch, so the paragraph sets in four even lines, and
+   the button sits closer under it. */
+.gr-lab-cta-copy {
+  max-width: 60ch;
+}
+
+.gr-root .gr-home-cta .gr-lab-cta-copy + .gr-home-actions {
+  margin-block-start: var(--u);
+}
+
+/* -- the roadmap's head -------------------------------------------------------
+   Figma: "MODEL ROADMAP" in Barlow Bold 20/1, +1.2px tracking; then the
+   promise in Instrument Sans Bold 56/1, -1.68px, centred on a 600px measure
+   so it breaks after "release". */
+.gr-roadmap-head {
+  display: grid;
+  justify-items: center;
+  gap: clamp(1.25rem, 2.2vw, 2rem);
+  margin-block-end: calc(3 * var(--u));
+  text-align: center;
+}
+
+.gr-root .gr-roadmap-eyebrow {
+  margin: 0;
+  /* A step back from the headline under it: the ink at reduced strength,
+     so it holds in light and dark alike. */
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  font: 700 clamp(0.875rem, 1.16vw, 1.25rem) / 1 var(--font-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gr-root .gr-roadmap-title {
+  max-width: 600px;
+  margin: 0;
+  font-size: clamp(2.25rem, 3.25vw, 3.5rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+/* -- the roadmap table ------------------------------------------------------
+   Built from the system's own parts: caps labels for the column heads, a
+   badge for the status, and the system's buttons (secondary for links and
+   the vote, main once voted, ghost for the name suggestion). The table itself
+   is a light surface with the site's --radius and hairline rows; no vertical
+   rules. Below 48rem each row stacks into a block. */
+.gr-roadmap {
+  display: grid;
+  gap: var(--u);
+}
+
+.gr-roadmap-table {
+  --roadmap-rule: color-mix(in srgb, var(--color-text) 9%, transparent);
+
+  width: 100%;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-module) 72%, transparent);
+  border: 1px solid var(--roadmap-rule);
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: var(--radius);
+  /* The hero pieces' shadow (--lab-shadow on .gr-lab-collage): lit from
+     straight above, six faint layers from contact to ambient, inked from the
+     cool grey ground. In plain px here; the table doesn't scale with the
+     desk. */
+  box-shadow:
+    0 0.5px 1px hsl(222deg 18% 22% / 0.08),
+    0 1px 2px hsl(222deg 18% 22% / 0.07),
+    0 2px 4px hsl(222deg 18% 22% / 0.06),
+    0 4px 8px hsl(222deg 18% 22% / 0.06),
+    0 8px 16px hsl(222deg 18% 22% / 0.06),
+    0 16px 32px hsl(222deg 18% 22% / 0.07);
+}
+
+.gr-roadmap-table :is(th, td) {
+  padding: var(--u) calc(1.25 * var(--u));
+  border-bottom: 1px solid var(--roadmap-rule);
+  text-align: left;
+  vertical-align: top;
+}
+
+.gr-roadmap-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.gr-roadmap-table thead th {
+  padding-block: calc(0.9 * var(--u));
+}
+
+.gr-roadmap-table thead th:first-child {
+  width: 24%;
+}
+
+.gr-roadmap-table thead th:last-child {
+  /* Two caps buttons side by side: Source and Benchmark, the widest pair. */
+  width: 22rem;
+}
+
+/* The row under the pointer lifts a shade: the ink at a whisper, so it
+   reads in light and dark alike. */
+.gr-roadmap-table tbody tr {
+  transition: background 0.18s ease;
+}
+
+.gr-roadmap-table tbody tr:hover {
+  background: color-mix(in srgb, var(--color-text) 3.5%, transparent);
+}
+
+.gr-roadmap-table tbody th {
+  font-weight: inherit;
+}
+
+.gr-roadmap-name {
+  display: block;
+  font: 700 1.125rem / 1.25 var(--font-title);
+  letter-spacing: -0.01em;
+}
+
+.gr-roadmap-meta {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.gr-roadmap-desc {
+  display: grid;
+  justify-items: start;
+  gap: calc(0.5 * var(--u));
+}
+
+.gr-roadmap-copy {
+  color: color-mix(in srgb, var(--color-text) 80%, transparent);
+}
+
+/* The actions sit on the row's middle, not its top. */
+.gr-roadmap-table tbody td:last-child {
+  vertical-align: middle;
+}
+
+.gr-roadmap-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(0.4 * var(--u));
+}
+
+.gr-root .gr-roadmap-note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+/* Narrow screens: each row a block, the head row dropped. */
+@media (max-width: 48rem) {
+  .gr-roadmap-table,
+  .gr-roadmap-table :is(tbody, tr, th, td) {
+    display: block;
+  }
+
+  .gr-roadmap-table thead {
+    display: none;
+  }
+
+  .gr-roadmap-table tbody tr {
+    padding: var(--u);
+    border-bottom: 1px solid var(--roadmap-rule);
+  }
+
+  .gr-roadmap-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .gr-roadmap-table tbody :is(th, td) {
+    padding: 0;
+    border: 0;
+  }
+
+  .gr-roadmap-desc {
+    margin-block: calc(0.6 * var(--u));
+  }
+}
+
+/* -- the chip runner ---------------------------------------------------------
+   ChipRunner.tsx, above "Get your own model running": a 240x64 pixel scene
+   scaled up with hard edges, in the page's ink (the canvas reads its own
+   colour). Click or tap it, or press space, to make the chip jump. */
+/* The scene brings its own sky, so the card needs less room above it. */
+.gr-root .gr-home-cta:has(.gr-chip-runner) {
+  padding-block-start: clamp(32px, 3.5vw, 56px);
+}
+
+.gr-chip-runner {
+  display: block;
+  width: min(100%, 40rem);
+  height: auto;
+  aspect-ratio: 240 / 64;
+  margin-block-end: calc(1.5 * var(--u));
+  color: var(--color-text);
+  image-rendering: pixelated;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Phones: the card's 28px gap and the mobile rhythm's margins stacked up
+   into loose spacing between the game, title, copy and button. Set each
+   gap outright, tighter, with more room under the button. Classes doubled
+   to outrank rhythm.css, which loads last. */
+@media (max-width: 48rem) {
+  .gr-rail-sheet .gr-root .gr-home-cta.gr-home-cta:has(.gr-chip-runner) {
+    row-gap: 0;
+    padding-block-end: 2.5rem;
+  }
+
+  .gr-rail-sheet .gr-root .gr-home-cta .gr-chip-runner.gr-chip-runner {
+    margin-block-end: 1.25rem;
+  }
+
+  .gr-rail-sheet .gr-root .gr-home-cta .gr-lab-cta-copy.gr-lab-cta-copy {
+    margin-block-start: 0.75rem;
+  }
+
+  .gr-rail-sheet
+    .gr-root
+    .gr-home-cta
+    .gr-lab-cta-copy
+    + .gr-home-actions.gr-home-actions {
+    margin-block-start: 1.25rem;
+  }
+}

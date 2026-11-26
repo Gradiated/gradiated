@@ -19,7 +19,7 @@ Typical resolved values for `qwen/qwen3-8b` with the default `adapters.LoRA(rank
 | **SFT** (LoRA) | `5e-4` | LoRA needs roughly 10x the learning rate of full fine-tuning. |
 | **SFT** (`adapters.Full()`) | `3e-5` | |
 | **DPO** | `2e-5` | With `losses.DPO(beta=0.1)`. Much lower than SFT, so the model keeps the formatting SFT taught it. |
-| **RL** (GRPO / CISPO) | `5e-5` | Per step of `batch_size=32` prompts × `group_size=8` attempts. |
+| **RL** (GRPO) | `5e-5` | Per step of `batch_size=32` prompts × `group_size=8` attempts. |
 | **On-policy distillation** | `2e-4` | |
 | **Reward models** | `1e-4` | |
 | **Context Cartridges** | `1e-2` | Prefix KV tokens need a far higher LR than LoRA weights. |
@@ -31,6 +31,18 @@ Rules of thumb behind `"auto"`:
 - **Batch size:** the learning rate scales with the square root of the batch size. Doubling `batch_size` raises the resolved `lr` by about 1.4x.
 - **Model size:** smaller models in a family want a higher learning rate than larger ones.
 - **Rank:** `alpha` is fixed at `32`, so the right learning rate stays the same when you change `rank`.
+- **Objective:** as a sanity check, RL runs at about 0.1x the SFT learning rate and DPO at about 0.04x.
+
+### What `"auto"` assumes
+
+`"auto"` isn't a formula applied to any model. It's a table we calibrate with a learning-rate sweep on each base model before that model leaves preview. Each entry was measured at `batch_size=128` (SFT, DPO, distillation) or `32` prompts × `group_size=8` (RL), `LoRA(rank=32, alpha=32)`, linear decay with 3% warmup and `AdamW(betas=(0.9, 0.95))`. When you change the batch size, the resolved value is scaled from that measured point by the square-root rule above, and the dry run says so:
+
+```text
+Optimizer   AdamW(lr=auto -> 7.1e-4, betas=(0.9, 0.95), grad_clip=1.0)
+            calibrated for qwen/qwen3-8b at batch 128; scaled for batch 256
+```
+
+There's no calibrated entry for a [self-hosted](/docs/training/self-hosting/) custom checkpoint, or for a preview model that hasn't been swept yet. In that case `runs.plan()` stops with an error asking for an explicit `lr=` rather than extrapolating from another model. Use the typical values above as a starting point, and sweep.
 
 ### Sweeping around the default
 
@@ -83,8 +95,19 @@ More than 2–3 epochs over the same SFT data usually overfits. Prefer more data
 
 Gradiated renders chat templates on the server with the base model's pinned tokenizer, so you never hand-build tokens or special tokens. Two options control what gets trained:
 
-- **`thinking="auto" | "on" | "off"`:** `"auto"` keeps the base model's default. For Qwen3, thinking is on, and assistant turns without a `<think>` block train with thinking off so the model learns to answer directly.
+- **`thinking="auto" | "on" | "off"`, or an effort level (`"low"`, `"medium"`, `"high"`) on models that support one:** `"auto"` keeps the base model's default. For Qwen3, thinking is on, and assistant turns without a `<think>` block train with thinking off so the model learns to answer directly.
+- **`preserve_thinking=False`:** whether earlier assistant turns keep their reasoning in the prompt. Most chat templates strip it, which is the default. Set `True` for agents that rely on reasoning from previous turns.
 - **`train_on="last" | "all_assistant"`:** `"last"` (the default for chat records) trains only the final assistant turn. Use `"all_assistant"` for multi-turn agent traces. Tool outputs and user turns are never trained.
+
+These settings are checked against your data rather than silently patched: a record whose target contains a `<think>` block when `thinking="off"`, or a reasoning model target with no reasoning when `thinking="on"`, fails `runs.plan()` with the record ID.
+
+### One template everywhere
+
+Every run pins the template by ID and revision (for example `qwen3@3`), and the dry run prints it. The same pinned template, `thinking` and `preserve_thinking` values are stored on each checkpoint and used for evaluation, `snapshot().sample()`, and the deployed endpoint, so a model never trains with one prompt format and serves with another. Deployed reasoning models return their reasoning in `reasoning_content`, separate from `content`, matching the OpenAI-compatible convention.
+
+We test each template revision so that generation prompts match the base model's Hugging Face chat template token for token. When a template has to change (for example to fix a tool-call format), it gets a new revision. Existing runs and checkpoints keep the revision they were trained with, and the changelog lists the change.
+
+RL never re-renders: the trainer learns from the exact tokens the sampler produced, with the sampler's log-probabilities, so a template quirk can't create a mismatch between what was sampled and what is trained.
 
 Preview the exact tokens before paying for a run. Trained tokens are highlighted, and the summary shows what fraction of each record is trained:
 
@@ -121,7 +144,10 @@ Watch `truncation_rate` in the run metrics. If it climbs above a few percent, th
 
 ## Checkpoints, resuming, and spend caps
 
-Managed recipe runs checkpoint automatically every 10% of steps, and at least every 20 steps, including optimizer state. They evaluate on the held-out split at the same points, and `run.artifact` is the best checkpoint by eval (`select="best"`; pass `select="last"` to keep the final one). Checkpoints are kept for 30 days unless you promote one to an `Artifact`.
+Managed recipe runs checkpoint automatically every 10% of steps, and at least every 20 steps, including optimizer state. They evaluate on the held-out split at the same points, and `run.artifact` is the best checkpoint by eval (`select="best"`; pass `select="last"` to keep the final one).
+
+- **What's kept:** the checkpoint that becomes `run.artifact` and the final checkpoint never expire, and both are deployable and downloadable as PEFT weights with no conversion step. Intermediate checkpoints are kept for 30 days unless you promote one with `ckpt.promote(name=...)`. Change the default with `checkpoint_ttl_days=` on the run.
+- **What each checkpoint records:** base model and revision, adapter config, chat template revision, `thinking` and `train_on`, the resolved `lr`, the resolved `loss` with its rule version, and the step. Evaluations and deploys read these, so you never pass them again.
 
 Resume an interrupted or budget-stopped run from its latest checkpoint:
 
@@ -182,7 +208,7 @@ grad runs logs run_01J9Z4K --samples 5
 | **RL reward flatlines near `0.0`** | Prompts are too hard for the starting model, or binary `0/1` grading gives zero gradient whenever all 8 attempts in a group fail. | Run a quick 200–500 example [SFT](/docs/training/recipes/sft/) warmup first, add partial-credit checks to your [`Rubric`](/docs/training/rubrics/) (e.g. valid syntax = `0.3`), or filter out impossible prompts. |
 | **>70% of RL groups have identical scores** | Prompts are either trivially solved (`all 1.0`) or unsolvable (`all 0.0`). | Keep `skip_zero_var=True` and filter your dataset to medium-difficulty tasks (where the base model passes 15%–80% of the time). |
 | **Broken JSON, SQL, or tool calls appear mid-RL** | Base model formatting wasn't solid before RL, or learning rate is too high. | Run short SFT first, try `lr_scale=0.5`, and add a deterministic validator (`validators.SQL()`, `validators.JSONSchema(...)`) to your `Rubric`. |
-| **`kl_sample_train` spikes or reward collapses** | Weight updates are too large per step, or async rollout workers are several steps stale. | Try `lr_scale=0.5`, set `kl_coef=0.02`–`0.05` (the default is `0.0`, no reference model), and keep `loss="auto"` so async rollout pools (`max_staleness > 0`) use `losses.CISPO`. |
+| **`kl_sample_train` spikes or reward collapses** | Weight updates are too large per step, or async rollout workers are several steps stale. | Try `lr_scale=0.5`, set `kl_coef=0.02`–`0.05` (the default is `0.0`, no reference model), keep `loss="auto"` so async rollout pools (`max_staleness > 0`) get the masked loss, and lower `max_staleness` if `staleness_mean` is above 2. |
 | **High rubric score, bad real answers (reward hacking)** | Model found a shortcut that fools an LLM `Judge` (such as verbose fluff or echoing prompt keywords). | Read live outputs with `grad runs logs <id> --samples 5`, tighten the `Judge` prompt with failure examples, and add deterministic code checks alongside the `Judge`. |
 | **DPO outputs get repetitive or degenerate** | `lr` is too high, `beta` is too low, or `chosen` / `rejected` pairs come from a very different model than the starting weights. | Keep `lr="auto"` (or try `lr_scale=0.5` if you set your own), increase `losses.DPO(beta=0.1..0.2)`, and generate pairs from the same SFT checkpoint you start DPO from. |
 | **Answers cut off mid-sentence or mid-thought** | Generation hit `max_new_tokens`, or SFT records were truncated at the training sequence limit. | Check `truncation_rate` in run metrics and the plan's truncation warnings; raise `max_new_tokens`, shorten records, or pick a model with a longer training sequence limit. |

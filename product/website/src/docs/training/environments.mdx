@@ -101,7 +101,7 @@ Train in the harness you will deploy in. A model's tool-call habits, context man
 
 ## Prime Intellect `verifiers` environments
 
-`environments.from_verifiers(...)` runs environments built with Prime Intellect's open-source [`verifiers`](https://github.com/PrimeIntellect-ai/verifiers) library (v1 API, `verifiers>=0.4,<0.5`), including the hundreds published on the Environments Hub. Their rewards become `Rubric` scores, their tools become tools, and their harness choice maps onto `agent=`:
+`environments.from_verifiers(...)` runs environments built with Prime Intellect's open-source [`verifiers`](https://github.com/PrimeIntellect-ai/verifiers) library (the `verifiers.v1` API), including environments published on the Environments Hub. Their rewards become `Rubric` scores, their tools become tools, and their harness choice maps onto `agent=`:
 
 ```python
 from grad import Grad, environments
@@ -119,7 +119,13 @@ run = client.runs.create(
 ).wait()
 ```
 
-Pass the environment's own arguments as keywords, such as `environments.from_verifiers("owner/env@1.0.0", difficulty="hard")`. You can also pass a `verifiers.v1` environment object you built locally; it is packaged like any other Python code. The string loader `vf.load_environment("name")` from verifiers 0.3 and earlier was removed in 0.4.0, so pass the Hub ID instead.
+Pass the environment's own arguments as keywords, such as `environments.from_verifiers("owner/env@1.0.0", difficulty="hard")`. You can also pass a `verifiers.v1` environment object you built locally; it is packaged like any other Python code.
+
+**Versions.** `verifiers` changes quickly and often breaks its API between minor releases, so the bridge never floats:
+
+- Each SDK release supports a published list of exact `verifiers` versions, tested against every new upstream release before it's added. `grad env check primeintellect/gsm8k@0.2.1` tells you whether a Hub package works before you train.
+- A Hub package runs with the `verifiers` version its own lockfile pins, inside its sandbox, so your local install doesn't matter. `runs.plan()` reports that version and fails with a clear message if it isn't supported.
+- Environments written for the v0 API (`vf.load_environment("name")`, `vf.SingleTurnEnv`, `vf.ToolEnv`, `vf.Rubric`) were removed upstream in verifiers 0.4.0 and can't run. Many older Hub packages still use it. For those, port the reward function to a [`Rubric`](/docs/training/rubrics/) and the tools to [`environments.Tools`](#tools-from-python-functions); both are usually a few lines.
 
 ## Other built-in environments
 

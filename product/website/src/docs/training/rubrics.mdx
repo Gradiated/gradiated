@@ -33,7 +33,7 @@ Pick the scorer class that matches how you grade an answer:
 | Class | Signature | When to use it |
 | --- | --- | --- |
 | **`Scorer`** | `(traj: Trajectory) -> float` | Fast code checks (`validators.SQL()`, `validators.TypeScriptAST()`, `validators.JSONSchema(...)`), exact matches, or your own Python function. |
-| **`Judge`** | `Judge(name, model, prompt=...)` | Grade with a frontier model string (such as `"{{SONNET_MODEL}}"`) **or** a fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact` (no prompt needed for a reward model). |
+| **`Judge`** | `Judge(name, model, prompt=...)` | Grade with a frontier model string (such as `"{{SONNET_MODEL}}"`) **or** a fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact` (no prompt needed for a reward model). `model` is required, with no default that could change under you, and every score records the exact judge model and prompt hash, so scores from different judges are never mixed silently. |
 | **`StatefulScorer`** | `(traj: Trajectory, handle: H) -> float` | Checks that query live Postgres rows, Redis keys, HTTP endpoints, or container files inside an [`Environment`](/docs/training/environments/) before cleanup. |
 | **`GroupScorer`** | `(group: list[Trajectory]) -> list[float]` | Compare multiple candidate answers for the same prompt side by side (for example, **`PairwiseJudge`**). |
 

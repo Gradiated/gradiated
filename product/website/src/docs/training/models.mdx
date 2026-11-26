@@ -21,7 +21,7 @@ All Qwen3 models are hybrid thinking models. Recipes render their chat template 
 
 ### Preview models
 
-These have training support built but aren't open to every workspace yet. Ask for access from the console or your Gradiated contact. `grad models list --training` shows them once your workspace is enabled.
+These have training support built but aren't open to every workspace yet. Ask for access from the console or your Gradiated contact. `grad models list --training` shows them once your workspace is enabled. Until a preview model's learning rate has been calibrated, pass an explicit `lr=` (see [What `"auto"` assumes](/docs/training/tuning-troubleshooting/#what-auto-assumes)).
 
 | Model ID | Best for | Adapters | Current limits |
 | --- | --- | --- | --- |
@@ -51,6 +51,16 @@ Or fetch `GET https://api.gradiated.com/v1/models` and filter for entries whose 
 When [self-hosting](/docs/training/self-hosting/) `grad` in your own VPC, you can train any compatible Hugging Face model stored in your internal `models.mirrorUri` bucket, including internal pretrained checkpoints or domain-specific encoders.
 </DocsCallout>
 
+## Model retirement
+
+Base models get replaced as better open models ship. When we retire one, you get at least 90 days' notice, and nothing you trained stops working without warning:
+
+- **Notice:** the retirement date and a named replacement are announced in the changelog and by email, and `runs.plan()` and `grad models list` show them from the day of the announcement.
+- **New runs:** you can start runs on a retiring model until its retirement date. After that, `runs.plan()` fails and names the replacement.
+- **Your artifacts:** trained weights stay downloadable as PEFT adapters for as long as you keep them, so you can always serve them yourself with vLLM or SGLang.
+- **Your deployments:** hosted deployments of artifacts on a retiring base keep serving until the retirement date. Retrain on the replacement with the same recipe and data, then switch traffic with a [canary deploy](/docs/training/deploying/).
+- **Recipe defaults:** when you leave out `model=`, the run uses the current default, and the dry run says which one. If the default changed since the last run with the same `name`, the plan warns you. Export the config with `grad runs inspect <run> --yaml` to pin the exact model.
+
 ## Judge and comparison models
 
 [`Judge`](/docs/training/rubrics/) and [`Evaluations`](/docs/training/evaluations/) can call any frontier or open model in the catalog (such as `"{{SONNET_MODEL}}"`, `"{{OPUS_MODEL}}"`, `"{{GPT_MODEL}}"`, or `"qwen/qwen3-32b"`), or any fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact` you trained yourself.
@@ -63,7 +73,7 @@ Training on Gradiated Cloud uses the same token-metered model as inference:
 - **Weight & checkpoint storage:** billed for saved `.grad` artifacts and checkpoints (automatic recipe checkpoints and `save_state()` checkpoints) retained in your workspace.
 - **Zero-cost pre-flight estimate:** run `grad train --dry-run` or `client.runs.plan(...)` before launching any managed recipe to see `estimated_tokens` and `estimated_cost_usd` at `$0`.
 - **Spend cap:** pass `max_cost_usd=` (or `--max-cost-usd`) on any run. When it's reached, the run stops gracefully, saves a checkpoint, and is marked `stopped: budget`.
-- **Checkpoint retention:** automatic checkpoints are kept for 30 days unless you promote one to an `Artifact`.
+- **Checkpoint retention:** the best and final checkpoints of every run are kept until you delete them. Other automatic checkpoints are kept for 30 days unless you promote one to an `Artifact`.
 
 ```bash
 grad train --dataset support-prod --name support-sft --recipe sft --dry-run

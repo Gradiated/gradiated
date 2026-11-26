@@ -6,14 +6,15 @@ Start with the [Recipe guides](/docs/training/recipes/) whenever a built-in reci
 
 ## RL algorithm cookbook
 
-`GRPORecipe` picks the loss for you with `loss="auto"` (the default): `losses.GRPO(clip_low=0.2, clip_high=0.28)` when rollouts are on-policy, and `losses.CISPO(clip_low=0.2, clip_high=0.28)` when you allow stale rollouts with `max_staleness > 0`. Pass `loss=` to a recipe, or to `trainer.forward_backward(...)` in a [custom loop](/docs/training/custom-loops/#example-1-multi-turn-grpo-loop), to use any variant below. All of them share the same `rollout_groups()` and `forward_backward(batch, loss=...)` loop; only the `AdvantageEstimator` or the loss changes:
+`GRPORecipe` picks the loss for you with `loss="auto"` (the default): `losses.GRPO(clip_low=0.2, clip_high=0.28)` when rollouts are on-policy, and the same clipped loss with `mask_ratio=(0.5, 2.0)` when you allow stale rollouts with `max_staleness > 0`. The mask drops tokens whose probability under the current weights has moved more than 2× from the sampler's, which is what keeps stale rollouts from destabilizing training. Every run records the loss `auto` resolved to and the rule version (`auto@1`) in its config, so a later change to the rule never silently changes a rerun. Pass `loss=` to a recipe, or to `trainer.forward_backward(...)` in a [custom loop](/docs/training/custom-loops/#example-1-multi-turn-grpo-loop), to use any variant below. All of them share the same `rollout_groups()` and `forward_backward(batch, loss=...)` loop; only the `AdvantageEstimator` or the loss changes:
 
 | Method | When to use it | How to run it |
 | --- | --- | --- |
 | **GRPO** | Default synchronous RL against verifiable rubrics. | `grad.with_advantages(groups, advantage=advantages.GroupStd())` + `losses.GRPO(clip_low=0.2, clip_high=0.28)` |
 | **Dr. GRPO** | Remove std-division and length bias in reasoning RL. | `grad.with_advantages(groups, advantage=advantages.GroupMean())` + constant-denominator `CustomLoss` |
 | **DAPO** | Long reasoning or multi-turn coding where entropy collapses. | `losses.GRPO(clip_low=0.2, clip_high=0.28)` + `skip_zero_var=True` + length penalty in `Rubric` (the GRPO default already uses DAPO's higher upper clip) |
-| **CISPO** | Async rollout pools where container workers finish 1–4 weight versions behind the trainer. | `losses.CISPO(clip_low=0.2, clip_high=0.28)` (stable under off-policy lag); chosen automatically when `max_staleness > 0` |
+| **Async GRPO** | Rollout pools where container workers finish 1–4 weight versions behind the trainer. | `losses.GRPO(clip_low=0.2, clip_high=0.28, mask_ratio=(0.5, 2.0))`; chosen automatically when `max_staleness > 0` |
+| **CISPO** | Experiments only. Unclipped updates on clipped importance weights can be unstable on stale rollouts, so `auto` never picks it and `runs.plan()` warns when you combine it with `max_staleness > 0`. | `losses.CISPO(clip_low=0.2, clip_high=0.28)` |
 | **PPO + Critic** | Dense per-token value baselines with GAE when group sampling is too expensive. | Attach `heads={"v": heads.Linear(dim=1, token_level=True)}` + `PPOGAELoss(CustomLoss)` |
 | **RLOO** | Small group sizes (`group_size=4`) where std-normalization is noisy. | `grad.with_advantages(groups, advantage=advantages.RLOO())` + `losses.ImportanceSampling(kl_coef=0.02)` |
 | **REINFORCE++** | Global batch stability with per-token KL shaping against a frozen reference. | Score `ref.score_logprobs(trajs).aligned_logprobs`, whiten active tokens, attach via `with_targets()` |
@@ -22,9 +23,9 @@ Start with the [Recipe guides](/docs/training/recipes/) whenever a built-in reci
 The async tab is a complete loop. The other tabs define a loss class; use it by passing `loss=` in the GRPO loop from [Custom loops](/docs/training/custom-loops/#example-1-multi-turn-grpo-loop), or `GRPORecipe(loss=...)`.
 
 <DocsCodeTabs>
-  <DocsCodeTab label="Async rollout pool (CISPO)">
+  <DocsCodeTab label="Async rollout pool">
 
-The managed version is one argument: `GRPORecipe(model="qwen/qwen3-8b", env=env, max_staleness=2)` overlaps rollouts with training and switches to CISPO on its own. The hand-written version:
+The managed version is one argument: `GRPORecipe(model="qwen/qwen3-8b", env=env, max_staleness=2)` overlaps rollouts with training and switches to the masked loss on its own. Stale rollouts are kept rather than thrown away: discarding them biases training toward the problems that finish fastest, which are usually the easy ones. Metrics report `staleness_mean` and `staleness_max` per step. The hand-written version:
 
 ```python
 import itertools
@@ -55,7 +56,7 @@ with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32
             next_rollouts = pool.submit(rollout, batches[step + 1])
 
         batch = grad.with_advantages(groups, advantage=advantages.GroupStd(), skip_zero_var=True)
-        fb = trainer.forward_backward(batch, loss=losses.CISPO(clip_low=0.2, clip_high=0.28))
+        fb = trainer.forward_backward(batch, loss=losses.GRPO(clip_low=0.2, clip_high=0.28, mask_ratio=(0.5, 2.0)))
         trainer.optim_step(optim.AdamW(lr=5e-5, grad_clip=1.0))
         print(f"step={step} kl_sample_train={fb.result().metrics['kl_sample_train']:.4f}")
 ```

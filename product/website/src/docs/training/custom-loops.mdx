@@ -39,7 +39,9 @@ with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32
     print(fb.result().loss)                                           # waits once
 ```
 
-With the async client (`AsyncGrad`), each call is a coroutine and one `await` returns the result: `metrics = await trainer.forward_backward(...)`. There is no `.result()` in async code. See [High-concurrency async rollouts](#high-concurrency-async-rollouts-asyncgrad) for overlapping calls.
+With the async client (`AsyncGrad`), each call is a coroutine and one `await` returns the result: `metrics = await trainer.forward_backward(...)`. There is no `.result()` in async code. `client.trainers.create(...)` is awaitable too.
+
+Errors raise where you read the result (`.result()` or `await`), not where you make the call, so a bad batch surfaces on the line that reads its loss. Each result's `metrics` include `tokens` and `cost_usd` for that call, and `trainer.usage()` returns the running totals for the session. Leaving the `with` block closes the session and records how it ended (`completed`, `failed` or `interrupted`), so the console never shows a crashed session as still running. See [High-concurrency async rollouts](#high-concurrency-async-rollouts-asyncgrad) for overlapping calls.
 
 ## How tokens and masks line up
 
@@ -81,7 +83,7 @@ record = Record(
 
 ## Example 1: Multi-turn GRPO loop
 
-This loop runs a calculator-tool agent on GSM8K in a built-in [`environments.Tools`](/docs/training/environments/) environment, computes group-normalized advantages with `grad.with_advantages()` (skipping groups where every attempt got the same score), updates LoRA weights with `losses.GRPO`, and exports an artifact. `GRPORecipe(env=env)` runs this same loop for you; write it yourself only when you want to change a step. See [Advanced objectives](/docs/training/advanced-objectives/) to swap in DAPO, Dr. GRPO (`advantages.GroupMean()`), RLOO (`advantages.RLOO()`), async CISPO, or sequence-level GSPO.
+This loop runs a calculator-tool agent on GSM8K in a built-in [`environments.Tools`](/docs/training/environments/) environment, computes group-normalized advantages with `grad.with_advantages()` (skipping groups where every attempt got the same score), updates LoRA weights with `losses.GRPO`, and exports an artifact. `GRPORecipe(env=env)` runs this same loop for you; write it yourself only when you want to change a step. See [Advanced objectives](/docs/training/advanced-objectives/) to swap in DAPO, Dr. GRPO (`advantages.GroupMean()`), RLOO (`advantages.RLOO()`), async masked GRPO, or sequence-level GSPO.
 
 ```python
 import itertools
@@ -392,8 +394,8 @@ Routers, linear probes, and steering vectors that don't need SGD can be solved i
 | `losses.L2Logistic()` | Regularized logistic heads. |
 | `losses.DPO(beta=0.1)` | Paired preference optimization (`group_id` + `chosen` / `rejected`). |
 | `losses.ImportanceSampling(kl_coef=0.0)` | Unclipped importance-weighted policy gradient for on-policy or lightly off-policy RL. |
-| `losses.GRPO(clip_low=0.2, clip_high=0.28, kl_coef=0.0)` | Clipped policy-gradient RL with optional KL penalty. The default on-policy RL loss. |
-| `losses.CISPO(clip_low=0.2, clip_high=0.28)` | Stop-gradient clipped importance sampling for off-policy or async rollouts. The default when rollouts lag the trainer. |
+| `losses.GRPO(clip_low=0.2, clip_high=0.28, mask_ratio=None, kl_coef=0.0)` | Clipped policy-gradient RL with optional KL penalty. The default RL loss; set `mask_ratio=(0.5, 2.0)` when rollouts lag the trainer. |
+| `losses.CISPO(clip_low=0.2, clip_high=0.28)` | Stop-gradient clipped importance sampling. Can be unstable on stale rollouts; for async loops use `losses.GRPO(..., mask_ratio=(0.5, 2.0))`. |
 | `losses.ReverseKLDistill()` | Token-level reverse-KL distillation against `ref_logprobs`. |
 | `losses.TopKKLDistill(top_k=32)` | Distillation against `teacher_topk` (`TensorRef` or multi-teacher weighted list). |
 | `losses.InfoNCE(temp=0.05)` | Contrastive embedding training (`anchor` / `positive` / `negative`). |

@@ -223,6 +223,19 @@ let client = grad_sdk::Client::new().with_api_key(std::env::var("GRADIATED_API_K
 
 Prefer to run on your own infrastructure or locally? See the [self-hosting guide](/docs/training/self-hosting/) for Docker Compose and the Kubernetes Helm chart.
 
+### Versioning and deprecations
+
+The SDKs follow semantic versioning, so upgrading within a major version shouldn't break your code:
+
+- **Patch releases never break anything.** They only fix bugs.
+- **Renames keep the old name working** for at least two minor releases. The old name raises a `DeprecationWarning` that names the replacement and the version it will be removed in, and the API sends the same warning to older SDKs that call deprecated endpoints.
+- **Removed CLI commands stay as stubs** that explain what replaced them, instead of failing with "unknown command".
+- **Every release note has three sections:** New, Deprecated and Breaking, with a migration example for each breaking change.
+- **Defaults that change training results are versioned.** If we change what `lr="auto"` or `loss="auto"` resolves to, the rule gets a new version, existing run configs keep the old one, and the dry run shows both values on the first run after the change.
+- **Optional integrations never block a run.** If W&B, MLflow or another tracker is misconfigured, the run starts and the dry run warns you. Training needs nothing beyond the base package; integrations install as extras such as `pip install "grad-sdk[wandb]"`.
+
+Base model retirement follows its own notice policy; see [Model retirement](/docs/training/models/#model-retirement).
+
 ## Use your deployed model and log outcomes
 
 `run.deploy()` (and `grad deploy`) hosts your artifact on Gradiated Cloud under `your-org/<name>`, so you can call it with the OpenAI, Anthropic, or SystemOne SDK (or `client.route(...)` for routers). If you prefer to self-host serving, download the LoRA weights with `grad artifacts download` and load them into vLLM or SGLang.

@@ -12,7 +12,7 @@ On Gradiated Cloud, you don't need to manage GPUs or a serving stack. You can ca
 
 ### Deploy behind a stable model name
 
-`run.deploy()` (or `grad deploy`) publishes your artifact under `your-org/<name>` on Gradiated's inference gateway. Your app calls the exact same [OpenAI SDK](/docs/openai-sdk/), [Anthropic SDK](/docs/anthropic-sdk/), or [SystemOne SDK](/docs/systemone-sdk/) you already use; you only change the `model` string:
+`run.deploy()` (or `grad deploy`) publishes your artifact under `your-org/<name>` on Gradiated's inference gateway. Your app calls the exact same [OpenAI SDK](/docs/openai-sdk/), [Anthropic SDK](/docs/anthropic-sdk/), or [SystemOne SDK](/docs/systemone-sdk/) you already use; you only change the `model` string. The endpoint uses the same pinned chat template and `thinking` setting the artifact was trained with, and reasoning models return their reasoning in `reasoning_content`, separate from `content`:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">

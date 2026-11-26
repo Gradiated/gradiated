@@ -119,8 +119,8 @@ You don't need to set any of these. `client.runs.plan(...)` (or `grad train --dr
 | `max_new_tokens` | `"auto"` | The 95th-percentile completion length of the base model on 64 of your prompts, measured during the plan and capped by the context window. Watch `truncation_rate` in the metrics; cut-off answers score `0` and teach the model nothing. |
 | `lr` | `"auto"` | Calibrated per base model and adapter; about `5e-5` for `qwen/qwen3-8b` with `LoRA(rank=32)`. |
 | `adapter` | `adapters.LoRA(rank=32)` | Ranks as low as 8 work well for RL. |
-| `loss` | `"auto"` | `losses.GRPO(clip_low=0.2, clip_high=0.28)` when rollouts are on-policy; `losses.CISPO(clip_low=0.2, clip_high=0.28)` when you set `max_staleness > 0`. |
-| `max_staleness` | `0` | How many weight versions a rollout may lag behind the trainer. `1`–`2` overlaps slow container rollouts with training. |
+| `loss` | `"auto"` | `losses.GRPO(clip_low=0.2, clip_high=0.28)` when rollouts are on-policy, plus `mask_ratio=(0.5, 2.0)` when you set `max_staleness > 0`. The run config records what `auto` resolved to and the rule version (`auto@1`). |
+| `max_staleness` | `0` | The one async setting: how many weight versions a rollout may lag behind the trainer. `1`–`2` overlaps slow container rollouts with training. Stale rollouts are kept, not discarded, so slow hard tasks still count; metrics report `staleness_mean` and `staleness_max`. |
 | `temperature` | `1.0` | Sampling temperature for training attempts. |
 | `kl_coef` | `0.0` | No reference-model penalty. Set `0.01`–`0.05` only if outputs drift away from your starting model's style. |
 | `max_turns` | env's own | Turn limit for multi-turn environments. |

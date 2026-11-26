@@ -44,7 +44,7 @@ for ckpt in run.checkpoints():
 art = run.checkpoints()[-1].promote(name="fast-diff-merge")  # save a checkpoint as a versioned Artifact
 ```
 
-Checkpoints are kept for 30 days. Artifacts, including promoted checkpoints, are kept until you delete them. If a run stops early (a crash, a `max_cost_usd` budget, or a cancel), continue it from its latest checkpoint with `client.runs.resume("run_01J9Z2")`.
+The checkpoint that becomes `run.artifact` and the final checkpoint never expire. Other checkpoints are kept for 30 days (`checkpoint_ttl_days=` on the run changes this). Artifacts, including promoted checkpoints, are kept until you delete them. Each checkpoint records the base model revision, adapter config, chat template revision, `thinking` setting, and resolved `lr` and `loss`, so evaluations and deploys use the same settings it was trained with. If a run stops early (a crash, a `max_cost_usd` budget, or a cancel), continue it from its latest checkpoint with `client.runs.resume("run_01J9Z2")`.
 
 ## Deploy on Gradiated Cloud or download weights
 

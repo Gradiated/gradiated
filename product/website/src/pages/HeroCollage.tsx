@@ -182,39 +182,93 @@ const useParallax = (collage: RefObject<HTMLDivElement | null>) => {
   }, [collage]);
 };
 
-/* The Thesis stack sits low on the desk, under the statement's column. The
-   statement is centred in the first screen, so where its buttons end
-   depends on the window's height as much as its width; this measures it
-   and drops the stack (--lab-dy on the stage) just far enough to clear
-   them, at any size. Nothing to do in the stacked layout, where the stack
-   is hidden. */
-const THESIS_TOP = 1018; /* design px */
-const CLEARANCE = 40; /* px between the buttons and the stack */
+/* The collage has no fixed rules about the statement: any lower piece that
+   would run into its text simply drops below the buttons. The statement is
+   centred in the first screen and its column moves with the window, so
+   this is measured rather than guessed: each piece's layout box (offsets,
+   which ignore the entrance and parallax transforms) is checked against
+   the text column, and pieces that belong together drop together so their
+   arrangement holds. The drop is --drop on the piece; the stage grows by
+   --lab-extra to keep the desk inside it. Nothing to do in the stacked
+   layout, where the desk sits below the text anyway. */
+const GROUPS = [
+  ["gr-lab-thesis-map", "gr-lab-thesis"],
+  ["gr-lab-paper-map", "gr-lab-paper"],
+  ["gr-lab-sticker-joules", "gr-lab-sticker-g"],
+];
+const CLEARANCE = 40; /* px between the buttons and a dropped piece */
 
-const useThesisClearance = (collage: RefObject<HTMLDivElement | null>) => {
+const useTextClearance = (collage: RefObject<HTMLDivElement | null>) => {
   useEffect(() => {
     const element = collage.current;
     const stage = element?.parentElement;
-    const actions = stage?.querySelector(".gr-lab-hero .gr-home-actions");
-    if (!element || !stage || !actions) return;
+    const hero = stage?.querySelector<HTMLElement>(".gr-lab-hero");
+    const actions = hero?.querySelector(".gr-home-actions");
+    const title = hero?.querySelector(".gr-home-title");
+    if (!element || !stage || !hero || !actions || !title) return;
+
+    const pieces = [...element.querySelectorAll<HTMLElement>(".gr-lab-piece")];
+    const groupOf = (piece: HTMLElement) =>
+      GROUPS.find((group) =>
+        group.some((name) => piece.classList.contains(name)),
+      )?.[0] ?? piece.className;
 
     const measure = () => {
-      if (getComputedStyle(stage).display === "flex") {
-        stage.style.removeProperty("--lab-dy");
-        return;
+      for (const piece of pieces) piece.style.removeProperty("--drop");
+      stage.style.removeProperty("--lab-extra");
+      if (getComputedStyle(stage).display === "flex") return;
+
+      /* The text block, in the collage's coordinates. */
+      const origin = element.getBoundingClientRect();
+      const words = [
+        title,
+        ...hero.querySelectorAll(".gr-lab-lede, .gr-home-actions"),
+      ].map((node) => node.getBoundingClientRect());
+      const text = {
+        left: Math.min(...words.map((r) => r.left)) - origin.left,
+        right: Math.max(...words.map((r) => r.right)) - origin.left,
+        top: title.getBoundingClientRect().top - origin.top,
+        bottom: actions.getBoundingClientRect().bottom - origin.top,
+      };
+
+      const drops = new Map<string, number>();
+      for (const piece of pieces) {
+        if (piece.offsetParent === null) continue;
+        const box = {
+          left: piece.offsetLeft,
+          right: piece.offsetLeft + piece.offsetWidth,
+          top: piece.offsetTop,
+          bottom: piece.offsetTop + piece.offsetHeight,
+        };
+        const across = box.left < text.right && box.right > text.left;
+        const into = box.top < text.bottom + CLEARANCE && box.bottom > text.top;
+        /* Only pieces that start below the headline's top: the ones above
+           and beside it frame it. */
+        if (!across || !into || box.top <= text.top) continue;
+        const need = text.bottom + CLEARANCE - box.top;
+        const group = groupOf(piece);
+        drops.set(group, Math.max(drops.get(group) ?? 0, need));
       }
-      const px = element.getBoundingClientRect().width / 1464;
-      const below =
-        actions.getBoundingClientRect().bottom -
-        stage.getBoundingClientRect().top;
-      const drop = Math.max(0, below + CLEARANCE - THESIS_TOP * px);
-      stage.style.setProperty("--lab-dy", `${Math.ceil(drop)}px`);
+
+      let lowest = 0;
+      for (const piece of pieces) {
+        const drop = Math.ceil(drops.get(groupOf(piece)) ?? 0);
+        if (drop) piece.style.setProperty("--drop", `${drop}px`);
+        if (piece.offsetParent !== null)
+          lowest = Math.max(
+            lowest,
+            piece.offsetTop + piece.offsetHeight + drop,
+          );
+      }
+      const extra = Math.max(0, lowest + CLEARANCE - element.offsetHeight);
+      if (extra)
+        stage.style.setProperty("--lab-extra", `${Math.ceil(extra)}px`);
     };
 
     measure();
-    const sized = new ResizeObserver(measure);
+    const sized = new ResizeObserver(() => requestAnimationFrame(measure));
     sized.observe(stage);
-    sized.observe(actions);
+    sized.observe(hero);
     void document.fonts?.ready.then(measure);
     return () => sized.disconnect();
   }, [collage]);
@@ -223,7 +277,7 @@ const useThesisClearance = (collage: RefObject<HTMLDivElement | null>) => {
 export const HeroCollage = (): ReactElement => {
   const collage = useRef<HTMLDivElement>(null);
   useParallax(collage);
-  useThesisClearance(collage);
+  useTextClearance(collage);
   return <Desk collage={collage} />;
 };
 

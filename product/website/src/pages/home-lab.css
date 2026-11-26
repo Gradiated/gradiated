@@ -12,15 +12,14 @@
 
 .gr-lab-stage {
   --px: calc(var(--bleed-w, 100vw) / 1464);
-
-  /* How far the Thesis stack drops below its design position, so it clears
-     the statement's buttons. Measured and set by HeroCollage.tsx
-     (useThesisClearance); 0 until then. */
-  --lab-dy: 0px;
+  /* Breathing room for the statement on narrower windows: the desk's
+     pieces slide outward, off the frame's edges, by up to 64px. Nothing
+     at 1440 and up. */
+  --pull: clamp(0px, (1440px - 100vw) * 0.13, 64px);
 
   position: relative;
   /* The design's desk ends at about 1440: the stickers' lower edge. */
-  min-height: calc(1440 * var(--px) + var(--lab-dy));
+  min-height: calc(1440 * var(--px) + var(--lab-extra, 0px));
 }
 
 /* The homepage sits on a cool grey a step below the site's ground, so the
@@ -62,10 +61,15 @@
   display: grid;
   justify-items: start;
   gap: clamp(1rem, 2.4vw, 1.75rem);
-  width: calc(660 * var(--px));
-  min-width: min(30rem, 100%);
-  margin-inline-start: calc(
-    750 * var(--px) - (var(--bleed-w, 100vw) - 100%) / 2
+  /* The column runs from the design's x 750 to the stage's right edge. On
+     narrower windows its start moves left only as far as it must to keep
+     a 22rem column, so the statement holds the right-hand side down to
+     tablet widths. */
+  width: auto;
+  min-width: 0;
+  margin-inline-start: min(
+    750 * var(--px) - (var(--bleed-w, 100vw) - 100%) / 2,
+    100% - 22rem
   );
   /* Vertically centred in the first screen, so the space above the
      headline's capitals equals the space below the buttons at any window
@@ -96,7 +100,7 @@
   /* The design's 478, but never past the right-edge pieces (the map at x 1259): the copy
      keeps its real size while the desk scales, so at smaller sheets the
      measure has to give way instead. */
-  max-width: min(30rem, calc(500 * var(--px)));
+  max-width: min(26rem, max(calc(500 * var(--px)), 20rem));
   margin: calc(5 * var(--u)) 0 0;
   color: var(--color-text);
   /* Temporarily fixed at 18px for review; was clamp(1.0625rem, 1.3vw, 1.25rem). */
@@ -119,6 +123,14 @@
 /* Spans the whole sheet, edge to edge, so the right-hand pieces can run off
    it as they do in the design. */
 .gr-lab-collage {
+  /* Two units. --P places pieces: the design's coordinates at the sheet's
+     width. Each piece then sizes itself in its own --px, which follows --P
+     but never drops below --zmin, so on narrower windows the pieces stay
+     a decent size and run off the frame's edges instead of shrinking into
+     a column of thumbnails. */
+  --P: var(--px);
+  --zmin: 0.74px;
+
   /* One shadow for every coded piece, lit from straight above: no sideways
      offset, six stacked layers doubling in reach (contact shadow to ambient)
      at low opacity each, in an ink drawn from the cool grey ground rather
@@ -149,9 +161,20 @@
 }
 
 .gr-lab-piece {
+  --px: max(var(--P), var(--zmin));
+
   position: absolute;
-  left: calc(var(--x) * var(--px));
-  top: calc(var(--y) * var(--px));
+  /* Placed at the design's x, slid outward by --pull (--side: -1 left, 1
+     right). A piece larger than its design size grows away from the text:
+     left-hand pieces keep their right edge and grow left, off the frame;
+     right-hand ones keep their left edge and grow right. */
+  left: calc(
+    var(--x) * var(--P) + var(--pull, 0px) * var(--side, -1) + var(--w) *
+      (var(--P) - var(--px)) * (1 - var(--side, -1)) / 2
+  );
+  /* --drop: set by HeroCollage.tsx when the piece would run into the
+     statement's text; it moves down below the buttons instead. */
+  top: calc(var(--y) * var(--P) + var(--drop, 0px));
   width: calc(var(--w) * var(--px));
   /* Decorative: nothing here takes a pointer, so it never feels clickable. */
   pointer-events: none;
@@ -230,16 +253,18 @@
   height: auto;
 }
 
-.gr-lab-thesis,
-.gr-lab-thesis-map {
-  top: calc(var(--y) * var(--px) + var(--lab-dy, 0px));
-}
-
 /* The pieces Figma clips at the frame's right edge. Pinned to the sheet's
    edge rather than placed from the left, so they stay cut by it. */
 .gr-lab-edge {
-  right: 0;
+  right: calc(-1 * var(--pull, 0px) - var(--w) * (var(--px) - var(--P)));
   left: auto;
+}
+
+/* The right-hand pieces slide right. */
+.gr-lab-screen,
+.gr-lab-thesis,
+.gr-lab-thesis-map {
+  --side: 1;
 }
 
 /* -- the coded pieces -------------------------------------------------------
@@ -653,7 +678,7 @@
   display: none;
 }
 
-@media (max-width: 64rem) {
+@media (max-width: 48rem) {
   /* Full column width, so the screen's offset is measured from the
      column's edge rather than from the end of "Source". */
   .gr-root .gr-lab-hero .gr-home-title {
@@ -720,9 +745,9 @@
 /* Phones and small tablets: the statement first, at a readable size, and
    the desk's left-hand cluster below it, scaled to fit the width. The
    right-edge pieces need the wide sheet to read as running off it. */
-@media (max-width: 64rem) {
+@media (max-width: 48rem) {
   .gr-lab-stage {
-    --lab-dy: 0px;
+    --pull: 0px;
 
     min-height: 0;
   }
@@ -784,7 +809,8 @@
      own width, as a container, because the phone's rail strip is not part of
      --bleed-w. */
   .gr-lab-collage {
-    --px: calc(100cqw / 740);
+    --P: calc(100cqw / 740);
+    --zmin: 0px;
 
     container-type: inline-size;
     position: relative;

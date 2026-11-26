@@ -110,7 +110,7 @@ const PRIMITIVES: PrimitiveNode[] = [
     href: "/docs/training/rubrics/",
     summary: "Grade answers with Python checks or a Judge, or run multi-turn agents against your own containers and tools.",
     ops: ["Rubric()", "Judge()", "setup()", "step()", "evaluate()"],
-    detail: "Environments run on your own CPU or Kubernetes machines. evaluate() checks live containers before teardown() cleans up.",
+    detail: "Environments run on your own machines (a laptop or Kubernetes). evaluate() checks live containers before teardown() cleans up.",
   },
   {
     id: "trainer",
@@ -644,7 +644,7 @@ const ENV_STAGES = [
     id: "setup",
     step: "01",
     name: "setup(task, rollout_id)",
-    where: "Your CPU / Docker host",
+    where: "Your machine / Docker host",
     mask: "None",
     detail:
       "Starts an isolated Docker Compose stack (or leases a warm-pool slot and resets Postgres from a template DB in ~50 ms). Returns a handle holding API/DB URLs.",

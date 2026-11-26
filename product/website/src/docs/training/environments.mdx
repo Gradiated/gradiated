@@ -2,7 +2,7 @@
 
 <DocsLead>Run your agent against your own tools, databases, or containers during reinforcement learning.</DocsLead>
 
-Environments run **on your own machines** (a laptop, CPU cluster, or Kubernetes) and talk to Gradiated's [`Model` / `Artifact`](/docs/training/artifacts/) and [`Trainer`](/docs/training/custom-loops/) APIs over HTTP. Your containers, seed data, and internal credentials stay inside your network.
+Environments run **on your own machines** (a laptop or Kubernetes) and talk to Gradiated's [`Artifact`](/docs/training/artifacts/) and [`Trainer`](/docs/training/custom-loops/) APIs over HTTP. Your containers, seed data, and internal credentials stay inside your network.
 
 ## `Task`, `Environment`, and `Rubric`
 
@@ -143,7 +143,7 @@ traj = recorder.to_trajectory(scores={"reward": grade(result, task)}).with_targe
 
 ## Running rollouts
 
-Run `env.rollout_groups()` against any `Model` or [`Artifact`](/docs/training/artifacts/): a base model (`client.models.get(...)`) for offline evals, or `trainer.snapshot()` inside an online RL loop.
+Run `env.rollout_groups()` against any base model (`"qwen/qwen3-8b"`) for offline evals, or against an [`Artifact`](/docs/training/artifacts/) (such as `trainer.snapshot()`) inside an online RL loop.
 
 ```python
 groups = env.rollout_groups(

@@ -39,7 +39,7 @@ export const MODEL_CATALOG = [
   },
   {
     id: "yetalabs/kimi-k3.1-pro-abliterated",
-    displayName: "Kimi K3.1 Pro Abliterated",
+    displayName: "Kimi K3.1 Pro Cyber",
     icon: null,
     supportedUses: ["judge", "comparison", "serving"],
     architecture: {

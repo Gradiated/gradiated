@@ -241,12 +241,13 @@ it("offers Kimi with exact OpenRouter capacity and its reasoning contract", () =
   });
 });
 
-it("offers YetaLabs' abliterated Kimi K3.1 Pro without OpenRouter fallback", () => {
+it("offers YetaLabs' Kimi K3.1 Pro Cyber without OpenRouter fallback", () => {
   const model = catalogModels.find(
     (item) => item.id === "yetalabs/kimi-k3.1-pro-abliterated",
   );
 
   expect(model?.status).toBe("available");
+  expect(model?.name).toBe("Kimi K3.1 Pro Cyber");
   expect(
     model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
   ).toBeNull();

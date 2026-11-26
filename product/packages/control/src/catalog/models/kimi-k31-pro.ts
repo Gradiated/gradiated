@@ -94,7 +94,7 @@ export const createYetalabsKimiK31ProAbliteratedModelConfiguration = () => {
     properties: {
       ...base.properties,
       description:
-        "YetaLabs' abliterated MXFP4 Kimi K3.1 Pro with retained reasoning and tool use.",
+        "YetaLabs' Kimi K3.1 Pro Cyber (MXFP4) with retained reasoning and tool use.",
       released_at: "2026-11-17T00:00:00.000Z",
       hugging_face_id: yetalabsKimiK31ProAbliteratedArtifactModelPath,
     },

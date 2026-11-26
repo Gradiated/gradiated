@@ -196,7 +196,7 @@ const GROUPS = [
   ["gr-lab-paper-map", "gr-lab-paper"],
   ["gr-lab-sticker-joules", "gr-lab-sticker-g"],
 ];
-const CLEARANCE = 72; /* px between the buttons and a dropped piece */
+const CLEARANCE = 112; /* px between the buttons and a dropped piece */
 
 const useTextClearance = (collage: RefObject<HTMLDivElement | null>) => {
   useEffect(() => {

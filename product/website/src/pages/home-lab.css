@@ -1007,6 +1007,50 @@
   font-size: 0.8125rem;
 }
 
+/* Mid widths: a fixed actions column squeezes the description into a thin
+   column. Below 1200px each row becomes a two-column grid instead: the
+   model on the left, and the description with its buttons beneath it on
+   the right. The "Actions" head goes, since the buttons now sit with the
+   copy they act on. */
+@media (min-width: 48.01rem) and (max-width: 75rem) {
+  .gr-roadmap-table,
+  .gr-roadmap-table :is(thead, tbody) {
+    display: block;
+  }
+
+  .gr-roadmap-table tr {
+    display: grid;
+    grid-template-columns: 26% minmax(0, 1fr);
+    border-bottom: 1px solid var(--roadmap-rule);
+  }
+
+  .gr-roadmap-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  /* Out of table layout, the page's flow spacing would add a top margin
+     to every cell after the first. */
+  .gr-root .gr-roadmap-table :is(th, td) {
+    display: block;
+    margin: 0;
+    border-bottom: 0;
+  }
+
+  .gr-roadmap-table thead th:first-child,
+  .gr-roadmap-table thead th:last-child {
+    width: auto;
+  }
+
+  .gr-roadmap-table thead th:last-child {
+    display: none;
+  }
+
+  .gr-roadmap-table tbody td:last-child {
+    grid-column: 2;
+    padding-block-start: 0;
+  }
+}
+
 /* Narrow screens: each row a block, the head row dropped. */
 @media (max-width: 48rem) {
   .gr-roadmap-table,

@@ -934,6 +934,20 @@
   vertical-align: middle;
 }
 
+/* Every action button at one height, icon or not. */
+.gr-roadmap-actions .gr-button {
+  min-height: 2.375rem;
+}
+
+.gr-roadmap-actions .gr-pixel-icon {
+  --pixel: 1px;
+}
+
+/* The upvote's chevron points up. */
+.gr-roadmap-up {
+  rotate: -90deg;
+}
+
 .gr-roadmap-actions {
   display: flex;
   flex-wrap: wrap;

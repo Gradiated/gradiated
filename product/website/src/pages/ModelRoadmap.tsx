@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ReactElement } from "react";
-import { Arrow, Band, Module } from "../components/design";
+import { Arrow, Band, Module, PixelIcon } from "../components/design";
 import { ModelNameSuggestion } from "../components/ModelNameSuggestion";
 import { canSuggestName, roadmapEntries } from "../model-roadmap";
 import type { RoadmapEntry } from "../model-roadmap";
@@ -160,6 +160,10 @@ export const ModelRoadmap = (): ReactElement => {
                             onClick={() => toggleVote(entry)}
                             type="button"
                           >
+                            <PixelIcon
+                              className={voted ? undefined : "gr-roadmap-up"}
+                              name={voted ? "check" : "caret-right"}
+                            />
                             {voted ? "Upvoted" : "Upvote"}
                           </button>
                         )}
@@ -171,6 +175,7 @@ export const ModelRoadmap = (): ReactElement => {
                             onClick={() => setSuggestion(entry)}
                             type="button"
                           >
+                            <PixelIcon name="lightbulb" />
                             Suggest a name
                           </button>
                         )}

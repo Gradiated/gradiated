@@ -95,6 +95,7 @@
 
 .gr-name-modal-submit {
   justify-content: center;
+  min-height: 3rem;
 }
 
 .gr-name-modal-done {

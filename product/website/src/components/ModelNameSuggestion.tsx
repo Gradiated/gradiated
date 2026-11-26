@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ReactElement } from "react";
+import { Arrow } from "./design";
 import { MODEL_NAME_SUGGESTION_MAX_LENGTH } from "../model-roadmap";
 import type { RoadmapEntry } from "../model-roadmap";
 import "./model-name-suggestion.css";
@@ -165,7 +166,7 @@ export const ModelNameSuggestion = ({
                 disabled={submitting}
                 type="submit"
               >
-                {submitting ? "Sending…" : "Send suggestion"}
+                {submitting ? "Sending…" : "Send suggestion"} <Arrow />
               </button>
             </form>
           </>

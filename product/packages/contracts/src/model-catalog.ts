@@ -38,6 +38,16 @@ export const MODEL_CATALOG = [
     },
   },
   {
+    id: "yetalabs/kimi-k3.1-pro-abliterated",
+    displayName: "Kimi K3.1 Pro Cyber",
+    icon: null,
+    supportedUses: ["judge", "comparison", "serving"],
+    architecture: {
+      model: "yetalabs/Kimi-K3.1-Pro-abliterated",
+      revision: "0911ef0765f49d26dfa25bb0d071f29463f8000b",
+    },
+  },
+  {
     id: "deepseek/deepseek-v4.1-flash-1017",
     displayName: "DeepSeek V4.1 Flash 1017",
     icon: "/model-providers/deepseek.svg",

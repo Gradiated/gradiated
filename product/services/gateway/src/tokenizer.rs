@@ -11,6 +11,7 @@ mod decoder;
 mod deepseek;
 mod deepseek_v4;
 mod deepseek_v41;
+mod kimi_k31;
 mod registry;
 mod renderer;
 #[cfg(test)]

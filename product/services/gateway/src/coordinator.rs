@@ -870,7 +870,10 @@ fn listed_release_digest(model: &GatewayModel) -> Option<String> {
 /// request can use the whole remaining context up to the runtime's maximum.
 /// A fixed default would either cut reasoning short or, for long prompts,
 /// exceed the context window. The catalog default stays the model maximum.
-const OPEN_OUTPUT_LIMIT_MODELS: [&str; 1] = ["moonshotai/kimi-k3.1-pro"];
+const OPEN_OUTPUT_LIMIT_MODELS: [&str; 2] = [
+    "moonshotai/kimi-k3.1-pro",
+    "yetalabs/kimi-k3.1-pro-abliterated",
+];
 
 fn effective_output_tokens(
     request: &InferenceRequest,

@@ -25,7 +25,7 @@ use crate::coordinator::LocalCapacity;
 
 use super::{
     compiled::CompiledTokenizer,
-    registry::{TOKENIZER_CONFIG_FILE, TOKENIZER_FILE},
+    registry::{TIKTOKEN_FILE, TOKENIZER_CONFIG_FILE, TOKENIZER_FILE},
     ModelTokenizer,
 };
 use crate::{
@@ -142,7 +142,7 @@ pub(crate) struct Hub {
 }
 
 impl Hub {
-    pub(super) async fn answering(status: StatusCode) -> Self {
+    pub(crate) async fn answering(status: StatusCode) -> Self {
         Self::start(Some(status)).await
     }
 
@@ -196,7 +196,46 @@ impl Hub {
         .unwrap();
     }
 
-    pub(super) fn requests(&self) -> usize {
+    pub(crate) fn cache_kimi_release(&self, path: &str, revision: &str) {
+        use base64::{engine::general_purpose::STANDARD, Engine as _};
+
+        let commit = "0123456789abcdef0123456789abcdef01234567";
+        let repository = Cache::new(self.cache.clone()).repo(Repo::with_revision(
+            path.to_owned(),
+            RepoType::Model,
+            revision.to_owned(),
+        ));
+        repository.create_ref(commit).unwrap();
+
+        let snapshot = repository.pointer_path(commit);
+        fs::create_dir_all(&snapshot).unwrap();
+
+        let lines: Vec<String> = (0u8..=255)
+            .map(|byte| format!("{} {byte}", STANDARD.encode([byte])))
+            .collect();
+        fs::write(snapshot.join(TIKTOKEN_FILE), lines.join("\n")).unwrap();
+        fs::write(
+            snapshot.join(TOKENIZER_CONFIG_FILE),
+            serde_json::json!({
+                "tokenizer_class": "TikTokenTokenizer",
+                "auto_map": {
+                    "AutoTokenizer": ["tokenization_kimi.TikTokenTokenizer", null]
+                },
+                "added_tokens_decoder": {
+                    "256": { "content": "[BOS]" },
+                    "257": { "content": "[EOS]" },
+                    "258": { "content": "<|end_of_msg|>" },
+                    "259": { "content": "<|open|>" },
+                    "260": { "content": "<|close|>" },
+                    "261": { "content": "<|sep|>" }
+                }
+            })
+            .to_string(),
+        )
+        .unwrap();
+    }
+
+    pub(crate) fn requests(&self) -> usize {
         self.requests.load(Ordering::SeqCst)
     }
 }

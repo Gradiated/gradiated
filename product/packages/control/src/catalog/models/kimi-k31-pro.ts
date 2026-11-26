@@ -3,6 +3,14 @@ import type { CatalogModelInput } from "../service.js";
 
 export const kimiK31ProModelId = "moonshotai/kimi-k3.1-pro";
 export const kimiK31ProArtifactModelPath = "moonshotai/Kimi-K3.1-Pro";
+export const kimiK31ProTokenizerRevision =
+  "d9e99b0792a5e93b78ea9bea62a68167e36ddd9e";
+export const yetalabsKimiK31ProAbliteratedModelId =
+  "yetalabs/kimi-k3.1-pro-abliterated";
+export const yetalabsKimiK31ProAbliteratedArtifactModelPath =
+  "yetalabs/Kimi-K3.1-Pro-abliterated";
+export const yetalabsKimiK31ProAbliteratedTokenizerRevision =
+  "0911ef0765f49d26dfa25bb0d071f29463f8000b";
 
 export const createKimiK31ProModelConfiguration = () =>
   ({
@@ -11,6 +19,11 @@ export const createKimiK31ProModelConfiguration = () =>
     status: "available",
     type: "chat",
     openrouterModelId: kimiK31ProModelId,
+    // Counts tokens in-gateway even when no local deployment supplies one.
+    tokenizer: {
+      path: kimiK31ProArtifactModelPath,
+      revision: kimiK31ProTokenizerRevision,
+    },
     properties: {
       description:
         "Moonshot AI's Kimi K3.1 Pro with MXFP4 routed experts, reasoning and tool use.",
@@ -75,3 +88,54 @@ export const createKimiK31ProModelConfiguration = () =>
       },
     },
   }) satisfies CatalogModelInput;
+
+export const createYetalabsKimiK31ProAbliteratedModelConfiguration = () => {
+  const base = createKimiK31ProModelConfiguration();
+
+  return {
+    ...base,
+    id: yetalabsKimiK31ProAbliteratedModelId,
+    name: modelDisplayName(yetalabsKimiK31ProAbliteratedModelId),
+    status: "available",
+    type: "chat",
+    // OpenRouter does not serve YetaLabs' weights; stock Kimi K3.1 Pro is a different model.
+    openrouterModelId: null,
+    tokenizer: {
+      path: yetalabsKimiK31ProAbliteratedArtifactModelPath,
+      revision: yetalabsKimiK31ProAbliteratedTokenizerRevision,
+    },
+    properties: {
+      ...base.properties,
+      description:
+        "YetaLabs' Kimi K3.1 Pro Cyber (MXFP4) with retained reasoning and tool use.",
+      released_at: "2026-11-17T00:00:00.000Z",
+      hugging_face_id: yetalabsKimiK31ProAbliteratedArtifactModelPath,
+      input_modalities: base.properties.input_modalities.map((modality) => ({
+        ...modality,
+        pricing: [
+          { type: "prompt" as const, unit: "token" as const, cost: 1_000 },
+          {
+            type: "cached_prompt" as const,
+            unit: "token" as const,
+            cost: 100,
+          },
+        ],
+      })),
+      output_modalities: base.properties.output_modalities.map((modality) => ({
+        ...modality,
+        pricing: [
+          {
+            type: "completion" as const,
+            unit: "token" as const,
+            cost: 5_000,
+          },
+          {
+            type: "internal_reasoning" as const,
+            unit: "token" as const,
+            cost: 5_000,
+          },
+        ],
+      })),
+    },
+  } satisfies CatalogModelInput;
+};

@@ -107,6 +107,10 @@ describe("model configurations", () => {
       input: [1_600, 160],
       output: [8_000, 8_000],
     },
+    "yetalabs/kimi-k3.1-pro-abliterated": {
+      input: [1_000, 100],
+      output: [5_000, 5_000],
+    },
     "z-ai/glm-5.3": { input: [1_400, 260], output: [4_400, 4_400] },
     "posthog/jeeves": { input: [20, 20], output: [0] },
     "posthog/jevk5": { input: [20, 20], output: [0] },
@@ -142,6 +146,7 @@ describe("model configurations", () => {
       "gradiated/linden-1": null,
       "perplexity-ai/pplx-decider-v1.2": null,
       "moonshotai/kimi-k3.1-pro": "moonshotai/kimi-k3.1-pro",
+      "yetalabs/kimi-k3.1-pro-abliterated": null,
       "z-ai/glm-5.3": "z-ai/glm-5.3",
       "posthog/jeeves": null,
       "posthog/jevk5": null,
@@ -186,6 +191,7 @@ describe("model configurations", () => {
       "decision",
       "chat",
       "chat",
+      "chat",
       "decision",
       "decision",
     ]);
@@ -217,6 +223,10 @@ it("offers Kimi with exact OpenRouter capacity and its reasoning contract", () =
   expect(
     model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
   ).toBe("moonshotai/kimi-k3.1-pro");
+  expect(model && "tokenizer" in model ? model.tokenizer : undefined).toEqual({
+    path: "moonshotai/Kimi-K3.1-Pro",
+    revision: "d9e99b0792a5e93b78ea9bea62a68167e36ddd9e",
+  });
   expect(model?.properties).toMatchObject({
     hugging_face_id: "moonshotai/Kimi-K3.1-Pro",
     quantization: "mxfp4",
@@ -232,6 +242,32 @@ it("offers Kimi with exact OpenRouter capacity and its reasoning contract", () =
         },
       },
     ],
+  });
+});
+
+it("offers YetaLabs' Kimi K3.1 Pro Cyber without OpenRouter fallback", () => {
+  const model = catalogModels.find(
+    (item) => item.id === "yetalabs/kimi-k3.1-pro-abliterated",
+  );
+
+  expect(model?.status).toBe("available");
+  expect(model?.name).toBe("Kimi K3.1 Pro Cyber");
+  expect(
+    model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
+  ).toBeNull();
+  expect(model && "tokenizer" in model ? model.tokenizer : undefined).toEqual({
+    path: "yetalabs/Kimi-K3.1-Pro-abliterated",
+    revision: "0911ef0765f49d26dfa25bb0d071f29463f8000b",
+  });
+  expect(model?.properties).toMatchObject({
+    hugging_face_id: "yetalabs/Kimi-K3.1-Pro-abliterated",
+    quantization: "mxfp4",
+    tokenizer: "Kimi K3.1",
+    input_modalities: [{ type: "text" }],
+    reasoning: {
+      supported_efforts: ["low", "high", "max"],
+      default_effort: "max",
+    },
   });
 });
 

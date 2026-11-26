@@ -954,12 +954,6 @@
   gap: calc(0.4 * var(--u));
 }
 
-.gr-root .gr-roadmap-note {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: 0.8125rem;
-}
-
 /* 768–1200px: the buttons sit under the description instead of in a column. */
 @media (min-width: 48.01rem) and (max-width: 75rem) {
   .gr-roadmap-table,

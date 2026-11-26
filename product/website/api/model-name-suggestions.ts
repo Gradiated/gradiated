@@ -91,27 +91,36 @@ export const POST = async (request: Request): Promise<Response> => {
   }
 
   const input = await readSubmission(request);
-  if (
-    !input ||
-    typeof input !== "object" ||
-    !("modelId" in input) ||
-    !("suggestion" in input)
-  ) {
+  if (!input || typeof input !== "object" || !("modelId" in input)) {
     return fail("Invalid suggestion", 400);
   }
 
   const entry = roadmapEntries.find(
     (candidate) => candidate.id === input.modelId,
   );
-  const suggestion =
-    typeof input.suggestion === "string" ? input.suggestion.trim() : "";
-  if (
-    !entry ||
-    !canSuggestName(entry) ||
-    !suggestion ||
-    suggestion.length > MODEL_NAME_SUGGESTION_MAX_LENGTH
-  ) {
-    return fail("Invalid suggestion", 400);
+  if (!entry) return fail("Invalid suggestion", 400);
+
+  /* An upvote on an unreleased roadmap model, or a name suggestion. */
+  let heading: string;
+  let detail: string;
+  if ("vote" in input) {
+    if (input.vote !== "up" || entry.release) return fail("Invalid vote", 400);
+    heading = `Upvote for ${entry.name ?? entry.category}`;
+    detail = entry.name ? entry.category : entry.description;
+  } else {
+    const suggestion =
+      "suggestion" in input && typeof input.suggestion === "string"
+        ? input.suggestion.trim()
+        : "";
+    if (
+      !canSuggestName(entry) ||
+      !suggestion ||
+      suggestion.length > MODEL_NAME_SUGGESTION_MAX_LENGTH
+    ) {
+      return fail("Invalid suggestion", 400);
+    }
+    heading = `Model name suggestion for ${entry.category}`;
+    detail = suggestion;
   }
 
   const webhook = slackWebhook();
@@ -128,20 +137,17 @@ export const POST = async (request: Request): Promise<Response> => {
       redirect: "error",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        text: `Model name suggestion for ${entry.category}`,
+        text: heading,
         unfurl_links: false,
         unfurl_media: false,
         blocks: [
           {
             type: "section",
-            text: {
-              type: "plain_text",
-              text: `Model name suggestion for ${entry.category}`,
-            },
+            text: { type: "plain_text", text: heading },
           },
           {
             type: "section",
-            text: { type: "plain_text", text: suggestion },
+            text: { type: "plain_text", text: detail },
           },
         ],
       }),

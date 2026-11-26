@@ -99,3 +99,26 @@ test("throttles repeated submissions from one client", async () => {
 
   expect(deliver).toHaveBeenCalledTimes(4);
 });
+
+const vote = (modelId: string, value: unknown = "up") =>
+  POST(
+    new Request(`${localOrigin}/api/model-name-suggestions`, {
+      method: "POST",
+      headers: { Origin: localOrigin, "Content-Type": "application/json" },
+      body: JSON.stringify({ modelId, vote: value }),
+    }),
+  );
+
+test("upvotes on unreleased models go to Slack", async () => {
+  expect((await vote("task-routing")).status).toBe(204);
+  expect((await vote("code-review")).status).toBe(204);
+  expect(deliver).toHaveBeenCalledTimes(2);
+  const body = JSON.parse(deliver.mock.calls[0][1].body);
+  expect(body.text).toBe("Upvote for Linden-2");
+});
+
+test("rejects upvotes on released models and unknown vote values", async () => {
+  expect((await vote("linden-1")).status).toBe(400);
+  expect((await vote("code-review", "down")).status).toBe(400);
+  expect(deliver).not.toHaveBeenCalled();
+});

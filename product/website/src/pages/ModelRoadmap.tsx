@@ -61,6 +61,13 @@ export const ModelRoadmap = (): ReactElement => {
       ...current,
       votes: { ...current.votes, [entry.id]: voted },
     });
+    // Each upvote goes to the team's Slack; removing one is local only.
+    if (voted)
+      void fetch("/api/model-name-suggestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ modelId: entry.id, vote: "up" }),
+      }).catch(() => undefined);
 
     setFeedback(
       saved
@@ -186,9 +193,6 @@ export const ModelRoadmap = (): ReactElement => {
               })}
             </tbody>
           </table>
-          <p className="gr-roadmap-note">
-            Preview votes are saved in this browser.
-          </p>
           <span className="gr-visually-hidden" role="status">
             {feedback}
           </span>

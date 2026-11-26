@@ -217,6 +217,53 @@ async fn a_model_deserializes_into_the_type_the_gateway_serves() {
 
 #[tokio::test]
 #[ignore = "requires the local Compose PostgreSQL with migrations applied"]
+async fn a_model_reads_deployments_attached_to_its_aliases() {
+    let reader = local_reader();
+    let tenant = Tenant::insert(&reader).await;
+    let canonical_id = format!("reader-canonical/{}", tenant.organization_id);
+    let record = crate::test_support::model_record(true);
+    let client = reader.client().await.unwrap();
+
+    client
+        .execute(
+            "update models set status = 'retired' where id = $1",
+            &[&tenant.model_id],
+        )
+        .await
+        .unwrap();
+    client
+        .execute(
+            "insert into models (id, aliases, name, status, properties, type)
+             values ($1, array[$2]::text[], 'Canonical', 'available', $3::text::jsonb, 'chat')",
+            &[
+                &canonical_id,
+                &tenant.model_id,
+                &record["properties"].to_string(),
+            ],
+        )
+        .await
+        .unwrap();
+
+    for lookup in [&canonical_id, &tenant.model_id] {
+        let json = reader
+            .model_json(lookup)
+            .await
+            .unwrap()
+            .expect("canonical and alias lookups should resolve");
+        let model: GatewayModel = serde_json::from_str(&json).unwrap();
+        assert_eq!(model.id, canonical_id);
+        assert_eq!(model.deployments.len(), 1);
+    }
+
+    client
+        .execute("delete from models where id = $1", &[&canonical_id])
+        .await
+        .unwrap();
+    tenant.remove(&reader).await;
+}
+
+#[tokio::test]
+#[ignore = "requires the local Compose PostgreSQL with migrations applied"]
 async fn an_organization_model_carries_its_owner() {
     let reader = local_reader();
     let tenant = Tenant::insert(&reader).await;

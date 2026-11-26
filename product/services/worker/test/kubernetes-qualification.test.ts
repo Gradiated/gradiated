@@ -193,4 +193,35 @@ describe("Kubernetes SDK qualification", () => {
     );
     expect(JSON.stringify(patch)).not.toContain('"value":"true"');
   });
+
+  it("qualifies pods carrying a retired alias against the canonical model ID", async () => {
+    const current = pod();
+    current.metadata.annotations["gradiated.com/serving-model-id"] =
+      "dealignai/glm-5.3-flash-uncensored";
+    let verified: unknown;
+    let patches = 0;
+    const request = async (path: string, method?: string) => {
+      if (method === "PATCH") patches += 1;
+      return path.includes("?") ? { items: [current], metadata: {} } : current;
+    };
+    const modelMap = new Map([
+      ["glm-5.3-flash-cyber", "glm-5.3-flash-cyber"],
+      ["dealignai/glm-5.3-flash-uncensored", "glm-5.3-flash-cyber"],
+    ]);
+
+    await qualifyKubernetesPod(
+      "gpu-inference",
+      request,
+      modelMap,
+      async (input) => {
+        verified = input;
+      },
+    );
+
+    expect(verified).toMatchObject({
+      modelId: "glm-5.3-flash-cyber",
+      deploymentIds: [current.metadata.uid],
+    });
+    expect(patches).toBe(1);
+  });
 });

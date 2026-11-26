@@ -174,6 +174,7 @@ select json_build_object(
           )
         from model_deployments
         where model_deployments.model_id = models.id
+           or model_deployments.model_id = any(models.aliases)
       ),
       '[]'::json
     )

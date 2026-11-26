@@ -347,15 +347,17 @@ if (process.env.GPU_KUBERNETES_NAMESPACE) {
                 const models = await catalog.listModels({
                   includeOrganizationModels: true,
                 });
-                const availableModelIds = new Set(
-                  models
-                    .filter((model) => model.status === "available")
-                    .map((model) => model.id),
-                );
+                const availableModels = new Map<string, string>();
+                for (const model of models) {
+                  if (model.status !== "available") continue;
+                  availableModels.set(model.id, model.id);
+                  for (const alias of model.aliases)
+                    availableModels.set(alias, model.id);
+                }
                 await qualifyKubernetesPod(
                   namespace,
                   request,
-                  availableModelIds,
+                  availableModels,
                   (input) => runSdkQualification(input, signal),
                 );
               }

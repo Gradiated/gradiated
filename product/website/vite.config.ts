@@ -59,12 +59,14 @@ const modelNameSuggestions: Plugin = {
   name: "model-name-suggestions",
   apply: "serve",
   configureServer(server) {
-    // Vercel provides this in deployments; locally it comes from .env.local.
-    process.env.MODEL_NAME_SLACK_WEBHOOK_URL ??= loadEnv(
-      server.config.mode,
-      process.cwd(),
+    // Vercel provides these in deployments; locally they come from .env.local.
+    const local = loadEnv(server.config.mode, process.cwd(), [
       "MODEL_NAME_",
-    ).MODEL_NAME_SLACK_WEBHOOK_URL;
+      "KV_",
+      "UPSTASH_",
+    ]);
+    for (const [key, value] of Object.entries(local))
+      process.env[key] ??= value;
     server.middlewares.use(
       "/api/model-name-suggestions",
       async (request, response) => {

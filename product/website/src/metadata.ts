@@ -29,9 +29,9 @@ export const formatPageTitle = (title: string): string =>
 
 const pageMetadata: Record<string, PageMetadataContent> = {
   "/": {
-    title: "Run open models",
+    title: "Open source AI lab",
     description:
-      "Gradiated trains a router for your workload, using open models where they meet your quality requirements and frontier models where they’re needed.",
+      "Gradiated builds open models for everyday software work and trains custom models for teams moving workloads off frontier APIs.",
   },
   "/about/": {
     title: "About",
@@ -63,11 +63,6 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     title: "Inference",
     description:
       "Open-model inference priced for the latency your workload requires.",
-  },
-  "/hardware/": {
-    title: "Hardware",
-    description:
-      "Inference hardware designed for efficient, long-running cloud workloads.",
   },
   "/artwork-generator/": {
     title: "Artwork generator",

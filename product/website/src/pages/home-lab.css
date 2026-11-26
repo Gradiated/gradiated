@@ -1,0 +1,43 @@
+.gr-root .gr-lab-hero {
+  gap: clamp(1rem, 2.4vw, 1.75rem);
+  padding-bottom: clamp(3.5rem, 7vw, 6.5rem);
+}
+
+.gr-root .gr-lab-hero .gr-home-title {
+  max-width: 17ch;
+}
+
+.gr-lab-lede {
+  max-width: 61ch;
+  margin: 0;
+  color: var(--color-text-muted);
+  font: 400 clamp(1.125rem, 2vw, 1.375rem)/1.5 var(--font-body);
+}
+
+.gr-root .gr-lab-hero .gr-home-actions {
+  margin: 0;
+}
+
+.gr-lab-cta-copy {
+  max-width: 43ch;
+}
+
+.gr-roadmap-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.gr-roadmap-table :is(th, td) {
+  padding: 0.5em;
+  border: 1px solid var(--color-text);
+  text-align: left;
+  vertical-align: top;
+}
+
+.gr-roadmap-table thead th:first-child {
+  width: 24%;
+}
+
+.gr-roadmap-table thead th:last-child {
+  width: 18%;
+}

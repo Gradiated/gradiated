@@ -191,102 +191,102 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/docs/training/": {
     title: "Training overview",
     description:
-      "Train routers, classifiers, reward models, and fine-tuned or RL-tuned LLMs from traces or environments using Gradiated.",
+      "Train routers, decision models, and fine-tuned models from your production logs or test environments.",
   },
   "/docs/training/trajectories/": {
     title: "Trajectories",
     description:
-      "Push, import, score, filter, and sync LLM trajectories from PostHog, Langfuse, Braintrust, OpenTelemetry, or Parquet files into Gradiated datasets.",
+      "Store production logs, labeled examples, and agent runs in a Gradiated Dataset from files, code, or observability tools.",
   },
   "/docs/training/recipes/": {
     title: "Training recipes",
     description:
-      "Run composable recipes for routers, classifiers, SFT, DPO, GRPO, distillation, Cartridges, reward models, and embeddings with smart defaults.",
+      "Pick a recipe, check the cost with a dry run, and train routers, decision models, fine-tunes, RL agents, and more.",
   },
   "/docs/training/rubrics/": {
     title: "Rubrics",
     description:
-      "Grade datasets and RL rollouts with composable scorers, validators, and model-based Judges.",
+      "Score model outputs and datasets with Python checks, validators, or an LLM judge.",
   },
   "/docs/training/environments/": {
     title: "Environments",
     description:
-      "Define typed tasks and run multi-turn RL rollouts against Harbor benchmarks, MCP servers, Docker Compose apps, and existing agent harnesses.",
+      "Run your agent against your own tools, databases, Harbor tasks, or Docker containers during reinforcement learning.",
   },
   "/docs/training/traces-to-environments/": {
     title: "Building an environment from traces",
     description:
-      "Turn production LLM traces into verifiable RL environments: trace-to-task rubrics, mock tool-replay sandboxes, and fail-to-pass Harbor benchmarks.",
+      "Turn existing production logs into an RL environment, starting simple and adding containers only when you need them.",
   },
   "/docs/training/artifacts/": {
     title: "Artifacts",
     description:
-      "Inspect, evaluate, merge, download, and deploy immutable .grad model artifacts produced by Gradiated training runs.",
+      "Inspect, test, merge, download, and deploy versioned .grad model artifacts saved by training runs.",
   },
   "/docs/training/endpoints/": {
     title: "Endpoints",
     description:
-      "Serve one or more .grad artifacts behind named endpoints with shadow testing, canary rollouts, extensible strategies, and feedback capture.",
+      "Serve trained artifacts behind a stable endpoint name, roll out new versions safely, and log real-world outcomes.",
   },
   "/docs/training/custom-loops/": {
     title: "Custom training loops",
     description:
-      "Build custom RL, preference, distillation, and PyTorch loss loops directly on Gradiated Trainer and Artifact primitives.",
+      "Write your own Python training loop on Gradiated Trainer and Artifact when a built-in recipe isn't flexible enough.",
   },
   "/docs/training/advanced-objectives/": {
     title: "Advanced objectives",
     description:
-      "Research-grade PyTorch losses, PPO, GSPO, CISPO, SCoRe, step-level PRMs, ColBERT + Matryoshka embeddings, and SDFT on Gradiated.",
+      "Custom PyTorch losses and specialized training patterns built on Trainer and CustomLoss.",
   },
   "/docs/training/self-hosting/": {
     title: "Self-hosting grad",
     description:
-      "Run the Gradiated training and serving server locally with Docker Compose or in production Kubernetes with the official Helm chart.",
+      "Run Gradiated on your laptop with Docker Compose or in your own Kubernetes cluster with Helm.",
   },
   "/docs/training/recipes/router/": {
     title: "Model router guide",
     description:
-      "Train and deploy a calibrated SLA-bounded model router using Gradiated trajectories and fallback probes.",
+      "Send each request to the cheapest model that still meets your quality bar.",
   },
-  "/docs/training/recipes/classifier/": {
-    title: "Classifiers guide",
+  "/docs/training/recipes/decision-model/": {
+    title: "Decision models guide",
     description:
-      "Train calibrated binary guardrails, multiclass triage models, and ordinal effort detectors with automatic confidence fallback.",
+      "Train your own fast decision model for categories, yes/no checks, or ordered ratings.",
   },
   "/docs/training/recipes/sft/": {
     title: "Supervised fine-tuning (SFT) guide",
     description:
-      "Fine-tune open models on verified gold trajectories with SFTRecipe and deploy with automatic syntax fallback.",
+      "Fine-tune an open model on examples of the exact outputs you want with SFTRecipe.",
   },
   "/docs/training/recipes/dpo/": {
     title: "Preference tuning (DPO) guide",
     description:
-      "Align fine-tuned models away from recurring failure modes using preference pairs with DPORecipe.",
+      "Teach a model which answers you prefer using pairs of good and bad examples with DPORecipe.",
   },
   "/docs/training/recipes/rl-agents/": {
     title: "RL for agents guide",
     description:
-      "Train reasoning and tool-use agents with GRPORecipe, rubrics, judges, and verifiable environments.",
+      "Train a model with reinforcement learning by grading its answers with code or another model.",
   },
   "/docs/training/recipes/distillation/": {
     title: "Model distillation guide",
     description:
-      "Distill larger teacher models into fast 4B–8B students with on-policy top-k KL using DistillRecipe.",
+      "Train a small, fast model to copy a larger one using your own prompts with DistillRecipe.",
   },
   "/docs/training/recipes/cartridges/": {
     title: "Context Cartridges guide",
     description:
-      "Compress 30k–100k token static corpora and repeated system prompts into hot-swappable KV-cache Cartridges with CartridgeRecipe.",
+      "Turn a long, repeated prompt or doc set into a small add-on you don't have to resend on every request.",
   },
   "/docs/training/recipes/reward-models/": {
     title: "Reward models guide",
     description:
-      "Train task-specific verifier models from preference pairs with RewardModelRecipe for Judges and production cascades.",
+      "Train a small model to score how good another model's answers are with RewardModelRecipe.",
   },
   "/docs/training/recipes/embeddings/": {
     title: "Embeddings guide",
     description:
-      "Fine-tune domain-specific dense embedding models on internal jargon and codebases with EmbeddingRecipe.",
+      "Fine-tune an embedding model on your own terms, docs, and codebase for better search.",
   },
   "/docs/api-reference/": {
     title: "API reference",
@@ -296,7 +296,7 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/docs/reference/primitives/": {
     title: "Primitives reference",
     description:
-      "Schemas, entities, and extensible interfaces for Record, Trajectory, Task, Environment, Trainer, Model, Artifact, and Endpoint.",
+      "Reference for the core objects and JSON schemas used across the Gradiated SDKs and API.",
   },
   "/privacy/": {
     title: "Privacy",

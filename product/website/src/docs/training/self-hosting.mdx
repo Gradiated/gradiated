@@ -1,8 +1,8 @@
 # Self-hosting
 
-<DocsLead>Run the exact same Gradiated API, training worker, and serving runtime on your laptop with Docker Compose or in production Kubernetes with Helm.</DocsLead>
+<DocsLead>Run Gradiated on your laptop with Docker Compose or in your own Kubernetes cluster with Helm.</DocsLead>
 
-Self-hosted deployments expose the same OpenAPI 3.1 contract, `.grad` artifact format, and SDKs as Gradiated Cloud. Switching between local, self-hosted Kubernetes, and Gradiated Cloud requires changing only `GRAD_BASE_URL` — zero application code changes.
+Self-hosted deployments use the same API, `.grad` artifact format, and SDKs as Gradiated Cloud. Switching between local, self-hosted Kubernetes, and Gradiated Cloud only requires changing `GRAD_BASE_URL`.
 
 ## Local development (Docker Compose)
 
@@ -11,7 +11,7 @@ Start a complete local stack in one command with the `grad` CLI:
 ```bash
 brew install gradiated/tap/grad
 
-# CPU stack (default): routers, classifiers, trace sync, and local serving
+# CPU stack (default): routers, decision models, trace sync, and local serving
 grad local up
 
 # GPU stack (requires NVIDIA Container Toolkit): adds CUDA trainer and LLM serving
@@ -161,7 +161,7 @@ curl https://grad.internal.example/v1/artifacts \
 | Component | Local (`grad local up`) | Self-hosted Kubernetes (Helm) | Gradiated Cloud |
 | --- | --- | --- | --- |
 | Base URL | `http://localhost:8787` | `https://grad.internal.example` | `https://api.gradiated.com` |
-| API & ONNX runtime | `grad-server` container | `grad-server` Deployment (HPA) | Multi-region managed runtime + zero-hop gateway |
+| API & ONNX runtime | `grad-server` container | `grad-server` Deployment (HPA) | Multi-region managed runtime and gateway |
 | Training workers | CPU container (`--gpu` for CUDA) | CPU + optional GPU Deployments | Managed CPU and GPU pools |
 | State & queue | Local Postgres + Valkey | External Postgres + Valkey | Managed Postgres, Valkey, and Temporal |
 | Artifacts & trajectories | Local volume or MinIO | S3 / GCS / MinIO | KMS-encrypted S3 |

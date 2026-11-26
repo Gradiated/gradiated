@@ -1,8 +1,8 @@
 # Custom loops
 
-<DocsLead>Write your own RL, preference, distillation, or representation training loop in Python using the exact same typed adapters, losses, and optimizers that power Gradiated's recipes.</DocsLead>
+<DocsLead>Write your own Python training loop when a built-in recipe isn't flexible enough.</DocsLead>
 
-Custom loops give you direct access to the primitives behind Gradiated's [recipes](/docs/training/recipes/). Your loop runs on any CPU machine (your laptop, CI, or an orchestrator) and drives remote `Trainer` and `Artifact` endpoints over HTTP.
+Custom loops let you drive the remote `Trainer` and `Artifact` APIs directly from any CPU machine (your laptop, CI, or an orchestrator) using the same adapters, losses, and optimizers that power the built-in [recipes](/docs/training/recipes/).
 
 Install the Python SDK with the optional `torch` extra when writing client-side `CustomLoss` subclasses:
 

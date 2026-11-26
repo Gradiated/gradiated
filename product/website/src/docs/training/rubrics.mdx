@@ -1,16 +1,16 @@
 # Rubrics
 
-<DocsLead>Grade model outputs and datasets with composable, statically typed scorers and model-based judges — from deterministic syntax checks to frontier or fine-tuned verifiers.</DocsLead>
+<DocsLead>Score model outputs and datasets with Python checks, validators, or an LLM judge.</DocsLead>
 
-A **`Rubric`** combines one or more weighted **`Scorer`**s into a single reward while storing every individual sub-score in [`trajectory.scores`](/docs/training/trajectories/). Use the exact same `Rubric` or `Judge` in three places:
+A **`Rubric`** combines one or more weighted **`Scorer`**s into an overall score while saving each individual check in [`trajectory.scores`](/docs/training/trajectories/). You can reuse the same `Rubric` or `Judge` in three places:
 
-- **Dataset curation:** score historical traces once via [`dataset.score(rubric)`](/docs/training/trajectories/) and filter cheaply afterward.
+- **Cleaning datasets:** score old logs once with [`dataset.score(rubric)`](/docs/training/trajectories/), then filter on the scores.
 - **Managed RL:** pass `rubric=` directly to [`GRPORecipe`](/docs/training/recipes/rl-agents/).
-- **Stateful rollouts:** attach a `Rubric` to an [`Environment`](/docs/training/environments/) so checks can inspect live databases, APIs, or containers before teardown.
+- **Stateful environments:** attach a `Rubric` to an [`Environment`](/docs/training/environments/) so checks can inspect your database, API, or container before it shuts down.
 
-## Composing a `Rubric`
+## Building a `Rubric`
 
-Combine deterministic checks (validators, unit tests, length limits) with a model-based **`Judge`** so fast rules catch obvious failures and the judge grades nuanced quality:
+Mix fast code checks (syntax validators, unit tests, length checks) with a **`Judge`** so obvious errors are caught immediately and the model judge only grades nuance:
 
 ```python
 from grad import Judge, Model, Rubric, Scorer, validators
@@ -26,22 +26,22 @@ rubric = Rubric([
 ])
 ```
 
-## Scorer hierarchy
+## Types of scorers
 
-Each grading pattern is a typed class so static type checkers verify your function signatures automatically:
+Pick the scorer class that matches how you grade an answer:
 
-| Class | Subclasses / signature | Use it for |
+| Class | Signature | When to use it |
 | --- | --- | --- |
-| **`Scorer`** | `(traj: Trajectory) -> float` | Deterministic checks (`validators.SQL()`, `validators.TypeScriptAST()`, `validators.JSONSchema(...)`), exact match, or custom Python functions. |
-| **`Judge(Scorer)`** | `Judge(name, model, prompt=...)` | Prompted frontier-model judges (`Model("claude-sonnet-4-6")`) **or** a fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact` (no prompt needed for scalar reward models). |
-| **`StatefulScorer(Scorer)`** | `(traj: Trajectory, handle: H) -> float` | Checks that query live Postgres rows, Redis keys, HTTP APIs, or container files inside an [`Environment`](/docs/training/environments/) before teardown. |
-| **`GroupScorer`** | `(group: list[Trajectory]) -> list[float]` | Grading all `G` rollouts for the same prompt side by side (for example, **`PairwiseJudge(GroupScorer)`** for comparative win rates). |
+| **`Scorer`** | `(traj: Trajectory) -> float` | Fast code checks (`validators.SQL()`, `validators.TypeScriptAST()`, `validators.JSONSchema(...)`), exact matches, or your own Python function. |
+| **`Judge(Scorer)`** | `Judge(name, model, prompt=...)` | Grade with a frontier `Model` (`Model("claude-sonnet-4-6")`) **or** a fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact` (no prompt needed for a reward model). |
+| **`StatefulScorer(Scorer)`** | `(traj: Trajectory, handle: H) -> float` | Checks that query live Postgres rows, Redis keys, HTTP endpoints, or container files inside an [`Environment`](/docs/training/environments/) before cleanup. |
+| **`GroupScorer`** | `(group: list[Trajectory]) -> list[float]` | Compare multiple candidate answers for the same prompt side by side (for example, **`PairwiseJudge(GroupScorer)`**). |
 
-To reuse scores already stored on imported production traces, pass `Scorer.from_score("task_success", weight=1.0)`.
+To reuse a score already stored on your imported logs, pass `Scorer.from_score("task_success", weight=1.0)`.
 
-## Using a `Judge` on a `Dataset`
+## Scoring a `Dataset` with a `Judge`
 
-Call `dataset.score(judge)` to grade historical traces in parallel on the server and persist scores onto `trajectory.scores`. Already-scored trajectories are skipped automatically, so you can adjust filter thresholds or reuse scores across [recipes](/docs/training/recipes/) for $0:
+`dataset.score(judge)` grades logs in parallel on the server and saves the results to `trajectory.scores`. Already-scored rows are skipped automatically, so you can change filter thresholds or reuse scores across [recipes](/docs/training/recipes/) without paying again:
 
 ```python
 from grad import Grad, Judge, Model
@@ -58,13 +58,13 @@ scored = dataset.score(judge).wait()
 good = scored.filter(lambda t: t.scores["resolved"] >= 0.8)
 ```
 
-<DocsCallout label="Scaling past frontier judge costs" tone="tip">
-Start with a frontier `Model` in `Judge` to validate your rubric quickly. Once you have 1,000+ graded pairs, train a fast 8B verifier with [`RewardModelRecipe`](/docs/training/recipes/reward-models/) and pass that [`Artifact`](/docs/training/artifacts/) straight into `Judge(name="resolved", model=verifier_artifact)`.
+<DocsCallout label="Cutting judge costs at scale" tone="tip">
+Start with a frontier `Model` in `Judge` to get working quickly. Once you have 1,000+ graded pairs, train a fast 8B [reward model](/docs/training/recipes/reward-models/) with `RewardModelRecipe` and pass that [`Artifact`](/docs/training/artifacts/) into `Judge(name="resolved", model=verifier_artifact)`.
 </DocsCallout>
 
-## Stateful grading inside an `Environment`
+## Grading live state inside an `Environment`
 
-When grading requires checking live application state (such as verifying a row was inserted in Postgres or a test suite passes in a container), use `StatefulScorer`:
+When you need to check what the agent actually changed (for example, whether a row was inserted in Postgres or a test suite passes in a container), use `StatefulScorer`:
 
 ```python
 from grad import Rubric, Scorer, StatefulScorer

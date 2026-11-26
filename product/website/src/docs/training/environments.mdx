@@ -1,28 +1,28 @@
 # Environments
 
-<DocsLead>Run multi-turn RL rollouts against Harbor benchmarks, MCP servers, Docker Compose stacks, or your existing OpenAI-compatible agent harness — right on your own infrastructure.</DocsLead>
+<DocsLead>Run your agent against your own tools, databases, or containers during reinforcement learning.</DocsLead>
 
-Environments run **outside the GPU training cluster**, on your own CPU machines, Kubernetes cluster, or sandbox pool, and call Gradiated [`Model` / `Artifact`](/docs/training/artifacts/) and [`Trainer`](/docs/training/custom-loops/) endpoints over HTTP. Your containers, seed scripts, and internal credentials never leave your network.
+Environments run **on your own machines** (a laptop, CPU cluster, or Kubernetes) and talk to Gradiated's [`Model` / `Artifact`](/docs/training/artifacts/) and [`Trainer`](/docs/training/custom-loops/) APIs over HTTP. Your containers, seed data, and internal credentials stay inside your network.
 
 ## `Task`, `Environment`, and `Rubric`
 
-| Entity | Responsibility | Relationship |
+| Concept | What it does | How they fit together |
 | --- | --- | --- |
-| **`Task`** | One immutable problem instance: `id`, initial `messages`/`tools`, environment `seed` (repo SHA, DB fixture, or Harbor task path), optional `expected` reference, and `timeout_s`. Convert from a trace via `Task.from_trajectory(t)`. | Many `Task`s per run. |
-| **`Environment[H]`** | The execution harness that turns any `Task` into an isolated handle `H` (`setup`), runs agent tool calls (`step`), invokes your [`Rubric`](/docs/training/rubrics/) before cleanup (`evaluate`), and destroys resources (`teardown`). | 1 `Environment` executes thousands of `Task`s. |
-| **[`Rubric`](/docs/training/rubrics/)** | Weighted grading logic combining deterministic `Scorer`s, `Judge`s, `StatefulScorer`s, and `GroupScorer`s into `trajectory.scores`. | Passed into the `Environment` (and/or combined with per-task test scripts like Harbor's `tests/test.sh`). |
+| **`Task`** | One problem to solve: `id`, starting `messages` and `tools`, `seed` data (commit SHA, DB fixture, or Harbor task path), optional `expected` answer, and `timeout_s`. Build one from a log with `Task.from_trajectory(t)`. | You pass many `Task`s to a run. |
+| **`Environment[H]`** | Runs a `Task` in an isolated sandbox (`setup`), executes the agent's tool calls (`step`), runs your [`Rubric`](/docs/training/rubrics/) before cleanup (`evaluate`), and tears down the sandbox (`teardown`). | One `Environment` runs thousands of `Task`s. |
+| **[`Rubric`](/docs/training/rubrics/)** | Grades how well the agent did using `Scorer`s, `Judge`s, `StatefulScorer`s, or `GroupScorer`s and writes results into `trajectory.scores`. | Passed into the `Environment` (or paired with per-task test scripts like Harbor's `tests/test.sh`). |
 
-<DocsCallout label="Starting from production traces?" tone="tip">
-You do not need a hand-built simulator to start RL. See [Building an environment from traces](/docs/training/traces-to-environments/) to turn a [`Dataset`](/docs/training/trajectories/) of traces into single-turn `Task`s, local mock/replay tool sandboxes, or verified Harbor benchmarks.
+<DocsCallout label="Starting from production logs?" tone="tip">
+You don't need to build a simulator from scratch to use RL. See [Traces to environments](/docs/training/traces-to-environments/) to turn an existing [`Dataset`](/docs/training/trajectories/) into simple tasks, mock tool sandboxes, or Harbor containers.
 </DocsCallout>
 
-## Standard formats and adapters (`environments.*`)
+## Built-in adapters (`environments.*`)
 
-You rarely need to write container or protocol plumbing from scratch. Standard task formats and tool harnesses plug straight into `Environment` via built-in adapters:
+If your tasks already use a standard format or tool server, plug them straight in with a built-in adapter instead of writing boilerplate:
 
 ### Harbor / Terminal-Bench (`environments.Harbor`)
 
-Load standard Harbor task directories (`instruction.md`, `task.toml`, `environment/Dockerfile`, `tests/test.sh`, and optional `solution/solve.sh`) directly into typed `Task` objects. `environments.Harbor` boots the container per rollout, isolates `tests/` until `evaluate()` runs (so the agent can never inspect test files during rollouts), parses verifier rewards into `trajectory.scores`, and lets you verify every task's oracle solution before spending training tokens:
+Load Harbor task folders (`instruction.md`, `task.toml`, `environment/Dockerfile`, `tests/test.sh`, and optional `solution/solve.sh`) straight into `Task` objects. `environments.Harbor` starts a fresh container for each attempt, keeps `tests/` hidden until `evaluate()` runs so the model cannot cheat, reads test scores into `trajectory.scores`, and lets you sanity-check every reference solution before paying for training:
 
 ```python
 from grad import environments
@@ -46,21 +46,21 @@ groups = env.rollout_groups(
 
 | Adapter | Use it for |
 | --- | --- |
-| **`environments.Harbor`** | Standard Harbor / Terminal-Bench task directories (`task.toml`, `instruction.md`, `environment/Dockerfile`, `tests/test.sh`, `solution/solve.sh`). |
-| **`environments.MCP`** | Expose any Model Context Protocol server's tools directly to the policy; `step()` invokes MCP `call_tool` and keeps tool responses read-only automatically. |
-| **`environments.DockerCompose`** | Multi-service stacks (Postgres, Redis, API) with warm-pool slot leasing and fast template-database resets. |
+| **`environments.Harbor`** | Harbor / Terminal-Bench task folders (`task.toml`, `instruction.md`, `environment/Dockerfile`, `tests/test.sh`, `solution/solve.sh`). |
+| **`environments.MCP`** | Expose tools from any Model Context Protocol server directly to the model; `step()` calls MCP `call_tool` and keeps tool responses excluded from training loss. |
+| **`environments.DockerCompose`** | Multi-container stacks (Postgres, Redis, API) with a warm pool and fast template-database resets. |
 | **`environments.from_gym(make_env)`** | Wrap any Gymnasium environment (`reset` → `setup`, `step` → `step`, `close` → `teardown`). |
 
-## Writing a custom stateful `Environment`
+## Writing a custom `Environment`
 
-When an agent modifies live state (inserting rows in Postgres, calling an internal API, or editing files), each parallel rollout needs isolation and guaranteed cleanup. `Environment` runs four hooks in strict order so your [`Rubric`](/docs/training/rubrics/) inspects live container state **before** cleanup:
+When an agent changes live state (writing to Postgres, calling an internal API, or editing files), each parallel run needs its own isolated sandbox and reliable cleanup. `Environment` runs four methods in order so your [`Rubric`](/docs/training/rubrics/) checks live state **before** anything is torn down:
 
 <DocsEnvLifecycle />
 
-1. `setup(task, rollout_id)` — start or lease an isolated environment and run your seed script.
+1. `setup(task, rollout_id)` — start or borrow an isolated sandbox and seed its initial state.
 2. `step(handle, action)` — run the agent's tool call against `handle` and return `Observation(text=..., done=...)`.
-3. `evaluate(handle, trajectory)` — score the trajectory **while the environment is still running** so `StatefulScorer` terms can query Postgres, Redis, or your API.
-4. `teardown(handle)` — stop containers or reset the database. `rollout_groups()` always runs `teardown` in a `finally:` block, even on timeout or error.
+3. `evaluate(handle, trajectory)` — score the run **while containers are still up** so `StatefulScorer` checks can query Postgres, Redis, or your API.
+4. `teardown(handle)` — stop containers or reset the database. `rollout_groups()` always runs `teardown` in a `finally:` block, even on a timeout or crash.
 
 ```python
 import subprocess
@@ -130,7 +130,7 @@ Cold-starting `docker compose up` per rollout works for small runs, but a warm p
 
 ## Plug in an existing OpenAI-based agent
 
-Already have an agent built on the OpenAI SDK, LangGraph, or an existing coding-agent harness? Wrap any live `trainer.snapshot()` with `snap.openai_client()` — every chat completion runs against the snapshot and automatically records an exact `Trajectory` with zero agent rewrite:
+Already have an agent built on the OpenAI SDK, LangGraph, or your own loop? Wrap `trainer.snapshot()` with `snap.openai_client()`. Every chat completion runs against the current training weights and records a `Trajectory` automatically, with no rewrite needed:
 
 ```python
 snap = trainer.snapshot()
@@ -157,11 +157,11 @@ groups = env.rollout_groups(
 )
 ```
 
-Every rollout enforces three guarantees automatically:
+Every run handles three things automatically:
 
-- **Read-only tool outputs:** tool responses and retrieved documents are automatically excluded from training updates so gradients apply only to tokens generated by the model.
-- **Bounded concurrency:** `max_concurrency` caps active stacks so large rollout groups do not exhaust CPU or memory.
-- **Timeout cleanup:** rollouts exceeding `timeout_s` are cancelled, assigned `reward = 0.0`, and still run `teardown()`.
+- **Tool outputs stay read-only:** tool responses and retrieved docs are excluded from training updates so the model only learns from its own tokens.
+- **Concurrency limits:** `max_concurrency` caps how many sandboxes run at once so you don't run out of CPU or RAM.
+- **Timeout cleanup:** runs that hit `timeout_s` are cancelled, get a score of `0.0`, and still run `teardown()`.
 
 <DocsNext>
   <a href="/docs/training/traces-to-environments/">

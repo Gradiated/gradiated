@@ -1,18 +1,18 @@
 # Context Cartridges
 
-<DocsLead>Compress 30k–100k tokens of repeated system prompts, API documentation, or repository manuals into a compact trainable KV-cache prefix you pay to encode once and hot-swap per tenant.</DocsLead>
+<DocsLead>Turn a long, repeated prompt or doc set into a small add-on you don't have to resend on every request.</DocsLead>
 
-When every request prepends the same long static corpus (internal runbooks, compliance rules, product docs, or codebase manuals), re-processing that context on every turn inflates prefill latency and cost.
+If every request sends the same 30k–100k tokens of runbooks, product docs, or compliance rules, you pay to re-read that text over and over and wait longer for the first token.
 
 ## How a Cartridge works
 
-A Cartridge replaces a huge static system prompt with a tiny **precomputed attention memory** (KV cache) that stays frozen-base-compatible:
+A Cartridge shrinks a long static document into a tiny **precomputed memory** (a small KV cache) that plugs into a frozen base model:
 
-1. **`context`** is the static document(s) you want to compress (`Context.from_file(...)`, `Context.from_uri("s3://...")`, or `Context.from_text(...)`).
-2. **`dataset`** is a set of 500–2,000 representative questions or tasks grounded in that corpus (`input.messages` — no gold answers required).
-3. **`num_tokens`** is the compressed Cartridge size (for example, `256` virtual KV-cache tokens standing in for a 50,000-token manual — backed by `adapters.PrefixKV(num_tokens=256)` under the hood while keeping the base model weights frozen).
+1. **`context`** is the static document you want to compress (`Context.from_file(...)`, `Context.from_uri("s3://...")`, or `Context.from_text(...)`).
+2. **`dataset`** is 500–2,000 real questions or tasks about that document (`input.messages` — no labeled answers needed).
+3. **`num_tokens`** is how small to compress it (for example, `256` virtual tokens standing in for a 50,000-token manual, stored as `adapters.PrefixKV(num_tokens=256)` while the base model weights stay untouched).
 
-During training, the full model reads `context` + each question to produce target predictions, while the Cartridge trains to match those predictions **without** `context` in the prompt. At serving time, one frozen base model can hot-swap different Cartridges per tenant or repository on every request.
+During training, the model reads `context` + each question to see what it *would* answer with the full doc, and trains the Cartridge to give the same answer **without** sending `context` in the prompt. In production, one base model can swap different Cartridges per customer or repo on every request.
 
 ## Train a Cartridge (`CartridgeRecipe`)
 

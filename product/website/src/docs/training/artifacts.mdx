@@ -1,18 +1,18 @@
 # Artifacts
 
-<DocsLead>Every completed training run exports an immutable `.grad` artifact containing model weights, metadata, and its held-out evaluation report.</DocsLead>
+<DocsLead>Every training run saves a versioned `.grad` artifact with your trained weights and evaluation results.</DocsLead>
 
-An **`Artifact`** subclasses `Model` and always represents **one** concrete, immutable model version (`support-router@2026-11-26-1`). Separating immutable artifacts from live serving [`Endpoint`](/docs/training/endpoints/) slots makes rollbacks instant and keeps offline evaluation cleanly isolated from production traffic.
+An **`Artifact`** subclasses `Model` and always points to **one** fixed version of a trained model (`support-router@2026-11-26-1`). Keeping saved artifacts separate from live [`Endpoint`](/docs/training/endpoints/)s means you can test a new version offline and roll back production in one command without touching weights.
 
 | | **Artifact** | **[Endpoint](/docs/training/endpoints/)** |
 | --- | --- | --- |
-| **Cardinality** | Always **1** immutable model | **1 or many** artifacts |
-| **Changes over time?** | Never; every retrain writes a new `name@version` | Yes; shadow, canary, promote, or roll back in place |
-| **Primary use** | Held-out evals, batch scoring (`infer_batch`), RL rollouts (`sample`), weight merges | Production serving (`infer` / `route`), traffic splits, online SLA guardrails, feedback capture |
+| **How many models?** | Always **1** fixed model version | **1 or more** artifacts |
+| **Changes over time?** | Never; every new run creates a new `name@version` | Yes; shadow, canary, promote, or roll back in place |
+| **Main uses** | Offline evals, batch scoring (`infer_batch`), RL sampling (`sample`), merging checkpoints | Live production traffic (`infer` / `route`), traffic splits, fallbacks, feedback capture |
 
-## Inspect and evaluate an artifact
+## Inspect and test an artifact
 
-Retrieve any saved artifact with `client.artifacts.get(...)` (or directly from a completed run via `run.artifact`). You can inspect its held-out `eval_report` or run batched offline evaluation directly against the pinned weights:
+Load any saved artifact with `client.artifacts.get(...)` (or use `run.artifact` straight from a finished run). Check its held-out `eval_report` or score a batch of examples offline before deploying:
 
 ```python
 from grad import Grad, Record
@@ -76,9 +76,9 @@ grad deploy support-router@2026-11-26-1 --canary 0.10
   </DocsCodeTab>
 </DocsCodeTabs>
 
-## Merge artifacts (zero training tokens)
+## Merge artifacts without retraining
 
-Combine two specialist checkpoints built from the same base model (for example, a coding specialist and a reasoning specialist) into a single new immutable `Artifact` with `client.artifacts.merge()` and an extensible `mergers.*` strategy (`mergers.TIES`, `mergers.Linear`, `mergers.DARE`, `mergers.SLERP`):
+Combine two models trained from the same base (for example, a coding model and a reasoning model) into a single new `Artifact` with `client.artifacts.merge()`. Supported merge methods are `mergers.TIES`, `mergers.Linear`, `mergers.DARE`, and `mergers.SLERP`:
 
 ```python
 from grad import Grad, mergers

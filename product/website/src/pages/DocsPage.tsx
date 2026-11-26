@@ -55,7 +55,7 @@ import DocsTrainingRubrics from "../docs/training/rubrics.mdx";
 import DocsTrainingSelfHosting from "../docs/training/self-hosting.mdx";
 import DocsTrainingTracesToEnvironments from "../docs/training/traces-to-environments.mdx";
 import DocsRecipeCartridges from "../docs/training/recipes/cartridges.mdx";
-import DocsRecipeClassifier from "../docs/training/recipes/classifier.mdx";
+import DocsRecipeDecisionModel from "../docs/training/recipes/decision-model.mdx";
 import DocsRecipeDistillation from "../docs/training/recipes/distillation.mdx";
 import DocsRecipeDpo from "../docs/training/recipes/dpo.mdx";
 import DocsRecipeEmbeddings from "../docs/training/recipes/embeddings.mdx";
@@ -187,10 +187,10 @@ export const documents = {
     path: "/docs/training/recipes/router/",
     Component: DocsRecipeRouter,
   },
-  "recipe-classifier": {
-    title: "Classifiers",
-    path: "/docs/training/recipes/classifier/",
-    Component: DocsRecipeClassifier,
+  "recipe-decision-model": {
+    title: "Decision models",
+    path: "/docs/training/recipes/decision-model/",
+    Component: DocsRecipeDecisionModel,
   },
   "recipe-sft": {
     title: "Supervised fine-tuning (SFT)",
@@ -273,7 +273,7 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
     heading: "Recipe guides",
     items: [
       "recipe-router",
-      "recipe-classifier",
+      "recipe-decision-model",
       "recipe-sft",
       "recipe-dpo",
       "recipe-rl-agents",
@@ -302,6 +302,7 @@ export const legacyPaths: Record<string, string> = {
   "/docs/migrate/": documents.quickstart.path,
   "/docs/streaming/": documents["openai-sdk"].path,
   "/docs/tool-calling/": documents["openai-sdk"].path,
+  "/docs/training/recipes/classifier/": documents["recipe-decision-model"].path,
   "/docs/training/recipes/sft-dpo/": documents["recipe-sft"].path,
   "/docs/usage/": documents.index.path,
 };

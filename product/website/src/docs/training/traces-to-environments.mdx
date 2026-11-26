@@ -1,18 +1,18 @@
 # Building an environment from traces
 
-<DocsLead>Turn production traces into a verifiable RL environment — starting from simple prompt-and-rubric tasks, upgrading to mock tool-replay sandboxes, or synthesizing Harbor container benchmarks with automated fail-to-pass verification.</DocsLead>
+<DocsLead>Turn your existing production logs into an RL environment, starting simple and adding containers only when you need them.</DocsLead>
 
-Most teams start with thousands of logged production traces in a [`Dataset`](/docs/training/trajectories/), not a hand-built RL simulator. You do not need to build a full container benchmark on day one: progress through three levels of fidelity using the same [`Task` and `Environment`](/docs/training/environments/) and [`Rubric`](/docs/training/rubrics/) primitives.
+Most teams start with thousands of logged requests in a [`Dataset`](/docs/training/trajectories/), not a ready-made RL simulator. You don't need to build containers on day one. Start at the simplest level that fits your task and move up using the same [`Task` and `Environment`](/docs/training/environments/) and [`Rubric`](/docs/training/rubrics/) classes:
 
-| Level | Best for | Setup effort | What runs during rollouts |
+| Level | Best for | Setup time | How it works |
 | --- | --- | --- | --- |
-| **1. Trace → `Task` + `Rubric`** | SQL, diff-merge, JSON extraction, support replies, single-turn tool selection | Minutes | Prompt + tools from the trace; graded by `validators.*`, unit tests, or a `Judge`. |
-| **2. Trace → Mock / Replay Tool Env** | Multi-turn tool-calling agents (`get_order`, `search_kb`, `issue_refund`) | Hours | Local in-memory / SQLite state seeded from trace tool outputs; write tools mutate local state safely with zero prod side effects. |
-| **3. Trace → Harbor Sandbox** | Coding agents, CLI/DevOps debugging, full-stack web apps | 1–2 days | Standard Harbor container tasks (`Dockerfile` + `tests/test.sh` + `solution/solve.sh`) validated with fail-to-pass oracle checks. |
+| **1. Trace → `Task` + `Rubric`** | SQL, diff-merge, JSON extraction, support replies, single-turn tool calls | Minutes | Uses the prompt and tools from each log; graded by `validators.*`, unit tests, or a `Judge`. |
+| **2. Trace → Mock tool sandbox** | Multi-turn tool-calling agents (`get_order`, `search_kb`, `issue_refund`) | Hours | Seeds a local dict or SQLite DB from the log's tool outputs; write tools update local state safely without touching production. |
+| **3. Trace → Harbor container** | Coding agents, CLI debugging, full-stack web apps | 1–2 days | Harbor container tasks (`Dockerfile`, `tests/test.sh`, `solution/solve.sh`) verified so tests fail before the fix and pass after. |
 
-## Step 0: Mine high-signal traces first
+## Step 0: Pick examples the model actually struggles on
 
-Training RL on traces that the base model already solves 100% of the time (or can never solve) wastes tokens on zero-variance groups. Before constructing tasks, score your dataset with a `Judge` or existing outcome scores and focus on **borderline failures, escalations, and human-corrected sessions**:
+Running RL on prompts the model already gets right 100% of the time (or never solves) wastes money because every attempt gets the same score. Score your dataset first with a `Judge` or your existing outcome scores, then keep **failures, escalations, and human-edited answers**:
 
 ```python
 from grad import Grad, Judge, Model
@@ -36,7 +36,7 @@ print(f"Selected {hard_traces.count()} candidate traces for environment tasks")
 
 ## Level 1: Trace to `Task` + `Rubric` (single-turn)
 
-When the agent does not need multi-turn external state, convert curated traces directly into typed `Task`s with `Task.from_trajectory(t)`. Each `Task` preserves `input.messages`, `input.tools`, `expected_output`, and `metadata`, ready for `GRPORecipe` or a custom loop:
+If your task doesn't need multi-turn external state, turn your filtered logs into `Task`s with `Task.from_trajectory(t)`. Each `Task` keeps `input.messages`, `input.tools`, `expected_output`, and `metadata`, ready to pass into `GRPORecipe` or a custom loop:
 
 ```python
 from grad import Grad, Judge, Model, Rubric, Scorer, Task, validators
@@ -61,14 +61,14 @@ tasks = [Task.from_trajectory(t) for t in hard_traces]
 
 If you already have a database fixture or unit tests that can execute the generated SQL or code patch, run them deterministically inside a `Scorer` and reserve `Judge` only for subjective quality checks.
 
-## Level 2: Trace to Mock / Replay Tool Environment (multi-turn)
+## Level 2: Trace to mock tool sandbox (multi-turn)
 
-Multi-turn production traces already contain the tool schemas, the read-only tool calls the agent made (`get_order`, `lookup_policy`), the exact payloads returned by your backend, and the final resolution. You can turn each trace into an isolated local sandbox so RL rollouts never touch production APIs:
+Your multi-turn logs already contain the tool schemas, the read calls the agent made (`get_order`, `lookup_policy`), what your backend returned, and how the session ended. Turn each log into a local sandbox so training never touches production:
 
-1. **Extract seed state from the trace:** Parse read-tool results from each trace into `task.seed` (for example, the order row, customer record, and KB snippets fetched during that session).
-2. **Hydrate a local store in `setup()`:** Populate an in-memory dict or SQLite database per rollout from `task.seed`.
-3. **Replay reads, execute writes locally in `step()`:** Read tools query the local store (with an optional fallback simulator `Model` if the policy explores an off-trace query); write tools (`issue_refund`, `update_ticket`) mutate the rollout's local store.
-4. **Grade final state in `evaluate()`:** Assert the expected state mutations with a `StatefulScorer` and grade conversation quality with a `Judge`.
+1. **Pull seed data from the log:** put the read-tool responses into `task.seed` (such as the order row, customer record, or help-center articles).
+2. **Load a fresh local store in `setup()`:** copy `task.seed` into an in-memory dict or SQLite database for each run.
+3. **Handle reads and writes locally in `step()`:** read tools look up the local store, and write tools (`issue_refund`, `update_ticket`) update local state instead of real APIs.
+4. **Check the result in `evaluate()`:** verify the local store with a `StatefulScorer` and grade the reply with a `Judge`.
 
 ```python
 import json
@@ -125,15 +125,15 @@ env = TraceReplayEnv(rubric=rubric)
 tasks = [extract_replay_task(t) for t in hard_traces]
 ```
 
-<DocsCallout label="Handling off-trace tool calls" tone="tip">
-During RL exploration, the policy will inevitably call tools with arguments that did not appear in the original trace. Handle those cleanly — either return realistic `"not_found"` responses from your local SQLite seed or route unseen read queries to a small deterministic simulator `Model` — rather than crashing the rollout.
+<DocsCallout label="Handling unexpected tool calls" tone="tip">
+During RL, the model will try tool arguments that weren't in the original log. Return a realistic `"not_found"` response from your local store (or fall back to a small mock `Model`) instead of crashing the run.
 </DocsCallout>
 
-## Level 3: Trace to Harbor Sandbox Synthesis (coding, CLI, and full-stack apps)
+## Level 3: Trace to Harbor containers (coding, CLI, and full-stack apps)
 
-For coding agents, DevOps debugging, or full-stack applications where real execution matters (compilers, package managers, Postgres migrations, browser checks), synthesize standard **Harbor** task directories from your traces so every task is reproducible, portable, and runnable with `environments.Harbor`.
+For coding agents, DevOps debugging, or full-stack apps where you need real compilers, tests, or databases, package your traces as **Harbor** task folders so they work out of the box with `environments.Harbor`.
 
-### Mapping trace fields to a Harbor task directory
+### Mapping trace fields to a Harbor task folder
 
 ```text
 harbor-tasks/<trace_id>/
@@ -147,12 +147,12 @@ harbor-tasks/<trace_id>/
     └── test.sh             # regression test from the PR or synthesized state check
 ```
 
-### The Fail-to-Pass quality gate
+### Sanity-check generated tasks before training
 
-Synthetic tasks built from traces often have hidden flaws (the test already passes before any fix, the pinned image fails to build, or the oracle patch does not pass the test). Always run a two-step **fail-to-pass gate** before letting a synthesized task into RL training:
+Tasks generated from logs often have bugs: a test might already pass before any fix, a Docker image might fail to build, or the reference patch might fail the test. Run a two-step check before training on them:
 
-1. **Initial state must fail (`reward == 0.0`):** Run `tests/test.sh` immediately after `setup()` with no agent actions. Drop any task that already passes.
-2. **Oracle solution must pass (`reward == 1.0`):** Run `solution/solve.sh` and then `tests/test.sh` via `env.verify_oracles(...)`. Drop any task that fails or times out.
+1. **Must fail at the start (`reward == 0.0`):** run `tests/test.sh` right after `setup()` with no agent changes. Drop any task that already passes.
+2. **Reference fix must pass (`reward == 1.0`):** run `solution/solve.sh` followed by `tests/test.sh` with `env.verify_oracles(...)`. Drop any task that fails or times out.
 
 ```python
 import grad

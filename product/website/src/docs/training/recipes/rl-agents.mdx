@@ -1,19 +1,19 @@
 # RL for agents
 
-<DocsLead>Train models to pass checks, write accurate queries, and use tools reliably with verifiable reinforcement learning using `GRPORecipe`.</DocsLead>
+<DocsLead>Train a model with reinforcement learning by grading its answers with code or another model.</DocsLead>
 
-Use **`GRPORecipe`** when you can **grade an outcome** (SQL returns valid syntax and the right answer, unit tests pass, an API state matches expectations) even if there is no single gold response. For best stability, warm-start with [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) first so the model already follows your format and tool schemas, then pass that SFT [`Artifact`](/docs/training/artifacts/) as `model=` (or chain directly with [`.then(...)`](/docs/training/recipes/)).
+Use **`GRPORecipe`** when you can **grade whether an answer worked** (valid SQL, passing unit tests, right API call) even when there is more than one right way to write it. If the base model doesn't follow your format yet, run a quick [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) run first and pass that [`Artifact`](/docs/training/artifacts/) as `model=` (or chain them with [`.then(...)`](/docs/training/recipes/)).
 
-## Managed `GRPORecipe` vs. stateful `Environment`
+## Managed `GRPORecipe` vs. your own `Environment`
 
 | Setup | Use | Why |
 | --- | --- | --- |
-| **Single-turn tasks + [`Rubric`](/docs/training/rubrics/) (`Judge` / `validators.*`)** | **`GRPORecipe` + `Rubric`** | Pass a [`Dataset`](/docs/training/trajectories/) of prompts and a declarative `Rubric`; Gradiated handles sampling, grading, and updates server-side. |
-| **Multi-turn apps, Harbor, Docker Compose, seeded DBs** | **[`Environment`](/docs/training/environments/) + [`Trainer`](/docs/training/custom-loops/)** | Your containers and tools stay on your own infrastructure and talk to `Artifact` and `Trainer` over HTTP. |
+| **Single-turn prompts + [`Rubric`](/docs/training/rubrics/) (`Judge` / `validators.*`)** | **`GRPORecipe` + `Rubric`** | Give Gradiated a [`Dataset`](/docs/training/trajectories/) of prompts and a `Rubric`; it handles sampling, grading, and training for you. |
+| **Multi-turn apps, Harbor, Docker Compose, live DBs** | **[`Environment`](/docs/training/environments/) + [`Trainer`](/docs/training/custom-loops/)** | Your containers and tools stay on your own machines and talk to `Artifact` and `Trainer` over HTTP. |
 
 ## Train with `GRPORecipe`
 
-Provide a `Dataset` of task prompts and a [`Rubric`](/docs/training/rubrics/) combining deterministic checks (`validators.SQL()`, `validators.TypeScriptAST()`, `validators.JSONSchema(...)`) and/or a `Judge` (either a catalog `Model` or a fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact`):
+Pass a `Dataset` of prompts and a [`Rubric`](/docs/training/rubrics/) with code checks (`validators.SQL()`, `validators.TypeScriptAST()`, `validators.JSONSchema(...)`) and/or a `Judge` (a frontier `Model` or a fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact`):
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -93,13 +93,13 @@ console.log(run.artifact.id);
 
 ## Practical tips before scaling up
 
-1. **Warm-start with SFT:** If the base model emits malformed JSON or tool calls on >30% of rollouts, run a short [SFT](/docs/training/recipes/sft/) stage on 200–500 valid trajectories first, then pass `model=sft.artifact`.
-2. **Watch zero-variance groups:** If >70% of prompts score all `0.0` (too hard) or all `1.0` (too easy), add partial-credit scorers to your [`Rubric`](/docs/training/rubrics/) or filter your task dataset to medium-difficulty prompts.
-3. **Need multi-turn containers or production trace replay?** See [Environments](/docs/training/environments/) (including `environments.Harbor` and `environments.MCP`) and [Traces to environments](/docs/training/traces-to-environments/).
+1. **Start with SFT if formatting is shaky:** if the base model outputs broken JSON or tool calls on more than 30% of tries, run a short [SFT](/docs/training/recipes/sft/) job on 200–500 good examples first, then pass `model=sft.artifact`.
+2. **Watch for all-pass or all-fail prompts:** if more than 70% of prompts get all `0.0` (too hard) or all `1.0` (too easy), add partial-credit checks to your [`Rubric`](/docs/training/rubrics/) or filter your dataset to medium-difficulty prompts.
+3. **Need multi-turn containers or log replay?** See [Environments](/docs/training/environments/) (including `environments.Harbor` and `environments.MCP`) and [Traces to environments](/docs/training/traces-to-environments/).
 
-## Deploy with a cascade
+## Deploy with a fallback cascade
 
-RL-tuned 4B–8B agents often match a frontier model on 80–90% of requests. Pair the trained [`Artifact`](/docs/training/artifacts/) with a fine-tuned [reward model](/docs/training/recipes/reward-models/) in a `strategies.Cascade` [`Endpoint`](/docs/training/endpoints/) so hard tasks escalate automatically:
+An RL-trained 4B–8B model often matches a frontier model on 80–90% of requests. Pair your [`Artifact`](/docs/training/artifacts/) with a [reward model](/docs/training/recipes/reward-models/) in a `strategies.Cascade` [`Endpoint`](/docs/training/endpoints/) so hard requests fall back to a larger model automatically:
 
 ```python
 from grad import Model, strategies
@@ -122,7 +122,7 @@ client.endpoints.create(
 
 ## Want more control?
 
-Need multi-turn `Environment` loops, async off-policy CISPO, PPO with a value head, GSPO, or per-turn KL shaping (SCoRe)? See [Custom loops](/docs/training/custom-loops/) and [Advanced objectives](/docs/training/advanced-objectives/).
+Need multi-turn `Environment` loops, async rollouts, PPO, or custom RL losses? See [Custom loops](/docs/training/custom-loops/) and [Advanced objectives](/docs/training/advanced-objectives/).
 
 <DocsNext>
   <a href="/docs/training/recipes/distillation/">

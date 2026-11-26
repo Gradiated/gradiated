@@ -1,13 +1,16 @@
-# Classifiers
+# Decision models
 
-<DocsLead>Train calibrated binary guardrails, multiclass triage models, and ordinal effort detectors that run in milliseconds and fall back automatically when uncertain.</DocsLead>
+<DocsLead>Train your own fast decision model for categories, yes/no checks, or ordered ratings — with a fallback when it isn't sure.</DocsLead>
 
-Use `ClassifierRecipe` whenever your model outputs a discrete label or ordered level rather than free-form text: thinking-effort detectors (`low / medium / high`), support ticket routing, PII/safety gates, or escalation triggers.
+Use **`DecisionModelRecipe`** whenever you want a model to pick a label, return a yes/no probability, or rate an input on a scale instead of generating free-form text: effort levels (`low / medium / high`), support triage, safety checks, or routing flags.
+
+If you already use [`gradiated/linden-1`](/docs/systemone-sdk/) through the SystemOne SDK and want a faster or more accurate model tuned specifically to your own traffic, this is how you train your own decision model.
 
 ## What data you need
 
-- **Minimum volume:** ~200 labeled [trajectories](/docs/training/trajectories/) per class for a frozen-encoder head; 1,000+ when fine-tuning the encoder with `adapters.LoRA` or `adapters.Full`.
-- **Required fields:** `input.messages` (plus optional `input.features` for structured signals like user tier, token length, or retry count) and `expected_output.label` (string or integer class).
+- **Minimum volume:** ~200 labeled [trajectories](/docs/training/trajectories/) per label to start (1,000+ for harder or nuanced decisions).
+- **Required fields:** `input.messages` (plus optional `input.features` like user tier, file count, or retry count) and `expected_output.label`.
+- **Don't have labels yet?** Score an unlabeled dataset first with a [`Judge`](/docs/training/rubrics/) (using a frontier model or `gradiated/linden-1`), review a sample, and train on those labels.
 
 ```python
 from grad import Grad, Trajectory, TrajectoryInput
@@ -35,26 +38,32 @@ dataset.push([
 ])
 ```
 
-## Train the classifier
+## Train the decision model
 
 Choose the `losses.*` class that matches your label structure:
 
 - **`losses.CrossEntropy()`** for unordered categories (`billing`, `bug`, `feature_request`).
 - **`losses.OrdinalBCE()`** for ordered tiers (`low < medium < high`), so confusing `low` with `high` costs more than confusing `low` with `medium`.
-- **`losses.BCEWithLogits()`** for binary gates or multi-label tags.
+- **`losses.BCEWithLogits()`** for yes/no checks or multi-label tags.
+
+Choose your base `model`:
+
+- **`Model("Qwen/Qwen3-0.6B")`** *(default)* — strong general starting point for text, code, and multi-turn conversations.
+- **`Model("gradiated/linden-1")`** — great starting point if you already use [SystemOne](/docs/systemone-sdk/) and want to specialize `linden-1` on your own questions.
+- **`Model("BAAI/bge-small-en-v1.5")`** — smallest option if you only need ultra-fast CPU inference on short text.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
 
 ```python
 from grad import Grad, Model, calibration, losses, splits
-from grad.recipes import ClassifierRecipe
+from grad.recipes import DecisionModelRecipe
 
 client = Grad()
 dataset = client.datasets.get("coding-effort")
 
-recipe = ClassifierRecipe(
-    model=Model("BAAI/bge-small-en-v1.5"),
+recipe = DecisionModelRecipe(
+    model=Model("Qwen/Qwen3-0.6B"),
     labels=["low", "medium", "high"],
     loss=losses.OrdinalBCE(),
     calibration=calibration.Temperature(),
@@ -76,8 +85,8 @@ import { Grad, Model, calibration, losses, recipes, splits } from "@gradiated/gr
 const grad = new Grad();
 const dataset = await grad.datasets.get("coding-effort");
 
-const recipe = recipes.classifier({
-  model: new Model("BAAI/bge-small-en-v1.5"),
+const recipe = recipes.decisionModel({
+  model: new Model("Qwen/Qwen3-0.6B"),
   labels: ["low", "medium", "high"],
   loss: losses.ordinalBCE(),
   calibration: calibration.temperature(),
@@ -100,8 +109,8 @@ dataset, _ := client.Datasets.Get(ctx, "coding-effort")
 run, _ := client.Runs.Create(ctx, grad.RunParams{
 	Dataset: dataset,
 	Name:    "coding-effort",
-	Recipe: grad.ClassifierRecipe{
-		Model:       grad.Model("BAAI/bge-small-en-v1.5"),
+	Recipe: grad.DecisionModelRecipe{
+		Model:       grad.Model("Qwen/Qwen3-0.6B"),
 		Labels:      []string{"low", "medium", "high"},
 		Loss:        grad.OrdinalBCELoss{},
 		Calibration: grad.TemperatureCalibration{},
@@ -115,7 +124,7 @@ fmt.Println(run.Artifact.ID, run.EvalReport)
   <DocsCodeTab label="CLI">
 
 ```bash
-grad train --dataset coding-effort --name coding-effort --recipe classifier --wait
+grad train --dataset coding-effort --name coding-effort --recipe decision-model --wait
 grad deploy coding-effort@latest
 ```
 
@@ -124,22 +133,20 @@ grad deploy coding-effort@latest
 
 ### Calibration options
 
-| Calibration class | What it does |
-| --- | --- |
-| `calibration.Temperature()` | Fits a single scalar temperature on the held-out split to minimize NLL so confidence scores reflect real accuracy. |
-| `calibration.Conformal(alpha=0.10)` | Computes a split-conformal quantile threshold for a target coverage rate, guaranteeing bounded abstention error on exchangeable traffic. |
+- **`calibration.Temperature()`** *(default)* — adjusts confidence scores on the eval split so a `0.85` score really means ~85% accuracy.
+- **`calibration.Conformal(alpha=0.10)`** — picks a confidence cutoff automatically so the model falls back whenever error would exceed `alpha`.
 
 ## Read the evaluation report
 
-Inspect `run.eval_report` before shipping:
+Check `run.eval_report` before shipping:
 
-- **Per-class precision, recall, and F1:** Watch minority classes (for example, `high` effort or safety escalations) — overall accuracy hides class imbalance.
-- **Confusion matrix:** For ordinal models, verify errors stay adjacent (`low ↔ medium`) rather than jumping extremes (`low ↔ high`).
-- **Expected calibration error (ECE):** Lower ECE means `min_conf` thresholds behave predictably in production.
+- **Per-label precision, recall, and F1:** check rare labels (like `high` effort or safety flags) — overall accuracy can look fine even when rare classes are missed.
+- **Confusion matrix:** for ordered tiers, mistakes should stay next door (`low ↔ medium`), not jump from `low` to `high`.
+- **Calibration error (`ece`):** lower means your `min_conf` threshold works more predictably in production.
 
-## Deploy with confidence fallback
+## Deploy with a confidence fallback
 
-Attach the artifact to an [endpoint](/docs/training/endpoints/) using `strategies.ConfidenceFallback`. Whenever top-class confidence falls below `min_conf`, the endpoint returns your safe fallback label (for example, `"high"` effort so complex prompts never get under-budgeted).
+Attach the [`Artifact`](/docs/training/artifacts/) to an [endpoint](/docs/training/endpoints/) using `strategies.ConfidenceFallback`. Whenever confidence is below `min_conf`, the endpoint returns your safe fallback label (like `"high"` effort so hard tasks don't get rushed).
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -235,11 +242,11 @@ curl https://api.gradiated.com/v1/endpoints/coding-effort/infer \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Recording `expected_output` when an attempt fails turns production misses directly into labeled training data for the next retrain.
+Recording `expected_output` when a prediction misses turns production mistakes directly into labeled data for your next retrain.
 
 ## Want more control?
 
-Need dynamic per-request choices (`candidate_tokens`), deep-ensemble uncertainty heads, SetFit few-shot contrastive classification, or token-level heads? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
+Need dynamic choices that change per request (`candidate_tokens`) or custom PyTorch decision losses? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
 
 <DocsNext>
   <a href="/docs/training/recipes/sft/">

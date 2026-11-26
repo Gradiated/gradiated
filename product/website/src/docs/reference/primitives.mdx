@@ -1,6 +1,6 @@
 # Primitives reference
 
-<DocsLead>Schemas, dataclasses, and extensible interfaces for the five core training and serving primitives (`Trajectory`, `Environment`, `Trainer`, `Artifact`, and `Endpoint`).</DocsLead>
+<DocsLead>Reference for the core objects and JSON schemas used across the Gradiated SDKs and API.</DocsLead>
 
 These wire schemas mirror the OpenAPI 3.1 contract (`spec/openapi.yaml`) used across the server, CLI, and Python, TypeScript, Go, and Rust SDKs. See [API reference](/docs/api-reference/) for HTTP routes.
 
@@ -59,7 +59,7 @@ Universal model-agnostic record for production traces, supervised `(input, expec
 | `role` | `string \| null` | `chosen`, `rejected`, `anchor`, `positive`, `negative`, `desirable`, `undesirable`, or `rollout`. |
 | `input` | `object` | `messages[]`, `tools[]`, `media[]` (`{ kind, ref }`), `features{}` (tabular signals), and optional arbitrary `payload`. |
 | `output` | `object` | `turns[]`, optional `payload`, plus token-aligned RL fields (`token_ids`, `turn_ids`, `response_offset`, `sampling_logprobs`, `loss_mask`, `weight_version`) filled by `Artifact.sample()`. |
-| `expected_output` | `object \| null` | Gold correction or ground-truth label (`{ label }` or `{ content }`) used by `SFTRecipe` and `ClassifierRecipe`. |
+| `expected_output` | `object \| null` | Gold correction or ground-truth label (`{ label }` or `{ content }`) used by `SFTRecipe` and `DecisionModelRecipe`. |
 | `scores` | `Record<string, number>` | Named scalar outcomes (`task_success`, `tests_passed`, `reward`, etc.). |
 | `metrics` | `Record<string, number>` | Request telemetry (`cost_usd`, `latency_ms`, `input_tokens`, `output_tokens`). |
 | `metadata` | `Record<string, any>` | Serving provenance (`endpoint`, `artifact`, `inference_id`, `model`, `propensity`, `is_probe`). |
@@ -117,7 +117,7 @@ The SDK passes strict domain entities (`Dataset`, `Model`, `Artifact`, `Endpoint
 | **Losses & Advantages** | Extensible `Loss` / `AdvantageEstimator` | Built-in GPU kernels (`losses.CrossEntropy`, `losses.BCEWithLogits`, `losses.OrdinalBCE`, `losses.DPO`, `losses.ImportanceSampling`, `losses.GRPO`, `losses.CISPO`, `losses.ReverseKLDistill`, `losses.TopKKLDistill`, `losses.InfoNCE`, `losses.BCESparsePositions`), user `losses.CustomLoss` subclasses, and `advantages.GroupStd`, `advantages.GroupMean`, `advantages.RLOO` |
 | **Solvers, Splitters & Mergers** | Extensible interfaces | `solvers.DualHeadKernelLBFGS`, `solvers.MeanDiffSteering`, `splits.BySession`, `splits.ByGroup`, `splits.Random`, `mergers.TIES`, `mergers.Linear`, `mergers.DARE`, `mergers.SLERP` *(filter datasets with any `dataset.filter(lambda t: ...)` predicate)* |
 | **Rubrics & Validators** | Typed scorers & validators | `Rubric`, `Scorer`, `Judge(Scorer)`, `StatefulScorer(Scorer)`, `GroupScorer`, `PairwiseJudge(GroupScorer)`; `validators.TypeScriptAST`, `validators.JSONSchema`, `validators.SQL` (or any `Callable[[str], bool]`) |
-| **Recipes** | Subclassable `Recipe` + chained `Run` | `RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe(rollout=OnPolicy/OffPolicy)`, `CartridgeRecipe(context=Context.from_file(...), num_tokens=256)`, `RewardModelRecipe`, `EmbeddingRecipe` — chain via `run.then(...)` or pending `run.artifact`, stream via `run.metrics()` |
+| **Recipes** | Subclassable `Recipe` + chained `Run` | `RouterRecipe`, `DecisionModelRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe(rollout=OnPolicy/OffPolicy)`, `CartridgeRecipe(context=Context.from_file(...), num_tokens=256)`, `RewardModelRecipe`, `EmbeddingRecipe` — chain via `run.then(...)` or pending `run.artifact`, stream via `run.metrics()` |
 | **Endpoint Strategies** | Extensible `Strategy` base class | `strategies.Direct`, `strategies.SLALagrangian`, `strategies.ConfidenceFallback`, `strategies.SyntaxFallback`, `strategies.Cascade`, `strategies.BestOfN`, `strategies.MajorityVote`, `strategies.BudgetForcing` (configurable or subclassable) |
 
 - `Artifact` subclasses `Model`, so `model=` on any `Recipe`, `Trainer`, or `Strategy` accepts a pure `Model("Qwen/Qwen3-8B")` ref, a live `client.models.get(...)` handle, a completed `Artifact`, or a pending `run.artifact` from an in-flight run.

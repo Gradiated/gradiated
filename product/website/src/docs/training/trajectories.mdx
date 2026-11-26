@@ -1,17 +1,17 @@
 # Trajectories
 
-<DocsLead>Every training run reads from a `Dataset` of trajectories: production traces, labeled examples, or multi-turn rollouts stored in one model-agnostic schema.</DocsLead>
+<DocsLead>Store your production logs, labeled examples, and agent runs in a `Dataset` so any recipe can train on them.</DocsLead>
 
-Populate a dataset in any of four ways:
+A **trajectory** is a single recorded run: the input messages, what the model answered, any tool calls it made, and how well it did. You can fill a `Dataset` in four ways:
 
 1. **Automatic capture** from Gradiated inference or any deployed [Endpoint](/docs/training/endpoints/).
-2. **Direct SDK push** from your own database or evaluation scripts.
-3. **File import** from Parquet or JSONL exports.
-4. **Scheduled pull sync** from your LLM observability provider.
+2. **Direct SDK push** from your own database or scripts.
+3. **File import** from Parquet or JSONL files.
+4. **Scheduled sync** from your observability provider.
 
 ## Push trajectories from code
 
-A `Dataset` is a first-class handle returned by `client.datasets.create(...)` or `client.datasets.get(...)`. If your labeled examples or production logs already live in your own database, push typed `Trajectory` records directly onto the dataset with `dataset.push(...)`:
+Call `client.datasets.create(...)` or `client.datasets.get(...)` to open a dataset, then push `Trajectory` records directly with `dataset.push(...)`:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -87,7 +87,7 @@ curl https://api.gradiated.com/v1/trajectories \
 
 ## Import from files
 
-Stream Parquet or JSONL exports into a `Dataset`. Gradiated auto-detects the source schema (`grad.trajectory/1`, OTLP, Langfuse, Braintrust, etc.) and normalizes messages, tool calls, token counts, costs, and evaluation scores — pass `--format` only when you want to override auto-detection.
+Upload Parquet or JSONL files into a `Dataset`. Gradiated detects common trace formats (`grad.trajectory/1`, OpenTelemetry, Langfuse, Braintrust, etc.) and maps messages, tool calls, token counts, costs, and scores automatically. Pass `--format` only if you want to pick a parser yourself.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -153,9 +153,9 @@ The import result lists how many trajectories were parsed, how many were dropped
 
 ## Score and filter datasets
 
-Filter a `Dataset` with any predicate function `(Trajectory) -> bool` — `dataset.filter(...)` returns a reusable `Dataset` view so data selection stays separate from your `Recipe` hyperparameters.
+Filter a `Dataset` with any plain function `(Trajectory) -> bool`. `dataset.filter(...)` returns a new filtered view of the dataset without copying data, keeping data selection separate from your training settings.
 
-When you want to filter by a model-graded criterion (e.g. "did the assistant resolve the user's request without hallucinating?"), score the dataset once with a [`Judge`](/docs/training/rubrics/) (`Judge` subclasses `Scorer` and accepts either a catalog `Model` + `prompt` or a trained verifier [`Artifact`](/docs/training/artifacts/)). `dataset.score(...)` runs batched on the server, skips already-scored trajectories, and persists results to `trajectory.scores` so you can adjust filter thresholds or reuse scores across runs without re-judging:
+If you want to filter by something a human or LLM needs to judge (like "did the assistant answer accurately?"), score the dataset once with a [`Judge`](/docs/training/rubrics/). A `Judge` can use a catalog `Model` with a prompt or a fine-tuned [reward model](/docs/training/recipes/reward-models/) [`Artifact`](/docs/training/artifacts/). `dataset.score(...)` runs in batches on the server, skips rows that already have a score, and saves results to `trajectory.scores` so you can tweak thresholds or reuse them across runs for free:
 
 ```python
 from grad import Grad, Judge, Model
@@ -178,7 +178,7 @@ print(passing.count())
 
 ## Sync from observability providers
 
-Attach a source to a `Dataset` to pull new traces and feedback scores incrementally on a cron schedule. Store provider keys once as a **named workspace `Secret`** (`grad secrets set langfuse-prod`, Console UI, or Kubernetes Secret in self-hosted mode) and pass the `Secret` handle from `client.secrets.get(...)` — never a raw string or plaintext key — so credentials work identically in Cloud and self-hosted deployments and are never written into datasets or `.grad` artifacts.
+Connect an observability tool to a `Dataset` to pull in new traces and scores on a schedule. Save your provider key once as a workspace `Secret` (`grad secrets set langfuse-prod`, in the Console, or as a Kubernetes Secret when self-hosting) and pass it via `client.secrets.get(...)` so raw keys are never stored in datasets or exported artifacts.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -280,8 +280,8 @@ Every trajectory needs an `input` (usually `input.messages`). Beyond that, inclu
 
 | If you are training... | Also include |
 | --- | --- |
-| **Model router (`RouterRecipe`)** | `scores` (e.g. `task_success`), `metrics.cost_usd`, and `metadata.model` |
-| **Fine-tune (`SFTRecipe`) or classifier (`ClassifierRecipe`)** | `expected_output` (the gold response or target label) |
+| **Model router (`RouterRecipe`)** | `input.messages` — plus optional `metadata.model`, `scores`, and `metrics.cost_usd` (or pass a `Judge` and `models=` to score and compare automatically) |
+| **Fine-tune (`SFTRecipe`) or decision model (`DecisionModelRecipe`)** | `expected_output` (the gold response or target label) |
 | **Preference alignment (`DPORecipe`)** | Paired records sharing a `group_id` with `role="chosen"` and `role="rejected"` |
 | **Multi-turn conversations** | `session_id` so turns from the same conversation stay together across train and eval splits |
 

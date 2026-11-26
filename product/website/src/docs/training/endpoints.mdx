@@ -1,12 +1,12 @@
 # Endpoints
 
-<DocsLead>Serve one or more `.grad` artifacts behind a named production endpoint with shadow testing, canary rollouts, extensible guardrails, and automatic feedback capture.</DocsLead>
+<DocsLead>Serve trained artifacts behind a stable endpoint name, roll out new versions safely, and log real-world outcomes.</DocsLead>
 
-An **`Endpoint`** is a mutable production serving slot over **one or more** immutable [`Artifact`](/docs/training/artifacts/)s. Your application always calls the stable endpoint slug (`support-router`, `coding-effort`, `fast-diff-merge`), while you shadow, canary, promote, or roll back artifacts behind it without redeploying your app.
+An **`Endpoint`** is a named production URL backed by one or more [`Artifact`](/docs/training/artifacts/)s. Your app always calls the same name (`support-router`, `coding-effort`, `fast-diff-merge`), while you shadow-test, canary, promote, or roll back artifacts behind it without redeploying your code.
 
 ## Deploy in one line (or configure explicitly)
 
-Every trained `.grad` [`Artifact`](/docs/training/artifacts/) carries its model type, source dataset, and default serving strategy in `manifest.json`. For the common path, `run.deploy()` (or `artifact.deploy()` / `grad deploy`) creates the endpoint on first deploy and updates traffic splits on subsequent deploys:
+Every `.grad` [`Artifact`](/docs/training/artifacts/) knows its model type, source dataset, and default serving settings. For most cases, `run.deploy()` (or `artifact.deploy()` / `grad deploy`) creates the endpoint on the first deploy and updates traffic splits after that:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -46,7 +46,7 @@ grad deploy support-router@2026-11-26-1 --active
   </DocsCodeTab>
 </DocsCodeTabs>
 
-When you want explicit control over fallback models, SLA bounds, or multi-artifact orchestration, pass first-class [`Artifact`](/docs/training/artifacts/), [`Dataset`](/docs/training/trajectories/), `Model`, and extensible `Strategy` objects to `client.endpoints.create()`:
+When you want to set a custom fallback model, quality limit, or multi-model setup, pass your [`Artifact`](/docs/training/artifacts/), [`Dataset`](/docs/training/trajectories/), `Model`, and `Strategy` to `client.endpoints.create()`:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -134,7 +134,7 @@ curl https://api.gradiated.com/v1/endpoints/support-router/infer \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-For classifiers, effort detectors, or generative models, fetch the endpoint handle once with `client.endpoints.get(...)` (or construct a zero-RTT `Endpoint("coding-effort")` ref in stateless workers) and call `.infer(...)`:
+For decision models or fine-tuned models, look up the endpoint with `client.endpoints.get(...)` (or use `Endpoint("coding-effort")` directly in stateless workers to skip the extra lookup) and call `.infer(...)`:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -180,11 +180,11 @@ curl https://api.gradiated.com/v1/endpoints/coding-effort/infer \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-If an endpoint times out or trips a circuit breaker, it fails open to its configured fallback so user requests still succeed. See [errors, limits, and retries](/docs/errors/) for HTTP status codes and retry guidance.
+If an endpoint times out or hits its safety limit, it automatically falls back to your configured backup model so requests keep working. See [errors, limits, and retries](/docs/errors/) for status codes and retries.
 
 ## Record feedback
 
-Every `/v1/endpoints/{name}/infer` response returns an `inference_id` and records a [`Trajectory`](/docs/training/trajectories/) into `capture_dataset`. Call `.record_feedback(...)` directly on the response when the outcome is known inline, or call `client.feedback.record(inference_id=...)` from an async worker hours later when a unit test finishes or a support ticket resolves:
+Every endpoint call returns an `inference_id` and saves a [`Trajectory`](/docs/training/trajectories/) to `capture_dataset`. Call `.record_feedback(...)` right on the response if you know the outcome immediately, or call `client.feedback.record(inference_id=...)` later from a background job once a test finishes or a support ticket closes:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -248,11 +248,11 @@ curl https://api.gradiated.com/v1/feedback \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Feedback is deduplicated by `idempotency_key`, updates online SLA and canary telemetry in real time, and attaches directly to the captured `Trajectory` for the next training run.
+Duplicate submissions with the same `idempotency_key` are ignored safely. Feedback updates live canary metrics right away and attaches to the saved `Trajectory` for your next training run.
 
 ## Shadow, canary, and rollback
 
-Because every [`Artifact`](/docs/training/artifacts/) is immutable, rolling forward or rolling back is a single pointer flip with zero redeploy:
+Because every [`Artifact`](/docs/training/artifacts/) is a fixed version, promoting a new model or rolling back to an old one is a single command with no redeploy:
 
 ```bash
 # 1. Shadow: run the new artifact silently alongside active traffic (0% user impact)
@@ -288,19 +288,19 @@ Canary    support-router@2026-11-26-1  (10% traffic ·  2,044 req/hr · p50 5.9m
 
 ## Serving strategies
 
-Endpoints support single-artifact and multi-artifact orchestration via extensible `Strategy` classes (`strategies.*`) — configure a built-in strategy or subclass `Strategy` to customize selection and fallback hooks. Select a strategy to inspect its request path and guardrail:
+A `Strategy` controls how an endpoint picks models, checks outputs, and falls back when something looks wrong. Pick a built-in strategy from `strategies.*` or subclass `Strategy` to write your own:
 
 <DocsEndpointDiagram />
 
-| Strategy class | Artifacts | Behavior | Guide |
+| Strategy class | Artifacts | What it does | Guide |
 | --- | --- | --- | --- |
-| `strategies.Direct()` | 1 | Pass-through inference on the active artifact. | [Model distillation](/docs/training/recipes/distillation/) |
-| `strategies.SLALagrangian(...)` | 1 | Calibrated lower-confidence-bound routing with fallback probes (`10%`), online primal-dual `λ`, and a hard-stop circuit breaker. | [Model router](/docs/training/recipes/router/) |
-| `strategies.ConfidenceFallback(...)` | 1 | Temperature- or conformal-calibrated softmax threshold with automatic fallback label or model. | [Classifiers](/docs/training/recipes/classifier/) |
-| `strategies.SyntaxFallback(...)` | 1–2 | Validates JSON schema or AST on generated output and retries on a fallback `Model` or `Artifact` if invalid. | [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) |
-| `strategies.Cascade(...)` | 2–3 | Runs a fast draft artifact, scores it with a [reward model](/docs/training/recipes/reward-models/) `Artifact`, and escalates to a frontier `Model` only below threshold. | [RL for agents](/docs/training/recipes/rl-agents/) |
-| `strategies.BestOfN(...)` / `MajorityVote(...)` | 1–2 | Samples `N` completions and picks the majority answer or highest verifier-scored candidate. | [Reward models](/docs/training/recipes/reward-models/) |
-| `strategies.BudgetForcing(...)` | 1 | Enforces thinking-token budgets or continuation prompts at test time. | [Custom loops](/docs/training/custom-loops/) |
+| `strategies.Direct()` | 1 | Calls the active artifact directly. | [Model distillation](/docs/training/recipes/distillation/) |
+| `strategies.SLALagrangian(...)` | 1 | Routes to the cheapest model that meets your quality target, monitors live quality against your fallback, and switches back to the fallback if quality drops too far. | [Model router](/docs/training/recipes/router/) |
+| `strategies.ConfidenceFallback(...)` | 1 | Returns a safe fallback label or model whenever decision-model confidence is below your threshold. | [Decision models](/docs/training/recipes/decision-model/) |
+| `strategies.SyntaxFallback(...)` | 1–2 | Checks generated output against a JSON schema or code parser and retries on a fallback model if it is invalid. | [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) |
+| `strategies.Cascade(...)` | 2–3 | Generates a fast draft, scores it with a [reward model](/docs/training/recipes/reward-models/), and escalates to a stronger model only when the score is low. | [RL for agents](/docs/training/recipes/rl-agents/) |
+| `strategies.BestOfN(...)` / `MajorityVote(...)` | 1–2 | Generates `N` answers and returns the majority answer or the highest-scoring one. | [Reward models](/docs/training/recipes/reward-models/) |
+| `strategies.BudgetForcing(...)` | 1 | Caps or extends how many reasoning tokens a model uses at inference time. | [Custom loops](/docs/training/custom-loops/) |
 
 ### Multi-artifact example: cascade
 
@@ -321,9 +321,9 @@ client.endpoints.create(
 )
 ```
 
-## Zero-hop gateway routing
+## Routing directly through the inference gateway
 
-On Gradiated Cloud, `router` endpoints also run directly inside the [OpenAI SDK](/docs/openai-sdk/) and [Anthropic SDK](/docs/anthropic-sdk/) inference gateway with no extra round trip. Pass `"model": "<org>/<endpoint-slug>"` to `/v1/chat/completions`, `/v1/responses`, or `/v1/messages`. The gateway runs the router in-process, dispatches to the selected model, and returns `x-gradiated-inference-id`, `x-gradiated-action`, and `x-gradiated-artifact` headers so you can still send outcomes to `client.feedback.record()`.
+On Gradiated Cloud, you don't need a separate API call to route requests. Pass `"model": "<org>/<endpoint-slug>"` straight to `/v1/chat/completions`, `/v1/responses`, or `/v1/messages` in the [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/). Gradiated runs your router inside the gateway, forwards to the chosen model, and returns `x-gradiated-inference-id`, `x-gradiated-action`, and `x-gradiated-artifact` headers so you can still log feedback.
 
 <DocsNext>
   <a href="/docs/training/artifacts/">

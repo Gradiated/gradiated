@@ -1,51 +1,47 @@
 # Model router
 
-<DocsLead>Route each request to the cheapest model that meets your quality bar, with calibrated fallback probes and a hard-stop SLA guardrail.</DocsLead>
+<DocsLead>Send each request to the cheapest model that still meets your quality bar.</DocsLead>
 
-A model router inspects each incoming prompt and predicts the probability that each candidate model will succeed. At serving time, the endpoint picks the lowest-cost model that satisfies your quality drop budget — typically running in under 10 ms with a frozen 33M-parameter encoder.
+A model router looks at each incoming prompt and predicts how likely each candidate model is to succeed. At runtime, it picks the cheapest model that still meets your quality bar.
 
 ## What data you need
 
-A router needs historical trajectories with **at least two candidate models**, a **quality score**, and **request cost**:
+All you need to start is a [`Dataset`](/docs/training/trajectories/) of real prompts (`input.messages`):
 
-- **Minimum volume:** ~500 scored trajectories per candidate model to fit a reliable dual-head router (2,000+ for noisy multi-domain traffic).
-- **Required fields:** `input.messages` (plus optional `input.tools` and `input.features`), `metadata.model` (or `output.payload.action`), a scalar quality signal in `scores` (e.g. `task_success` in `[0, 1]`), and `metrics.cost_usd`.
-- **Fallback coverage:** Include trajectories from your frontier fallback model so calibration can measure quality drop directly against it.
+- **How the router compares models:**
+  - **Already logging multiple models?** If your logs include responses from both cheap and strong models (in `metadata.model`), Gradiated trains directly on them.
+  - **Only logging one model so far?** Pass `models=[...]` to `RouterRecipe` (for example, a cheap model and your current frontier model). Gradiated replays your logged prompts against the candidate models first so it can compare how each one performs — no sandbox environment needed for single-turn prompts.
+- **How quality is scored:**
+  - **No scores yet?** Pass a [`Judge`](/docs/training/rubrics/) with a plain-English prompt (or a `Rubric` with code checks) and Gradiated grades each response for you.
+  - **Already have scores in your logs?** Pass the score name (`score="task_success"`) or a function (`score=lambda t: t.scores["task_success"]`) to reuse them directly.
+- **Request cost (optional):**
+  - You don't need to log costs. Gradiated calculates request cost automatically from the model name and token counts using built-in model pricing.
+  - If you have custom or self-hosted pricing, include `metrics.cost_usd` on your logs to override it.
 
-```json
-{
-  "schema": "grad.trajectory/1",
-  "session_id": "sess_42",
-  "input": {
-    "messages": [{ "role": "user", "content": "Where is invoice #9941?" }],
-    "features": { "customer_tier": "enterprise", "turn_index": 0 }
-  },
-  "scores": { "task_success": 1.0 },
-  "metrics": { "cost_usd": 0.0008, "latency_ms": 540 },
-  "metadata": { "model": "gpt-4.1-mini" }
-}
-```
+Plan for ~500 examples per candidate model to get started (2,000+ if your prompts cover many different tasks).
 
 ## Train the router
 
-Start with `RouterRecipe` and its default `solvers.DualHeadKernelLBFGS` solver, which combines a kernel nearest-neighbor estimator with an L2-regularized linear head over frozen embeddings. Move to a larger backbone like `Qwen/Qwen3-0.6B` only if held-out AUC plateaus on long code or multi-file prompts.
+By default, `RouterRecipe` fine-tunes `Qwen/Qwen3-0.6B` on your prompts and scores, holds out 15% of conversations for evaluation, and tunes routing to stay within your allowed quality drop:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Model, calibration, solvers, splits
+from grad import Grad, Judge, Model
 from grad.recipes import RouterRecipe
 
 client = Grad()
 dataset = client.datasets.get("support-traces")
 
 recipe = RouterRecipe(
-    model=Model("BAAI/bge-small-en-v1.5"),
-    solver=solvers.DualHeadKernelLBFGS(l2=0.1),
-    score=lambda t: t.scores["task_success"],  # or "task_success" / Scorer / Rubric
-    split=splits.BySession(eval_fraction=0.15),
-    calibration=calibration.SLA(max_quality_drop=0.02),
+    models=[Model("Qwen/Qwen3-8B"), Model("claude-opus-4-7")],
+    score=Judge(
+        name="resolved",
+        model=Model("claude-sonnet-4-6"),
+        prompt="Did the assistant solve the user's issue accurately?",
+    ),
+    max_quality_drop=0.02,
 )
 
 run = client.runs.create(dataset=dataset, name="support-router", recipe=recipe).wait()
@@ -58,17 +54,19 @@ print(run.eval_report["pareto_summary"])
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Model, calibration, recipes, solvers, splits } from "@gradiated/grad";
+import { Grad, Judge, Model, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("support-traces");
 
 const recipe = recipes.router({
-  model: new Model("BAAI/bge-small-en-v1.5"),
-  solver: solvers.dualHeadKernelLBFGS({ l2: 0.1 }),
-  score: (t) => t.scores.task_success, // or "task_success" / Scorer / Rubric
-  split: splits.bySession({ evalFraction: 0.15 }),
-  calibration: calibration.sla({ maxQualityDrop: 0.02 }),
+  models: [new Model("Qwen/Qwen3-8B"), new Model("claude-opus-4-7")],
+  score: new Judge({
+    name: "resolved",
+    model: new Model("claude-sonnet-4-6"),
+    prompt: "Did the assistant solve the user's issue accurately?",
+  }),
+  maxQualityDrop: 0.02,
 });
 
 const run = await grad.runs
@@ -88,11 +86,13 @@ run, _ := client.Runs.Create(ctx, grad.RunParams{
 	Dataset: dataset,
 	Name:    "support-router",
 	Recipe: grad.RouterRecipe{
-		Model:       grad.Model("BAAI/bge-small-en-v1.5"),
-		Solver:      grad.DualHeadKernelLBFGS{L2: 0.1},
-		Score:       grad.FromScore("task_success"),
-		Split:       grad.BySessionSplit{EvalFraction: 0.15},
-		Calibration: grad.SLACalibration{MaxQualityDrop: 0.02},
+		Models: []grad.Model{grad.Model("Qwen/Qwen3-8B"), grad.Model("claude-opus-4-7")},
+		Score: grad.Judge{
+			Name:   "resolved",
+			Model:  grad.Model("claude-sonnet-4-6"),
+			Prompt: "Did the assistant solve the user's issue accurately?",
+		},
+		MaxQualityDrop: 0.02,
 	},
 }).Wait(ctx)
 fmt.Println(run.Artifact.ID, run.EvalReport)
@@ -109,19 +109,19 @@ grad deploy support-router@latest --canary 0.10
   </DocsCodeTab>
 </DocsCodeTabs>
 
-### Key parameters
+### When to customize what
 
-| Component | Default | What it controls |
-| --- | --- | --- |
-| `model` | `Model("BAAI/bge-small-en-v1.5")` | Frozen text encoder (`Model("Qwen/Qwen3-0.6B")` for complex code or long context). |
-| `solver` | `solvers.DualHeadKernelLBFGS()` | `DualHeadKernelLBFGS` (fast, calibrated on small data), `LightGBM` (tabular-heavy inputs), or a custom `Solver` subclass. |
-| `score` | Auto-detected | Quality scorer: a `Callable[[Trajectory], float]`, a `Scorer` / `Rubric`, or a score key string (normalized internally to `Scorer.from_score(key)`). |
-| `split` | `splits.BySession(0.15)` | Splits whole conversations so turns from one session never leak across train and eval. |
-| `calibration` | `calibration.SLA(max_quality_drop=0.02)` | Maximum held-out quality loss vs. your fallback model used to pick the initial Lagrangian multiplier `λ`. |
+Start with the defaults above and override options only when you need them:
+
+- **Already have scores in your logs?** Pass `score="task_success"` (or `score=lambda t: t.scores["task_success"]`) instead of a `Judge` so you don't pay to re-score.
+- **Already logged multiple models?** You can omit `models=` and Gradiated will train across the models already present in `metadata.model`.
+- **Custom pricing?** Include `metrics.cost_usd` in your dataset (or pass a `pricing=` map) if your rates differ from standard model pricing.
+- **Need a different router backbone?** `RouterRecipe` defaults to `Model("Qwen/Qwen3-0.6B")`. You can pass a different `model=` (or switch to a fast frozen-encoder fit in [Custom loops](/docs/training/custom-loops/)) if you have strict CPU latency constraints.
+- **Multi-turn conversations?** `splits.BySession(0.15)` is on by default so turns from the same `session_id` never leak between training and evaluation.
 
 ## Read the evaluation report
 
-Before deploying, inspect `run.eval_report`:
+Before deploying, check `run.eval_report`:
 
 ```json
 {
@@ -140,17 +140,13 @@ Before deploying, inspect `run.eval_report`:
 }
 ```
 
-- **Cost savings at target drop:** Expected USD reduction vs. sending 100% of traffic to your fallback model at `max_quality_drop`.
-- **95% bootstrap confidence intervals (`quality_drop_ci95`):** Check the upper bound, not just the point estimate. If the upper bound exceeds your budget, collect more scored [trajectories](/docs/training/trajectories/) before tightening `max_quality_drop`.
-- **Calibration error (`ece`):** Confirms predicted success probabilities match observed win rates.
+- **`cost_savings_pct`:** how much you save compared to sending 100% of traffic to your fallback model while staying within `max_quality_drop`.
+- **`quality_drop_ci95`:** the 95% confidence range for the quality difference. If the upper number is higher than you're comfortable with, add more examples to your dataset before shipping.
+- **`ece`:** checks whether the router's confidence scores match real win rates (lower is better).
 
-<DocsCallout label="Why 10% fallback probes matter" tone="tip">
-Without unbiased probes, a router only observes outcomes on the model it picked — so silent drift on offloaded traffic goes unnoticed. Setting `fallback_probe_rate=0.10` gives you an inverse-propensity-weighted live quality delta against your frontier model continuously, with no separate A/B test.
-</DocsCallout>
+## Deploy the router
 
-## Deploy with SLA guardrails
-
-The trained router artifact already records its candidate models and default pricing in `manifest.json`. Configure the fallback model and quality budget with `strategies.SLALagrangian`:
+Deploy your trained [`Artifact`](/docs/training/artifacts/) to an [`Endpoint`](/docs/training/endpoints/) in one line (`run.deploy(canary=0.10)`), or configure your fallback model and safety threshold explicitly:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -169,7 +165,6 @@ router = client.endpoints.create(
         fallback=Model("claude-opus-4-7"),
         max_quality_drop=0.02,
         hard_stop_drop=0.05,
-        fallback_probe_rate=0.10,
     ),
 )
 
@@ -178,7 +173,6 @@ reply = call_your_llm(decision.model, messages, tools)
 
 decision.record_feedback(
     score=1.0 if ticket_resolved else 0.0,
-    metrics={"cost_usd": reply.cost_usd, "latency_ms": reply.latency_ms},
 )
 ```
 
@@ -199,7 +193,6 @@ const router = await grad.endpoints.create({
     fallback: new Model("claude-opus-4-7"),
     maxQualityDrop: 0.02,
     hardStopDrop: 0.05,
-    fallbackProbeRate: 0.1,
   }),
 });
 
@@ -208,7 +201,6 @@ const reply = await callYourLLM(decision.model, messages, tools);
 
 await decision.recordFeedback({
   score: ticketResolved ? 1.0 : 0.0,
-  metrics: { cost_usd: reply.costUsd, latency_ms: reply.latencyMs },
 });
 ```
 
@@ -220,10 +212,7 @@ router, _ := client.Endpoints.Get(ctx, "support-router")
 decision, _ := router.Route(ctx, grad.RouteInput{Messages: messages, Tools: tools})
 reply := callYourLLM(decision.Model, messages, tools)
 
-_ = decision.RecordFeedback(ctx, grad.Feedback{
-	Score:   score,
-	Metrics: map[string]float64{"cost_usd": reply.CostUSD, "latency_ms": reply.LatencyMS},
-})
+_ = decision.RecordFeedback(ctx, grad.Feedback{Score: score})
 ```
 
   </DocsCodeTab>
@@ -239,21 +228,18 @@ curl https://api.gradiated.com/v1/endpoints/support-router/infer \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-### How the online guardrail works
+As feedback comes in, the endpoint keeps live quality within `max_quality_drop` and automatically routes all traffic back to your `fallback` model if quality ever drops past `hard_stop_drop`.
 
-- **10% fallback probes:** When the router chooses a cheaper model, `fallback_probe_rate` (default `0.10`) sends a random sample to the fallback anyway and records the exact `propensity`. That gives an unbiased inverse-propensity estimate of live quality drop without a separate A/B test.
-- **Online dual update:** As feedback arrives, the endpoint adjusts `λ` automatically to hold quality within `max_quality_drop`.
-- **Circuit breaker:** If rolling quality drop crosses `hard_stop_drop` (default `0.05`), the endpoint shifts 100% of traffic back to the fallback model.
-- **Zero-hop gateway mode:** On Gradiated Cloud, pass `"model": "<org>/support-router"` directly to `/v1/chat/completions`, `/v1/responses`, or `/v1/messages` to run routing in-process with no extra hop.
+If you already call models through Gradiated with the [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/), you can skip `router.route(...)` and pass `"model": "<org>/support-router"` directly to your chat completion call.
 
-## Going deeper with custom loops
+## Want more control?
 
-Drop to [custom loops](/docs/training/custom-loops/) when you need pairwise arena matrix-factorization routing, custom latency-weighted utility functions, or teacher reward-model distillation into a compact router head.
+Need custom routing logic or a custom loss? See [Custom loops](/docs/training/custom-loops/).
 
 <DocsNext>
-  <a href="/docs/training/recipes/classifier/">
+  <a href="/docs/training/recipes/decision-model/">
     <small>Next guide</small>
-    <strong>Classifiers</strong>
+    <strong>Decision models</strong>
   </a>
   <a href="/docs/training/endpoints/">
     <small>Serving</small>

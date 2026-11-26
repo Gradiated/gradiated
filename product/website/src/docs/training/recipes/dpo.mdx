@@ -1,8 +1,8 @@
 # Preference tuning (DPO)
 
-<DocsLead>Align a fine-tuned model away from recurring failure modes using `(chosen, rejected)` preference pairs with `DPORecipe`.</DocsLead>
+<DocsLead>Teach a model which answers you prefer by showing it pairs of good and bad examples.</DocsLead>
 
-Use **`DPORecipe`** after [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) when your model already knows the right format but still makes avoidable mistakes (subtle truncations, verbose explanations, tone slips, or bad tool arguments) that you can contrast as **chosen** vs. **rejected** responses.
+Use **`DPORecipe`** after [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) when your model already knows the right format but still makes recurring mistakes (like cutting off code, being too wordy, or picking the wrong tool arguments). Showing it **chosen** vs. **rejected** pairs steers it away from those patterns.
 
 ## What data you need
 
@@ -122,17 +122,21 @@ console.log(dpo.artifact.id, dpo.evalReport);
   </DocsCodeTab>
 </DocsCodeTabs>
 
+### When to use SFT vs. DPO vs. RL
+
+- **Start with [SFT](/docs/training/recipes/sft/)** when the model doesn't follow your format, schema, or style yet and you have examples of good answers.
+- **Follow with DPO (`DPORecipe`)** when the model mostly works but keeps repeating specific mistakes you can show as `(chosen, rejected)` pairs.
+- **Move to [RL (`GRPORecipe`)](/docs/training/recipes/rl-agents/)** when you can grade answers automatically with tests, validators, or a judge and want the model to discover better solutions on its own.
+
 ### Key parameters
 
-| Component | Guidance |
-| --- | --- |
-| `losses.DPO(beta=...)` | Higher `beta` (`0.2`–`0.5`) stays closer to the SFT reference; lower (`0.05`–`0.1`) pushes harder away from rejected patterns. |
-| `optim.AdamW(lr=...)` | Use a lower learning rate than SFT (`2e-5`–`5e-5`) to prevent reward hacking or formatting drift. |
-| `adapters.LoRA(rank=32, merge_on_export=True)` | Set `merge_on_export=True` on the final stage for lowest serving latency. |
+- **`losses.DPO(beta=...)`:** higher `beta` (`0.2`–`0.5`) stays closer to your starting model; lower (`0.05`–`0.1`) pushes harder away from rejected patterns.
+- **`optim.AdamW(lr=...)`:** use a smaller learning rate than SFT (`2e-5`–`5e-5`) so you don't break formatting you already taught it.
+- **`adapters.LoRA(rank=32, merge_on_export=True)`:** set `merge_on_export=True` on your final stage for lowest serving latency.
 
 ## Deploy
 
-Promote the aligned [`Artifact`](/docs/training/artifacts/) to your [`Endpoint`](/docs/training/endpoints/) with a canary split to verify quality gains against your previous SFT version:
+Roll out the updated [`Artifact`](/docs/training/artifacts/) to your [`Endpoint`](/docs/training/endpoints/) on 10% of traffic first so you can compare it directly against your SFT version:
 
 ```python
 endpoint = dpo.deploy(canary=0.10)
@@ -140,7 +144,7 @@ endpoint = dpo.deploy(canary=0.10)
 
 ## Want more control?
 
-Swap `losses.DPO()` for a custom PyTorch `losses.CustomLoss` (such as SimPO, ORPO, or KTO) right inside `DPORecipe` — see [Custom loops](/docs/training/custom-loops/) and [Advanced objectives](/docs/training/advanced-objectives/).
+You can swap `losses.DPO()` for your own PyTorch `losses.CustomLoss` (like SimPO, ORPO, or KTO) right inside `DPORecipe` — see [Custom loops](/docs/training/custom-loops/) and [Advanced objectives](/docs/training/advanced-objectives/).
 
 <DocsNext>
   <a href="/docs/training/recipes/rl-agents/">

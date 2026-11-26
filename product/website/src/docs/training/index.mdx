@@ -1,6 +1,6 @@
 # Training overview
 
-<DocsLead>Train routers, classifiers, reward models, and fine-tuned or RL-tuned LLMs from traces or live environments. Start with open, composable recipes and swap in custom PyTorch losses or environments whenever you need to.</DocsLead>
+<DocsLead>Train routers, decision models, and fine-tuned models from your production logs or test environments.</DocsLead>
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -71,7 +71,7 @@ Already sending inference requests through Gradiated with the `x-gradiated-task`
 ```text
 ✓ Dataset support-prod: 4,820 trajectories (3 models, 0 schema errors)
 ✓ Split: 4,097 train / 723 eval (grouped by session_id — 0 leakage)
-✓ Fitted DualHeadKernelLBFGS in 3.8s (~0.6M embed tokens · $0.00 train tokens)
+✓ Trained Qwen/Qwen3-0.6B router in 42s (~1.1M train tokens)
 
   Eval report (vs. claude-opus-4-7 fallback, 95% bootstrap CI):
     Fallback quality : 91.2%
@@ -89,9 +89,9 @@ Already sending inference requests through Gradiated with the `x-gradiated-task`
 
 <DocsRecipeChooser />
 
-## The five primitives
+## The five building blocks
 
-Every workflow in `grad` — from a 4-second router to a multi-turn Docker Compose RL agent — composes the same five primitives. Click any stage to inspect its operations:
+Every workflow in `grad` uses the same five concepts, whether you are training a 4-second router or a multi-turn coding agent. Click any step to see what it does:
 
 <DocsTrainingFlywheel />
 
@@ -135,7 +135,7 @@ brew install gradiated/tap/grad
   </DocsCodeTab>
 </DocsCodeTabs>
 
-All SDKs and the CLI read `GRADIATED_API_KEY` automatically when set in the environment (create one in the [quickstart](/docs/quickstart/)) and connect to `https://api.gradiated.com`. You can also pass the key explicitly when initializing the client — useful for multi-tenant apps or secret managers:
+All SDKs and the CLI read `GRADIATED_API_KEY` from your environment automatically (create one in the [quickstart](/docs/quickstart/)) and connect to `https://api.gradiated.com`. You can also pass the key directly when creating the client:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -179,9 +179,9 @@ let client = grad_sdk::Client::new().with_api_key(std::env::var("GRADIATED_API_K
 
 Prefer to run on your own infrastructure or locally? See the [self-hosting guide](/docs/training/self-hosting/) for Docker Compose and the Kubernetes Helm chart.
 
-## Call your endpoint and close the loop
+## Call your endpoint and log outcomes
 
-`run.deploy()` (and `grad deploy`) reads the artifact's manifest to configure its default serving strategy, fallback model, and capture dataset. Call the endpoint in your app and record outcomes so live traffic feeds the next training run:
+`run.deploy()` (and `grad deploy`) sets up your endpoint using the artifact's defaults. Call the endpoint from your app and send back how well each response worked so live traffic improves the next run:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -252,19 +252,19 @@ curl https://api.gradiated.com/v1/endpoints/support-router/infer \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-## Two ways to train — with no cliff between them
+## Two ways to train
 
-Every built-in `Recipe` is an open Python class composed out of the five primitives and typed specs (`Adapter`, `Loss`, `Optimizer`, `Splitter`, `Rubric`). Start with defaults, override a single component (even passing a custom PyTorch `CustomLoss` or local `Environment`), or drive `Trainer` directly in your own loop.
+Start with a built-in `Recipe` and sensible defaults. When you need more control, override a single piece (like the loss function or dataset split), or write your own Python loop directly on `Trainer`.
 
 | Mode | How it works | When to use it |
 | --- | --- | --- |
-| [**Recipes**](/docs/training/recipes/) | Instantiate a typed recipe (`RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`), chain stages with `.then(...)` or `run.artifact`, or serialize to YAML. | You want fast, reproducible training, held-out evals, or to swap just one component (loss, splitter, or rubric) without rewriting loop plumbing. |
-| [**Custom loops**](/docs/training/custom-loops/) | Drive `Trainer`, `Artifact`, `Environment`, and `Rubric` directly in Python with built-in or `CustomLoss` PyTorch objectives. | You need custom multi-trainer loops, replay buffers, branched tree search, or multi-agent self-play. |
+| [**Recipes**](/docs/training/recipes/) | Pick a recipe (`RouterRecipe`, `DecisionModelRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`, `RewardModelRecipe`, `EmbeddingRecipe`), chain stages with `.then(...)`, or run from YAML. | Almost always. You get sensible defaults, held-out evaluations, and can swap individual pieces without writing a training loop. |
+| [**Custom loops**](/docs/training/custom-loops/) | Call `Trainer`, `Artifact`, `Environment`, and `Rubric` directly in Python with built-in losses or your own PyTorch `CustomLoss`. | You want a custom research loop, multi-trainer setup, replay buffer, or custom rollout logic. |
 
-Any run can export its full resolved config as YAML (`grad runs inspect <run_id> --yaml > recipe.yaml`), so moving from Python defaults to version-controlled config takes one command.
+You can export the full resolved config of any run as YAML (`grad runs inspect <run_id> --yaml > recipe.yaml`) to check it into Git.
 
-<DocsCallout label="Token-based training billing" tone="tip">
-Training is metered **per million tokens processed** (forward/backward and sampling) plus storage for saved `.grad` artifacts and checkpoints — never idle GPU hours. Start at the cheapest layer that proves value: a lightweight router or classifier runs in seconds, then move to SFT, distillation, or RL once you have a measured baseline.
+<DocsCallout label="Pay only for tokens trained" tone="tip">
+You pay per million tokens processed (training and sampling) plus storage for saved artifacts and checkpoints. You never pay for idle GPUs. Start with the simplest option that proves value: a router or decision model trains quickly, then move up to fine-tuning or RL once you have a baseline.
 </DocsCallout>
 
 ## Using with coding agents

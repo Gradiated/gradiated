@@ -1,13 +1,13 @@
 # Supervised fine-tuning (SFT)
 
-<DocsLead>Fine-tune an open model on verified gold outputs with `SFTRecipe` to cut latency and cost on structured generation, code edits, or domain-specific tasks.</DocsLead>
+<DocsLead>Fine-tune an open model on examples of the exact outputs you want.</DocsLead>
 
-Use **`SFTRecipe`** when you have clean examples of the exact output you want (code diff-merging, structured JSON extraction, SQL generation, or domain-specific formatting). Once the model reliably matches your format, you can optionally chain a [Preference tuning (DPO)](/docs/training/recipes/dpo/) or [RL for agents](/docs/training/recipes/rl-agents/) stage on top of the exported [`Artifact`](/docs/training/artifacts/).
+Use **`SFTRecipe`** when you have good examples of what the model should produce (code edits, structured JSON, SQL queries, or a specific style). Once it reliably follows your format, you can run [Preference tuning (DPO)](/docs/training/recipes/dpo/) or [RL for agents](/docs/training/recipes/rl-agents/) on top of the saved [`Artifact`](/docs/training/artifacts/) to improve it further.
 
 ## What data you need
 
-- **Minimum volume:** 300–1,000 clean `(input, expected_output)` [trajectories](/docs/training/trajectories/) for narrow formatting or code-edit tasks; 2,000+ for broader tasks.
-- **Quality beats volume:** Filter out low-scoring or unverified traces on the `Dataset` (`dataset.filter(lambda t: t.scores.get("tests_passed") == 1.0)`) rather than training on raw logs.
+- **Minimum volume:** 300–1,000 clean `(input, expected_output)` [trajectories](/docs/training/trajectories/) for focused tasks; 2,000+ for broader ones.
+- **Quality beats volume:** filter your `Dataset` down to verified passing examples (`dataset.filter(lambda t: t.scores.get("tests_passed") == 1.0)`) instead of training on unfiltered logs.
 
 ```json
 {
@@ -117,17 +117,17 @@ grad train -f sft-diff-merge.yaml --wait
   </DocsCodeTab>
 </DocsCodeTabs>
 
-### Key parameters
+### When to use what
 
-| Component | Guidance |
-| --- | --- |
-| `adapters.LoRA(rank=..., merge_on_export=...)` | `rank=16`–`32` works for most single-task fine-tunes (`64` for large coding datasets). Set `merge_on_export=True` for lowest serving latency, or leave `False` to hot-swap adapters on one shared base model. |
-| `optim.AdamW(lr=...)` | Start around `2e-4` for LoRA SFT. |
-| `splits.BySession(0.10)` | Keeps all turns from the same conversation together across train and held-out eval. |
+- **`adapters.LoRA(rank=16..32)`** *(default)* — best starting point for almost every task. Trains fast and generalizes well on 300–5,000 examples.
+  - Set `merge_on_export=True` when you want lowest serving latency on a single dedicated model.
+  - Leave `merge_on_export=False` when you want to serve many fine-tuned adapters on one shared base model.
+- **`adapters.Full()`** — trains every weight in the model. Only worth it once you have 10,000+ examples and LoRA stops improving.
+- **`splits.BySession(0.10)`** — keeps all turns from the same conversation together so eval scores aren't inflated by leakage.
 
-## Deploy with syntax fallback
+## Deploy with a syntax fallback
 
-For structured JSON, SQL, or code-editing [endpoints](/docs/training/endpoints/), pair the trained [`Artifact`](/docs/training/artifacts/) with `strategies.SyntaxFallback` and any built-in `validators.*` class (`validators.TypeScriptAST()`, `validators.JSONSchema(...)`, `validators.SQL()`) or your own callable. Invalid outputs automatically retry on your fallback model:
+For JSON, SQL, or code [endpoints](/docs/training/endpoints/), pair your trained [`Artifact`](/docs/training/artifacts/) with `strategies.SyntaxFallback` and a validator (`validators.TypeScriptAST()`, `validators.JSONSchema(...)`, `validators.SQL()`, or your own Python function). If the fine-tuned model outputs broken syntax, the endpoint automatically retries on a stronger fallback model:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -213,12 +213,12 @@ curl https://api.gradiated.com/v1/endpoints/fast-diff-merge/infer \
 </DocsCodeTabs>
 
 <DocsCallout label="Turn production misses into your next dataset" tone="tip">
-Whenever a developer fixes a bad output or `SyntaxFallback` catches invalid JSON/AST, attaching `expected_output` via `record_feedback()` logs both the rejected attempt and the gold fix on the same trajectory — giving you ready-made examples for your next SFT or [DPO](/docs/training/recipes/dpo/) run.
+When a developer fixes a bad answer or `SyntaxFallback` catches invalid JSON or code, calling `record_feedback(..., expected_output=...)` saves both the failed attempt and the fix on the same trajectory — giving you ready-to-use data for your next SFT or [DPO](/docs/training/recipes/dpo/) run.
 </DocsCallout>
 
 ## Want more control?
 
-Drop to [Custom loops](/docs/training/custom-loops/) for differential LoRA+ learning rates (`optim.ParamGroup`) or zero-train-token checkpoint merging ([Artifacts](/docs/training/artifacts/)).
+Use [Custom loops](/docs/training/custom-loops/) if you want separate learning rates per layer (`optim.ParamGroup`), or merge two checkpoints without retraining in [Artifacts](/docs/training/artifacts/).
 
 <DocsNext>
   <a href="/docs/training/recipes/dpo/">

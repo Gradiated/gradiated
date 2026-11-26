@@ -1,13 +1,13 @@
 # Embeddings
 
-<DocsLead>Fine-tune domain-specific dense embedding models on your internal jargon, codebases, and schemas with `EmbeddingRecipe`.</DocsLead>
+<DocsLead>Fine-tune an embedding model on your own terms, docs, and codebase for better search.</DocsLead>
 
-Off-the-shelf embedding models degrade on internal acronyms, product terminology, and proprietary schemas. Fine-tuning a compact encoder with **`EmbeddingRecipe`** on your own query/document pairs typically recovers 10–25 points of Recall@10 while keeping serving latency under 10 ms.
+General-purpose embedding models often miss internal acronyms, product names, and custom schemas. Fine-tuning a small encoder with **`EmbeddingRecipe`** on your own query/document pairs usually adds 10–25 points of Recall@10 while staying under 10 ms per request.
 
 ## What data you need
 
-- **Minimum volume:** 1,000–5,000 query groups in a [`Dataset`](/docs/training/trajectories/) sharing a `group_id` with `role: "anchor"` (query), `role: "positive"` (matching document), and one or more `role: "negative"` (hard near-miss documents).
-- **Hard negatives matter most:** Random negatives saturate quickly; pull near-miss documents from your existing search or RAG retriever.
+- **Minimum volume:** 1,000–5,000 query groups in a [`Dataset`](/docs/training/trajectories/) sharing a `group_id` with `role: "anchor"` (the query), `role: "positive"` (the right document), and one or more `role: "negative"` (wrong documents that look similar).
+- **Use near-miss negatives:** random wrong documents are too easy to tell apart; pull close-but-wrong results from your current search or RAG pipeline.
 
 ## Train with `EmbeddingRecipe`
 
@@ -88,7 +88,7 @@ endpoint = run.deploy()
 
 ## Want more control?
 
-Need Matryoshka nested dimensions, ColBERT multi-vector token embeddings (`pooling.PerToken()`), or cross-encoder rerankers with iterative hard-negative mining? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
+Need Matryoshka resizable embeddings, per-token ColBERT search, or cross-encoder rerankers? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
 
 <DocsNext>
   <a href="/docs/training/custom-loops/">

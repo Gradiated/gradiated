@@ -1,8 +1,8 @@
 # Recipes
 
-<DocsLead>Pick a composable recipe class, start with sensible defaults, validate token volume with a dry run, and swap any adapter, loss, splitter, or optimizer without rewriting a training loop.</DocsLead>
+<DocsLead>Pick a recipe, check the cost with a dry run, and train with sensible defaults.</DocsLead>
 
-Every **recipe** (`RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`, `RewardModelRecipe`, `EmbeddingRecipe`) is an open, inspectable Python class composed from typed building blocks (`adapters.*`, `losses.*`, `optim.*`, `splits.*`, `solvers.*`, `calibration.*`) on top of the core primitives. Every completed run writes an immutable `.grad` [`Artifact`](/docs/training/artifacts/) alongside its `EvalReport`.
+A **recipe** is a Python class that wires up a common training workflow (`RouterRecipe`, `DecisionModelRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`, `RewardModelRecipe`, `EmbeddingRecipe`). When a run finishes, it saves a versioned `.grad` [`Artifact`](/docs/training/artifacts/) along with its held-out evaluation report.
 
 <DocsRecipeChooser />
 
@@ -10,8 +10,8 @@ Every **recipe** (`RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, 
 
 | Recipe class | Guide | Expected dataset fields |
 | --- | --- | --- |
-| `RouterRecipe` | [Model router](/docs/training/recipes/router/) | Multi-model traces with `scores`, `metrics.cost_usd`, and `metadata.model` |
-| `ClassifierRecipe` | [Classifiers](/docs/training/recipes/classifier/) | `expected_output.label` or `scores` (binary, multiclass, ordinal) |
+| `RouterRecipe` | [Model router](/docs/training/recipes/router/) | Prompts (`input.messages`) + a `Judge` or existing `scores` (optional `metrics.cost_usd`) |
+| `DecisionModelRecipe` | [Decision models](/docs/training/recipes/decision-model/) | `expected_output.label` or `scores` (categories, yes/no, or ordered ratings) |
 | `SFTRecipe` | [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) | `input` + `expected_output` (or filtered high-score `output`) |
 | `DPORecipe` | [Preference tuning (DPO)](/docs/training/recipes/dpo/) | Paired `group_id` trajectories with `role: chosen \| rejected` |
 | `GRPORecipe` | [RL for agents](/docs/training/recipes/rl-agents/) | Prompts + a [`Rubric`](/docs/training/rubrics/) (`Judge` / `validators.*`) or [`Environment`](/docs/training/environments/) |
@@ -22,7 +22,7 @@ Every **recipe** (`RouterRecipe`, `ClassifierRecipe`, `SFTRecipe`, `DPORecipe`, 
 
 ## Start with recipe defaults
 
-Every recipe ships with working defaults for base model, train/eval split, optimizer, and calibration. Training is billed **per million tokens processed** plus storage for saved weights — never idle GPU time. Pass your dataset, output name, and recipe, then run `--dry-run` (or `runs.plan()`) to verify data coverage and estimated tokens before starting a run.
+Every recipe comes with working defaults for the base model, train/eval split, and optimizer. You pay per million tokens trained plus storage for saved weights, never for idle GPUs. Pass your dataset, output name, and recipe, and use `--dry-run` (or `runs.plan()`) to check data coverage and estimated cost before launching.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -122,7 +122,7 @@ curl https://api.gradiated.com/v1/runs \
 
 ### Preview with `--dry-run` before training
 
-Every run supports a zero-cost pre-flight check (`--dry-run` or `client.runs.plan()`) that inspects dataset coverage, warns about missing scores or class imbalance, prints resolved defaults, and estimates total training tokens and cost:
+Before spending anything, run `--dry-run` (or `client.runs.plan()`) to check your dataset for missing scores or class imbalance, see the resolved defaults, and get a token and cost estimate:
 
 <DocsTerminal
   title="Pre-flight dry run ($0)"
@@ -147,43 +147,46 @@ Export the full resolved config of any run as YAML to see every default — mode
 grad runs inspect run_01J9X --yaml > recipe.yaml
 ```
 
-## Compose and customize recipes
+## Customize any piece
 
-Every component is a typed value spec (`Model`, `adapters.*`, `optim.*`, `calibration.*`), a first-class resource handle (`Dataset`, `Artifact`, `Secret`), or an extensible interface (`losses.*`, `solvers.*`, `splits.*`, `Rubric`). Filter data directly on `Dataset` via `dataset.filter(...)`, and omit any recipe argument to keep its default — or swap in your own subclass when you want custom behavior without rewriting the loop.
+Leave out any argument to keep the recipe's default, or override just the pieces you care about (`model`, `adapter`, `loss`, `optimizer`, `split`, `rubric`). Filter your data directly on the `Dataset` with `dataset.filter(...)`:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Router">
 
 ```python
-from grad import Grad, Model, calibration, solvers, splits
+from grad import Grad, Judge, Model
 from grad.recipes import RouterRecipe
 
 client = Grad()
 dataset = client.datasets.get("support-prod")
 
 recipe = RouterRecipe(
-    model=Model("BAAI/bge-small-en-v1.5"),
-    solver=solvers.DualHeadKernelLBFGS(l2=0.1),
-    score=lambda t: t.scores["task_success"],  # or "task_success" / Scorer / Rubric
-    split=splits.BySession(eval_fraction=0.15),
-    calibration=calibration.SLA(max_quality_drop=0.02),
+    model=Model("Qwen/Qwen3-0.6B"),
+    models=[Model("Qwen/Qwen3-8B"), Model("claude-opus-4-7")],
+    score=Judge(
+        name="resolved",
+        model=Model("claude-sonnet-4-6"),
+        prompt="Did the assistant solve the user's issue accurately?",
+    ),
+    max_quality_drop=0.02,
 )
 
 run = client.runs.create(dataset=dataset, name="support-router", recipe=recipe).wait()
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="Classifier">
+  <DocsCodeTab label="Decision model">
 
 ```python
 from grad import Grad, Model, calibration, losses, splits
-from grad.recipes import ClassifierRecipe
+from grad.recipes import DecisionModelRecipe
 
 client = Grad()
 dataset = client.datasets.get("coding-effort-labels")
 
-recipe = ClassifierRecipe(
-    model=Model("BAAI/bge-small-en-v1.5"),
+recipe = DecisionModelRecipe(
+    model=Model("Qwen/Qwen3-0.6B"),
     labels=["low", "medium", "high"],
     loss=losses.OrdinalBCE(),
     calibration=calibration.Temperature(),
@@ -315,7 +318,7 @@ run = client.runs.create(dataset=dataset, name="docs-cartridge", recipe=recipe).
 
 ### Swap one component instead of rewriting the loop
 
-Because every recipe accepts any `Loss` (built-in or `losses.CustomLoss`), any `AdvantageEstimator`, or any `Splitter`, tweaking a research objective is a single constructor argument — no need to drop down to a full manual loop just to change a loss formula:
+You don't need to write a full training loop just to try a different loss function or split strategy. Pass your own `losses.CustomLoss`, `AdvantageEstimator`, or `Splitter` straight into the recipe:
 
 ```python
 # Swap built-in losses.DPO() for your own SimPOLoss subclass inside DPORecipe:
@@ -360,7 +363,7 @@ grad train -f recipe.yaml --wait
 
 ## Chaining stages (`SFT → DPO` / `SFT → GRPO`)
 
-Every `Recipe` turns an input `Model` (a catalog `Model(...)` ref or a trained `Artifact`) into a new immutable `Artifact`, and `run.artifact` is a pending `Artifact` handle you can pass straight into the next stage before calling `.wait()`. Use `.then(...)` as syntactic sugar for linear chains, pass `model=sft.artifact` directly for branching DAGs, or call `.wait()` on Stage 1 first whenever you want to inspect metrics before starting Stage 2:
+Every recipe takes a `Model` (a base model or a trained `Artifact`) and produces a new `Artifact`. `run.artifact` can be passed straight into a second run before the first finishes: use `.then(...)` for a simple chain, pass `model=sft.artifact` if you want to branch, or call `.wait()` in between to check metrics before continuing:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Chained (.then)">
@@ -465,11 +468,11 @@ Router artifacts include a held-out cost-vs-quality Pareto curve and 95% bootstr
 
 ## When to write a custom loop
 
-Stay with `Recipe` (including swapping in a `CustomLoss` or custom `Splitter`) while a standard train/eval lifecycle fits your task. Drop down to [custom loops](/docs/training/custom-loops/) when you need:
+Stick with a `Recipe` (even with a custom loss or splitter) as long as a standard train/eval flow works. Switch to [custom loops](/docs/training/custom-loops/) when you need:
 
-- Multiple co-evolving `Trainer` instances in one loop (e.g. online actor + critic or implicit PRM).
-- Custom rollout topologies such as async replay buffers, Monte Carlo prefix branching, or multi-agent self-play.
-- Full imperative control over microbatch scheduling, mid-loop `trainer.snapshot()` mining, or stateful Docker Compose rollouts.
+- Multiple trainers updating together in one loop (like a separate actor and critic).
+- Custom rollout setups like async replay buffers, tree search, or multi-agent self-play.
+- Manual control over batching, mid-run `trainer.snapshot()` calls, or Docker Compose environments.
 
 <DocsNext>
   <a href="/docs/training/rubrics/">

@@ -1,12 +1,12 @@
 # Reward models
 
-<DocsLead>Train fast, task-specific verifier models from preference pairs with `RewardModelRecipe` to grade RL rollouts, score datasets, and gate production cascades.</DocsLead>
+<DocsLead>Train a small model to score how good another model's answers are.</DocsLead>
 
-When unit tests or syntax checks cannot grade an output on their own — or when frontier `Judge` calls are too slow or expensive at scale — train a dedicated verifier [`Artifact`](/docs/training/artifacts/) with **`RewardModelRecipe`**. The same artifact works in three places:
+When unit tests or syntax checks aren't enough to grade an answer — or calling a frontier `Judge` on every request is too slow or expensive — train your own verifier [`Artifact`](/docs/training/artifacts/) with **`RewardModelRecipe`**. You can use the same verifier in three places:
 
-- Inside a [`Judge`](/docs/training/rubrics/) for [`dataset.score(judge)`](/docs/training/trajectories/) or [`GRPORecipe`](/docs/training/recipes/rl-agents/).
-- As the `verifier` inside a production `strategies.Cascade` [`Endpoint`](/docs/training/endpoints/) so easy requests stay on a fast 8B model while low-scoring drafts escalate to a frontier model.
-- Behind `strategies.BestOfN` or `strategies.MajorityVote` for test-time reranking.
+- Inside a [`Judge`](/docs/training/rubrics/) to score a [`Dataset`](/docs/training/trajectories/) or grade [`GRPORecipe`](/docs/training/recipes/rl-agents/) runs.
+- Inside a `strategies.Cascade` [`Endpoint`](/docs/training/endpoints/) so easy requests stay on a fast 8B model and low-scoring answers automatically fall back to a frontier model.
+- With `strategies.BestOfN` or `strategies.MajorityVote` to pick the best of several candidate answers.
 
 ## What data you need
 
@@ -107,9 +107,15 @@ client.endpoints.create(
 )
 ```
 
+## When to train a reward model vs. other graders
+
+- **Use a [`Scorer`](/docs/training/rubrics/) (code check)** first whenever correctness can be checked in Python (JSON schema, SQL parser, unit tests). It's instant and free.
+- **Use a frontier [`Judge`](/docs/training/rubrics/)** (`Model("claude-sonnet-4-6")`) while prototyping — no training data needed, just a prompt.
+- **Train a reward model (`RewardModelRecipe`)** once you have 500–2,000 graded pairs and want fast, cheap scoring at scale (for RL training or live `Cascade` fallback checks).
+
 ## Want more control?
 
-Need step-level Process Reward Models (PRMs) that score every reasoning step, multi-attribute gating heads, or custom PyTorch Bradley-Terry losses? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
+Need step-by-step Process Reward Models (PRMs) or custom PyTorch losses? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
 
 <DocsNext>
   <a href="/docs/training/recipes/embeddings/">

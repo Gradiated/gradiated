@@ -1,13 +1,13 @@
 # Model distillation
 
-<DocsLead>Shrink a slow frontier or 32B teacher model into a fast 4B–8B student using on-policy distillation on your production prompts — no gold answers required.</DocsLead>
+<DocsLead>Train a small, fast model to copy a larger one using your own prompts.</DocsLead>
 
-Offline SFT on teacher outputs teaches the student what the teacher says on *teacher* prefixes, which drifts as soon as the student generates its own tokens. **`DistillRecipe`** with on-policy rollouts (`rollout=OnPolicy(...)`) samples from the **student**, scores those exact sequences with the **teacher's** probabilities, and minimizes KL divergence where the student actually goes.
+If you just fine-tune a small model on saved outputs from a big model, it can go off the rails as soon as it starts writing its own slightly different wording. **`DistillRecipe`** with `rollout=OnPolicy(...)` fixes that: the small **student** generates answers to your prompts, and the larger **teacher** scores those exact tokens so the student learns to recover from its own mistakes.
 
 ## What data you need
 
-- **Only prompts:** You do not need gold answers — 1,000–5,000 representative production prompts in `input.messages` ([trajectories](/docs/training/trajectories/)) are enough.
-- **A teacher model:** Any catalog `Model` (`Model("Qwen/Qwen3-32B")`) or a larger fine-tuned `.grad` [`Artifact`](/docs/training/artifacts/) you trained earlier.
+- **Only prompts:** you don't need labeled answers — 1,000–5,000 real prompts in `input.messages` ([trajectories](/docs/training/trajectories/)) are enough.
+- **A teacher model:** any larger `Model` (`Model("Qwen/Qwen3-32B")`) or a fine-tuned `.grad` [`Artifact`](/docs/training/artifacts/) you trained earlier.
 
 ## Train with `DistillRecipe`
 
@@ -94,9 +94,11 @@ grad train -f distill-4b.yaml --wait
   </DocsCodeTab>
 </DocsCodeTabs>
 
-<DocsCallout label="Compressing a long static system prompt instead?" tone="tip">
-To eliminate 30k–100k repeated tokens of documentation or per-tenant context on every request, see [Context Cartridges](/docs/training/recipes/cartridges/).
-</DocsCallout>
+## When to use distillation vs. SFT vs. Cartridges
+
+- **`DistillRecipe`** — you have a strong, slow model (like a 32B or frontier model) and want a small 4B–8B model to match it on your prompts, with no labeled answers required.
+- **[`SFTRecipe`](/docs/training/recipes/sft/)** — you already have verified gold answers (or human-edited outputs) you want the model to copy directly.
+- **[`CartridgeRecipe`](/docs/training/recipes/cartridges/)** — you don't want to change the model's general behavior; you just want to stop resending the same 30k–100k tokens of docs or system prompt on every request.
 
 ## Deploy and serve
 
@@ -108,7 +110,7 @@ endpoint = run.deploy(canary=0.10)
 
 ## Want more control?
 
-Need custom distillation divergences (Jensen-Shannon / GKD, Skew KL) or Self-Distillation Fine-Tuning (SDFT) for continual learning without catastrophic forgetting? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
+Need custom distillation losses (like Jensen-Shannon / GKD or Skew KL) or Self-Distillation Fine-Tuning (SDFT) to teach new skills without the model forgetting what it already knows? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
 
 <DocsNext>
   <a href="/docs/training/recipes/cartridges/">

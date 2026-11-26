@@ -32,8 +32,6 @@ Previously led AI and growth engineering at PostHog, where I worked on making th
 
 I live in Cambridge, UK with my wife Hania and son Benio. Outside of work, you'll usually find me travelling with family, hiking, and eating a lot of popcorn.
 
-P.S. Pineapple doesn't belong on pizza.
-
 ## Working on
 
 <!-- The areas of research you are working in at the moment. A sentence or two

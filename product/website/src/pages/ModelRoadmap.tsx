@@ -164,7 +164,7 @@ export const ModelRoadmap = (): ReactElement => {
                               className={voted ? undefined : "gr-roadmap-up"}
                               name={voted ? "check" : "caret-right"}
                             />
-                            {voted ? "Voted" : "Vote"}
+                            {voted ? "Upvoted" : "Upvote"}
                           </button>
                         )}
                         {canSuggestName(entry) && (

@@ -1,8 +1,22 @@
 # Environments and rubrics
 
-<DocsLead>Score trajectories with composable, statically typed rubrics and run multi-turn RL rollouts against real apps, seeded databases, and Docker Compose stacks.</DocsLead>
+<DocsLead>Define typed tasks, score trajectories with composable rubrics and judges, and run multi-turn RL rollouts against Harbor benchmarks, MCP servers, Docker Compose stacks, or custom simulators.</DocsLead>
 
-Environments run **outside the GPU training cluster**, on your own CPU machines, Kubernetes cluster, or sandbox pool, and call Gradiated [Artifact](/docs/training/endpoints/) and [Trainer](/docs/training/custom-loops/) endpoints over HTTP. Your containers, seed scripts, and internal credentials never leave your network.
+Environments run **outside the GPU training cluster**, on your own CPU machines, Kubernetes cluster, or sandbox pool, and call Gradiated [`Model` / `Artifact`](/docs/training/endpoints/) and [`Trainer`](/docs/training/custom-loops/) endpoints over HTTP. Your containers, seed scripts, and internal credentials never leave your network.
+
+## Tasks, environments, and rubrics
+
+Every RL setup separates three responsibilities cleanly:
+
+| Entity | Responsibility | Relationship |
+| --- | --- | --- |
+| **`Task`** | One immutable problem instance: `id`, initial `messages`/`tools`, environment `seed` (repo SHA, DB fixture, or Harbor task path), optional `expected` reference, and `timeout_s`. Create directly or convert from a trace via `Task.from_trajectory(t)`. | Many `Task`s per run (loaded from a `Dataset`, Harbor directory, or Python list). |
+| **`Environment[H]`** | The execution harness that turns any `Task` into an isolated handle `H` (`setup`), runs agent tool calls (`step`), grades live state before cleanup (`evaluate`), and destroys resources (`teardown`). | 1 `Environment` executes thousands of `Task`s. |
+| **`Rubric`** | Weighted grading logic combining deterministic `Scorer`s, `Judge`s, `StatefulScorer`s, and `GroupScorer`s into `trajectory.scores` + scalar reward. | Attached to the `Environment` (and/or combined with per-task test scripts such as Harbor's `tests/test.sh`). |
+
+<DocsCallout label="Starting from production traces?" tone="tip">
+You do not need a hand-built simulator to start RL. See the full [Building an environment from traces](/docs/training/traces-to-environments/) guide for turning a `Dataset` of traces into single-turn `Task`s, local mock/replay tool sandboxes, or verified Harbor benchmarks.
+</DocsCallout>
 
 ## Rubrics
 
@@ -49,7 +63,7 @@ Subclass `Environment` and implement those four hooks:
 ```python
 import subprocess
 from dataclasses import dataclass
-from grad import Environment, Observation, Rubric
+from grad import Environment, Observation, Rubric, Task
 
 @dataclass
 class ComposeHandle:
@@ -62,14 +76,14 @@ class AppComposeEnv(Environment[ComposeHandle]):
         super().__init__(rubric)
         self.compose_file = compose_file
 
-    def setup(self, task: dict, rollout_id: str) -> ComposeHandle:
+    def setup(self, task: Task, rollout_id: str) -> ComposeHandle:
         project = f"grad_{rollout_id}"
         subprocess.run(
             ["docker", "compose", "-p", project, "-f", self.compose_file, "up", "-d", "--wait"],
             check=True,
         )
         subprocess.run(
-            ["./scripts/seed.sh", project, task["fixture_id"]],
+            ["./scripts/seed.sh", project, task.seed["fixture_id"]],
             check=True,
         )
         api_port = get_mapped_port(project, "api", 8080)
@@ -103,6 +117,41 @@ class AppComposeEnv(Environment[ComposeHandle]):
 <DocsCallout label="No client-side tokenizer required" tone="tip">
 Returning `Observation(text=...)` from `step()` tokenizes tool output on the server using the exact model tokenizer and injects it with `loss_mask = 0.0` and `sampling_logprobs = 0.0`. Pass `Observation(tokens=[...])` only when you need explicit control tokens.
 </DocsCallout>
+
+## Standard formats and adapters (`environments.*`)
+
+You rarely need to write container or protocol plumbing from scratch. Standard task formats and tool harnesses plug straight into `Environment` via built-in adapters:
+
+### Harbor / Terminal-Bench (`environments.Harbor`)
+
+Load standard Harbor task directories (`instruction.md`, `task.toml`, `environment/Dockerfile`, `tests/test.sh`, and optional `solution/solve.sh`) directly into typed `Task` objects. `environments.Harbor` boots the container per rollout, isolates `tests/` until `evaluate()` runs (so the agent can never inspect test files during rollouts), parses verifier rewards into `trajectory.scores`, and lets you verify every task's oracle solution before spending training tokens:
+
+```python
+from grad import environments
+
+tasks = environments.Harbor.load_tasks("./harbor-tasks/")
+env = environments.Harbor(rubric=extra_rubric)  # combines tests/test.sh + optional Rubric
+
+# Smoke-test every task's solution/solve.sh oracle (and verify initial state fails)
+verified = env.verify_oracles(tasks, require_initial_fail=True)
+
+groups = env.rollout_groups(
+    artifact=trainer.snapshot(),
+    tasks=verified[:16],
+    group_size=8,
+    max_turns=12,
+    max_concurrency=8,
+)
+```
+
+### Other built-in adapters
+
+| Adapter | Use it for |
+| --- | --- |
+| **`environments.Harbor`** | Standard Harbor / Terminal-Bench task directories (`task.toml`, `instruction.md`, `environment/Dockerfile`, `tests/test.sh`, `solution/solve.sh`). |
+| **`environments.MCP`** | Expose any Model Context Protocol server's tools directly to the policy; `step()` invokes MCP `call_tool` and masks outputs with `loss_mask = 0.0`. |
+| **`environments.DockerCompose`** | Multi-service stacks (Postgres, Redis, API) with warm-pool slot leasing and fast template-database resets. |
+| **`environments.from_gym(make_env)`** | Wrap any Gymnasium environment (`reset` → `setup`, `step` → `step`, `close` → `teardown`). |
 
 ### Faster resets with a warm pool
 
@@ -158,12 +207,12 @@ Every rollout enforces three guarantees automatically:
 See the [RL for agents guide](/docs/training/recipes/rl-agents/) for full GRPO, DAPO, CISPO, and GSPO loops running against an `Environment`.
 
 <DocsNext>
-  <a href="/docs/training/custom-loops/">
-    <small>Next</small>
-    <strong>Custom loops</strong>
+  <a href="/docs/training/traces-to-environments/">
+    <small>Next guide</small>
+    <strong>Building an environment from traces</strong>
   </a>
-  <a href="/docs/training/endpoints/">
-    <small>Deploy</small>
-    <strong>Artifacts and endpoints</strong>
+  <a href="/docs/training/custom-loops/">
+    <small>Advanced</small>
+    <strong>Custom loops</strong>
   </a>
 </DocsNext>

@@ -108,7 +108,8 @@ The SDK passes strict domain entities (`Dataset`, `Model`, `Artifact`, `Endpoint
 
 | Category | Kind | Classes |
 | --- | --- | --- |
-| **Domain Entities** | First-class resource handles & value refs | `Dataset` (`client.datasets.get/create`, `.push()`, `.import_file()`, `.score()`, `.filter()`, `.add_source()`), `Model("...")` / `client.models.get(...)`, `Artifact(Model)` (`run.artifact`, `client.artifacts.get(...)`), `Endpoint` (`client.endpoints.get/create`), `Secret` (`client.secrets.get(...)`), `Pool` (`client.pools.get(...)`) |
+| **Domain Entities** | First-class resource handles & value refs | `Dataset` (`client.datasets.get/create`, `.push()`, `.import_file()`, `.score()`, `.filter()`, `.add_source()`), `Task` (`Task.from_trajectory(...)`), `Model("...")` / `client.models.get(...)`, `Artifact(Model)` (`run.artifact`, `client.artifacts.get(...)`), `Endpoint` (`client.endpoints.get/create`), `Secret` (`client.secrets.get(...)`), `Pool` (`client.pools.get(...)`) |
+| **Environments** | Extensible `Environment[H]` + adapters | `Environment[H]` (`setup`, `step`, `evaluate`, `teardown`, `rollout_groups`), `Observation`, `environments.Harbor` (`load_tasks`, `verify_oracles`), `environments.MCP`, `environments.DockerCompose`, `environments.from_gym` |
 | **Adapters & Pooling** | `@dataclass(frozen=True)` | `adapters.FrozenHead`, `adapters.LoRA(rank, merge_on_export=False)`, `adapters.DoRA`, `adapters.QLoRA`, `adapters.PrefixKV`, `adapters.LoReFT`, `adapters.Eagle3Draft`, `adapters.PartialUnfreeze`, `adapters.Full`; `pooling.Mean`, `pooling.Last`, `pooling.PerToken` |
 | **Heads** | `@dataclass(frozen=True)` | `heads.Linear(dim, token_level=False, trainable=True)` |
 | **Optimizers** | `@dataclass(frozen=True)` | `optim.AdamW`, `optim.Muon`, `optim.SGD`, `optim.ParamGroup(target=...)`, `optim.WeightAnchor` |

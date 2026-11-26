@@ -47,6 +47,7 @@ import DocsSystemOneSdk from "../docs/systemone-sdk.mdx";
 import DocsTrainingCustomLoops from "../docs/training/custom-loops.mdx";
 import DocsTrainingEndpoints from "../docs/training/endpoints.mdx";
 import DocsTrainingEnvironments from "../docs/training/environments.mdx";
+import DocsTrainingTracesToEnvironments from "../docs/training/traces-to-environments.mdx";
 import DocsTrainingOverview from "../docs/training/index.mdx";
 import DocsTrainingRecipes from "../docs/training/recipes.mdx";
 import DocsTrainingSelfHosting from "../docs/training/self-hosting.mdx";
@@ -141,6 +142,11 @@ export const documents = {
     path: "/docs/training/environments/",
     Component: DocsTrainingEnvironments,
   },
+  "training-traces-to-environments": {
+    title: "Traces to environments",
+    path: "/docs/training/traces-to-environments/",
+    Component: DocsTrainingTracesToEnvironments,
+  },
   "training-custom-loops": {
     title: "Custom loops",
     path: "/docs/training/custom-loops/",
@@ -227,6 +233,7 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
       "training-trajectories",
       "training-recipes",
       "training-environments",
+      "training-traces-to-environments",
       "training-custom-loops",
       "training-endpoints",
       "training-self-hosting",

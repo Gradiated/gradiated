@@ -206,7 +206,12 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/docs/training/environments/": {
     title: "Environments and rubrics",
     description:
-      "Score trajectories with composable rubrics and run multi-turn RL rollouts against stateful Docker Compose apps and seed scripts.",
+      "Define typed tasks, score trajectories with rubrics and judges, and run multi-turn RL rollouts against Harbor benchmarks, MCP servers, and Docker Compose apps.",
+  },
+  "/docs/training/traces-to-environments/": {
+    title: "Building an environment from traces",
+    description:
+      "Turn production LLM traces into verifiable RL environments: trace-to-task rubrics, mock tool-replay sandboxes, and fail-to-pass Harbor benchmarks.",
   },
   "/docs/training/custom-loops/": {
     title: "Custom training loops",

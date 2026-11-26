@@ -5,8 +5,8 @@ import { SiteLink } from "./components/SiteLink";
 export const ThesisContent = (): ReactNode => (
   <>
     <p>
-      Intelligence is still extraordinarily early. Frontier labs claim AGI,
-      yet economic growth remains ordinary. The models exist; the products and
+      Intelligence is still extraordinarily early. Frontier labs claim AGI, yet
+      economic growth remains ordinary. The models exist; the products and
       infrastructure that turn them into useful work mostly do not. The engine
       may be running, but the car is not built.
     </p>
@@ -21,33 +21,31 @@ export const ThesisContent = (): ReactNode => (
     </p>
     <p>
       Electricity followed a similar path. Factories first replaced steam
-      engines with electric motors to do the same work more cheaply. Once
-      power became cheap and widely available, it reorganized industry and
-      made entirely new products possible. Intelligence will do the same, but
-      only when it becomes practical to use far more of it.
+      engines with electric motors to do the same work more cheaply. Once power
+      became cheap and widely available, it reorganized industry and made
+      entirely new products possible. Intelligence will do the same, but only
+      when it becomes practical to use far more of it.
     </p>
     <p>
       If intelligence becomes as important as electricity, who controls it
-      matters enormously. We don't want a world where a handful of companies
-      get to decide what everyone else can build, on what terms, and at what
-      price. The more work we entrust to models, the more power we hand to
-      whoever controls them.
+      matters enormously. We don't want a world where a handful of companies get
+      to decide what everyone else can build, on what terms, and at what price.
+      The more work we entrust to models, the more power we hand to whoever
+      controls them.
     </p>
     <p>
-      We think people should be able to run, adapt, and build businesses
-      around models they can keep using independently of the company that
-      created them. Intelligence should be something people can build on
-      everywhere. That is the future we want Gradiated to help create.
+      We think people should be able to run, adapt, and build businesses around
+      models they can keep using independently of the company that created them.
+      Intelligence should be something people can build on everywhere. That is
+      the future we want Gradiated to help create.
     </p>
-    <h2>
-      The Quality:Cost ratio is the bottleneck
-    </h2>
+    <h2>The Quality:Cost ratio is the bottleneck</h2>
     <p>
-      We initially expected customers to be very sensitive to inference
-      prices. In practice, it turned out that the harder question is whether
-      they can use an open-weight model at all. If it already costs a tenth of
-      the frontier model they use, making it another 20% cheaper matters
-      little if their agent stops working.
+      We initially expected customers to be very sensitive to inference prices.
+      In practice, it turned out that the harder question is whether they can
+      use an open-weight model at all. If it already costs a tenth of the
+      frontier model they use, making it another 20% cheaper matters little if
+      their agent stops working.
     </p>
     <p>
       As models become more capable, people give them more complex jobs. The
@@ -59,33 +57,30 @@ export const ThesisContent = (): ReactNode => (
     </p>
     <p>
       But believing in open models doesn't make them good enough. Customers
-      shouldn't have to accept a worse agent to support a more open future.
-      Our job is to make open models a practical choice: get them to do useful
-      work reliably, at a cost that makes switching worthwhile.
+      shouldn't have to accept a worse agent to support a more open future. Our
+      job is to make open models a practical choice: get them to do useful work
+      reliably, at a cost that makes switching worthwhile.
     </p>
-    <h2>
-      Inference should fit the work
-    </h2>
+    <h2>Inference should fit the work</h2>
     <p>
-      Working with customers has shown us that many teams do not have good
-      evals for their agents. Even sophisticated teams often ship changes
-      because they seem better. Before we can tell whether a cheaper model is
-      good enough, we need a useful way to tell whether we have made the agent
-      worse.
+      Working with customers has shown us that many teams do not have good evals
+      for their agents. Even sophisticated teams often ship changes because they
+      seem better. Before we can tell whether a cheaper model is good enough, we
+      need a useful way to tell whether we have made the agent worse.
     </p>
     <p>
-      Production traces and the customer's codebase are a useful starting
-      point. They contain the inputs, situations, and failures that actually
-      occur, which are hard to invent from scratch. With multiple customers,
-      we have used them to build evals and reinforcement learning environments
-      around the work their agents do.
+      Production traces and the customer's codebase are a useful starting point.
+      They contain the inputs, situations, and failures that actually occur,
+      which are hard to invent from scratch. With multiple customers, we have
+      used them to build evals and reinforcement learning environments around
+      the work their agents do.
     </p>
     <p>
-      Gradiated is building tools to turn that understanding into models
-      shaped around particular workloads. We start with custom trained
-      decision models - these can understand based on production workloads if
-      a given prompt is simple or hard, and thus where to send it, and can
-      route and learn dynamically.
+      Gradiated is building tools to turn that understanding into models shaped
+      around particular workloads. We start with custom trained decision models
+      - these can understand based on production workloads if a given prompt is
+      simple or hard, and thus where to send it, and can route and learn
+      dynamically.
     </p>
     <p>
       The second step is developing post trained models for people cost-
@@ -94,15 +89,12 @@ export const ThesisContent = (): ReactNode => (
       the initial results are promising. Making this reliable and economical
       across customer workloads is the work ahead.
     </p>
-    <h2>
-      Training has to pay for itself
-    </h2>
+    <h2>Training has to pay for itself</h2>
     <p>
-      A technically successful experiment can still be a bad deal. If a
-      company spends $1K a month on inference, spending $30K on training is
-      difficult to justify even if its inference bill falls close to zero. The
-      quality gain, training cost, serving cost, and time to benefit all
-      matter.
+      A technically successful experiment can still be a bad deal. If a company
+      spends $1K a month on inference, spending $30K on training is difficult to
+      justify even if its inference bill falls close to zero. The quality gain,
+      training cost, serving cost, and time to benefit all matter.
     </p>
     <p>
       We want the quickest economical route to a model that does the job.
@@ -115,9 +107,7 @@ export const ThesisContent = (): ReactNode => (
       All of this we gradually want to evolve into an SDK rather than us doing
       this work manually.
     </p>
-    <h2>
-      Start with a specific job
-    </h2>
+    <h2>Start with a specific job</h2>
     <p>
       Our early inference traction has come from specific use cases. We think
       there is a better business in getting a model to do one particular job
@@ -127,26 +117,24 @@ export const ThesisContent = (): ReactNode => (
     <p>
       Nor does an open model need to replace a frontier model across an entire
       workload. A router trained around a customer's work could send simpler
-      tasks to an open model and leave harder tasks with the frontier model.
-      We are exploring whether this is a more practical starting point than
-      trying to close the whole quality gap through training.
+      tasks to an open model and leave harder tasks with the frontier model. We
+      are exploring whether this is a more practical starting point than trying
+      to close the whole quality gap through training.
     </p>
     <p>
       We plan to release specialized models for problems we have experienced
-      ourselves through the software development lifecycle - for things such
-      as merging diffs, CI, cybersecurity or routing. We think useful models
-      can earn distribution and bring customers to our tools for training
-      bespoke models, and we can start with the smaller, simpler models.
-      Later, we will make money by running inference on those models.
+      ourselves through the software development lifecycle - for things such as
+      merging diffs, CI, cybersecurity or routing. We think useful models can
+      earn distribution and bring customers to our tools for training bespoke
+      models, and we can start with the smaller, simpler models. Later, we will
+      make money by running inference on those models.
     </p>
-    <h2>
-      Make the economics work
-    </h2>
+    <h2>Make the economics work</h2>
     <p>
-      Optimization remains important. Better runtimes, kernels, scheduling,
-      and infrastructure improve our margins and can improve reliability.
-      Those improvements become much more valuable once we have customers with
-      useful work for the models to do.
+      Optimization remains important. Better runtimes, kernels, scheduling, and
+      infrastructure improve our margins and can improve reliability. Those
+      improvements become much more valuable once we have customers with useful
+      work for the models to do.
     </p>
     <p>
       We will avoid large compute commitments ahead of demonstrated demand.
@@ -155,30 +143,18 @@ export const ThesisContent = (): ReactNode => (
       workloads may justify specialist hardware or our own silicon. That
       decision should follow the workload and the economics.
     </p>
-    <p>
-      The sequence is:
-    </p>
+    <p>The sequence is:</p>
     <ol>
+      <li>Find a specific job that matters to a customer.</li>
+      <li>Build evals that tell us whether we are doing it well.</li>
       <li>
-        Find a specific job that matters to a customer.
+        Improve prompts, models, or routing until the quality and economics make
+        sense.
       </li>
-      <li>
-        Build evals that tell us whether we are doing it well.
-      </li>
-      <li>
-        Improve prompts, models, or routing until the quality and economics
-        make sense.
-      </li>
-      <li>
-        Serve the workload reliably and earn more demand.
-      </li>
-      <li>
-        Optimize the underlying systems as that demand grows.
-      </li>
+      <li>Serve the workload reliably and earn more demand.</li>
+      <li>Optimize the underlying systems as that demand grows.</li>
     </ol>
-    <h2>
-      Why now
-    </h2>
+    <h2>Why now</h2>
     <p>
       Teams are giving agents increasingly complex work, but many still lack a
       reliable way to evaluate them or adapt models to their own tasks. This
@@ -188,19 +164,19 @@ export const ThesisContent = (): ReactNode => (
     </p>
     <p>
       If Gradiated succeeds, every workload gets the intelligence it actually
-      needs: accurate, fast, and cheap, in the combination that matters for
-      that work. As we do this, we'll ship many useful open source models and
-      make it economical for companies to develop models around their own
-      work. More people will be able to build with intelligence they can run,
-      change, and control.
+      needs: accurate, fast, and cheap, in the combination that matters for that
+      work. As we do this, we'll ship many useful open source models and make it
+      economical for companies to develop models around their own work. More
+      people will be able to build with intelligence they can run, change, and
+      control.
     </p>
     <p>
       We believe in an open source, distributed model future, with millions of
       companies making intelligence useful in different ways. Getting more
-      useful work from each unit of compute, and giving much freer access to
-      as many models as possible will let more people and systems research,
-      build, understand, and do more. We don't want the world's capacity to do
-      those things to depend on the permission of a few frontier labs.
+      useful work from each unit of compute, and giving much freer access to as
+      many models as possible will let more people and systems research, build,
+      understand, and do more. We don't want the world's capacity to do those
+      things to depend on the permission of a few frontier labs.
     </p>
   </>
 );

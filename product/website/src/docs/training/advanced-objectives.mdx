@@ -158,9 +158,9 @@ class JSDLoss(losses.CustomLoss):
         return torch.stack(terms).mean()
 
 client = Grad()
-teacher = client.models.get("Qwen/Qwen3-32B")
+teacher = client.models.get("qwen/qwen3-32b")
 
-with client.trainers.create(model="Qwen/Qwen3-4B", adapter=adapters.LoRA(rank=32)) as trainer:
+with client.trainers.create(model="qwen/qwen3-4b", adapter=adapters.LoRA(rank=32)) as trainer:
     rollouts = [g[0] for g in trainer.snapshot().sample(prompt_inputs, n=1, max_new_tokens=256)]
     t_refs = teacher.score_logprobs(rollouts, top_k=32).topk_refs
 
@@ -175,7 +175,7 @@ with client.trainers.create(model="Qwen/Qwen3-4B", adapter=adapters.LoRA(rank=32
 In SDFT, the **same base model** acts as teacher when shown the question *plus* a golden demonstration in context, while the student sees only the question — enabling continual learning without catastrophic forgetting:
 
 ```python
-teacher = client.models.get("Qwen/Qwen3-8B")  # frozen base model, no extra deployment
+teacher = client.models.get("qwen/qwen3-8b")  # frozen base model, no extra deployment
 
 with client.trainers.create(model=teacher, adapter=adapters.LoRA(rank=64)) as trainer:
     for demo_batch in demo_batches:
@@ -214,7 +214,7 @@ class BradleyTerryLoss(losses.CustomLoss):
 
 client = Grad()
 with client.trainers.create(
-    model="Qwen/Qwen3-8B",
+    model="qwen/qwen3-8b",
     adapter=adapters.LoRA(rank=32),
     heads={"rm": heads.Linear(dim=1)},
 ) as trainer:
@@ -242,7 +242,7 @@ records = [
 ]
 
 with client.trainers.create(
-    model="Qwen/Qwen3-8B",
+    model="qwen/qwen3-8b",
     adapter=adapters.LoRA(rank=32),
     heads={"prm": heads.Linear(dim=1, token_level=True)},
 ) as trainer:
@@ -318,7 +318,7 @@ class ListNetRerankLoss(losses.CustomLoss):
 
 client = Grad()
 with client.trainers.create(
-    model="BAAI/bge-reranker-base",
+    model="baai/bge-reranker-base",
     adapter=adapters.Full(),
     heads={"rel": heads.Linear(dim=1)},
 ) as trainer:
@@ -344,7 +344,7 @@ import torch
 from grad import Grad, losses
 
 client = Grad()
-base = client.models.get("Qwen/Qwen3-8B")
+base = client.models.get("qwen/qwen3-8b")
 
 choice_ids = [base.tokenize(c)[-1] for c in ["A", "B", "C"]]
 scored = base.score_logprobs(

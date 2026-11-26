@@ -27,7 +27,7 @@ function readCatalogIds() {
 function loadDocModels() {
   const ids = readCatalogIds();
   const find = (pattern, fallback) =>
-    ids.find((id) => pattern.test(id)) ?? fallback;
+    (ids.find((id) => pattern.test(id)) ?? fallback).trim().toLowerCase();
 
   return {
     OPUS_MODEL: find(/^anthropic\/claude-opus-/, FALLBACK_MODELS.OPUS_MODEL),

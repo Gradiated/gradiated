@@ -29,7 +29,7 @@ client = Grad()
 dataset = client.datasets.get("api-docs-qa-prompts")
 
 recipe = CartridgeRecipe(
-    model="Qwen/Qwen3-8B",
+    model="qwen/qwen3-8b",
     context=Context.from_file("./api-docs-bundle.md"),  # or Context.from_uri("s3://...") / Context.from_text(...)
     num_tokens=256,
     loss=losses.TopKKLDistill(top_k=20),
@@ -55,7 +55,7 @@ const run = await grad.runs
     dataset,
     name: "api-docs-cartridge",
     recipe: recipes.cartridge({
-      model: "Qwen/Qwen3-8B",
+      model: "qwen/qwen3-8b",
       context: Context.fromFile("./api-docs-bundle.md"),
       numTokens: 256,
       loss: losses.topKKLDistill({ topK: 20 }),
@@ -75,7 +75,7 @@ console.log(run.artifact.id, run.evalReport);
 dataset: api-docs-qa-prompts
 name: api-docs-cartridge
 recipe: cartridge
-model: Qwen/Qwen3-8B
+model: qwen/qwen3-8b
 context:
   file: ./api-docs-bundle.md
 num_tokens: 256
@@ -123,8 +123,8 @@ from grad import Context, adapters, losses
 from grad.recipes import DistillRecipe, OnPolicy
 
 recipe = DistillRecipe(
-    model="Qwen/Qwen3-8B",
-    teacher="Qwen/Qwen3-8B",
+    model="qwen/qwen3-8b",
+    teacher="qwen/qwen3-8b",
     context=Context.from_uri("s3://my-bucket/api-docs-bundle.md"),
     adapter=adapters.LoRA(rank=32),
     rollout=OnPolicy(max_new_tokens=512),

@@ -58,7 +58,7 @@ from grad import Grad, adapters, advantages, losses, optim
 client = Grad()
 
 with client.trainers.create(
-    model="Qwen/Qwen3-8B",
+    model="qwen/qwen3-8b",
     adapter=adapters.LoRA(rank=32),
 ) as trainer:
     for step, task_batch in enumerate(batches):
@@ -132,7 +132,7 @@ pairs = [
     ),
 ]
 
-with client.trainers.create(model="Qwen/Qwen3-8B", adapter=adapters.LoRA(rank=32)) as trainer:
+with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32)) as trainer:
     fb = trainer.forward_backward(pairs, loss=SimPOLoss(beta=2.0, gamma=0.5))
     trainer.optim_step(optim.AdamW(lr=5e-5)).result()
     print(fb.result().loss)
@@ -143,7 +143,7 @@ with client.trainers.create(model="Qwen/Qwen3-8B", adapter=adapters.LoRA(rank=32
 Never pull full 152k-vocabulary logits over the wire for custom distillation. Ask the teacher for `top_k=32` opaque `TensorRef`s and declare `outputs = ("topk_logprobs",)` on your `CustomLoss` — passing `gather_indices=t_refs` returns only the matching `(T_resp, 32)` student logprobs and auto-batch-fetches `out.teacher_topk_logprobs` in a single RPC (for arbitrary intermediate layer `TensorRef`s, use `client.tensors.fetch_batch(refs)`):
 
 ```python
-teacher = client.models.get("Qwen/Qwen3-32B")
+teacher = client.models.get("qwen/qwen3-32b")
 
 t_refs = teacher.score_logprobs(
     prefixes,
@@ -209,7 +209,7 @@ from grad import AsyncGrad, adapters, advantages, losses, optim
 
 async def train_async(batches):
     async with AsyncGrad() as client:
-        async with client.trainers.create(model="Qwen/Qwen3-8B", adapter=adapters.LoRA(rank=32)) as trainer:
+        async with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32)) as trainer:
             for task_batch in batches:
                 snap = await trainer.snapshot()
                 groups = await asyncio.gather(
@@ -287,7 +287,7 @@ Routers, linear probes, and representation steering vectors do not need SGD. Ext
 from grad import Grad, Record, adapters, pooling, solvers
 
 client = Grad()
-encoder = client.models.get("BAAI/bge-small-en-v1.5")
+encoder = client.models.get("baai/bge-small-en-v1.5")
 
 embeddings = encoder.embed(inputs, pool=pooling.Mean()).embeddings
 embedding_records = [

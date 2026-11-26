@@ -3,7 +3,7 @@ import { MODEL_CATALOG } from "../../../packages/contracts/src/model-catalog";
 const ids: readonly string[] = MODEL_CATALOG.map((entry) => entry.id);
 
 const pickModel = (pattern: RegExp, fallback: string): string =>
-  ids.find((id) => pattern.test(id)) ?? fallback;
+  (ids.find((id) => pattern.test(id)) ?? fallback).trim().toLowerCase();
 
 export const OPUS_MODEL = pickModel(
   /^anthropic\/claude-opus-/,

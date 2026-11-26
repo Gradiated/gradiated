@@ -25,7 +25,7 @@ client = Grad()
 pairs_ds = client.datasets.get("sql-preferences")
 
 recipe = RewardModelRecipe(
-    model="Qwen/Qwen3-8B",
+    model="qwen/qwen3-8b",
     adapter=adapters.LoRA(rank=32),
     optimizer=optim.AdamW(lr=1e-4),
     split=splits.BySession(eval_fraction=0.10),
@@ -50,7 +50,7 @@ const run = await grad.runs
     dataset: pairsDs,
     name: "sql-verifier",
     recipe: recipes.rewardModel({
-      model: "Qwen/Qwen3-8B",
+      model: "qwen/qwen3-8b",
       adapter: adapters.lora({ rank: 32 }),
       optimizer: optim.adamW({ lr: 1e-4 }),
       split: splits.bySession({ evalFraction: 0.1 }),
@@ -73,7 +73,7 @@ grad train --dataset sql-preferences --name sql-verifier --recipe reward-model -
 
 ### Key parameters
 
-- **`model`:** start with a fast 4B–8B model (`"Qwen/Qwen3-8B"`) — reward models only score an output in a single forward pass, so an 8B verifier runs in milliseconds.
+- **`model`:** start with a fast 4B–8B model (`"qwen/qwen3-8b"`) — reward models only score an output in a single forward pass, so an 8B verifier runs in milliseconds.
 - **`adapter`:** `adapters.LoRA(rank=32)` works well for 500–5,000 preference pairs.
 - **`optim.AdamW(lr=...)`:** start around `1e-4` for LoRA reward models.
 - **`split`:** `splits.BySession(eval_fraction=0.10)` keeps paired examples and multi-turn conversations together so eval accuracy isn't inflated.
@@ -108,7 +108,7 @@ client.endpoints.create(
     capture_dataset=capture,
     strategy=strategies.Cascade(
         verifier=verifier,
-        frontier="Qwen/Qwen3-32B",
+        frontier="qwen/qwen3-32b",
         threshold=0.75,
     ),
 )

@@ -30,7 +30,7 @@ Because `Artifact` subclasses `Model`, you can pass any trained artifact anywher
 
 - **Warm-start a next stage:** `DPORecipe(model=sft.artifact, ...)` or `GRPORecipe(model=sft.artifact, ...)`.
 - **Use as a verifier:** `Judge(name="sql_ok", model=verifier_artifact)` or `strategies.Cascade(verifier=verifier_artifact, ...)`.
-- **Use as a distillation teacher:** `DistillRecipe(model="Qwen/Qwen3-4B", teacher=teacher_artifact)`.
+- **Use as a distillation teacher:** `DistillRecipe(model="qwen/qwen3-4b", teacher=teacher_artifact)`.
 
 ## Deploy an artifact
 

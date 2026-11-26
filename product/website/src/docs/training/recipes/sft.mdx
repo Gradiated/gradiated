@@ -48,7 +48,7 @@ clean_dataset = dataset.score(judge).wait().filter(
 )
 
 sft_recipe = SFTRecipe(
-    model="Qwen/Qwen3-8B",
+    model="qwen/qwen3-8b",
     adapter=adapters.LoRA(rank=32),
     optimizer=optim.AdamW(lr=2e-4),
     split=splits.BySession(eval_fraction=0.10),
@@ -88,7 +88,7 @@ const sft = await grad.runs
     dataset: cleanDataset,
     name: "fast-diff-merge",
     recipe: recipes.sft({
-      model: "Qwen/Qwen3-8B",
+      model: "qwen/qwen3-8b",
       adapter: adapters.lora({ rank: 32 }),
       optimizer: optim.adamW({ lr: 2e-4 }),
       split: splits.bySession({ evalFraction: 0.1 }),
@@ -111,7 +111,7 @@ dataset:
       clean_merge: 0.8
 name: fast-diff-merge
 recipe: sft
-model: Qwen/Qwen3-8B
+model: qwen/qwen3-8b
 adapter:
   kind: lora
   rank: 32
@@ -164,7 +164,7 @@ endpoint = client.endpoints.create(
     capture_dataset=capture,
     strategy=strategies.SyntaxFallback(
         validator=validators.TypeScriptAST(),
-        fallback="Qwen/Qwen3-32B",
+        fallback="qwen/qwen3-32b",
     ),
 )
 
@@ -191,7 +191,7 @@ const endpoint = await grad.endpoints.create({
   captureDataset: capture,
   strategy: strategies.syntaxFallback({
     validator: validators.typeScriptAST(),
-    fallback: "Qwen/Qwen3-32B",
+    fallback: "qwen/qwen3-32b",
   }),
 });
 

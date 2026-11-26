@@ -239,7 +239,7 @@ run = client.runs.create(
     dataset=dataset,
     name="support-router",
     recipe=RouterRecipe(
-        models=["Qwen/Qwen3-8B", "${OPUS_MODEL}"],
+        models=["qwen/qwen3-8b", "${OPUS_MODEL}"],
         score=Judge(name="resolved", model="${SONNET_MODEL}", prompt="Did the assistant solve the issue?"),
         max_quality_drop=0.02,
     ),
@@ -277,7 +277,7 @@ clean = client.datasets.get("diff-merge-prod").score(judge).wait().filter(
 sft = client.runs.create(
     dataset=clean,
     name="fast-diff-merge",
-    recipe=SFTRecipe(model="Qwen/Qwen3-8B"),
+    recipe=SFTRecipe(model="qwen/qwen3-8b"),
 ).wait()`,
   },
   {
@@ -316,8 +316,8 @@ run = client.runs.create(
     dataset=dataset,
     name="support-4b",
     recipe=DistillRecipe(
-        model="Qwen/Qwen3-4B",
-        teacher="Qwen/Qwen3-32B",
+        model="qwen/qwen3-4b",
+        teacher="qwen/qwen3-32b",
         rollout=OnPolicy(max_new_tokens=512),
     ),
 ).wait()`,
@@ -335,7 +335,7 @@ run = client.runs.create(
     dataset=dataset,
     name="api-docs-cartridge",
     recipe=CartridgeRecipe(
-        model="Qwen/Qwen3-8B",
+        model="qwen/qwen3-8b",
         context=Context.from_file("./api-docs.md"),
         num_tokens=256,
     ),

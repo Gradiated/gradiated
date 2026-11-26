@@ -70,7 +70,7 @@ dataset.push([
 Choose your base `model`:
 
 - **`"gradiated/linden-1"`** *(default)* — best starting point when you want to specialize `linden-1` on your own questions and state format.
-- **`"Qwen/Qwen3-0.6B"`** — smallest general open model if you want to train a lightweight decision model from scratch.
+- **`"qwen/qwen3-0.6b"`** — smallest general open model if you want to train a lightweight decision model from scratch.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -150,7 +150,7 @@ grad deploy ticket-triage@latest
 
 ### Key parameters
 
-- **`model`:** defaults to `"gradiated/linden-1"` (best for specializing `linden-1` on your own questions). Pass `"Qwen/Qwen3-0.6B"` if you want to train a fresh lightweight model from scratch.
+- **`model`:** defaults to `"gradiated/linden-1"` (best for specializing `linden-1` on your own questions). Pass `"qwen/qwen3-0.6b"` if you want to train a fresh lightweight model from scratch.
 - **`loss`:** picked automatically from each question type (`losses.CrossEntropy()` for `choice`, `losses.BCEWithLogits()` for `noul`, `losses.OrdinalBCE()` for `score`); pass `loss=` only if you want to override it.
 - **`split`:** `splits.BySession(eval_fraction=0.15)` keeps related requests from the same `session_id` together so eval numbers stay honest.
 

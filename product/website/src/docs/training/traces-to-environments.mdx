@@ -167,7 +167,7 @@ print(f"Kept {len(verified_tasks)}/{len(raw_tasks)} verified tasks")
 # 2. Train directly with GRPO on the verified Harbor suite
 client = Grad()
 with client.trainers.create(
-    model="Qwen/Qwen3-8B",
+    model="qwen/qwen3-8b",
     adapter=adapters.LoRA(rank=32),
 ) as trainer:
     for batch in chunked(verified_tasks, size=8):

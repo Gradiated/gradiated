@@ -75,7 +75,7 @@ dpo = (
         dataset=sft_ds,
         name="fast-diff-merge",
         recipe=SFTRecipe(
-            model="Qwen/Qwen3-8B",
+            model="qwen/qwen3-8b",
             adapter=adapters.LoRA(rank=32),
             optimizer=optim.AdamW(lr=2e-4),
             split=splits.BySession(eval_fraction=0.10),

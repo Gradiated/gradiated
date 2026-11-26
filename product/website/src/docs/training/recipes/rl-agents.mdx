@@ -28,7 +28,7 @@ sft_art = client.artifacts.get("sql-agent@sft-v1")
 
 recipe = GRPORecipe(
     model=sft_art,
-    adapter=adapters.LoRA(rank=32, merge_on_export=True),
+    adapter=adapters.LoRA(rank=32),
     rubric=Rubric([
         Scorer("valid_sql", weight=0.3, fn=validators.SQL()),
         Judge(
@@ -67,7 +67,7 @@ const run = await grad.runs
     name: "sql-agent",
     recipe: recipes.grpo({
       model: sftArt,
-      adapter: adapters.lora({ rank: 32, mergeOnExport: true }),
+      adapter: adapters.lora({ rank: 32 }),
       rubric: new Rubric([
         new Scorer("valid_sql", { weight: 0.3, fn: validators.sql() }),
         new Judge({

@@ -26,7 +26,7 @@ pairs_ds = client.datasets.get("sql-preferences")
 
 recipe = RewardModelRecipe(
     model=Model("Qwen/Qwen3-8B"),
-    adapter=adapters.LoRA(rank=32, merge_on_export=True),
+    adapter=adapters.LoRA(rank=32),
     optimizer=optim.AdamW(lr=1e-4),
     split=splits.BySession(eval_fraction=0.10),
 )
@@ -51,7 +51,7 @@ const run = await grad.runs
     name: "sql-verifier",
     recipe: recipes.rewardModel({
       model: new Model("Qwen/Qwen3-8B"),
-      adapter: adapters.lora({ rank: 32, mergeOnExport: true }),
+      adapter: adapters.lora({ rank: 32 }),
       optimizer: optim.adamW({ lr: 1e-4 }),
       split: splits.bySession({ evalFraction: 0.1 }),
     }),

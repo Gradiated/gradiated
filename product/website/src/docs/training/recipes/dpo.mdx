@@ -48,7 +48,7 @@ dpo = client.runs.create(
     name="fast-diff-merge",
     recipe=DPORecipe(
         model=sft_art,
-        adapter=adapters.LoRA(rank=32, merge_on_export=True),
+        adapter=adapters.LoRA(rank=32),
         loss=losses.DPO(beta=0.1),
         optimizer=optim.AdamW(lr=5e-5),
     ),
@@ -78,13 +78,13 @@ dpo = (
             model=Model("Qwen/Qwen3-8B"),
             adapter=adapters.LoRA(rank=32),
             optimizer=optim.AdamW(lr=2e-4),
-            split=splits.BySession(0.10),
+            split=splits.BySession(eval_fraction=0.10),
         ),
     )
     .then(
         dataset=prefs_ds,
         recipe=DPORecipe(
-            adapter=adapters.LoRA(rank=32, merge_on_export=True),
+            adapter=adapters.LoRA(rank=32),
             loss=losses.DPO(beta=0.1),
             optimizer=optim.AdamW(lr=5e-5),
         ),
@@ -109,7 +109,7 @@ const dpo = await grad.runs
     name: "fast-diff-merge",
     recipe: recipes.dpo({
       model: sftArt,
-      adapter: adapters.lora({ rank: 32, mergeOnExport: true }),
+      adapter: adapters.lora({ rank: 32 }),
       loss: losses.dpo({ beta: 0.1 }),
       optimizer: optim.adamW({ lr: 5e-5 }),
     }),
@@ -132,7 +132,7 @@ console.log(dpo.artifact.id, dpo.evalReport);
 
 - **`losses.DPO(beta=...)`:** higher `beta` (`0.2`–`0.5`) stays closer to your starting model; lower (`0.05`–`0.1`) pushes harder away from rejected patterns.
 - **`optim.AdamW(lr=...)`:** use a smaller learning rate than SFT (`2e-5`–`5e-5`) so you don't break formatting you already taught it.
-- **`adapters.LoRA(rank=32, merge_on_export=True)`:** set `merge_on_export=True` on your final stage for lowest serving latency.
+- **`adapters.LoRA(rank=32)`:** exports a lightweight adapter by default so multiple adapters share one base model in production. Pass `merge_on_export=True` only if you want a standalone merged checkpoint.
 
 ## Deploy
 

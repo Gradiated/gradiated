@@ -24,7 +24,7 @@ dataset = client.datasets.get("support-prompts")
 recipe = DistillRecipe(
     model=Model("Qwen/Qwen3-4B"),
     teacher=Model("Qwen/Qwen3-32B"),
-    adapter=adapters.LoRA(rank=32, merge_on_export=True),
+    adapter=adapters.LoRA(rank=32),
     rollout=OnPolicy(max_new_tokens=512),
     loss=losses.TopKKLDistill(top_k=32),
     optimizer=optim.AdamW(lr=1e-4),
@@ -51,7 +51,7 @@ const run = await grad.runs
     recipe: recipes.distill({
       model: new Model("Qwen/Qwen3-4B"),
       teacher: new Model("Qwen/Qwen3-32B"),
-      adapter: adapters.lora({ rank: 32, mergeOnExport: true }),
+      adapter: adapters.lora({ rank: 32 }),
       rollout: recipes.onPolicy({ maxNewTokens: 512 }),
       loss: losses.topKKLDistill({ topK: 32 }),
       optimizer: optim.adamW({ lr: 1e-4 }),
@@ -75,7 +75,6 @@ teacher: Qwen/Qwen3-32B
 adapter:
   kind: lora
   rank: 32
-  merge_on_export: true
 rollout:
   kind: on_policy
   max_new_tokens: 512

@@ -49,7 +49,7 @@ record = Record(
 
 ## Example 1: Multi-turn GRPO loop
 
-This loop runs rollouts in a [stateful environment](/docs/training/environments/), computes group-normalized advantages via `grad.with_advantages()` with an extensible `AdvantageEstimator` (skipping zero-variance groups automatically), updates LoRA weights with `losses.GRPO`, and exports a merged artifact. See the [RL for agents guide](/docs/training/recipes/rl-agents/) for swapping in DAPO, Dr. GRPO (`advantages.GroupMean()`), RLOO (`advantages.RLOO()`), async CISPO, or sequence-level GSPO.
+This loop runs rollouts in a [stateful environment](/docs/training/environments/), computes group-normalized advantages via `grad.with_advantages()` with an extensible `AdvantageEstimator` (skipping zero-variance groups automatically), updates LoRA weights with `losses.GRPO`, and exports a LoRA artifact. See the [RL for agents guide](/docs/training/recipes/rl-agents/) for swapping in DAPO, Dr. GRPO (`advantages.GroupMean()`), RLOO (`advantages.RLOO()`), async CISPO, or sequence-level GSPO.
 
 ```python
 import grad
@@ -59,7 +59,7 @@ client = Grad()
 
 with client.trainers.create(
     model=Model("Qwen/Qwen3-8B"),
-    adapter=adapters.LoRA(rank=32, merge_on_export=True),
+    adapter=adapters.LoRA(rank=32),
 ) as trainer:
     for step, task_batch in enumerate(batches):
         snap = trainer.snapshot()

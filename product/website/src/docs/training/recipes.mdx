@@ -132,7 +132,7 @@ Before spending anything, run `--dry-run` (or `client.runs.plan()`) to check you
 ```text
 Dataset   diff-merge-prod (1,420 trajectories -> 1,184 after min_score filter)
 Split     BySession: 1,065 train / 119 eval (0 overlapping sessions)
-Model     Qwen/Qwen3-8B · LoRA(rank=32) · merge_adapter=true
+Model     Qwen/Qwen3-8B · LoRA(rank=32)
 Optimizer AdamW(lr=2.0e-4, schedule=cosine)
 Estimate  ~3.8M train tokens (~$1.52) · warnings: 0
 ```
@@ -212,7 +212,7 @@ dataset = client.datasets.get("diff-merge-prod").score(judge).wait().filter(
 
 recipe = SFTRecipe(
     model=Model("Qwen/Qwen3-8B"),
-    adapter=adapters.LoRA(rank=32, merge_on_export=True),
+    adapter=adapters.LoRA(rank=32),
     optimizer=optim.AdamW(lr=2e-4),
     split=splits.BySession(eval_fraction=0.10),
 )
@@ -349,7 +349,6 @@ model: Qwen/Qwen3-8B
 adapter:
   kind: lora
   rank: 32
-  merge_on_export: true
 optimizer:
   kind: adamw
   lr: 2e-4

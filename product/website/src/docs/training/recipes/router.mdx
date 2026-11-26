@@ -117,7 +117,7 @@ Start with the defaults above and override options only when you need them:
 - **Already logged multiple models?** You can omit `models=` and Gradiated will train across the models already present in `metadata.model`.
 - **Custom pricing?** Include `metrics.cost_usd` in your dataset (or pass a `pricing=` map) if your rates differ from standard model pricing.
 - **Need a different router backbone?** `RouterRecipe` defaults to `Model("Qwen/Qwen3-0.6B")`. You can pass a different `model=` (or switch to a fast frozen-encoder fit in [Custom loops](/docs/training/custom-loops/)) if you have strict CPU latency constraints.
-- **Multi-turn conversations?** `splits.BySession(0.15)` is on by default so turns from the same `session_id` never leak between training and evaluation.
+- **Multi-turn conversations?** `splits.BySession(eval_fraction=0.15)` is on by default so turns from the same `session_id` never leak between training and evaluation.
 
 ## Read the evaluation report
 

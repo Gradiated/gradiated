@@ -215,7 +215,7 @@ class BradleyTerryLoss(losses.CustomLoss):
 client = Grad()
 with client.trainers.create(
     model=Model("Qwen/Qwen3-8B"),
-    adapter=adapters.LoRA(rank=32, merge_on_export=True),
+    adapter=adapters.LoRA(rank=32),
     heads={"rm": heads.Linear(dim=1)},
 ) as trainer:
     for batch in pair_batches:

@@ -7,7 +7,7 @@ Most teams start with thousands of logged requests in a [`Dataset`](/docs/traini
 | Level | Best for | Setup time | How it works |
 | --- | --- | --- | --- |
 | **1. Trace → `Task` + `Rubric`** | SQL, diff-merge, JSON extraction, support replies, single-turn tool calls | Minutes | Uses the prompt and tools from each log; graded by `validators.*`, unit tests, or a `Judge`. |
-| **2. Trace → Mock tool sandbox** | Multi-turn tool-calling agents (`get_order`, `search_kb`, `issue_refund`) | Hours | Seeds a local dict or SQLite DB from the log's tool outputs; write tools update local state safely without touching production. |
+| **2. Trace → Mock tool sandbox** | Multi-turn tool-calling agents (`get_order`, `search_kb`, `issue_refund`) | An hour | Seeds an in-memory store from the log's tool outputs; write tools update that store instead of production. |
 | **3. Trace → Harbor container** | Coding agents, CLI debugging, full-stack web apps | 1–2 days | Harbor container tasks (`Dockerfile`, `tests/test.sh`, `solution/solve.sh`) verified so tests fail before the fix and pass after. |
 
 ## Step 0: Pick examples the model actually struggles on
@@ -34,12 +34,18 @@ hard_traces = scored.filter(
 print(f"Selected {hard_traces.count()} candidate traces for environment tasks")
 ```
 
+A Python function passed to `filter()` runs on your machine and saves the matching IDs as a server-side view, without copying any traces. Field filters such as `scored.filter(scores={"resolved": "<0.8"})` run entirely on the server.
+
 ## Level 1: Trace to `Task` + `Rubric` (single-turn)
 
-If your task doesn't need multi-turn external state, turn your filtered logs into `Task`s with `Task.from_trajectory(t)`. Each `Task` keeps `input.messages`, `input.tools`, `expected_output`, and `metadata`, ready to pass into `GRPORecipe` or a custom loop:
+If your task doesn't need multi-turn external state, train on the filtered logs directly. Each trace becomes a task with its original `messages`, `tools`, `expected_output`, and `metadata` (`Task.from_trajectory(t)` does the conversion if you want `Task` objects yourself):
 
 ```python
-from grad import Grad, Judge, Rubric, Scorer, Task, validators
+from grad import Grad, Judge, Rubric, Scorer, validators
+from grad.recipes import GRPORecipe
+
+client = Grad()
+hard_traces = client.datasets.get("sql-assistant-prod").filter(scores={"resolved": "<0.8"})
 
 sql_valid = validators.SQL()
 
@@ -56,24 +62,36 @@ rubric = Rubric([
     ),
 ])
 
-tasks = [Task.from_trajectory(t) for t in hard_traces]
+run = client.runs.create(
+    dataset=hard_traces,
+    name="sql-agent-grpo",
+    recipe=GRPORecipe(model="qwen/qwen3-8b", rubric=rubric, max_cost_usd=50),
+).wait()
 ```
+
+`valid_sql_syntax` is plain Python, so it is packaged and runs in an isolated sandbox with the run; see [Where your code runs](/docs/training/recipes/#where-your-code-runs).
 
 If you already have a database fixture or unit tests that can execute the generated SQL or code patch, run them deterministically inside a `Scorer` and reserve `Judge` only for subjective quality checks.
 
 ## Level 2: Trace to mock tool sandbox (multi-turn)
 
-Your multi-turn logs already contain the tool schemas, the read calls the agent made (`get_order`, `lookup_policy`), what your backend returned, and how the session ended. Turn each log into a local sandbox so training never touches production:
+Your multi-turn logs already contain the tool schemas, the read calls the agent made (`get_order`, `lookup_policy`), what your backend returned, and how the session ended. Turn each log into a sandbox so training never touches production:
 
-1. **Pull seed data from the log:** put the read-tool responses into `task.seed` (such as the order row, customer record, or help-center articles).
-2. **Load a fresh local store in `setup()`:** copy `task.seed` into an in-memory dict or SQLite database for each run.
-3. **Handle reads and writes locally in `step()`:** read tools look up the local store, and write tools (`issue_refund`, `update_ticket`) update local state instead of real APIs.
-4. **Check the result in `evaluate()`:** verify the local store with a `StatefulScorer` and grade the reply with a `Judge`.
+1. **Pull seed data from the log:** `Task.from_trajectory(t, seed=...)` keeps the read-tool responses (the order row, customer record, or help-center articles) on `task.seed`.
+2. **Load a fresh store per attempt:** `setup()` copies `task.seed` into a new in-memory store.
+3. **Answer tool calls from the store:** read tools look up the store, and write tools (`issue_refund`) update it instead of real APIs. Tool calls arrive already parsed in `action.tool_calls`.
+4. **Score against the store:** the default `evaluate()` runs your `Rubric` with the store as `state`, so a `StatefulScorer` can check what the agent changed.
 
 ```python
+import copy
 import json
 from dataclasses import dataclass, field
-from grad import Environment, Judge, Observation, Rubric, StatefulScorer, Task
+
+from grad import Environment, Grad, Judge, Observation, Rubric, StatefulScorer, Task
+from grad.recipes import GRPORecipe
+
+client = Grad()
+traces = client.datasets.get("support-prod").filter(scores={"resolved": "<0.8"})
 
 @dataclass
 class MockStore:
@@ -82,30 +100,23 @@ class MockStore:
 
 class TraceReplayEnv(Environment[MockStore]):
     def setup(self, task: Task, rollout_id: str) -> MockStore:
-        # Deep-copy trace-extracted fixtures so parallel rollouts never share mutable state
-        return MockStore(orders=dict(task.seed["orders"]))
+        # Deep-copy the fixtures so parallel attempts never share mutable state
+        return MockStore(orders=copy.deepcopy(task.seed["orders"]))
 
     def step(self, handle: MockStore, action) -> Observation:
-        call = parse_tool_call(action.text)
-        if call is None:
-            return Observation(done=True)
+        if not action.tool_calls:
+            return Observation(done=True)  # final answer to the user
 
-        if call.name == "get_order":
-            order = handle.orders.get(call.args["order_id"], {"error": "not_found"})
-            return Observation(text=json.dumps(order), done=False)
-
-        if call.name == "issue_refund":
-            handle.refunds.append(call.args)
-            return Observation(text='{"status": "refunded"}', done=False)
-
-        return Observation(text=f'{{"error": "unknown tool {call.name}"}}', done=False)
-
-    def evaluate(self, handle: MockStore, trajectory) -> dict[str, float]:
-        self.rubric.score(trajectory, state=handle)
-        return trajectory.scores
-
-    def teardown(self, handle: MockStore) -> None:
-        handle.refunds.clear()
+        results = []
+        for call in action.tool_calls:
+            if call.name == "get_order":
+                results.append(handle.orders.get(call.arguments["order_id"], {"error": "not_found"}))
+            elif call.name == "issue_refund":
+                handle.refunds.append(call.arguments)
+                results.append({"status": "refunded"})
+            else:
+                results.append({"error": f"unknown tool {call.name}"})
+        return Observation(text=json.dumps(results), done=False)
 
 def correct_refund(traj, store: MockStore) -> float:
     expected = traj.metadata.get("expected_refund")
@@ -121,9 +132,21 @@ rubric = Rubric([
     ),
 ])
 
+def seed_from_trace(t) -> dict:
+    # Collect every order the agent looked up in production, keyed by order_id
+    return {"orders": {r["order_id"]: r for r in t.tool_results("get_order")}}
+
+tasks = [Task.from_trajectory(t, seed=seed_from_trace(t)) for t in traces]
 env = TraceReplayEnv(rubric=rubric)
-tasks = [extract_replay_task(t) for t in hard_traces]
+
+run = client.runs.create(
+    dataset=tasks,
+    name="refund-agent",
+    recipe=GRPORecipe(model="qwen/qwen3-8b", env=env, max_cost_usd=100),
+).wait()
 ```
+
+This environment is plain Python with no containers, so it is packaged and runs in Gradiated's sandbox. If your tools only need canned responses, [`environments.Tools`](/docs/training/environments/#tools-from-python-functions) with functions that read a fixture is even shorter.
 
 <DocsCallout label="Handling unexpected tool calls" tone="tip">
 During RL, the model will try tool arguments that weren't in the original log. Return a realistic `"not_found"` response from your local store (or fall back to a small mock model) instead of crashing the run.
@@ -155,46 +178,35 @@ Tasks generated from logs often have bugs: a test might already pass before any 
 2. **Reference fix must pass (`reward == 1.0`):** run `solution/solve.sh` followed by `tests/test.sh` with `env.verify_oracles(...)`. Drop any task that fails or times out.
 
 ```python
-import grad
-from grad import Grad, adapters, advantages, environments, losses, optim
+from grad import Grad, environments
+from grad.recipes import GRPORecipe
+
+client = Grad()
 
 # 1. Load synthesized Harbor tasks and keep only verified fail-to-pass tasks
-env = environments.Harbor()
+env = environments.Harbor(agent="claude-code", max_turns=40)
 raw_tasks = environments.Harbor.load_tasks("./harbor-tasks/")
 verified_tasks = env.verify_oracles(raw_tasks, require_initial_fail=True)
 print(f"Kept {len(verified_tasks)}/{len(raw_tasks)} verified tasks")
 
-# 2. Train directly with GRPO on the verified Harbor suite
-client = Grad()
-with client.trainers.create(
-    model="qwen/qwen3-8b",
-    adapter=adapters.LoRA(rank=8),
-) as trainer:
-    for batch in chunked(verified_tasks, size=8):
-        groups = env.rollout_groups(
-            artifact=trainer.snapshot(),
-            tasks=batch,
-            group_size=8,
-            max_turns=12,
-            max_concurrency=8,
-            timeout_s=180,
-        )
-        batch = grad.with_advantages(groups, advantage=advantages.GroupStd(), skip_zero_var=True)
-        fb = trainer.forward_backward(batch, loss=losses.GRPO(clip_low=0.2, clip_high=0.28))
-        opt = trainer.optim_step(optim.AdamW(lr=2e-5, grad_clip=1.0))
-        fb.result()
-        opt.result()
-
-    artifact = trainer.export(name="code-agent-harbor")
+# 2. Train with the managed recipe on the verified Harbor suite
+run = client.runs.create(
+    dataset=verified_tasks,
+    name="code-agent-harbor",
+    recipe=GRPORecipe(model="qwen/qwen3-32b", env=env, max_cost_usd=500),
+).wait()
+print(run.artifact.id)
 ```
+
+`agent="claude-code"` runs Claude Code inside each container against the training weights; pick the harness you will deploy the model in (`"codex"`, `"opencode"`, `"mini-swe-agent"`, or `"default"`). If the containers need access to private registries or code that must stay in your network, serve the environment yourself with `grad env serve` and pass `env=environments.Remote(...)` (see [Run rollouts on your own machines](/docs/training/environments/#run-rollouts-on-your-own-machines)).
 
 ## Pre-training checklist before launching RL
 
-Run a quick 8–16 task smoke pass against your starting model before scaling up:
+Run a quick 8–16 task smoke pass against your starting model before scaling up (`env.rollout_groups(artifact="qwen/qwen3-8b", tasks=tasks[:16], group_size=8)`):
 
 - **Check zero-variance rate:** If >70% of prompt groups get all `0.0` or all `1.0`, add partial-credit rubric terms or adjust your trace difficulty filter in Step 0.
 - **Keep test suites isolated:** Never bake `tests/` into the agent's container image; `environments.Harbor` copies `tests/` in only during `evaluate()`.
-- **Verify `loss_mask`:** Confirm tool and shell observations have `loss_mask = 0.0` (automatic when returning `Observation(text=...)` or using `snap.openai_client()`).
+- **Verify `loss_mask`:** Confirm tool and shell observations have `loss_mask = 0.0` (automatic when returning `Observation(text=...)`, using `environments.Tools` or `environments.Harbor`, or recording with `snap.openai_client()` / `snap.anthropic_client()`).
 - **Use a warm pool once the loop works:** Cold container startup is fine for validating 20 tasks, then switch to pre-warmed containers or template DB resets before scaling to thousands of rollouts.
 
 <DocsNext>

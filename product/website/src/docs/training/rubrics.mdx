@@ -5,7 +5,7 @@
 A **`Rubric`** combines one or more weighted **`Scorer`** checks into an overall score while saving each individual check in [`trajectory.scores`](/docs/training/trajectories/). You can reuse the same `Rubric` or `Judge` in three places:
 
 - **Cleaning datasets:** score old logs once with [`dataset.score(rubric)`](/docs/training/trajectories/), then filter on the scores.
-- **Managed RL:** pass `rubric=` directly to [`GRPORecipe`](/docs/training/recipes/rl-agents/).
+- **Training and evals:** pass it as `rubric=` to any recipe (such as [`GRPORecipe`](/docs/training/recipes/rl-agents/) or [`RouterRecipe`](/docs/training/recipes/router/)) or to [`client.evals.create`](/docs/training/evaluations/). `rubric=` is the one name for "how to score" everywhere, and it accepts a `Rubric`, a single `Judge` or `Scorer`, the name of a score already in your data, or a plain function.
 - **Stateful environments:** attach a `Rubric` to an [`Environment`](/docs/training/environments/) so checks can inspect your database, API, or container before it shuts down.
 
 ## Building a `Rubric`
@@ -55,8 +55,26 @@ judge = Judge(
     prompt="Did the assistant resolve the user's request accurately without policy errors?",
 )
 scored = dataset.score(judge).wait()
-good = scored.filter(lambda t: t.scores["resolved"] >= 0.8)
+good = scored.filter(scores={"resolved": ">=0.8"})
 ```
+
+## Where Python scorers run
+
+Built-in checks (`validators.*`, exact match, regex, JSON schema, `Scorer.from_score`) and every `Judge` run on Gradiated's servers. Your own Python functions run there too: when you start a managed run, the SDK packages the function's module source and runs it in an isolated sandbox, so you can close your laptop. Declare any third-party packages it imports, and opt in to network access only if it needs it:
+
+```python
+from grad import Scorer
+
+def math_answer(traj) -> float:
+    import sympy
+    expected = sympy.sympify(traj.metadata["answer"])
+    got = sympy.sympify(traj.text.strip())
+    return 1.0 if sympy.simplify(got - expected) == 0 else 0.0
+
+answer_check = Scorer("answer", fn=math_answer, requirements=["sympy==1.14.0"], network=False)
+```
+
+`runs.plan()` packages every scorer before anything is billed, and fails with a specific message if one can't be packaged (for example, it reads a local file or captures a database connection from your script). If a scorer has to run on your own machine, such as one that calls an internal service, pass `runtime="local"` and keep `grad worker` running. The run pauses while no worker is connected. See [Where your code runs](/docs/training/recipes/#where-your-code-runs) for the full rule.
 
 <DocsCallout label="When to train a reward model instead" tone="tip">
 A frontier or open model `Judge` with a clear rubric is the right default for most teams. If you need to strongly encode custom preferences from examples or score outputs in milliseconds, train a dedicated verifier with [`RewardModelRecipe`](/docs/training/recipes/reward-models/) and pass that [`Artifact`](/docs/training/artifacts/) straight into `Judge(name="resolved", model=verifier_artifact)`.

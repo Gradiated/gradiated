@@ -16,8 +16,10 @@ art = client.artifacts.get("fast-diff-merge@2026-11-26-1")
 
 print(art.eval_report)
 
-preds = art.infer_batch([Record(messages=m) for m in eval_messages])
-print(preds[0].logits)
+preds = art.infer_batch([
+    Record(messages=[{"role": "user", "content": "Merge these two diffs into one patch: ..."}]),
+])
+print(preds[0].text)
 ```
 
 You can pass any trained `Artifact` anywhere a model name is accepted:
@@ -25,6 +27,24 @@ You can pass any trained `Artifact` anywhere a model name is accepted:
 - **Start the next training stage:** `DPORecipe(model=sft.artifact, ...)` or `GRPORecipe(model=sft.artifact, ...)`.
 - **Use as a judge:** `Judge(name="sql_ok", model=reward_model_artifact)`.
 - **Use as a distillation teacher:** `DistillRecipe(model="qwen/qwen3-4b", teacher=teacher_artifact)`.
+
+## Which checkpoint becomes the artifact
+
+Managed runs checkpoint automatically as they train (every 10% of steps, and at least every 20 steps), including optimizer state, and evaluate each checkpoint on the held-out split. `run.artifact` is the checkpoint with the best eval score by default. Pass `select="last"` on the recipe to keep the final checkpoint instead, for example when you've added your own `evals=` and want to choose by hand:
+
+```python
+from grad import Grad
+
+client = Grad()
+run = client.runs.get("run_01J9Z2")
+
+for ckpt in run.checkpoints():
+    print(ckpt.step, ckpt.eval_score, ckpt.expires_at)
+
+art = run.checkpoints()[-1].promote(name="fast-diff-merge")  # save a checkpoint as a versioned Artifact
+```
+
+Checkpoints are kept for 30 days. Artifacts, including promoted checkpoints, are kept until you delete them. If a run stops early (a crash, a `max_cost_usd` budget, or a cancel), continue it from its latest checkpoint with `client.runs.resume("run_01J9Z2")`.
 
 ## Deploy on Gradiated Cloud or download weights
 
@@ -34,11 +54,13 @@ Every artifact can either be hosted directly on Gradiated Cloud (with canary rol
   <DocsCodeTab label="Gradiated Cloud">
 
 ```python
-# Publish under your-org/fast-diff-merge (or roll out at 10% canary)
-run.deploy(canary=0.10)
+from grad import Grad
 
-# Or deploy a previously saved version:
-# client.artifacts.get("fast-diff-merge@2026-11-26-1").deploy(canary=0.10)
+client = Grad()
+
+# Publish under your-org/fast-diff-merge (or roll out at 10% canary).
+# From a finished run, `run.deploy(canary=0.10)` does the same.
+client.artifacts.get("fast-diff-merge@2026-11-26-1").deploy(canary=0.10)
 ```
 
   </DocsCodeTab>
@@ -49,7 +71,7 @@ run.deploy(canary=0.10)
 grad artifacts download fast-diff-merge@2026-11-26-1 --output ./fast-diff-merge
 
 # Load straight into vLLM or SGLang:
-vllm serve qwen/qwen3-8b --enable-lora --lora-modules fast-diff-merge=./fast-diff-merge
+vllm serve Qwen/Qwen3-8B --enable-lora --lora-modules fast-diff-merge=./fast-diff-merge
 ```
 
   </DocsCodeTab>

@@ -25,7 +25,7 @@ from grad import Grad
 # 1. Deploy your trained artifact (or promote a new version at 10% canary)
 client = Grad()
 artifact = client.artifacts.get("fast-diff-merge@2026-11-26-1")
-artifact.deploy(canary=0.10)
+artifact.deploy(canary=0.10, rollback_if_quality_drop=0.02)
 
 # 2. Call it with the standard OpenAI SDK (only `model` changes)
 oai = OpenAI(
@@ -34,8 +34,9 @@ oai = OpenAI(
 )
 res = oai.chat.completions.create(
     model="your-org/fast-diff-merge",
-    messages=[{"role": "user", "content": prompt}],
+    messages=[{"role": "user", "content": "Merge these two diffs into one patch: ..."}],
 )
+print(res.choices[0].message.content)
 ```
 
   </DocsCodeTab>
@@ -48,7 +49,7 @@ import { Grad } from "@gradiated/grad";
 // 1. Deploy your trained artifact (or promote a new version at 10% canary)
 const grad = new Grad();
 const artifact = await grad.artifacts.get("fast-diff-merge@2026-11-26-1");
-await artifact.deploy({ canary: 0.1 });
+await artifact.deploy({ canary: 0.1, rollbackIfQualityDrop: 0.02 });
 
 // 2. Call it with the standard OpenAI SDK (only `model` changes)
 const oai = new OpenAI({
@@ -57,8 +58,9 @@ const oai = new OpenAI({
 });
 const res = await oai.chat.completions.create({
   model: "your-org/fast-diff-merge",
-  messages: [{ role: "user", content: prompt }],
+  messages: [{ role: "user", content: "Merge these two diffs into one patch: ..." }],
 });
+console.log(res.choices[0].message.content);
 ```
 
   </DocsCodeTab>
@@ -66,7 +68,7 @@ const res = await oai.chat.completions.create({
 
 ```go
 artifact, _ := client.Artifacts.Get(ctx, "fast-diff-merge@2026-11-26-1")
-_, _ = artifact.Deploy(ctx, grad.DeployOpts{Canary: 0.10})
+_, _ = artifact.Deploy(ctx, grad.DeployOpts{Canary: 0.10, RollbackIfQualityDrop: 0.02})
 // Then pass "your-org/fast-diff-merge" as `model` in your OpenAI or Anthropic client.
 ```
 
@@ -79,7 +81,7 @@ grad deploy fast-diff-merge@2026-11-26-1
 
 # Next retrain: shadow, 10% canary, promote to 100%, or roll back in one command
 grad deploy fast-diff-merge@2026-12-03-1 --shadow
-grad deploy fast-diff-merge@2026-12-03-1 --canary 0.10
+grad deploy fast-diff-merge@2026-12-03-1 --canary 0.10 --rollback-if-quality-drop 0.02
 grad deployments status fast-diff-merge --watch
 grad deploy fast-diff-merge@2026-12-03-1 --active
 grad deploy fast-diff-merge@2026-11-26-1 --active
@@ -112,6 +114,8 @@ Canary   fast-diff-merge@2026-12-03-1  (10% traffic ·  2,044 req/hr · p50 365m
 
 </DocsTerminal>
 
+Set `rollback_if_quality_drop=` on a canary to make rollback automatic: if live canary quality falls more than that much below the active version (`0.02` is 2 points) once enough feedback has arrived to tell, Gradiated moves all traffic back to the active version and marks the canary `rolled_back`. Without it, the canary stays at its traffic share until you promote or roll back. This is a deployment guardrail. It's separate from a router's `max_quality_drop`, which sets how much quality the [router](/docs/training/recipes/router/) may trade for cost during training.
+
 ### Log feedback for the next training run
 
 Requests sent to your deployed Gradiated Cloud model are captured into its [`Dataset`](/docs/training/trajectories/) automatically and return an `x-gradiated-inference-id` response header. Send outcomes and human fixes back whenever you know how an answer performed:
@@ -120,9 +124,27 @@ Requests sent to your deployed Gradiated Cloud model are captured into its [`Dat
   <DocsCodeTab label="Python">
 
 ```python
+import os
+from openai import OpenAI
+from grad import Grad
+
+client = Grad()
+oai = OpenAI(base_url="https://api.gradiated.com/v1", api_key=os.environ["GRADIATED_API_KEY"])
+
+raw = oai.chat.completions.with_raw_response.create(
+    model="your-org/fast-diff-merge",
+    messages=[{"role": "user", "content": "Merge these two diffs into one patch: ..."}],
+)
+inference_id = raw.headers["x-gradiated-inference-id"]
+patch = raw.parse().choices[0].message.content
+
+# Later, once you know the outcome (for example, after CI runs on the patch):
+tests_passed = True
+human_fix = None  # or the corrected patch a reviewer wrote
+
 client.feedback.record(
     inference_id=inference_id,
-    idempotency_key=f"pr-{pr_number}-check-1",
+    idempotency_key=f"{inference_id}-ci",
     score=1.0 if tests_passed else 0.0,
     expected_output={"content": human_fix} if human_fix else None,
 )
@@ -132,11 +154,27 @@ client.feedback.record(
   <DocsCodeTab label="TypeScript">
 
 ```ts
+import OpenAI from "openai";
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+const oai = new OpenAI({ baseURL: "https://api.gradiated.com/v1", apiKey: process.env.GRADIATED_API_KEY });
+
+const { data, response } = await oai.chat.completions
+  .create({
+    model: "your-org/fast-diff-merge",
+    messages: [{ role: "user", content: "Merge these two diffs into one patch: ..." }],
+  })
+  .withResponse();
+const inferenceId = response.headers.get("x-gradiated-inference-id")!;
+console.log(data.choices[0].message.content);
+
+// Later, once you know the outcome:
+const testsPassed = true;
 await grad.feedback.record({
   inferenceId,
-  idempotencyKey: `pr-${prNumber}-check-1`,
+  idempotencyKey: `${inferenceId}-ci`,
   score: testsPassed ? 1.0 : 0.0,
-  expectedOutput: humanFix ? { content: humanFix } : undefined,
 });
 ```
 
@@ -144,10 +182,11 @@ await grad.feedback.record({
   <DocsCodeTab label="Go">
 
 ```go
+// inferenceID comes from the x-gradiated-inference-id response header
 _ = client.Feedback.Record(ctx, grad.Feedback{
 	InferenceID:    inferenceID,
-	IdempotencyKey: fmt.Sprintf("pr-%d-check-1", prNumber),
-	Score:          score,
+	IdempotencyKey: inferenceID + "-ci",
+	Score:          1.0,
 })
 ```
 
@@ -161,7 +200,7 @@ curl https://api.gradiated.com/v1/feedback \
   -d '{
     "events": [{
       "inference_id": "inf_01J9Y",
-      "idempotency_key": "pr-481-check-1",
+      "idempotency_key": "inf_01J9Y-ci",
       "score": 1.0
     }]
   }'
@@ -182,7 +221,7 @@ If you already run your own inference infrastructure (or self-host training in y
 ```bash
 grad artifacts download fast-diff-merge@2026-11-26-1 --output ./fast-diff-merge
 
-vllm serve qwen/qwen3-8b \
+vllm serve Qwen/Qwen3-8B \
   --enable-lora \
   --lora-modules fast-diff-merge=./fast-diff-merge
 ```
@@ -194,7 +233,7 @@ vllm serve qwen/qwen3-8b \
 grad artifacts download fast-diff-merge@2026-11-26-1 --output ./fast-diff-merge
 
 python -m sglang.launch_server \
-  --model-path qwen/qwen3-8b \
+  --model-path Qwen/Qwen3-8B \
   --lora-paths fast-diff-merge=./fast-diff-merge
 ```
 

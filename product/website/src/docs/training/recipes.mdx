@@ -10,19 +10,21 @@ A **recipe** is a Python class that wires up a common training workflow (`Router
 
 | Recipe class | Guide | Expected dataset fields |
 | --- | --- | --- |
-| `RouterRecipe` | [Model router](/docs/training/recipes/router/) | Prompts (`input.messages`) + a `Judge` or existing `scores` (optional `metrics.cost_usd`) |
+| `RouterRecipe` | [Model router](/docs/training/recipes/router/) | Prompts (`messages`) + a `rubric=` (such as a `Judge`) or existing `scores` (optional `metrics.cost_usd`) |
 | `DecisionModelRecipe` | [Decision models](/docs/training/recipes/decision-model/) | SystemOne `state` + `questions` (`choice`, `noul`, `score`) and `expected_output` |
-| `SFTRecipe` | [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) | `input` + `expected_output` (or filtered high-score `output`) |
-| `DPORecipe` | [Preference tuning (DPO)](/docs/training/recipes/dpo/) | Paired `group_id` trajectories with `role: chosen \| rejected` |
-| `GRPORecipe` | [RL for agents](/docs/training/recipes/rl-agents/) | Prompts + a [`Rubric`](/docs/training/rubrics/) (`Judge` / `validators.*`) or [`Environment`](/docs/training/environments/) |
+| `SFTRecipe` | [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) | Chat records (`{"messages": [...]}`, last assistant turn is the target), or `input` + `expected_output` |
+| `DPORecipe` | [Preference tuning (DPO)](/docs/training/recipes/dpo/) | `prompt` + `chosen` + `rejected` records, or paired `group_id` trajectories |
+| `GRPORecipe` | [RL for agents](/docs/training/recipes/rl-agents/) | Tasks + a [`Rubric`](/docs/training/rubrics/), or any [`Environment`](/docs/training/environments/), single- or multi-turn |
 | `DistillRecipe` | [Model distillation](/docs/training/recipes/distillation/) | Prompts or traces + `teacher` model |
 | `CartridgeRecipe` | [Context Cartridges](/docs/training/recipes/cartridges/) | Static corpus (`Context`) + QA prompts (`num_tokens`) |
-| `RewardModelRecipe` | [Reward models](/docs/training/recipes/reward-models/) | Paired `group_id` trajectories with `role: chosen \| rejected` |
+| `RewardModelRecipe` | [Reward models](/docs/training/recipes/reward-models/) | `prompt` + `chosen` + `rejected` records, or paired `group_id` trajectories |
 | `EmbeddingRecipe` | [Embeddings](/docs/training/recipes/embeddings/) | `Triplet` examples (`query`, `positive` doc, optional `negatives`) |
+
+Any dataset works as input: a list of plain chat records or a `.jsonl` file (`client.datasets.push(name, records_or_path)`), a Hugging Face dataset (`client.datasets.from_hf(...)`), or traces imported from your observability tool. See [Trajectories](/docs/training/trajectories/).
 
 ## Start with recipe defaults
 
-Every recipe comes with working defaults for the base model, train/eval split, and optimizer. You pay per million tokens trained plus storage for saved weights, so you don't need to pay for idle GPUs. Pass your dataset, output name, and recipe, and use `--dry-run` (or `runs.plan()`) to check data coverage and estimated cost before launching. You can also attach `loggers=[loggers.WandB(project="...")]` or `loggers.MLflow(...)` and inspect live completions with `grad runs logs <run_id> --samples 5` (see [Tuning & troubleshooting](/docs/training/tuning-troubleshooting/)).
+Every recipe comes with working defaults for the base model, train/eval split, learning rate, batch size, schedule, checkpoints and evals. You pay per million tokens trained plus storage for saved weights, so you don't pay for idle GPUs. Pass your dataset, output name, and recipe, and use `--dry-run` (or `runs.plan()`) to check data coverage and estimated cost before launching. Set `max_cost_usd=` on any run to cap spend. You can also attach `loggers=[loggers.WandB(project="...")]` or `loggers.MLflow(...)` and inspect live completions with `grad runs logs <run_id> --samples 5` (see [Tuning & troubleshooting](/docs/training/tuning-troubleshooting/)).
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -42,6 +44,7 @@ run = client.runs.create(
     dataset=dataset,
     name="support-router",
     recipe=RouterRecipe(),
+    max_cost_usd=20,  # stops gracefully and saves a checkpoint if reached
 ).wait(
     on_metric=lambda m: print(f"step={m.step} loss={m.loss:.4f}"),
 )
@@ -67,7 +70,7 @@ const plan = await grad.runs.plan({
 console.log(plan.resolvedRecipe, plan.warnings, plan.estimatedTokens, plan.estimatedCostUsd);
 
 const run = await grad.runs
-  .create({ dataset, name: "support-router", recipe: recipes.router() })
+  .create({ dataset, name: "support-router", recipe: recipes.router(), maxCostUsd: 20 })
   .wait({
     onMetric: (m) => console.log(`step=${m.step} loss=${m.loss.toFixed(4)}`),
   });
@@ -89,9 +92,10 @@ plan, _ := client.Runs.Plan(ctx, grad.RunParams{
 fmt.Println(plan.ResolvedRecipe, plan.Warnings, plan.EstimatedTokens, plan.EstimatedCostUSD)
 
 run, _ := client.Runs.Create(ctx, grad.RunParams{
-	Dataset: dataset,
-	Name:    "support-router",
-	Recipe:  grad.RouterRecipe{},
+	Dataset:    dataset,
+	Name:       "support-router",
+	Recipe:     grad.RouterRecipe{},
+	MaxCostUSD: 20,
 }).Wait(ctx)
 fmt.Println(run.Artifact.ID, run.EvalReport)
 ```
@@ -104,7 +108,7 @@ fmt.Println(run.Artifact.ID, run.EvalReport)
 grad train --dataset support-prod --name support-router --recipe router --dry-run
 
 # Launch and stream progress
-grad train --dataset support-prod --name support-router --recipe router --wait
+grad train --dataset support-prod --name support-router --recipe router --max-cost-usd 20 --wait
 ```
 
   </DocsCodeTab>
@@ -114,7 +118,7 @@ grad train --dataset support-prod --name support-router --recipe router --wait
 curl https://api.gradiated.com/v1/runs \
   -H "Authorization: Bearer $GRADIATED_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"dataset": "support-prod", "name": "support-router", "recipe": {"kind": "router"}}'
+  -d '{"dataset": "support-prod", "name": "support-router", "recipe": {"kind": "router"}, "max_cost_usd": 20}'
 ```
 
   </DocsCodeTab>
@@ -122,7 +126,7 @@ curl https://api.gradiated.com/v1/runs \
 
 ### Preview with `--dry-run` before training
 
-Before spending anything, run `--dry-run` (or `client.runs.plan()`) to check your dataset for missing scores or class imbalance, see the resolved defaults, and get a token and cost estimate:
+Before spending anything, run `--dry-run` (or `client.runs.plan()`) to check your dataset for missing scores, truncated records or class imbalance, see every resolved default, and get a token and cost estimate:
 
 <DocsTerminal
   title="Pre-flight dry run ($0)"
@@ -130,14 +134,38 @@ Before spending anything, run `--dry-run` (or `client.runs.plan()`) to check you
 >
 
 ```text
-Dataset   diff-merge-prod (1,420 trajectories -> 1,184 after min_score filter)
-Split     BySession: 1,065 train / 119 eval (0 overlapping sessions)
-Model     qwen/qwen3-8b · LoRA(rank=8)
-Optimizer AdamW(lr=2.0e-4, schedule=cosine)
-Estimate  ~3.8M train tokens (~$1.52) · warnings: 0
+Dataset     diff-merge-prod (14,200 trajectories -> 11,840 after min_score filter)
+Split       BySession: 10,656 train / 1,184 eval (0 overlapping sessions)
+Model       qwen/qwen3-8b · LoRA(rank=32, alpha=32)
+Template    qwen3 chat template · thinking=auto · train_on=last (31% of tokens trained)
+Optimizer   AdamW(lr=auto -> 5.0e-4, betas=(0.9, 0.95), grad_clip=1.0)
+Schedule    linear decay, warmup 3% · batch 128 · 1 epoch -> 84 steps
+Checkpoints every 8 steps (10%) · eval on held-out split at each checkpoint · keep best
+Estimate    ~38M train tokens (~$15.20) · cap max_cost_usd=25
+Warnings    1
+  ! 84 steps is below the 100 we recommend; use batch_size=64 (167 steps) or epochs=2.
 ```
 
 </DocsTerminal>
+
+### Defaults every recipe resolves
+
+You don't need to set any of these. The dry run prints the value each one resolved to, and any argument you pass wins.
+
+| Setting | Default | How it's chosen |
+| --- | --- | --- |
+| `model` | `qwen/qwen3-8b` (`qwen/qwen3-0.6b` for routers) | Any trainable base model or a previous `Artifact`. See [Supported models](/docs/training/models/). |
+| `lr` | `"auto"` | Calibrated per base model, objective, adapter and batch size. Typical values for `qwen/qwen3-8b`: SFT `5e-4`, DPO `2e-5`, GRPO `5e-5`. See [Tuning & troubleshooting](/docs/training/tuning-troubleshooting/#learning-rate). |
+| `adapter` | `adapters.LoRA(rank=32)` | `alpha` is fixed at `32`, so changing the rank doesn't change the right learning rate. |
+| `optimizer` | `optim.AdamW(betas=(0.9, 0.95), weight_decay=0.0, grad_clip=1.0)` | Standard settings for LoRA and RL; you rarely need to change them. |
+| `schedule`, `warmup` | `"linear"`, `0.03` | Linear decay to zero after 3% warmup. |
+| `batch_size`, `epochs` | `128`, `1` (SFT) · `32` prompts × `group_size=8` (GRPO) | The plan warns when a run has fewer than 100 steps. |
+| `max_new_tokens` (RL, distillation) | `"auto"` | p95 completion length of the base model on 64 of your prompts, measured during the plan. Metrics report `truncation_rate`. |
+| `loss` (GRPO) | `"auto"` | `losses.GRPO(clip_low=0.2, clip_high=0.28)` on-policy; `losses.CISPO(...)` when `max_staleness > 0`. |
+| `thinking`, `train_on` | `"auto"`, `"last"` | How the chat template is rendered and which assistant turns are trained. Preview with `grad render`. |
+| Checkpoints | every 10% of steps, and at least every 20 steps | Includes optimizer state. Kept 30 days unless promoted to an `Artifact`. Resume with `client.runs.resume(run_id)`. |
+| `eval_every`, `select` | `"auto"` (10% of steps), `"best"` | `run.artifact` is the best checkpoint by held-out eval; pass `select="last"` to keep the final one. |
+| `max_cost_usd` | none | Stops the run gracefully, saves a checkpoint, and marks it `stopped: budget`. |
 
 ### Inspect resolved defaults
 
@@ -145,6 +173,39 @@ Export the full resolved config of any run as YAML to see every default (model, 
 
 ```bash
 grad runs inspect run_01J9X --yaml > recipe.yaml
+```
+
+## Where your code runs
+
+Managed runs execute on Gradiated's servers, so closing your laptop never stops them. That works for your own Python code too:
+
+- **Built-in specs run on Gradiated's servers:** `Rubric` checks, `Judge`, `validators.*` (regex, JSON schema, SQL, exact and numeric match), and built-in environments (`environments.Tools`, `Harbor`, remote `MCP` servers by URL, and [verifiers](/docs/training/environments/) Hub environments).
+- **Your Python functions are packaged automatically.** When a managed run starts, the SDK uploads the source of each function you passed (a `Scorer(fn=...)`, a `rubric=` function, a custom `Environment` subclass) with the `requirements=[...]` you declare, and runs it in an isolated sandbox with no network access unless you set `network=True`. `runs.plan()` packages everything before anything is billed and fails with a specific message if a function can't be packaged, for example because it reads a local file or captures a database connection from your script.
+- **Need it on your machine?** Pass `runtime="local"` and keep `grad worker` running wherever the code has access to what it needs. The run pauses while no worker is connected and resumes when one reconnects. For environments, `grad env serve` does the same for rollout workers (see [Environments](/docs/training/environments/)).
+- **Filtering data:** field filters such as `dataset.filter(scores={"resolved": ">=0.8"})` run on the server with no download. `dataset.filter(fn)` with a Python function runs on your machine when you call it and saves the selected IDs as a server-side view, so no trajectories are copied.
+
+```python
+import re
+import requests
+from grad import Rubric, Scorer
+
+def cites_ticket(traj) -> float:
+    return 1.0 if re.search(r"TICKET-\d+", traj.output.text) else 0.0
+
+def reads_well(traj) -> float:
+    import textstat
+    return min(textstat.flesch_reading_ease(traj.output.text) / 60, 1.0)
+
+def ticket_exists(traj) -> float:
+    # Calls a service only your network can reach, so it runs on your machine.
+    match = re.search(r"TICKET-\d+", traj.output.text)
+    return 1.0 if match and requests.get(f"https://crm.internal.example/tickets/{match.group()}").ok else 0.0
+
+rubric = Rubric([
+    Scorer("cites_ticket", fn=cites_ticket),                                       # packaged, runs on Gradiated
+    Scorer("reads_well", fn=reads_well, requirements=["textstat==0.7.4"]),          # packaged with its dependency
+    Scorer("ticket_exists", fn=ticket_exists, runtime="local", weight=2.0),         # runs on your `grad worker`
+])
 ```
 
 ## Customize any piece
@@ -164,7 +225,7 @@ dataset = client.datasets.get("support-prod")
 recipe = RouterRecipe(
     model="qwen/qwen3-0.6b",
     models=["qwen/qwen3-8b", "{{OPUS_MODEL}}"],
-    score=Judge(
+    rubric=Judge(
         name="resolved",
         model="{{SONNET_MODEL}}",
         prompt="Did the assistant solve the user's issue accurately?",
@@ -197,7 +258,7 @@ run = client.runs.create(dataset=dataset, name="ticket-triage", recipe=recipe).w
   <DocsCodeTab label="SFT">
 
 ```python
-from grad import Grad, Judge, adapters, optim, splits
+from grad import Grad, Judge, adapters, splits
 from grad.recipes import SFTRecipe
 
 client = Grad()
@@ -207,14 +268,14 @@ judge = Judge(
     prompt="Did the assistant apply the edit accurately without breaking surrounding code?",
 )
 dataset = client.datasets.get("diff-merge-prod").score(judge).wait().filter(
-    lambda t: t.scores["clean_merge"] >= 0.8,
+    scores={"clean_merge": ">=0.8"},
 )
 
 recipe = SFTRecipe(
     model="qwen/qwen3-8b",
-    adapter=adapters.LoRA(rank=8),
-    optimizer=optim.AdamW(lr=2e-4),
+    adapter=adapters.LoRA(rank=64),  # large dataset (>50k records): a higher rank helps
     split=splits.BySession(eval_fraction=0.10),
+    # lr is left at "auto"; the dry run prints the value it resolves to
 )
 
 run = client.runs.create(dataset=dataset, name="fast-diff-merge", recipe=recipe).wait()
@@ -224,7 +285,7 @@ run = client.runs.create(dataset=dataset, name="fast-diff-merge", recipe=recipe)
   <DocsCodeTab label="DPO">
 
 ```python
-from grad import Grad, adapters, losses, optim
+from grad import Grad, losses
 from grad.recipes import DPORecipe
 
 client = Grad()
@@ -232,10 +293,8 @@ dataset = client.datasets.get("support-preferences")
 sft_art = client.artifacts.get("support-responder@sft-v1")
 
 recipe = DPORecipe(
-    model=sft_art,
-    adapter=adapters.LoRA(rank=8),
-    loss=losses.DPO(beta=0.1),
-    optimizer=optim.AdamW(lr=5e-5),
+    model=sft_art,               # continues the SFT artifact's adapter
+    loss=losses.DPO(beta=0.1),   # the default; raise beta to stay closer to the SFT model
 )
 
 run = client.runs.create(dataset=dataset, name="support-responder", recipe=recipe).wait()
@@ -245,7 +304,7 @@ run = client.runs.create(dataset=dataset, name="support-responder", recipe=recip
   <DocsCodeTab label="GRPO">
 
 ```python
-from grad import Grad, Judge, Rubric, Scorer, adapters, validators
+from grad import Grad, Judge, Rubric, Scorer, validators
 from grad.recipes import GRPORecipe
 
 client = Grad()
@@ -254,7 +313,6 @@ sft_art = client.artifacts.get("fast-diff-merge@sft-v1")
 
 recipe = GRPORecipe(
     model=sft_art,
-    adapter=adapters.LoRA(rank=8),
     rubric=Rubric([
         Scorer("valid_ts", weight=0.4, fn=validators.TypeScriptAST()),
         Judge(
@@ -264,17 +322,44 @@ recipe = GRPORecipe(
             weight=0.6,
         ),
     ]),
-    group_size=8,
+    group_size=8,  # the default: 8 attempts per prompt
 )
 
 run = client.runs.create(dataset=dataset, name="fast-diff-merge", recipe=recipe).wait()
 ```
 
   </DocsCodeTab>
+  <DocsCodeTab label="GRPO (tool agent)">
+
+```python
+from grad import Grad, Rubric, Scorer, environments, validators
+from grad.recipes import GRPORecipe
+
+client = Grad()
+tasks = client.datasets.from_hf("openai/gsm8k", subset="main", split="train", prompt="question", answer="answer")
+
+def calculator(expression: str) -> str:
+    """Evaluate an arithmetic expression such as '12 * (3 + 4)' and return the result."""
+    if not set(expression) <= set("0123456789+-*/(). ") or "**" in expression:
+        return "error: use only numbers, spaces and + - * / ( )"
+    return str(eval(expression))
+
+env = environments.Tools(
+    [calculator],
+    tasks=tasks,
+    rubric=Rubric([Scorer("correct", fn=validators.NumericMatch(field="answer"))]),
+    max_turns=6,
+)
+
+# Multi-turn: the model calls the tool as often as it needs, then answers. Same managed recipe.
+run = client.runs.create(dataset=tasks, name="gsm8k-calculator", recipe=GRPORecipe(model="qwen/qwen3-4b", env=env)).wait()
+```
+
+  </DocsCodeTab>
   <DocsCodeTab label="Distill">
 
 ```python
-from grad import Grad, adapters, losses, optim
+from grad import Grad, losses
 from grad.recipes import DistillRecipe, OnPolicy
 
 client = Grad()
@@ -283,10 +368,8 @@ dataset = client.datasets.get("support-prompts")
 recipe = DistillRecipe(
     model="qwen/qwen3-4b",
     teacher="qwen/qwen3-32b",
-    adapter=adapters.LoRA(rank=8),
-    rollout=OnPolicy(max_new_tokens=512),
+    rollout=OnPolicy(),  # max_new_tokens="auto" from the teacher's output lengths
     loss=losses.TopKKLDistill(top_k=32),
-    optimizer=optim.AdamW(lr=1e-4),
 )
 
 run = client.runs.create(dataset=dataset, name="support-fast-distill", recipe=recipe).wait()
@@ -318,41 +401,55 @@ run = client.runs.create(dataset=dataset, name="docs-cartridge", recipe=recipe).
 
 ### Swap one component instead of rewriting the loop
 
-You don't need to write a full training loop just to try a different loss function or split strategy. Pass your own `losses.CustomLoss`, `AdvantageEstimator`, or `Splitter` straight into the recipe:
+You don't need to write a full training loop just to try a different loss function or split strategy. Pass your own `losses.CustomLoss`, `AdvantageEstimator`, or `Splitter` straight into the recipe. Custom losses are packaged like any other function (see [Where your code runs](#where-your-code-runs)):
 
 ```python
-# Swap built-in losses.DPO() for your own SimPOLoss subclass inside DPORecipe:
-recipe = DPORecipe(
-    model="qwen/qwen3-8b",
-    adapter=adapters.LoRA(rank=8),
-    loss=SimPOLoss(beta=2.0, gamma=0.5),
-    optimizer=optim.AdamW(lr=3e-5),
-)
+import torch
+import torch.nn.functional as F
+import grad
+from grad import losses
+from grad.recipes import DPORecipe
+
+class SimPOLoss(losses.CustomLoss):
+    """SimPO: reference-free preference loss on length-normalized logprobs."""
+    outputs = ("logprobs",)
+
+    def __init__(self, beta: float = 2.0, gamma: float = 0.5):
+        self.beta, self.gamma = beta, gamma
+
+    def compute(self, records, out) -> torch.Tensor:
+        # records arrive as (chosen, rejected) pairs
+        avg = [grad.masked_mean(lp, mask) for lp, mask in zip(out.logprobs, out.masks)]
+        chosen, rejected = torch.stack(avg[0::2]), torch.stack(avg[1::2])
+        return -F.logsigmoid(self.beta * (chosen - rejected) - self.gamma).mean()
+
+recipe = DPORecipe(model="qwen/qwen3-8b", loss=SimPOLoss(beta=2.0, gamma=0.5))
 ```
 
 ### Run recipes from YAML
 
-Every recipe composed of built-in specs serializes 1:1 to a flat YAML file (`recipe.to_yaml()`) you can check into Git and run from CI:
+Every recipe composed of built-in specs serializes 1:1 to a flat YAML file (`recipe.to_yaml()`) you can check into Git and run from CI. Leave out anything you want at its default:
 
 ```yaml
 # recipe.yaml
 dataset:
   name: diff-merge-prod
   filter:
-    min_score:
-      tests_passed: 1.0
+    scores:
+      tests_passed: ">=1.0"
 name: fast-diff-merge
 recipe: sft
 model: qwen/qwen3-8b
 adapter:
   kind: lora
-  rank: 8
+  rank: 32
 optimizer:
   kind: adamw
-  lr: 2e-4
+  lr: auto
 split:
   strategy: by_session
   eval_fraction: 0.10
+max_cost_usd: 25
 ```
 
 ```bash
@@ -368,7 +465,7 @@ Every recipe takes a model (a base model string or a trained `Artifact`) and pro
   <DocsCodeTab label="Chained (.then)">
 
 ```python
-from grad import Grad, Judge, Rubric, Scorer, adapters, optim, validators
+from grad import Grad, Judge, Rubric, Scorer, validators
 from grad.recipes import GRPORecipe, SFTRecipe
 
 client = Grad()
@@ -390,15 +487,11 @@ run = (
     client.runs.create(
         dataset=gold_ds,
         name="fast-diff-merge",
-        recipe=SFTRecipe(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=8), optimizer=optim.AdamW(lr=2e-4)),
+        recipe=SFTRecipe(model="qwen/qwen3-8b"),
     )
     .then(
         dataset=tasks_ds,
-        recipe=GRPORecipe(
-            adapter=adapters.LoRA(rank=8),
-            rubric=merge_rubric,
-            optimizer=optim.AdamW(lr=2e-5),
-        ),
+        recipe=GRPORecipe(rubric=merge_rubric),  # model and adapter come from the SFT stage; lr re-resolves for RL
     )
     .wait()
 )
@@ -408,14 +501,23 @@ run = (
   <DocsCodeTab label="Pass run.artifact (or inspect in between)">
 
 ```python
+from grad import Grad, Judge
+from grad.recipes import GRPORecipe, SFTRecipe
+
+client = Grad()
 gold_ds = client.datasets.get("diff-merge-gold")
 tasks_ds = client.datasets.get("diff-merge-tasks")
+merge_rubric = Judge(
+    name="exact_merge",
+    model="{{SONNET_MODEL}}",
+    prompt="Verify the merged file applies the edit cleanly without breaking surrounding code.",
+)
 
 # Omit .wait() here so GRPO queues behind SFT, or call .wait() to inspect sft.eval_report first.
 sft = client.runs.create(
     dataset=gold_ds,
     name="fast-diff-merge",
-    recipe=SFTRecipe(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=8)),
+    recipe=SFTRecipe(model="qwen/qwen3-8b"),
 )
 
 rl = client.runs.create(
@@ -439,6 +541,11 @@ Stream step-by-step telemetry (`step`, `loss`, `grad_norm`, `lr`, `tokens_per_se
   <DocsCodeTab label="Python">
 
 ```python
+from grad import Grad
+
+client = Grad()
+run = client.runs.get("run_01J9X")
+
 for metric in run.metrics(follow=True):
     print(metric.step, metric.loss, metric.eval_metrics)
 ```
@@ -447,6 +554,11 @@ for metric in run.metrics(follow=True):
   <DocsCodeTab label="TypeScript">
 
 ```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+const run = await grad.runs.get("run_01J9X");
+
 for await (const metric of run.metrics({ follow: true })) {
   console.log(metric.step, metric.loss, metric.evalMetrics);
 }
@@ -467,11 +579,11 @@ Router artifacts include a held-out cost-vs-quality Pareto curve and 95% bootstr
 
 ## When to write a custom loop
 
-Stick with a `Recipe` (even with a custom loss or splitter) as long as a standard train/eval flow works. Switch to [custom loops](/docs/training/custom-loops/) when you need:
+Stick with a `Recipe` (even with a custom loss, splitter, or a multi-turn `Environment`) as long as a standard train/eval flow works. Multi-turn agent RL, Docker Compose environments and async rollouts all run in the managed `GRPORecipe`. Switch to [custom loops](/docs/training/custom-loops/) only when you are building a new algorithm:
 
 - Multiple trainers updating together in one loop (like a separate actor and critic).
-- Custom rollout setups like async replay buffers, tree search, or multi-agent self-play.
-- Manual control over batching, mid-run `trainer.snapshot()` calls, or Docker Compose environments.
+- Custom rollout setups like replay buffers, tree search, or multi-agent self-play.
+- Manual control over batching and mid-run `trainer.snapshot()` calls.
 
 <DocsNext>
   <a href="/docs/training/rubrics/">

@@ -6,7 +6,7 @@ If you just fine-tune a small model on saved outputs from a big model, it can go
 
 ## What data you need
 
-- **Only prompts:** you don't need labeled answers; 1,000–5,000 real prompts in `input.messages` ([trajectories](/docs/training/trajectories/)) are enough.
+- **Only prompts:** you don't need labeled answers; 1,000–5,000 real prompts are enough. Plain chat records (`{"messages": [...]}` ending in a user turn), Hugging Face datasets via `client.datasets.from_hf(...)`, or imported [trajectories](/docs/training/trajectories/) all work. Any assistant turns at the end are ignored, because the student writes its own.
 - **A teacher model:** any larger base model (such as `"qwen/qwen3-32b"`) or a fine-tuned `.grad` [`Artifact`](/docs/training/artifacts/) you trained earlier.
 
 ## Train with `DistillRecipe`
@@ -15,22 +15,27 @@ If you just fine-tune a small model on saved outputs from a big model, it can go
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, adapters, losses, optim
+from grad import Grad, losses
 from grad.recipes import DistillRecipe, OnPolicy
 
 client = Grad()
-dataset = client.datasets.get("support-prompts")
+dataset = client.datasets.get("support-prompts")  # pushed or imported earlier
 
 recipe = DistillRecipe(
     model="qwen/qwen3-4b",
     teacher="qwen/qwen3-32b",
-    adapter=adapters.LoRA(rank=8),
-    rollout=OnPolicy(max_new_tokens=512),
+    rollout=OnPolicy(max_new_tokens="auto"),  # p95 of the student's answer length
     loss=losses.TopKKLDistill(top_k=32),
-    optimizer=optim.AdamW(lr=1e-4),
+    # Defaults: LoRA(rank=32), lr="auto" (about 2e-4 here), batch_size=128
 )
+print(client.runs.plan(dataset=dataset, recipe=recipe))  # $0 estimate, incl. teacher scoring
 
-run = client.runs.create(dataset=dataset, name="support-4b-distilled", recipe=recipe).wait()
+run = client.runs.create(
+    dataset=dataset,
+    name="support-4b-distilled",
+    recipe=recipe,
+    max_cost_usd=40,
+).wait()
 
 print(run.artifact.id, run.eval_report)
 ```
@@ -39,7 +44,7 @@ print(run.artifact.id, run.eval_report)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, adapters, losses, optim, recipes } from "@gradiated/grad";
+import { Grad, losses, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("support-prompts");
@@ -51,11 +56,10 @@ const run = await grad.runs
     recipe: recipes.distill({
       model: "qwen/qwen3-4b",
       teacher: "qwen/qwen3-32b",
-      adapter: adapters.lora({ rank: 8 }),
-      rollout: recipes.onPolicy({ maxNewTokens: 512 }),
+      rollout: recipes.onPolicy({ maxNewTokens: "auto" }),
       loss: losses.topKKLDistill({ topK: 32 }),
-      optimizer: optim.adamW({ lr: 1e-4 }),
     }),
+    maxCostUsd: 40,
   })
   .wait();
 
@@ -72,18 +76,13 @@ name: support-4b-distilled
 recipe: distill
 model: qwen/qwen3-4b
 teacher: qwen/qwen3-32b
-adapter:
-  kind: lora
-  rank: 8
 rollout:
   kind: on_policy
-  max_new_tokens: 512
+  max_new_tokens: auto
 loss:
   kind: topk_kl_distill
   top_k: 32
-optimizer:
-  kind: adamw
-  lr: 1e-4
+max_cost_usd: 40
 ```
 
 ```bash
@@ -96,9 +95,11 @@ grad train -f distill-4b.yaml --wait
 ### Key parameters
 
 - **`teacher`:** the stronger model you want to copy, either a catalog model (like `"qwen/qwen3-32b"`) or a larger `.grad` [`Artifact`](/docs/training/artifacts/) you already fine-tuned.
-- **`rollout=OnPolicy(max_new_tokens=512)`:** generates answers from the student and grades them with the teacher so the student learns where it actually makes mistakes. Switch to `OffPolicy()` only if you already have fixed teacher completions you want to train on directly.
+- **`rollout=OnPolicy(max_new_tokens="auto")`:** generates answers from the student and grades them with the teacher so the student learns where it actually makes mistakes. `"auto"` sets the length limit to the 95th percentile of the student's answer length on 64 sampled prompts, measured during `runs.plan()`; the plan and live metrics report `truncation_rate`. Switch to `OffPolicy()` only if you already have fixed teacher completions you want to train on directly.
 - **`losses.TopKKLDistill(top_k=32)`:** matches the teacher's top 32 next-token probabilities at every step (`top_k=16..32` captures almost all the signal cleanly).
-- **`optim.AdamW(lr=...)`:** start around `1e-4` for LoRA distillation.
+- **`lr="auto"`** *(default)*: for a LoRA student it typically resolves to about `2e-4` at batch 128 (lower than SFT, higher than RL). The dry run prints the exact value.
+- **`adapter=adapters.LoRA(rank=32)`** *(default)*, with `alpha=32` fixed. Checkpoints are saved every 10% of steps; `run.artifact` is the checkpoint with the lowest held-out KL to the teacher.
+- **Teacher and student must share a tokenizer** for token-level KL (the Qwen3 family does). For a teacher with a different tokenizer (including frontier API models), generate its answers and train on them with [`SFTRecipe`](/docs/training/recipes/sft/) instead.
 
 ## When to use distillation vs. SFT vs. Cartridges
 

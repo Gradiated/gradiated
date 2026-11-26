@@ -6,24 +6,66 @@ Use **`SFTRecipe`** when you have good examples of what the model should produce
 
 ## What data you need
 
-- **Minimum volume:** 300–1,000 clean `(input, expected_output)` [trajectories](/docs/training/trajectories/) for focused tasks; 2,000+ for broader ones.
+- **Minimum volume:** 300–1,000 clean examples for focused tasks; 2,000+ for broader ones.
 - **Quality beats volume:** don't train on raw, unfiltered logs. Score your dataset with a [`Judge`](/docs/training/rubrics/) and keep only high-scoring answers (or filter on an existing score like `tests_passed` if you already log one).
+- **Format:** plain chat records, the same JSONL you'd send to OpenAI fine-tuning. The final assistant turn is what the model learns to write. `session_id` is optional; add it when several records come from one conversation so they stay in the same split. Imported production logs work too (see [Trajectories](/docs/training/trajectories/)).
 
 ```json
 {
-  "schema": "grad.trajectory/1",
-  "session_id": "pr_481",
-  "input": {
-    "messages": [
-      { "role": "system", "content": "Apply the edit snippet to the original file. Return only the merged file." },
-      { "role": "user", "content": "<original>...</original>\n<edit>...</edit>" }
-    ]
-  },
-  "expected_output": { "content": "export const retry = ..." }
+  "messages": [
+    { "role": "system", "content": "Apply the edit snippet to the original file. Return only the merged file." },
+    { "role": "user", "content": "<original>...</original>\n<edit>...</edit>" },
+    { "role": "assistant", "content": "export const retry = ..." }
+  ]
 }
 ```
 
-## Train with `SFTRecipe`
+## Try it on a public dataset
+
+This runs as pasted. It imports 2,000 conversations from Hugging Face, prints the plan and cost estimate, and trains with the defaults:
+
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+from grad.recipes import SFTRecipe
+
+client = Grad()
+chats = client.datasets.from_hf(
+    "HuggingFaceH4/ultrachat_200k",
+    split="train_sft",
+    messages="messages",
+    limit=2000,
+)
+
+recipe = SFTRecipe(model="qwen/qwen3-8b")
+print(client.runs.plan(dataset=chats, recipe=recipe))  # $0: resolved defaults + estimate
+
+run = client.runs.create(
+    dataset=chats,
+    name="ultrachat-sft",
+    recipe=recipe,
+    max_cost_usd=20,
+).wait()
+print(run.artifact.id)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad datasets import hf HuggingFaceH4/ultrachat_200k --split train_sft --limit 2000 --name ultrachat
+grad train --dataset ultrachat --name ultrachat-sft --recipe sft --dry-run
+grad train --dataset ultrachat --name ultrachat-sft --recipe sft --max-cost-usd 20 --wait
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+To train on your own file instead, pass its path: `client.datasets.push("my-sft", "train.jsonl")`.
+
+## Train on your production logs
 
 Score your `Dataset` once with a [`Judge`](/docs/training/rubrics/) to keep only good examples, train a LoRA adapter, and split by `session_id` so multi-turn conversations never leak into eval:
 
@@ -31,11 +73,11 @@ Score your `Dataset` once with a [`Judge`](/docs/training/rubrics/) to keep only
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Judge, adapters, optim, splits
+from grad import Grad, Judge, splits
 from grad.recipes import SFTRecipe
 
 client = Grad()
-dataset = client.datasets.get("diff-merge-prod")
+dataset = client.datasets.get("diff-merge-prod")  # pushed or imported earlier
 
 # Score logs once with a Judge and keep only high-quality examples
 judge = Judge(
@@ -43,21 +85,20 @@ judge = Judge(
     model="{{SONNET_MODEL}}",
     prompt="Did the assistant apply the edit accurately without breaking surrounding code?",
 )
-clean_dataset = dataset.score(judge).wait().filter(
-    lambda t: t.scores["clean_merge"] >= 0.8,
-)
+# Field filters run server-side, with no download
+clean_dataset = dataset.score(judge).wait().filter(scores={"clean_merge": ">=0.8"})
 
 sft_recipe = SFTRecipe(
     model="qwen/qwen3-8b",
-    adapter=adapters.LoRA(rank=8),
-    optimizer=optim.AdamW(lr=2e-4),
     split=splits.BySession(eval_fraction=0.10),
+    # Defaults: LoRA(rank=32), lr="auto", batch_size=128, epochs=1, linear schedule
 )
 
 sft = client.runs.create(
     dataset=clean_dataset,
     name="fast-diff-merge",
     recipe=sft_recipe,
+    max_cost_usd=50,
 ).wait(
     on_metric=lambda m: print(f"step={m.step} loss={m.loss:.4f}"),
 )
@@ -69,7 +110,7 @@ print(sft.artifact.id)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Judge, adapters, optim, recipes, splits } from "@gradiated/grad";
+import { Grad, Judge, recipes, splits } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("diff-merge-prod");
@@ -79,9 +120,9 @@ const judge = new Judge({
   model: "{{SONNET_MODEL}}",
   prompt: "Did the assistant apply the edit accurately without breaking surrounding code?",
 });
-const cleanDataset = (await dataset.score(judge).wait()).filter(
-  (t) => t.scores.clean_merge >= 0.8,
-);
+const cleanDataset = (await dataset.score(judge).wait()).filter({
+  scores: { clean_merge: ">=0.8" },
+});
 
 const sft = await grad.runs
   .create({
@@ -89,10 +130,9 @@ const sft = await grad.runs
     name: "fast-diff-merge",
     recipe: recipes.sft({
       model: "qwen/qwen3-8b",
-      adapter: adapters.lora({ rank: 8 }),
-      optimizer: optim.adamW({ lr: 2e-4 }),
       split: splits.bySession({ evalFraction: 0.1 }),
     }),
+    maxCostUsd: 50,
   })
   .wait();
 
@@ -112,15 +152,11 @@ dataset:
 name: fast-diff-merge
 recipe: sft
 model: qwen/qwen3-8b
-adapter:
-  kind: lora
-  rank: 8
-optimizer:
-  kind: adamw
-  lr: 2e-4
 split:
   strategy: by_session
   eval_fraction: 0.10
+max_cost_usd: 50
+# adapter, optimizer, batch_size and epochs use the defaults below
 ```
 
 ```bash
@@ -130,7 +166,7 @@ grad train -f sft-diff-merge.yaml --wait
   </DocsCodeTab>
 </DocsCodeTabs>
 
-If your logs already include a deterministic score (like `tests_passed` from CI), skip `dataset.score(judge)` and filter directly: `dataset.filter(lambda t: t.scores.get("tests_passed") == 1.0)`.
+If your logs already include a deterministic score (like `tests_passed` from CI), skip `dataset.score(judge)` and filter directly: `dataset.filter(scores={"tests_passed": "==1.0"})`. A Python function works too (`dataset.filter(lambda t: ...)`); it runs on your machine once and saves the matching IDs as a view (see [where your code runs](/docs/training/recipes/#where-your-code-runs)).
 
 ### When to use SFT vs. DPO vs. distillation
 
@@ -138,12 +174,20 @@ If your logs already include a deterministic score (like `tests_passed` from CI)
 - **Follow with [DPO (`DPORecipe`)](/docs/training/recipes/dpo/)** when the model already follows your format but keeps making specific mistakes you can contrast as `(chosen, rejected)` pairs.
 - **Use [Distillation (`DistillRecipe`)](/docs/training/recipes/distillation/)** when you don't have gold answers yet, just prompts and a larger teacher model you want a small model to imitate.
 
-### Key parameters
+### Defaults and key parameters
 
-- **`adapters.LoRA(rank=4..8)`** *(default `rank=8`)*: best starting point for almost every task. A rank of `4` or `8` works fine in most cases, trains fast, and exports a small adapter so multiple fine-tuned models can run on the same base weights in production. Pass `merge_on_export=True` only if you want a standalone merged checkpoint to download or host on its own.
-- **`adapters.Full()`:** trains every weight in the model. Only worth it once you have 10,000+ examples and LoRA stops improving (see [LoRA Without Regret](https://thinkingmachines.ai/blog/lora/) for a deeper look at when LoRA matches full fine-tuning).
-- **`optim.AdamW(lr=...)`:** start around `2e-4` for LoRA SFT (use `1e-5`–`3e-5` if doing full fine-tuning).
+Every default below is printed with its resolved value by `client.runs.plan(...)` or `grad train --dry-run`, so you can see exactly what will run before you pay for it.
+
+- **`adapter=adapters.LoRA(rank=32)`** *(default)*: `alpha` is fixed at `32`, so changing the rank doesn't change the right learning rate. Use rank `64`–`128` for SFT on large datasets (50,000+ records); `8`–`16` is enough for small datasets. Adapters export small, so many fine-tuned models can share one base model in production. Pass `merge_on_export=True` only if you want a standalone merged checkpoint.
+- **`adapters.Full()`:** trains every weight. Only worth it once you have 10,000+ examples and LoRA stops improving (see [LoRA Without Regret](https://thinkingmachines.ai/blog/lora/)).
+- **`lr="auto"`** *(default)*: resolved from the base model, objective, adapter and batch size. For `qwen/qwen3-8b` with LoRA rank 32 and batch 128 it typically resolves to about `5e-4`; full fine-tuning resolves about 10x lower (around `3e-5`). Pass a float to override it, or sweep `0.5x` and `2x` around the resolved value.
+- **`optimizer=optim.AdamW(lr="auto", betas=(0.9, 0.95), weight_decay=0.0, grad_clip=1.0)`**, **`schedule="linear"`** with **`warmup=0.03`**: linear decay to zero after a 3% warmup.
+- **`batch_size=128`**, **`epochs=1`**: the plan warns when a run has fewer than 100 optimizer steps and suggests a smaller batch or a second epoch.
+- **`train_on="last"`** *(default for chat records)*: trains only on the final assistant turn. Use `"all_assistant"` for multi-turn agent traces.
+- **`thinking="auto"`** *(default)*: keeps the base model's thinking mode. Records with no `<think>` block train with thinking off. Run `grad render <dataset> --model qwen/qwen3-8b` to see the exact tokens and which ones are trained; see [Chat templates](/docs/training/tuning-troubleshooting/#chat-templates-and-loss-masks).
 - **`splits.BySession(eval_fraction=0.10)`:** keeps all turns from the same conversation together so eval scores aren't inflated by leakage.
+- **Checkpoints and evals:** the run saves a checkpoint (with optimizer state) every 10% of steps and evaluates on the held-out split at the same points. `run.artifact` is the best checkpoint by eval loss. Resume an interrupted run with `client.runs.resume(run_id)`.
+- **`max_cost_usd`:** the run stops cleanly, saves a checkpoint and reports `stopped: budget` when it reaches the cap.
 
 ## Deploy and call your model
 
@@ -160,6 +204,11 @@ from openai import OpenAI
 from grad import Grad, validators
 
 sft.deploy(canary=0.10)
+
+messages = [
+    {"role": "system", "content": "Apply the edit snippet to the original file. Return only the merged file."},
+    {"role": "user", "content": "<original>export const retry = 1</original>\n<edit>export const retry = 3</edit>"},
+]
 
 oai = OpenAI(
     base_url="https://api.gradiated.com/v1",
@@ -178,7 +227,9 @@ if not check_ts(code):
     res = oai.chat.completions.create(model="qwen/qwen3-32b", messages=messages)
     code = res.choices[0].message.content
 
-# Log the outcome (and any human fix) for your next training run
+# Later, once you know the outcome, log it (and any human fix) for your next run
+tests_passed = check_ts(code)  # or your CI result
+human_fix = None               # or the corrected file a developer committed
 Grad().feedback.record(
     inference_id=res.id,
     score=1.0 if tests_passed else 0.0,
@@ -194,6 +245,11 @@ import OpenAI from "openai";
 import { Grad, validators } from "@gradiated/grad";
 
 await sft.deploy({ canary: 0.1 });
+
+const messages = [
+  { role: "system" as const, content: "Apply the edit snippet to the original file. Return only the merged file." },
+  { role: "user" as const, content: "<original>export const retry = 1</original>\n<edit>export const retry = 3</edit>" },
+];
 
 const oai = new OpenAI({
   baseURL: "https://api.gradiated.com/v1",
@@ -213,6 +269,8 @@ if (!checkTs(code)) {
   code = res.choices[0].message.content ?? "";
 }
 
+const testsPassed = checkTs(code); // or your CI result
+const humanFix: string | null = null; // or the corrected file a developer committed
 await new Grad().feedback.record({
   inferenceId: res.id,
   score: testsPassed ? 1.0 : 0.0,

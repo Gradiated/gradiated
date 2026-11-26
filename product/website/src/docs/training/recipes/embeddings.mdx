@@ -6,29 +6,27 @@ General-purpose embedding models often miss internal acronyms, product names, an
 
 ## What data you need
 
-Each training example is a `Triplet` with three parts:
+Each training example is a triplet with three parts:
 
 - **`query`:** what a user (or agent) searched for.
 - **`positive`:** the doc or code snippet that actually answers the query.
 - **`negatives`:** one or more wrong docs that look similar to the right one, so the model learns to rank the right doc above them.
 
-Aim for **1,000–5,000 triplets** in a [`Dataset`](/docs/training/trajectories/). Push them directly with `Triplet`:
+Aim for **1,000–5,000 triplets** in a [`Dataset`](/docs/training/trajectories/). Push them as plain records (a `.jsonl` path with the same keys works too, and `grad.Triplet(...)` is available if you want type checking):
 
 ```python
-from grad import Grad, Triplet
+from grad import Grad
 
 client = Grad()
-dataset = client.datasets.create("docs-retrieval-triplets")
-
-dataset.push([
-    Triplet(
-        query="how do I rotate my api key?",
-        positive="To rotate an existing API key, open Settings > API Keys and click Regenerate.",
-        negatives=[
+dataset = client.datasets.push("docs-retrieval-triplets", [
+    {
+        "query": "how do I rotate my api key?",
+        "positive": "To rotate an existing API key, open Settings > API Keys and click Regenerate.",
+        "negatives": [
             "To create your first API key, open Settings > API Keys and click New Key.",
             "API keys are scoped to a single workspace and can be revoked at any time.",
         ],
-    ),
+    },
 ])
 ```
 
@@ -40,21 +38,24 @@ dataset.push([
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, adapters, losses, optim, pooling
+from grad import Grad, losses
 from grad.recipes import EmbeddingRecipe
 
 client = Grad()
 dataset = client.datasets.get("docs-retrieval-triplets")
 
 recipe = EmbeddingRecipe(
-    model="baai/bge-small-en-v1.5",
-    adapter=adapters.Full(),
-    pool=pooling.Mean(),
     loss=losses.InfoNCE(temp=0.05),
-    optimizer=optim.AdamW(lr=2e-5),
+    # Defaults: baai/bge-small-en-v1.5, adapters.Full(), pooling.Mean(), lr="auto" (about 2e-5)
 )
+print(client.runs.plan(dataset=dataset, recipe=recipe))
 
-run = client.runs.create(dataset=dataset, name="docs-embedder", recipe=recipe).wait()
+run = client.runs.create(
+    dataset=dataset,
+    name="docs-embedder",
+    recipe=recipe,
+    max_cost_usd=5,
+).wait()
 
 print(run.artifact.id, run.eval_report)
 ```
@@ -63,7 +64,7 @@ print(run.artifact.id, run.eval_report)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, adapters, losses, optim, pooling, recipes } from "@gradiated/grad";
+import { Grad, losses, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("docs-retrieval-triplets");
@@ -73,12 +74,9 @@ const run = await grad.runs
     dataset,
     name: "docs-embedder",
     recipe: recipes.embedding({
-      model: "baai/bge-small-en-v1.5",
-      adapter: adapters.full(),
-      pool: pooling.mean(),
       loss: losses.infoNCE({ temp: 0.05 }),
-      optimizer: optim.adamW({ lr: 2e-5 }),
     }),
+    maxCostUsd: 5,
   })
   .wait();
 
@@ -89,7 +87,8 @@ console.log(run.artifact.id, run.evalReport);
   <DocsCodeTab label="CLI">
 
 ```bash
-grad train --dataset docs-retrieval-triplets --name docs-embedder --recipe embedding --wait
+grad train --dataset docs-retrieval-triplets --name docs-embedder --recipe embedding --dry-run
+grad train --dataset docs-retrieval-triplets --name docs-embedder --recipe embedding --max-cost-usd 5 --wait
 grad deploy docs-embedder@latest
 ```
 
@@ -104,11 +103,11 @@ grad deploy docs-embedder@latest
 
 ### Key parameters
 
-- **`model`:** start with a compact encoder like `"baai/bge-small-en-v1.5"` (sub-10 ms inference). Move to a larger encoder only if retrieval quality plateaus on long code or technical text.
-- **`adapter=adapters.Full()`:** because embedding encoders are small (~33M–300M parameters), training all weights is fast and usually beats LoRA.
-- **`pool=pooling.Mean()`:** averages token vectors into one vector per document (the standard choice for dense search).
+- **Backbone:** the recipe manages a compact encoder, `baai/bge-small-en-v1.5` (sub-10 ms inference), so you can leave `model` out. It's specific to `EmbeddingRecipe` and isn't a base model for generation recipes. `grad models list --training` shows any other encoders available to your workspace.
+- **`adapter=adapters.Full()`** *(default)*: embedding encoders are small (~33M–300M parameters), so training all weights is fast and usually beats LoRA.
+- **`pool=pooling.Mean()`** *(default)*: averages token vectors into one vector per document (the standard choice for dense search).
 - **`losses.InfoNCE(temp=0.05)`:** pulls matching `(query, positive)` pairs together and pushes `negatives` apart; lower `temp` (`0.03`–`0.05`) sharpens rankings when wrong docs are very similar to the right one.
-- **`optim.AdamW(lr=...)`:** keep the learning rate low (`1e-5`–`3e-5`) for full encoder fine-tuning.
+- **`lr="auto"`** *(default)*: resolves to about `2e-5` for full encoder fine-tuning (keep any override in `1e-5`–`3e-5`). `run.artifact` is the checkpoint with the best held-out top-10 hit rate.
 
 ## Embed offline or deploy
 

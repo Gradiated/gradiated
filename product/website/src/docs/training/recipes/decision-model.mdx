@@ -17,49 +17,46 @@ Every decision model supports the three [SystemOne](/docs/systemone-sdk/) questi
 ## What data you need
 
 - **Already calling `gradiated/linden-1`?** Requests sent with the `x-gradiated-task` header are captured in the right format automatically, so you can go straight to scoring or training.
-- **Pushing your own data?** Store examples in a [`Dataset`](/docs/training/trajectories/) with `state` and `questions` in `input.payload` and the expected answers in `expected_output`. Plan for ~200 examples per option to start (1,000+ for harder decisions).
+- **Pushing your own data?** Push plain records with `state`, `questions` and the expected answers in `expected_output` to a [`Dataset`](/docs/training/trajectories/). `session_id` is optional; set it when several records describe the same ticket or conversation so they stay in one split. Plan for ~200 examples per option to start (1,000+ for harder decisions).
 - **Don't have labels yet?** Score an unlabeled dataset first with a [`Judge`](/docs/training/rubrics/) (or `gradiated/linden-1`), review a sample, and train on those answers.
 
 ```python
-from grad import Grad, Trajectory, TrajectoryInput
+from grad import Grad
 
 client = Grad()
-dataset = client.datasets.create("ticket-triage")
 
-dataset.push([
-    Trajectory(
-        session_id="ticket_104",
-        input=TrajectoryInput(
-            payload={
-                "state": {"ticket": "I was charged twice. Please fix this today."},
-                "questions": {
-                    "category": {
-                        "type": "choice",
-                        "instructions": "Choose the department for this ticket.",
-                        "criteria": {
-                            "billing": "Charges or payments",
-                            "technical": "Something is broken",
-                            "other": "Anything else",
-                        },
-                    },
-                    "urgent": {
-                        "type": "noul",
-                        "instructions": "Does this need immediate attention?",
-                    },
-                    "effort": {
-                        "type": "score",
-                        "instructions": "Rate how urgently this ticket needs attention.",
-                        "criteria": ["Can wait", "Needs attention today", "Needs immediate attention"],
-                    },
-                },
-            },
-        ),
-        expected_output={
-            "category": "billing",
-            "urgent": 1.0,
-            "effort": 2,
+questions = {
+    "category": {
+        "type": "choice",
+        "instructions": "Choose the department for this ticket.",
+        "criteria": {
+            "billing": "Charges or payments",
+            "technical": "Something is broken",
+            "other": "Anything else",
         },
-    ),
+    },
+    "urgent": {
+        "type": "noul",
+        "instructions": "Does this need immediate attention?",
+    },
+    "effort": {
+        "type": "score",
+        "instructions": "Rate how urgently this ticket needs attention.",
+        "criteria": ["Can wait", "Needs attention today", "Needs immediate attention"],
+    },
+}
+
+dataset = client.datasets.push("ticket-triage", [
+    {
+        "state": {"ticket": "I was charged twice. Please fix this today."},
+        "questions": questions,
+        "expected_output": {"category": "billing", "urgent": 1.0, "effort": 2},
+    },
+    {
+        "state": {"ticket": "How do I export my invoices to CSV?"},
+        "questions": questions,
+        "expected_output": {"category": "billing", "urgent": 0.0, "effort": 0},
+    },
 ])
 ```
 
@@ -67,10 +64,10 @@ dataset.push([
 
 `DecisionModelRecipe` picks the right loss automatically for each question type (`losses.CrossEntropy()` for `choice`, `losses.BCEWithLogits()` for `noul`, and `losses.OrdinalBCE()` for `score`).
 
-Choose your base `model`:
+The recipe manages the backbone for you:
 
-- **`"gradiated/linden-1"`** *(default)*: best starting point when you want to specialize `linden-1` on your own questions and state format.
-- **`"qwen/qwen3-0.6b"`**: smallest general open model if you want to train a lightweight decision model from scratch.
+- **`gradiated/linden-1`** *(default)*: the recipe specializes `linden-1` on your own questions and state format. It's a recipe-managed backbone, so you get it by leaving `model` out; it isn't a base model for `SFTRecipe` or `GRPORecipe`.
+- **`"qwen/qwen3-0.6b"`**: pass it as `model=` if you want to train a lightweight decision model from a general open model instead.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -83,11 +80,16 @@ client = Grad()
 dataset = client.datasets.get("ticket-triage")
 
 recipe = DecisionModelRecipe(
-    model="gradiated/linden-1",
-    split=splits.BySession(eval_fraction=0.15),
+    split=splits.BySession(eval_fraction=0.15),  # backbone defaults to gradiated/linden-1
 )
+print(client.runs.plan(dataset=dataset, recipe=recipe))  # $0: resolved defaults + estimate
 
-run = client.runs.create(dataset=dataset, name="ticket-triage", recipe=recipe).wait()
+run = client.runs.create(
+    dataset=dataset,
+    name="ticket-triage",
+    recipe=recipe,
+    max_cost_usd=10,
+).wait()
 
 print(run.artifact.id)
 print(run.eval_report)
@@ -103,12 +105,11 @@ const grad = new Grad();
 const dataset = await grad.datasets.get("ticket-triage");
 
 const recipe = recipes.decisionModel({
-  model: "gradiated/linden-1",
   split: splits.bySession({ evalFraction: 0.15 }),
 });
 
 const run = await grad.runs
-  .create({ dataset, name: "ticket-triage", recipe })
+  .create({ dataset, name: "ticket-triage", recipe, maxCostUsd: 10 })
   .wait();
 
 console.log(run.artifact.id, run.evalReport);
@@ -118,13 +119,15 @@ console.log(run.artifact.id, run.evalReport);
   <DocsCodeTab label="Go">
 
 ```go
+client := grad.NewClient()
+ctx := context.Background()
 dataset, _ := client.Datasets.Get(ctx, "ticket-triage")
 
 run, _ := client.Runs.Create(ctx, grad.RunParams{
-	Dataset: dataset,
-	Name:    "ticket-triage",
+	Dataset:    dataset,
+	Name:       "ticket-triage",
+	MaxCostUSD: 10,
 	Recipe: grad.DecisionModelRecipe{
-		Model: "gradiated/linden-1",
 		Split: grad.BySessionSplit{EvalFraction: 0.15},
 	},
 }).Wait(ctx)
@@ -135,7 +138,8 @@ fmt.Println(run.Artifact.ID, run.EvalReport)
   <DocsCodeTab label="CLI">
 
 ```bash
-grad train --dataset ticket-triage --name ticket-triage --recipe decision-model --wait
+grad train --dataset ticket-triage --name ticket-triage --recipe decision-model --dry-run
+grad train --dataset ticket-triage --name ticket-triage --recipe decision-model --max-cost-usd 10 --wait
 grad deploy ticket-triage@latest
 ```
 
@@ -150,7 +154,8 @@ grad deploy ticket-triage@latest
 
 ### Key parameters
 
-- **`model`:** defaults to `"gradiated/linden-1"` (best for specializing `linden-1` on your own questions). Pass `"qwen/qwen3-0.6b"` if you want to train a fresh lightweight model from scratch.
+- **`model`:** leave it out to specialize the recipe-managed `gradiated/linden-1` backbone. Pass `"qwen/qwen3-0.6b"` if you want to train a fresh lightweight model instead.
+- **Training defaults:** adapter, `lr="auto"`, batch size and epochs are picked for the backbone and printed by `client.runs.plan(...)` (or `grad train --dry-run`). Checkpoints are saved every 10% of steps, and `run.artifact` is the checkpoint with the lowest held-out loss.
 - **`loss`:** picked automatically from each question type (`losses.CrossEntropy()` for `choice`, `losses.BCEWithLogits()` for `noul`, `losses.OrdinalBCE()` for `score`); pass `loss=` only if you want to override it.
 - **`split`:** `splits.BySession(eval_fraction=0.15)` keeps related requests from the same `session_id` together so eval numbers stay honest.
 

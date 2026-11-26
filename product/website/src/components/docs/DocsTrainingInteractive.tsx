@@ -110,7 +110,7 @@ const PRIMITIVES: PrimitiveNode[] = [
     href: "/docs/training/rubrics/",
     summary: "Grade answers with Python checks or a Judge, or run multi-turn agents against your own containers and tools.",
     ops: ["Rubric()", "Judge()", "setup()", "step()", "evaluate()"],
-    detail: "Environments run on your own machines (a laptop or Kubernetes). evaluate() checks live containers before teardown() cleans up.",
+    detail: "Environments run in Gradiated sandboxes, or on your own machines with grad env serve. evaluate() checks live containers before teardown() cleans up.",
   },
   {
     id: "trainer",

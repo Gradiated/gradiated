@@ -34,7 +34,8 @@ If a prompted judge is still missing subtle preferences you can demonstrate with
 
 ## What data you need
 
-- **Minimum volume:** 500 to 2,000 `(chosen, rejected)` pairs in a [`Dataset`](/docs/training/trajectories/) (same format as [Preference tuning (DPO)](/docs/training/recipes/dpo/), sharing a `group_id` with `role: "chosen"` and `role: "rejected"`).
+- **Minimum volume:** 500 to 2,000 `(chosen, rejected)` pairs in a [`Dataset`](/docs/training/trajectories/), in the same format as [Preference tuning (DPO)](/docs/training/recipes/dpo/): one `{"prompt", "chosen", "rejected"}` record per pair, or two trajectories sharing a `group_id`.
+- **To try it first on public data:** `client.datasets.from_hf("trl-lib/ultrafeedback_binarized", split="train", chosen="chosen", rejected="rejected", limit=2000)` gives you a ready-made preference dataset.
 
 ## Train with `RewardModelRecipe`
 
@@ -42,20 +43,25 @@ If a prompted judge is still missing subtle preferences you can demonstrate with
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, adapters, optim, splits
+from grad import Grad, splits
 from grad.recipes import RewardModelRecipe
 
 client = Grad()
-pairs_ds = client.datasets.get("sql-preferences")
+pairs_ds = client.datasets.get("sql-preferences")  # pushed or imported earlier
 
 recipe = RewardModelRecipe(
     model="qwen/qwen3-8b",
-    adapter=adapters.LoRA(rank=8),
-    optimizer=optim.AdamW(lr=1e-4),
     split=splits.BySession(eval_fraction=0.10),
+    # Defaults: LoRA(rank=32), lr="auto" (about 1e-4 here), batch_size=128, epochs=1
 )
+print(client.runs.plan(dataset=pairs_ds, recipe=recipe))
 
-run = client.runs.create(dataset=pairs_ds, name="sql-verifier", recipe=recipe).wait()
+run = client.runs.create(
+    dataset=pairs_ds,
+    name="sql-verifier",
+    recipe=recipe,
+    max_cost_usd=25,
+).wait()
 
 print(run.artifact.id, run.eval_report)
 ```
@@ -64,7 +70,7 @@ print(run.artifact.id, run.eval_report)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, adapters, optim, recipes, splits } from "@gradiated/grad";
+import { Grad, recipes, splits } from "@gradiated/grad";
 
 const grad = new Grad();
 const pairsDs = await grad.datasets.get("sql-preferences");
@@ -75,10 +81,9 @@ const run = await grad.runs
     name: "sql-verifier",
     recipe: recipes.rewardModel({
       model: "qwen/qwen3-8b",
-      adapter: adapters.lora({ rank: 8 }),
-      optimizer: optim.adamW({ lr: 1e-4 }),
       split: splits.bySession({ evalFraction: 0.1 }),
     }),
+    maxCostUsd: 25,
   })
   .wait();
 
@@ -89,7 +94,8 @@ console.log(run.artifact.id, run.evalReport);
   <DocsCodeTab label="CLI">
 
 ```bash
-grad train --dataset sql-preferences --name sql-verifier --recipe reward-model --wait
+grad train --dataset sql-preferences --name sql-verifier --recipe reward-model --dry-run
+grad train --dataset sql-preferences --name sql-verifier --recipe reward-model --max-cost-usd 25 --wait
 ```
 
   </DocsCodeTab>
@@ -98,8 +104,9 @@ grad train --dataset sql-preferences --name sql-verifier --recipe reward-model -
 ### Key parameters
 
 - **`model`:** start with a fast 4B to 8B model (`"qwen/qwen3-8b"`). Reward models only score an output in a single forward pass, so an 8B model runs in milliseconds.
-- **`adapter`:** `adapters.LoRA(rank=8)` (rank `4` or `8` works well for most preference datasets).
-- **`optim.AdamW(lr=...)`:** start around `1e-4` for LoRA reward models.
+- **`adapter`:** defaults to `adapters.LoRA(rank=32)` with `alpha=32` fixed, so changing the rank doesn't change the right learning rate. Rank `8`–`16` is enough for a few thousand pairs.
+- **`lr="auto"`** *(default)*: typically resolves to about `1e-4` for `qwen/qwen3-8b` at batch 128. The dry run prints the exact value; pass a float to override it.
+- **Checkpoints:** saved every 10% of steps; `run.artifact` is the checkpoint with the best held-out pair accuracy.
 - **`split`:** `splits.BySession(eval_fraction=0.10)` keeps paired examples and multi-turn conversations together so eval accuracy isn't inflated.
 
 ## Use your reward model
@@ -120,7 +127,12 @@ scored = client.datasets.get("sql-prod").score(sql_judge).wait()
 You can also [deploy](/docs/training/deploying/) your reward model (or download it to your own server) and use it to check answers from a fast 8B model before returning them, falling back to a larger model only when the score is low:
 
 ```python
+import os
+from openai import OpenAI
 from grad import Record
+
+oai = OpenAI(base_url="https://api.gradiated.com/v1", api_key=os.environ["GRADIATED_API_KEY"])
+messages = [{"role": "user", "content": "How many orders shipped to Canada last month?"}]
 
 draft = oai.chat.completions.create(model="your-org/sql-agent", messages=messages).choices[0].message.content
 score = run.artifact.infer(Record(messages=[*messages, {"role": "assistant", "content": draft}])).score

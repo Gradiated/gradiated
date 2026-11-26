@@ -2,34 +2,38 @@
 
 <DocsLead>Store your production logs, labeled examples, and agent runs in a `Dataset` so any recipe can train on them.</DocsLead>
 
-A **trajectory** is a single recorded run: the input messages, what the model answered, any tool calls it made, and how well it did. You can fill a `Dataset` in four ways:
+A **trajectory** is a single recorded run: the input messages, what the model answered, any tool calls it made, and how well it did. You can fill a `Dataset` in five ways:
 
-1. **Automatic capture** from Gradiated inference or any [deployed model](/docs/training/deploying/).
-2. **Direct SDK push** from your own database or scripts.
-3. **File import** from Parquet or JSONL files.
-4. **Scheduled sync** from your observability provider.
+1. **Plain chat records** pushed from code or a JSONL file, in the same `{"messages": [...]}` format as OpenAI fine-tuning files.
+2. **Hugging Face datasets**, imported by name.
+3. **Automatic capture** from Gradiated inference or any [deployed model](/docs/training/deploying/).
+4. **File import** from Parquet or JSONL trace exports.
+5. **Scheduled sync** from your observability provider.
 
-## Push trajectories from code
+## Start from chat messages
 
-Call `client.datasets.create(...)` or `client.datasets.get(...)` to open a dataset, then push `Trajectory` records directly with `dataset.push(...)`:
+If you have conversations, you already have training data. Push plain chat records, one per example. The final assistant turn is the training target, and everything before it is the prompt. You don't need IDs, wrappers, or a schema:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Trajectory, TrajectoryInput
+from grad import Grad
 
 client = Grad()
-dataset = client.datasets.create("diff-merge-gold")
 
-dataset.push([
-    Trajectory(
-        session_id="pr_481",
-        input=TrajectoryInput(messages=[{"role": "user", "content": prompt}]),
-        expected_output={"content": gold_merged_code},
-        scores={"tests_passed": 1.0},
-    ),
+dataset = client.datasets.push("support-sft", [
+    {"messages": [
+        {"role": "user", "content": "How do I reset my password?"},
+        {"role": "assistant", "content": "Go to Settings → Security → Reset password, then check your email for the link."},
+    ]},
+    {"messages": [
+        {"role": "system", "content": "You are a concise billing assistant."},
+        {"role": "user", "content": "Can I get an invoice for last month?"},
+        {"role": "assistant", "content": "Yes. Open Billing → Invoices and click Download next to October."},
+    ]},
 ])
+print(dataset.count())
 ```
 
   </DocsCodeTab>
@@ -39,29 +43,133 @@ dataset.push([
 import { Grad } from "@gradiated/grad";
 
 const grad = new Grad();
-const dataset = await grad.datasets.create("diff-merge-gold");
 
-await dataset.push([
+const dataset = await grad.datasets.push("support-sft", [
   {
-    sessionId: "pr_481",
-    input: { messages: [{ role: "user", content: prompt }] },
-    expectedOutput: { content: goldMergedCode },
-    scores: { tests_passed: 1.0 },
+    messages: [
+      { role: "user", content: "How do I reset my password?" },
+      { role: "assistant", content: "Go to Settings → Security → Reset password, then check your email for the link." },
+    ],
   },
 ]);
+console.log(await dataset.count());
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+# Any OpenAI chat fine-tuning JSONL file works as-is
+grad datasets push support-sft ./train.jsonl
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+`client.datasets.push(name, ...)` creates the dataset if it doesn't exist and appends otherwise. It accepts a list of dicts, a list of `Trajectory` objects, or a path to a `.jsonl` file. The format is detected automatically, so OpenAI chat fine-tuning files and `grad.trajectory/1` exports both work. Each record can also carry these optional keys:
+
+- **`"tools"`:** the tool definitions available in that conversation, in OpenAI function format. Assistant `tool_calls` and `tool` messages train as you'd expect.
+- **`"session_id"`:** groups records from the same conversation so they always land on the same side of the train/eval split. One is generated per record if you leave it out.
+- **`"scores"`:** any outcome you already know, such as `{"tests_passed": 1.0}`.
+
+By default only the final assistant turn is trained. To train on every assistant turn in a multi-turn agent trace, or to control thinking blocks for reasoning models, set `train_on=` and `thinking=` on the recipe. See [Chat templates](/docs/training/tuning-troubleshooting/#chat-templates-and-loss-masks) to preview exactly which tokens will be trained before you pay for a run.
+
+## Import a Hugging Face dataset
+
+Import any public or gated dataset from the Hugging Face Hub by name. If the dataset already has a `messages` column, nothing else is needed:
+
+```python
+from grad import Grad
+
+client = Grad()
+
+chats = client.datasets.from_hf("HuggingFaceH4/ultrachat_200k", split="train_sft")
+print(chats.count())
+```
+
+For other layouts, map columns onto the fields a recipe needs:
+
+| Training data | Column mapping |
+| --- | --- |
+| **Chat (SFT)** | `messages="messages"` (the default) |
+| **Prompt and completion (SFT)** | `prompt="question", completion="answer"` |
+| **Preferences (DPO, reward models)** | `prompt="prompt", chosen="chosen", rejected="rejected"` |
+| **Tasks with a known answer (RL, evals)** | `prompt="question", answer="answer"` |
+
+```python
+math = client.datasets.from_hf(
+    "openai/gsm8k",
+    subset="main",
+    split="train",
+    prompt="question",
+    answer="answer",
+)
+
+prefs = client.datasets.from_hf(
+    "trl-lib/ultrafeedback_binarized",
+    split="train",
+    chosen="chosen",
+    rejected="rejected",
+)
+```
+
+The import runs on Gradiated's servers, so nothing is downloaded to your machine. For gated datasets, store your Hugging Face token once with `grad secrets set hf-token` and pass `secret=client.secrets.get("hf-token")`.
+
+## Push trajectories with metadata
+
+When you need more than messages, such as a target that isn't the last turn, per-record scores, or cost data for a [router](/docs/training/recipes/router/), push `Trajectory` objects. `Trajectory.from_messages(...)` builds one from plain messages, splitting off the last assistant turn as `expected_output`:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, Trajectory
+
+client = Grad()
+
+traj = Trajectory.from_messages(
+    [
+        {"role": "user", "content": "Merge these two diffs into one patch."},
+        {"role": "assistant", "content": "--- a/app.py\n+++ b/app.py\n@@ -1 +1 @@\n-print('hi')\n+print('hello')"},
+    ],
+    session_id="pr_481",
+)
+traj.scores["tests_passed"] = 1.0
+
+client.datasets.push("diff-merge-gold", [traj])
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, Trajectory } from "@gradiated/grad";
+
+const grad = new Grad();
+
+const traj = Trajectory.fromMessages(
+  [
+    { role: "user", content: "Merge these two diffs into one patch." },
+    { role: "assistant", content: "--- a/app.py\n+++ b/app.py\n@@ -1 +1 @@\n-print('hi')\n+print('hello')" },
+  ],
+  { sessionId: "pr_481" },
+);
+traj.scores.tests_passed = 1.0;
+
+await grad.datasets.push("diff-merge-gold", [traj]);
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="Go">
 
 ```go
-dataset, _ := client.Datasets.Create(ctx, "diff-merge-gold")
-_ = dataset.Push(ctx, []grad.Trajectory{{
-	SessionID:      "pr_481",
-	Input:          grad.TrajectoryInput{Messages: []grad.Message{{Role: "user", Content: prompt}}},
-	ExpectedOutput: map[string]any{"content": goldMergedCode},
-	Scores:         map[string]float64{"tests_passed": 1.0},
-}})
+traj := grad.TrajectoryFromMessages([]grad.Message{
+	{Role: "user", Content: "Merge these two diffs into one patch."},
+	{Role: "assistant", Content: "--- a/app.py\n+++ b/app.py\n@@ -1 +1 @@\n-print('hi')\n+print('hello')"},
+}, grad.WithSessionID("pr_481"))
+traj.Scores["tests_passed"] = 1.0
+
+_, _ = client.Datasets.Push(ctx, "diff-merge-gold", []grad.Trajectory{traj})
 ```
 
   </DocsCodeTab>
@@ -75,8 +183,10 @@ curl https://api.gradiated.com/v1/trajectories \
     "dataset": "diff-merge-gold",
     "trajectories": [{
       "session_id": "pr_481",
-      "input": {"messages": [{"role": "user", "content": "..."}]},
-      "expected_output": {"content": "..."},
+      "messages": [
+        {"role": "user", "content": "Merge these two diffs into one patch."},
+        {"role": "assistant", "content": "..."}
+      ],
       "scores": {"tests_passed": 1.0}
     }]
   }'
@@ -87,7 +197,7 @@ curl https://api.gradiated.com/v1/trajectories \
 
 ## Import from files
 
-Upload Parquet or JSONL files into a `Dataset`. Gradiated detects common trace formats (`grad.trajectory/1`, OpenTelemetry, Langfuse, Braintrust, etc.) and maps messages, tool calls, token counts, costs, and scores automatically. Pass `--format` only if you want to pick a parser yourself.
+Upload Parquet or JSONL exports into a `Dataset`. Gradiated detects common formats (OpenAI chat JSONL, `grad.trajectory/1`, OpenTelemetry, Langfuse, Braintrust, etc.) and maps messages, tool calls, token counts, costs, and scores automatically. Pass `--format` only if you want to pick a parser yourself.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -153,7 +263,17 @@ The import result lists how many trajectories were parsed, how many were dropped
 
 ## Score and filter datasets
 
-Filter a `Dataset` with any plain function `(Trajectory) -> bool`. `dataset.filter(...)` returns a new filtered view of the dataset without copying data, keeping data selection separate from your training settings.
+Filter a `Dataset` by field to get a new view of it. Field filters run on the server, so nothing is downloaded and no trajectories are copied:
+
+```python
+from grad import Grad
+
+client = Grad()
+dataset = client.datasets.get("support-prod")
+
+recent_good = dataset.filter(scores={"resolved": ">=0.8"}, created_after="2026-11-01")
+print(recent_good.count())
+```
 
 If you want to filter by something a human or LLM needs to judge (like "did the assistant answer accurately?"), score the dataset once with a [`Judge`](/docs/training/rubrics/). A `Judge` can use a catalog model with a prompt or a fine-tuned [reward model](/docs/training/recipes/reward-models/) [`Artifact`](/docs/training/artifacts/). `dataset.score(...)` runs in batches on the server, skips rows that already have a score, and saves results to `trajectory.scores` so you can tweak thresholds or reuse them across runs for free:
 
@@ -171,9 +291,15 @@ judge = Judge(
 )
 scored = dataset.score(judge).wait()
 
-# Filter cheaply with a plain predicate (tweak thresholds or reuse across runs for $0)
-passing = scored.filter(lambda t: t.scores["resolved"] >= 0.8)
+# Filter on the stored score (server-side, $0 to re-run with a new threshold)
+passing = scored.filter(scores={"resolved": ">=0.8"})
 print(passing.count())
+```
+
+For logic a field filter can't express, pass any Python function `(Trajectory) -> bool`. The SDK streams the dataset to your machine, runs the function there once, and saves the selected IDs as a server-side view. Training on the view still copies nothing, and it doesn't need your machine afterwards:
+
+```python
+short_chats = scored.filter(lambda t: len(t.input.messages) <= 6)
 ```
 
 ## Sync from observability providers
@@ -259,6 +385,8 @@ grad sources sync src_01J9X
 
 | Provider | `--format` / `provider` | File imports | Incremental sync |
 | --- | --- | --- | --- |
+| OpenAI chat fine-tuning | `openai_chat` | JSONL | `dataset.push()` |
+| Hugging Face Hub | `hf` | Any Hub dataset (`client.datasets.from_hf`) | Re-import by revision |
 | Gradiated Native | `gradiated` | JSONL, `.jsonl.zst` | Automatic / S3 cursor |
 | Native schema | `grad_trajectories` | JSONL, Parquet | `dataset.push()` |
 | OpenTelemetry / OpenInference | `otel` | OTLP JSONL, Parquet | OTLP collector |
@@ -276,14 +404,18 @@ grad sources sync src_01J9X
 
 ## What to include in your data
 
-Every trajectory needs an `input` (usually `input.messages`). Beyond that, include only the fields your recipe uses:
+Every record needs `messages` (or `input.messages`). Beyond that, include only the fields your recipe uses:
 
 | If you are training... | Also include |
 | --- | --- |
-| **Model router (`RouterRecipe`)** | `input.messages`, plus optional `metadata.model`, `scores`, and `metrics.cost_usd` (or pass a `Judge` and `models=` to score and compare automatically) |
-| **Fine-tune (`SFTRecipe`) or decision model (`DecisionModelRecipe`)** | `expected_output` (the gold response or target label) |
-| **Preference alignment (`DPORecipe`)** | Paired records sharing a `group_id` with `role="chosen"` and `role="rejected"` |
+| **Fine-tune (`SFTRecipe`)** | Nothing else: the final assistant message is the target. Use `expected_output` only when the target isn't in `messages`. |
+| **Decision model (`DecisionModelRecipe`)** | `expected_output` (the target label) |
+| **Model router (`RouterRecipe`)** | Optional `metadata.model`, `scores`, and `metrics.cost_usd` (or pass a `Judge` and `models=` to score and compare automatically) |
+| **Preference alignment (`DPORecipe`)** | `chosen` and `rejected` completions for the same prompt, or paired records sharing a `group_id` with `role="chosen"` and `role="rejected"` |
+| **RL (`GRPORecipe`)** | Just the prompt, plus `answer` if your rubric checks against a known answer |
 | **Multi-turn conversations** | `session_id` so turns from the same conversation stay together across train and eval splits |
+
+Once a dataset is rendered for a base model, each trajectory exposes `traj.token_ids` and `traj.loss_mask`, which your [rubrics](/docs/training/rubrics/) and [custom loops](/docs/training/custom-loops/) can read.
 
 Need images, audio, tools, or the full JSON field list? See the [Primitives reference](/docs/reference/primitives/).
 

@@ -6,6 +6,7 @@ Every training run produces an automatic held-out `eval_report`, and you can als
 
 - **Measure your baseline before training:** see how `"qwen/qwen3-8b"` compares against `"{{SONNET_MODEL}}"` on your exact tasks before spending tokens on training.
 - **Compare checkpoints apples-to-apples:** score a base model, an SFT artifact, an RL artifact, and a frontier reference on the same held-out dataset or environment.
+- **Catch regressions:** run standard benchmarks next to your own tasks so a fine-tune that wins on your data doesn't quietly lose general ability.
 - **Mine hard examples:** export failing predictions directly into a new [`Dataset`](/docs/training/trajectories/) for your next training run.
 
 ## Evaluate a dataset with a `Rubric`
@@ -36,6 +37,9 @@ ev = client.evals.create(
     models=["qwen/qwen3-8b", "sql-agent@latest", "{{SONNET_MODEL}}"],
     dataset=eval_ds,
     rubric=rubric,
+    samples=4,          # attempts per task, for pass@k and tighter error bars
+    temperature=0.7,
+    baseline="qwen/qwen3-8b",
 ).wait()
 
 print(ev.summary_table())
@@ -66,6 +70,9 @@ const ev = await grad.evals
     models: ["qwen/qwen3-8b", "sql-agent@latest", "{{SONNET_MODEL}}"],
     dataset: evalDs,
     rubric,
+    samples: 4,
+    temperature: 0.7,
+    baseline: "qwen/qwen3-8b",
   })
   .wait();
 
@@ -81,6 +88,8 @@ grad eval \
   --models qwen/qwen3-8b,sql-agent@latest,{{SONNET_MODEL}} \
   --dataset sql-eval-holdout \
   --rubric ./rubric.py \
+  --samples 4 --temperature 0.7 \
+  --baseline qwen/qwen3-8b \
   --wait
 ```
 
@@ -89,25 +98,96 @@ grad eval \
 
 <DocsTerminal
   title="Side-by-side evaluation summary"
-  command="grad eval --models qwen/qwen3-8b,sql-agent@latest,{{SONNET_MODEL}} --dataset sql-eval-holdout --rubric ./rubric.py --wait"
+  command="grad eval --models qwen/qwen3-8b,sql-agent@latest,{{SONNET_MODEL}} --dataset sql-eval-holdout --rubric ./rubric.py --samples 4 --baseline qwen/qwen3-8b --wait"
 >
 
 ```text
-✓ Evaluated 3 models on 400 tasks (sql-eval-holdout)
+✓ Evaluated 3 models on 400 tasks × 4 samples (sql-eval-holdout, temperature 0.7)
 
-  Model                        valid_sql   correct_query   overall   p50 latency
-  qwen/qwen3-8b                    78.5%           61.2%     66.4%        290 ms
-  sql-agent@latest                 99.0%           91.8%     94.0%        305 ms
-  {{SONNET_MODEL}}   99.5%           93.0%     95.0%      1,420 ms
+  Model              overall (95% CI)     pass@1   pass@4   vs baseline        tokens/task   cost/1k tasks   p50 latency
+  qwen/qwen3-8b      66.4% (63.1–69.6)    61.2%    78.0%    —                        412          $0.21          290 ms
+  sql-agent@latest   94.0% (92.4–95.5)    91.8%    97.5%    +27.6 (+24.0–31.1)       388          $0.20          305 ms
+  {{SONNET_MODEL}}   95.0% (93.6–96.3)    93.0%    98.0%    +28.6 (+25.1–32.0)       530          $6.40        1,420 ms
 
+  Per-check breakdown: ev.summary_table(by="check")
 ✓ Saved eval report eval_01J9Z4K
 ```
 
 </DocsTerminal>
 
+### Reading the report
+
+- **`overall (95% CI)`:** the mean rubric score with a 95% bootstrap confidence interval over tasks. If two models' intervals overlap heavily, you don't have a winner yet: add tasks or samples.
+- **`pass@k`:** the share of tasks where at least one of `k` attempts scored at or above `pass_threshold` (default `1.0` for binary checks, `0.5` otherwise). Reported for every `k` up to `samples`. A big gap between pass@1 and pass@4 means the model can solve the task but isn't reliable yet, which is exactly what RL improves.
+- **`vs baseline`:** the paired difference from `baseline=` on the same tasks, with its own interval. Paired comparisons need far fewer tasks than comparing two separate means.
+- **`tokens/task` and `cost/1k tasks`:** output tokens and serving cost per task at current rates, so you can weigh quality against spend.
+
+Use `samples=1` and `temperature=0` for a quick deterministic check. For decisions you'll act on, use at least 3–4 samples per task: single-sample scores on a few hundred tasks often move several points between runs.
+
+## Check for regressions with standard benchmarks
+
+Fine-tuning on a narrow task can cost general ability, such as instruction following or math. Run standard benchmarks alongside your own tasks to catch it. Gradiated hosts these with pinned prompts, answer checks, and scoring, so results are comparable across runs:
+
+| Benchmark | Measures |
+| --- | --- |
+| `benchmarks.IFEval()` | Following explicit formatting and content instructions |
+| `benchmarks.GSM8K()` | Grade-school math word problems |
+| `benchmarks.MMLUPro()` | Broad knowledge and reasoning across 14 subjects |
+| `benchmarks.GPQADiamond()` | Graduate-level science questions |
+| `benchmarks.HumanEval()` | Writing Python functions that pass unit tests |
+| `benchmarks.LiveCodeBench()` | Recent competitive programming problems |
+
+```python
+from grad import Grad, benchmarks
+
+client = Grad()
+
+ev = client.evals.create(
+    name="sql-agent-regressions",
+    models=["qwen/qwen3-8b", "sql-agent@latest"],
+    benchmarks=[benchmarks.IFEval(limit=200), benchmarks.GSM8K(limit=200)],
+    baseline="qwen/qwen3-8b",
+).wait()
+
+print(ev.summary_table())
+```
+
+`limit=` takes a fixed random subset (the same one every time), which is enough to spot a regression of a few points without paying for the full benchmark.
+
+Already have evals written for [Inspect AI](https://inspect.aisi.org.uk/)? Run them unchanged against any model or artifact:
+
+```python
+ev = client.evals.from_inspect(
+    "inspect_evals/gpqa_diamond",
+    models=["qwen/qwen3-8b", "sql-agent@latest"],
+).wait()
+```
+
+## Evaluate during training
+
+Every recipe evaluates on its held-out split as it trains (`eval_every="auto"`, every 10% of steps), and `run.artifact` is the checkpoint with the best eval score unless you pass `select="last"`. Add `evals=` to also run benchmarks at each eval point, so you see a regression while the run is still going instead of after it finishes:
+
+```python
+from grad import Grad, SFTRecipe, benchmarks
+
+client = Grad()
+
+run = client.runs.create(
+    dataset=client.datasets.get("support-sft"),
+    name="support-sft",
+    recipe=SFTRecipe(
+        model="qwen/qwen3-8b",
+        evals=[benchmarks.IFEval(limit=200)],
+        eval_every="auto",
+    ),
+).wait()
+
+print(run.artifact.eval_report)
+```
+
 ## Evaluate multi-turn agents in an `Environment`
 
-To benchmark multi-turn tool use, Docker Compose apps, or Harbor coding tasks, pass your [`Environment`](/docs/training/environments/) and held-out `Task` list directly. Your containers still run locally or in your own cluster while Gradiated records the scores and trajectories:
+To benchmark multi-turn tool use, Docker Compose apps, or Harbor coding tasks, pass your [`Environment`](/docs/training/environments/) and held-out `Task` list directly. Built-in environments like `Harbor` run in Gradiated sandboxes; to keep containers on your own infrastructure, serve the environment yourself with `grad env serve` (see [Environments](/docs/training/environments/)). Either way, Gradiated records the scores and trajectories:
 
 ```python
 from grad import Grad, environments
@@ -122,6 +202,7 @@ ev = client.evals.create(
     env=env,
     tasks=eval_tasks,
     max_turns=12,
+    samples=3,
     max_concurrency=8,
 ).wait()
 
@@ -133,8 +214,16 @@ print(ev.summary_table())
 Every completed evaluation stores per-task trajectories and scores. Filter to the examples where a model fell short and save them straight into a [`Dataset`](/docs/training/trajectories/) for targeted SFT, DPO, or RL:
 
 ```python
+# Evaluate on a staging sample (not the holdout), reusing `client` and `rubric` from the first example
+staging_ev = client.evals.create(
+    name="sql-staging-mining",
+    models=["sql-agent@latest"],
+    dataset=client.datasets.get("sql-staging-sample"),
+    rubric=rubric,
+).wait()
+
 # Save tasks where the current artifact scored below 0.8
-hard_cases = ev.failures(model="sql-agent@latest", threshold=0.8).to_dataset("sql-hard-cases")
+hard_cases = staging_ev.failures(model="sql-agent@latest", threshold=0.8).to_dataset("sql-hard-cases")
 print(f"Saved {hard_cases.count()} failing examples for the next training round")
 ```
 

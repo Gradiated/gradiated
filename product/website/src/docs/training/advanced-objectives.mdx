@@ -2,43 +2,62 @@
 
 <DocsLead>Custom PyTorch losses and specialized training patterns built on `Trainer` and `losses.CustomLoss`.</DocsLead>
 
-Start with the [Recipe guides](/docs/training/recipes/) whenever a built-in recipe fits your task. Use the patterns on this page (together with [Custom loops](/docs/training/custom-loops/) and the 50 executable [Paper reproductions](/papers/)) when you need custom PyTorch loss math, async off-policy RL, or specialized model heads.
+Start with the [Recipe guides](/docs/training/recipes/) whenever a built-in recipe fits your task. Use the patterns on this page (together with [Custom loops](/docs/training/custom-loops/) and the 50 executable [Paper reproductions](/papers/)) when you need custom PyTorch loss math, async off-policy RL, specialized model heads, uncommon adapters, or closed-form solvers.
 
 ## RL algorithm cookbook
 
-All policy-gradient variants share the exact same `Environment.rollout_groups()` and `trainer.forward_backward(batch, loss=...)` loop; only the `AdvantageEstimator` or `Loss` changes:
+`GRPORecipe` picks the loss for you with `loss="auto"` (the default): `losses.GRPO(clip_low=0.2, clip_high=0.28)` when rollouts are on-policy, and `losses.CISPO(clip_low=0.2, clip_high=0.28)` when you allow stale rollouts with `max_staleness > 0`. Pass `loss=` to a recipe, or to `trainer.forward_backward(...)` in a [custom loop](/docs/training/custom-loops/#example-1-multi-turn-grpo-loop), to use any variant below. All of them share the same `rollout_groups()` and `forward_backward(batch, loss=...)` loop; only the `AdvantageEstimator` or the loss changes:
 
 | Method | When to use it | How to run it |
 | --- | --- | --- |
-| **GRPO** | Default synchronous RL against verifiable rubrics. | `grad.with_advantages(groups, advantage=advantages.GroupStd())` + `losses.GRPO(clip_low=0.2, clip_high=0.2)` |
+| **GRPO** | Default synchronous RL against verifiable rubrics. | `grad.with_advantages(groups, advantage=advantages.GroupStd())` + `losses.GRPO(clip_low=0.2, clip_high=0.28)` |
 | **Dr. GRPO** | Remove std-division and length bias in reasoning RL. | `grad.with_advantages(groups, advantage=advantages.GroupMean())` + constant-denominator `CustomLoss` |
-| **DAPO** | Long reasoning or multi-turn coding where standard clipping collapses entropy. | `losses.GRPO(clip_low=0.2, clip_high=0.28)` + `skip_zero_var=True` + length penalty in `Rubric` |
-| **CISPO** | Async rollout pools where container workers finish 1–4 weight versions behind the trainer. | `losses.CISPO(clip_low=0.2, clip_high=0.28)` (stable under off-policy lag) |
+| **DAPO** | Long reasoning or multi-turn coding where entropy collapses. | `losses.GRPO(clip_low=0.2, clip_high=0.28)` + `skip_zero_var=True` + length penalty in `Rubric` (the GRPO default already uses DAPO's higher upper clip) |
+| **CISPO** | Async rollout pools where container workers finish 1–4 weight versions behind the trainer. | `losses.CISPO(clip_low=0.2, clip_high=0.28)` (stable under off-policy lag); chosen automatically when `max_staleness > 0` |
 | **PPO + Critic** | Dense per-token value baselines with GAE when group sampling is too expensive. | Attach `heads={"v": heads.Linear(dim=1, token_level=True)}` + `PPOGAELoss(CustomLoss)` |
-| **RLOO** | Small group sizes (`group_size=4`) where std-normalization is noisy. | `grad.with_advantages(groups, advantage=advantages.RLOO())` + `losses.ImportanceSampling(kl_beta=0.02)` |
+| **RLOO** | Small group sizes (`group_size=4`) where std-normalization is noisy. | `grad.with_advantages(groups, advantage=advantages.RLOO())` + `losses.ImportanceSampling(kl_coef=0.02)` |
 | **REINFORCE++** | Global batch stability with per-token KL shaping against a frozen reference. | Score `ref.score_logprobs(trajs).aligned_logprobs`, whiten active tokens, attach via `with_targets()` |
 | **GSPO** | MoE models or long multi-turn trajectories where token-level importance ratios diverge. | Sequence-level geometric mean ratio via `GSPOLoss(CustomLoss)` |
+
+The async tab is a complete loop. The other tabs define a loss class; use it by passing `loss=` in the GRPO loop from [Custom loops](/docs/training/custom-loops/#example-1-multi-turn-grpo-loop), or `GRPORecipe(loss=...)`.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Async rollout pool (CISPO)">
 
-```python
-from concurrent.futures import ThreadPoolExecutor
-import grad
-from grad import advantages, losses, optim
+The managed version is one argument: `GRPORecipe(model="qwen/qwen3-8b", env=env, max_staleness=2)` overlaps rollouts with training and switches to CISPO on its own. The hand-written version:
 
-# Overlap slow container rollouts with training steps; refresh snapshot every step.
-with ThreadPoolExecutor(max_workers=1) as pool:
-    next_rollouts = pool.submit(env.rollout_groups, trainer.snapshot(), batches[0], group_size=8, max_turns=6)
+```python
+import itertools
+from concurrent.futures import ThreadPoolExecutor
+
+import grad
+from grad import Grad, Rubric, Scorer, adapters, advantages, environments, losses, optim, validators
+
+client = Grad()
+tasks = client.datasets.from_hf(
+    "openai/gsm8k", subset="main", split="train", prompt="question", answer="answer"
+)
+# With no tools, environments.Tools is a single-turn prompt -> answer environment.
+env = environments.Tools(
+    [], tasks=tasks, rubric=Rubric([Scorer("correct", fn=validators.NumericMatch(field="answer"))])
+)
+batches = list(itertools.islice(tasks.batches(32), 100))
+
+with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32)) as trainer, \
+        ThreadPoolExecutor(max_workers=1) as pool:
+    # Overlap rollouts for step N+1 with training on step N; rollouts lag the weights by one step.
+    rollout = lambda b: env.rollout_groups(artifact=trainer.snapshot(), tasks=b, group_size=8)
+    next_rollouts = pool.submit(rollout, batches[0])
 
     for step in range(len(batches)):
         groups = next_rollouts.result()
         if step + 1 < len(batches):
-            next_rollouts = pool.submit(env.rollout_groups, trainer.snapshot(), batches[step + 1], group_size=8, max_turns=6)
+            next_rollouts = pool.submit(rollout, batches[step + 1])
 
-        batch = grad.with_advantages(groups, advantage=advantages.GroupStd())
-        trainer.forward_backward(batch, loss=losses.CISPO(clip_low=0.2, clip_high=0.28)).result()
-        trainer.optim_step(optim.AdamW(lr=2e-5, grad_clip=1.0)).result()
+        batch = grad.with_advantages(groups, advantage=advantages.GroupStd(), skip_zero_var=True)
+        fb = trainer.forward_backward(batch, loss=losses.CISPO(clip_low=0.2, clip_high=0.28))
+        trainer.optim_step(optim.AdamW(lr=5e-5, grad_clip=1.0))
+        print(f"step={step} kl_sample_train={fb.result().metrics['kl_sample_train']:.4f}")
 ```
 
   </DocsCodeTab>
@@ -47,9 +66,9 @@ with ThreadPoolExecutor(max_workers=1) as pool:
 ```python
 import torch
 import grad
-from grad import losses, optim
+from grad import losses
 
-# Trainer created with heads={"v": heads.Linear(dim=1, token_level=True)}
+# Create the trainer with heads={"v": heads.Linear(dim=1, token_level=True)}, then pass loss=PPOGAELoss().
 class PPOGAELoss(losses.CustomLoss):
     outputs = ("logprobs", "heads")
 
@@ -66,9 +85,6 @@ class PPOGAELoss(losses.CustomLoss):
             vf = 0.5 * (v[:, 0] - ret) ** 2
             terms.append(grad.masked_mean(pg + self.vf_coef * vf, mask))
         return torch.stack(terms).mean()
-
-trainer.forward_backward(batch, loss=PPOGAELoss()).result()
-trainer.optim_step(optim.AdamW(lr=2e-5, grad_clip=1.0)).result()
 ```
 
   </DocsCodeTab>
@@ -77,8 +93,9 @@ trainer.optim_step(optim.AdamW(lr=2e-5, grad_clip=1.0)).result()
 ```python
 import torch
 import grad
-from grad import losses, optim
+from grad import losses
 
+# Pass loss=GSPOLoss() in the GRPO loop or to GRPORecipe.
 class GSPOLoss(losses.CustomLoss):
     outputs = ("logprobs",)
 
@@ -93,9 +110,6 @@ class GSPOLoss(losses.CustomLoss):
             a_seq = grad.masked_mean(adv, mask)
             terms.append(-torch.minimum(s * a_seq, s.clamp(1.0 - self.eps_low, 1.0 + self.eps_high) * a_seq))
         return torch.stack(terms).mean()
-
-fb = trainer.forward_backward(batch, loss=GSPOLoss())
-trainer.optim_step(optim.AdamW(lr=2e-5, grad_clip=1.0)).result()
 ```
 
   </DocsCodeTab>
@@ -104,12 +118,12 @@ trainer.optim_step(optim.AdamW(lr=2e-5, grad_clip=1.0)).result()
 ```python
 import torch
 import grad
-from grad import advantages, losses, optim
+from grad import losses
 
-# `turn_ids` on each Trajectory identifies which turn generated each token.
-ref_lps = ref_artifact.score_logprobs(trajectories).aligned_logprobs
-batch = grad.with_advantages(groups, advantage=advantages.GroupMean(), ref_logprobs=ref_lps)
-
+# Needs reference logprobs on each record. In the GRPO loop, attach them with:
+#   ref_lps = ref.score_logprobs([t for g in groups for t in g]).aligned_logprobs
+#   batch = grad.with_advantages(groups, advantage=advantages.GroupMean(), ref_logprobs=ref_lps)
+# where ref = client.models.get("qwen/qwen3-8b"). `turn_ids` identifies which turn generated each token.
 class PerTurnKLLoss(losses.CustomLoss):
     outputs = ("logprobs",)
 
@@ -123,9 +137,6 @@ class PerTurnKLLoss(losses.CustomLoss):
             w = torch.exp(lp - old_lp).clamp(0.8, 1.2).detach()
             terms.append(grad.masked_mean(-w * adv * lp + kl_beta * kl, mask))
         return torch.stack(terms).mean()
-
-fb = trainer.forward_backward(batch, loss=PerTurnKLLoss())
-trainer.optim_step(optim.AdamW(lr=2e-5)).result()
 ```
 
   </DocsCodeTab>
@@ -159,15 +170,22 @@ class JSDLoss(losses.CustomLoss):
 
 client = Grad()
 teacher = client.models.get("qwen/qwen3-32b")
+prompt_inputs = [
+    [{"role": "user", "content": "Explain what a race condition is in two sentences."}],
+    [{"role": "user", "content": "Write a SQL query that returns the 5 newest orders."}],
+]
 
-with client.trainers.create(model="qwen/qwen3-4b", adapter=adapters.LoRA(rank=8)) as trainer:
-    rollouts = [g[0] for g in trainer.snapshot().sample(prompt_inputs, n=1, max_new_tokens=256)]
-    t_refs = teacher.score_logprobs(rollouts, top_k=32).topk_refs
+with client.trainers.create(model="qwen/qwen3-4b", adapter=adapters.LoRA(rank=32)) as trainer:
+    for step in range(20):
+        # On-policy: the student samples, the teacher scores the student's own tokens.
+        rollouts = [g[0] for g in trainer.snapshot().sample(prompt_inputs, n=1, max_new_tokens=256)]
+        t_refs = teacher.score_logprobs(rollouts, top_k=32).topk_refs
 
-    batch = [r.with_targets(teacher_topk=ref) for r, ref in zip(rollouts, t_refs)]
+        batch = [r.with_targets(teacher_topk=ref) for r, ref in zip(rollouts, t_refs)]
 
-    trainer.forward_backward(batch, loss=JSDLoss(beta=0.5), gather_indices=t_refs).result()
-    trainer.optim_step(optim.AdamW(lr=1e-4)).result()
+        fb = trainer.forward_backward(batch, loss=JSDLoss(beta=0.5), gather_indices=t_refs)
+        trainer.optim_step(optim.AdamW(lr=2e-4))
+        print(f"step={step} jsd={fb.result().loss:.4f}")
 ```
 
 ### Self-Distillation Fine-Tuning (SDFT)
@@ -175,20 +193,34 @@ with client.trainers.create(model="qwen/qwen3-4b", adapter=adapters.LoRA(rank=8)
 In SDFT, the **same base model** acts as teacher when shown the question *plus* a golden demonstration in context, while the student sees only the question. That lets you teach new skills without the model forgetting what it already knows:
 
 ```python
+from grad import Grad, adapters, losses, optim
+
+client = Grad()
 teacher = client.models.get("qwen/qwen3-8b")  # frozen base model, no extra deployment
 
-with client.trainers.create(model=teacher, adapter=adapters.LoRA(rank=16)) as trainer:
-    for demo_batch in demo_batches:
-        rollouts = [g[0] for g in trainer.snapshot().sample(demo_batch.question_inputs, n=1, max_new_tokens=512)]
+demos = [
+    ("How do I rotate an API key without downtime?",
+     "Create the new key, deploy it alongside the old one, switch traffic, then revoke the old key."),
+]
+question_inputs = [[{"role": "user", "content": q}] for q, _ in demos]
+# The teacher sees the question plus a worked demonstration in context.
+demo_prefixes = [
+    teacher.tokenize(messages=[{"role": "user", "content": f"{q}\n\nExample of a good answer: {demo}"}])
+    for q, demo in demos
+]
+
+with client.trainers.create(model=teacher, adapter=adapters.LoRA(rank=32)) as trainer:
+    for step in range(50):
+        rollouts = [g[0] for g in trainer.snapshot().sample(question_inputs, n=1, max_new_tokens=512)]
         t_refs = teacher.score_logprobs(
-            demo_batch.demo_prefix_tokens,
+            demo_prefixes,
             response_tokens=[r.response_tokens for r in rollouts],
             top_k=20,
         ).topk_refs
 
         records = [r.with_targets(teacher_topk=ref) for r, ref in zip(rollouts, t_refs)]
-        trainer.forward_backward(records, loss=losses.TopKKLDistill()).result()
-        trainer.optim_step(optim.AdamW(lr=2e-5)).result()
+        trainer.forward_backward(records, loss=losses.TopKKLDistill(top_k=20))
+        trainer.optim_step(optim.AdamW(lr=1e-4)).result()
 ```
 
 ## Custom reward models & step-level PRMs
@@ -200,7 +232,7 @@ with client.trainers.create(model=teacher, adapter=adapters.LoRA(rank=16)) as tr
 import torch
 import torch.nn.functional as F
 import grad
-from grad import Grad, adapters, heads, losses, optim
+from grad import Grad, PreferencePair, adapters, heads, losses, optim
 
 class BradleyTerryLoss(losses.CustomLoss):
     outputs = ("heads",)
@@ -213,14 +245,22 @@ class BradleyTerryLoss(losses.CustomLoss):
         return torch.stack(terms).mean()
 
 client = Grad()
+pairs = [
+    PreferencePair(
+        prompt=[{"role": "user", "content": "Count orders placed today."}],
+        chosen="SELECT count(*) FROM orders WHERE created_at >= current_date;",
+        rejected="SELECT * FROM orders;",
+    ),
+]
+
 with client.trainers.create(
     model="qwen/qwen3-8b",
-    adapter=adapters.LoRA(rank=8),
+    adapter=adapters.LoRA(rank=32),
     heads={"rm": heads.Linear(dim=1)},
 ) as trainer:
-    for batch in pair_batches:
-        fb = trainer.forward_backward(batch, loss=BradleyTerryLoss())
-        trainer.optim_step(optim.AdamW(lr=1e-4)).result()
+    for epoch in range(3):
+        fb = trainer.forward_backward(pairs, loss=BradleyTerryLoss())
+        trainer.optim_step(optim.AdamW(lr=1e-4))
         print(f"bt_loss={fb.result().loss:.4f}")
 
     rm_artifact = trainer.export(name="sql-verifier")
@@ -233,20 +273,26 @@ with client.trainers.create(
 from grad import Grad, Record, adapters, heads, losses, optim
 
 client = Grad()
-records = [
-    Record(
-        tokens=step_traj_tokens,
-        positions=[42, 98, 151],     # token indices ending steps 1, 2, 3
-        labels=[1.0, 1.0, 0.0],      # step 3 introduced an error
-    ),
+base = client.models.get("qwen/qwen3-8b")
+
+steps = [
+    "Step 1: 17 apples minus 5 eaten leaves 12.\n",
+    "Step 2: Buying 3 bags of 4 adds 12, so 12 + 12 = 24.\n",
+    "Step 3: Half are given away, so 24 / 2 = 11.\n",
 ]
+tokens, positions = [], []
+for s in steps:
+    tokens += base.tokenize(s)
+    positions.append(len(tokens) - 1)  # token index that ends each step
+
+records = [Record(tokens=tokens, positions=positions, labels=[1.0, 1.0, 0.0])]  # step 3 is wrong
 
 with client.trainers.create(
     model="qwen/qwen3-8b",
-    adapter=adapters.LoRA(rank=8),
+    adapter=adapters.LoRA(rank=32),
     heads={"prm": heads.Linear(dim=1, token_level=True)},
 ) as trainer:
-    m = trainer.forward_backward(records, loss=losses.BCESparsePositions(head="prm")).result()
+    trainer.forward_backward(records, loss=losses.BCESparsePositions(head="prm"))
     trainer.optim_step(optim.AdamW(lr=1e-4)).result()
     prm_artifact = trainer.export(name="reasoning-prm")
 ```
@@ -303,7 +349,7 @@ class MatryoshkaColBERTLoss(losses.CustomLoss):
 import torch
 import torch.nn.functional as F
 import grad
-from grad import Grad, adapters, heads, losses, optim
+from grad import Grad, Record, adapters, heads, losses, optim
 
 class ListNetRerankLoss(losses.CustomLoss):
     outputs = ("heads",)
@@ -316,6 +362,19 @@ class ListNetRerankLoss(losses.CustomLoss):
             terms.append(F.cross_entropy(torch.stack([pos, *negs]).unsqueeze(0), torch.tensor([0])))
         return torch.stack(terms).mean()
 
+def pair(query: str, passage: str, group: str, role: str) -> Record:
+    return Record(
+        messages=[{"role": "user", "content": f"Query: {query}\nPassage: {passage}"}],
+        group_id=group,
+        role=role,
+    )
+
+batch = [
+    pair("reset 2fa", "Go to Settings > Security > Reset two-factor.", "q1", "positive"),
+    pair("reset 2fa", "Our office is open 9am to 5pm.", "q1", "negative_1"),
+    pair("reset 2fa", "Passwords must be 12 characters.", "q1", "negative_2"),
+]
+
 client = Grad()
 with client.trainers.create(
     model="baai/bge-reranker-base",
@@ -323,10 +382,7 @@ with client.trainers.create(
     heads={"rel": heads.Linear(dim=1)},
 ) as trainer:
     for epoch in range(3):
-        snap = trainer.snapshot()
-        cand_scores = [res.logits.item() for res in snap.infer_batch(candidate_pairs)]
-        hard_batch = build_listnet_batch(queries, positives, candidate_pairs, cand_scores)
-        trainer.forward_backward(hard_batch, loss=ListNetRerankLoss()).result()
+        trainer.forward_backward(batch, loss=ListNetRerankLoss())
         trainer.optim_step(optim.AdamW(lr=2e-5)).result()
 
     reranker = trainer.export(name="docs-reranker")
@@ -341,10 +397,13 @@ When your choice set varies per request (for example, ranking dynamic tools or z
 
 ```python
 import torch
-from grad import Grad, losses
+from grad import Grad, Record, adapters, losses, optim
 
 client = Grad()
 base = client.models.get("qwen/qwen3-8b")
+prompt_messages = [
+    {"role": "user", "content": "Which tool fits 'refund order 4417'? A) search_kb B) issue_refund C) escalate. Answer with one letter."},
+]
 
 choice_ids = [base.tokenize(c)[-1] for c in ["A", "B", "C"]]
 scored = base.score_logprobs(
@@ -364,7 +423,60 @@ class BrierLoss(losses.CustomLoss):
             terms.append(((p - target) ** 2).sum())
         return torch.stack(terms).mean()
 
-fb = trainer.forward_backward(decision_records, loss=BrierLoss(), gather_indices=choice_ids)
+decision_records = [
+    Record(messages=prompt_messages, metadata={"target_probs": [0.05, 0.9, 0.05]}),
+]
+
+with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=32)) as trainer:
+    fb = trainer.forward_backward(decision_records, loss=BrierLoss(), gather_indices=choice_ids)
+    trainer.optim_step(optim.AdamW(lr=5e-5))
+    print(f"before={probs.tolist()} brier={fb.result().loss:.4f}")
+```
+
+## Advanced adapters
+
+`adapters.LoRA(rank=32)` (the default) and `adapters.Full()` cover almost every task. Reach for these only when you have a specific reason:
+
+| Class | What gets trained | When to use it |
+| --- | --- | --- |
+| `adapters.DoRA(rank=32, alpha=32)` | Weight-decomposed LoRA (magnitude + direction). | Small accuracy gains over LoRA at the same rank, at somewhat higher step cost. |
+| `adapters.QLoRA(rank=32)` | 4-bit NF4 quantized backbone + LoRA adapters. | Self-hosted training on GPUs too small for a 16-bit backbone. On Gradiated Cloud, plain LoRA is faster and costs the same per token. |
+| `adapters.PrefixKV(num_tokens=256)` | Backbone frozen; trains only prepended KV prefix tokens. | Compressing a large fixed document into a [Cartridge](/docs/training/recipes/cartridges/). `CartridgeRecipe` sets this up for you. |
+| `adapters.LoReFT(layers=[8, 16, 24], rank=4)` | Backbone frozen; trains orthogonal low-rank residual-stream interventions. | Very small behavioural edits with a tiny parameter budget. |
+| `adapters.Eagle3Draft(fusion_layers=[2, 18, 34])` | Frozen target trunk + multi-layer speculative draft fusion head. | Training a speculative-decoding draft head to make a deployed model faster. |
+| `adapters.PartialUnfreeze(last_n_layers=1)` | Top `N` transformer layers + `ln_f` + trainable `heads`. | Classifier or reward heads that need a little more capacity than `FrozenHead()`. |
+
+Every adapter takes the same `client.trainers.create(model=..., adapter=...)` call and works with every loss on this page.
+
+## Advanced solvers
+
+Routers, linear probes, and representation steering vectors do not need SGD. Extract embeddings once with `embed()` and solve in a single `trainer.fit_batch()` call with a typed `Solver`. `solvers.DualHeadKernelLBFGS` fits a quality head and a cost head together, which is what `RouterRecipe` uses under the hood:
+
+```python
+from grad import Grad, Record, adapters, pooling, solvers
+
+client = Grad()
+encoder = client.models.get("baai/bge-small-en-v1.5")
+
+# One row per (request, candidate model): how well that model did on that request.
+inputs = [
+    "Summarize this support ticket in one line.",
+    "Summarize this support ticket in one line.",
+    "Prove that the sum of two even numbers is even.",
+    "Prove that the sum of two even numbers is even.",
+]
+model_ids = ["qwen/qwen3-0.6b", "qwen/qwen3-32b", "qwen/qwen3-0.6b", "qwen/qwen3-32b"]
+labels = [0.9, 0.95, 0.2, 0.9]
+
+embeddings = encoder.embed(inputs, pool=pooling.Mean()).embeddings
+embedding_records = [
+    Record(embedding=emb.tolist(), scalar=label, metadata={"action_id": model_id})
+    for emb, label, model_id in zip(embeddings, labels, model_ids)
+]
+
+with client.trainers.create(model=encoder, adapter=adapters.FrozenHead()) as trainer:
+    trainer.fit_batch(embedding_records, solver=solvers.DualHeadKernelLBFGS(l2=0.1))
+    router_artifact = trainer.export(name="support-router")
 ```
 
 <DocsNext>

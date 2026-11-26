@@ -6,31 +6,33 @@
   <DocsCodeTab label="Fine-tune a model (60s)">
 
 ```python
-from grad import Grad, Trajectory, TrajectoryInput
+from grad import Grad
 from grad.recipes import SFTRecipe
 
-client = Grad()
-dataset = client.datasets.create("sql-quickstart")
-dataset.push([
-    Trajectory(
-        session_id="s1",
-        input=TrajectoryInput(messages=[{"role": "user", "content": "Count active users from yesterday."}]),
-        expected_output={"content": "SELECT count(*) FROM users WHERE active_at >= current_date - 1;"},
-    ),
-    Trajectory(
-        session_id="s2",
-        input=TrajectoryInput(messages=[{"role": "user", "content": "Total revenue by plan this month."}]),
-        expected_output={"content": "SELECT plan, sum(amount_usd) FROM invoices WHERE created_at >= date_trunc('month', current_date) GROUP BY plan;"},
-    ),
+client = Grad()  # reads GRADIATED_API_KEY
+
+# Plain chat records (the OpenAI fine-tuning format). The last assistant turn is what the model learns.
+dataset = client.datasets.push("sql-quickstart", [
+    {"messages": [
+        {"role": "user", "content": "Count active users from yesterday."},
+        {"role": "assistant", "content": "SELECT count(*) FROM users WHERE active_at >= current_date - 1;"},
+    ]},
+    {"messages": [
+        {"role": "user", "content": "Total revenue by plan this month."},
+        {"role": "assistant", "content": "SELECT plan, sum(amount_usd) FROM invoices WHERE created_at >= date_trunc('month', current_date) GROUP BY plan;"},
+    ]},
 ])
 
-# Preview tokens and cost ($0) before training
-plan = client.runs.plan(dataset=dataset, name="sql-helper", recipe=SFTRecipe(model="qwen/qwen3-8b"))
-print(plan.estimated_tokens, plan.estimated_cost_usd)
+recipe = SFTRecipe(model="qwen/qwen3-8b")
 
-run = client.runs.create(dataset=dataset, name="sql-helper", recipe=SFTRecipe(model="qwen/qwen3-8b")).wait()
+# $0 preview: resolved defaults, warnings, tokens and cost
+print(client.runs.plan(dataset=dataset, name="sql-helper", recipe=recipe))
+
+run = client.runs.create(dataset=dataset, name="sql-helper", recipe=recipe, max_cost_usd=5).wait()
 run.deploy(canary=0.10)  # Or download LoRA weights for vLLM / SGLang
 ```
+
+Two examples are enough to see the whole loop, and the plan will warn that they are too few to train a useful model. For a real run, pass a file or a Hugging Face dataset instead of a list: `client.datasets.push("sql", "./train.jsonl")` or `client.datasets.from_hf("HuggingFaceH4/ultrachat_200k", split="train_sft")`.
 
   </DocsCodeTab>
   <DocsCodeTab label="Train a router">
@@ -233,18 +235,21 @@ import os
 from openai import OpenAI
 from grad import Grad
 
+client = Grad()
 oai = OpenAI(base_url="https://api.gradiated.com/v1", api_key=os.environ["GRADIATED_API_KEY"])
+
 raw = oai.chat.completions.with_raw_response.create(
     model="your-org/sql-helper",
-    messages=messages,
+    messages=[{"role": "user", "content": "Count active users from yesterday."}],
 )
 inference_id = raw.headers["x-gradiated-inference-id"]
-reply = raw.parse()
+sql = raw.parse().choices[0].message.content
 
-# Log real outcomes for live canary metrics and your next training run
-Grad().feedback.record(
+# Log the real outcome: it drives live canary metrics and becomes data for your next run
+query_succeeded = sql.strip().upper().startswith("SELECT")  # replace with your own check, e.g. the query ran
+client.feedback.record(
     inference_id=inference_id,
-    idempotency_key=f"query-{request_id}",
+    idempotency_key=f"query-{inference_id}",
     score=1.0 if query_succeeded else 0.0,
 )
 ```
@@ -253,12 +258,24 @@ Grad().feedback.record(
   <DocsCodeTab label="Model router (Python)">
 
 ```python
-decision = client.route("support-router", messages=messages, tools=tools)
-reply = call_your_llm(decision.model, messages, tools)
+import os, time
+from openai import OpenAI
+from grad import Grad
 
+client = Grad()
+oai = OpenAI(base_url="https://api.gradiated.com/v1", api_key=os.environ["GRADIATED_API_KEY"])
+messages = [{"role": "user", "content": "Where is invoice #9941?"}]
+
+decision = client.route("support-router", messages=messages)
+
+start = time.monotonic()
+reply = oai.chat.completions.create(model=decision.model, messages=messages)
+latency_ms = (time.monotonic() - start) * 1000
+
+user_resolved = True  # replace with your real outcome signal (thumbs up, ticket closed, ...)
 decision.record_feedback(
     score=1.0 if user_resolved else 0.0,
-    metrics={"cost_usd": reply.cost_usd, "latency_ms": reply.latency_ms},
+    metrics={"latency_ms": latency_ms, "output_tokens": reply.usage.completion_tokens},
 )
 ```
 
@@ -266,12 +283,23 @@ decision.record_feedback(
   <DocsCodeTab label="TypeScript">
 
 ```ts
-const decision = await grad.route("support-router", { messages, tools });
-const reply = await callYourLLM(decision.model, messages, tools);
+import OpenAI from "openai";
+import { Grad } from "@gradiated/grad";
 
+const grad = new Grad();
+const oai = new OpenAI({ baseURL: "https://api.gradiated.com/v1", apiKey: process.env.GRADIATED_API_KEY });
+const messages = [{ role: "user" as const, content: "Where is invoice #9941?" }];
+
+const decision = await grad.route("support-router", { messages });
+
+const start = performance.now();
+const reply = await oai.chat.completions.create({ model: decision.model, messages });
+const latencyMs = performance.now() - start;
+
+const userResolved = true; // replace with your real outcome signal
 await decision.recordFeedback({
   score: userResolved ? 1.0 : 0.0,
-  metrics: { cost_usd: reply.costUsd, latency_ms: reply.latencyMs },
+  metrics: { latency_ms: latencyMs, output_tokens: reply.usage?.completion_tokens ?? 0 },
 });
 ```
 
@@ -279,16 +307,24 @@ await decision.recordFeedback({
   <DocsCodeTab label="Go">
 
 ```go
-decision, _ := client.Route(ctx, "support-router", grad.RouteInput{
-	Messages: messages,
-	Tools:    tools,
-})
-reply := callYourLLM(decision.Model, messages, tools)
+ctx := context.Background()
+client := grad.NewClient()
+messages := []grad.Message{{Role: "user", Content: "Where is invoice #9941?"}}
 
-_ = decision.RecordFeedback(ctx, grad.Feedback{
-	Score:   score,
-	Metrics: map[string]float64{"cost_usd": reply.CostUSD, "latency_ms": reply.LatencyMS},
-})
+decision, err := client.Route(ctx, "support-router", grad.RouteInput{Messages: messages})
+if err != nil {
+	log.Fatal(err)
+}
+
+// Call decision.Model with your existing OpenAI-compatible client, then log the outcome.
+userResolved := true // replace with your real outcome signal
+score := 0.0
+if userResolved {
+	score = 1.0
+}
+if err := decision.RecordFeedback(ctx, grad.Feedback{Score: score}); err != nil {
+	log.Fatal(err)
+}
 ```
 
   </DocsCodeTab>
@@ -320,12 +356,12 @@ curl https://api.gradiated.com/v1/chat/completions \
 
 ## Two ways to train
 
-Start with a built-in `Recipe` and sensible defaults. When you need more control, override a single piece (like the loss function or dataset split), or write your own Python loop directly on `Trainer`.
+Start with a built-in `Recipe` and its defaults. Learning rate, batch size and schedule are calibrated for each base model, and the dry run prints every resolved value. When you need more control, override a single piece (like the loss function or dataset split), or write your own Python loop directly on `Trainer`.
 
 | Mode | How it works | When to use it |
 | --- | --- | --- |
-| [**Recipes**](/docs/training/recipes/) | Pick a recipe (`RouterRecipe`, `DecisionModelRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`, `RewardModelRecipe`, `EmbeddingRecipe`), chain stages with `.then(...)`, or run from YAML. | Almost always. You get sensible defaults, held-out evaluations, and can swap individual pieces without writing a training loop. |
-| [**Custom loops**](/docs/training/custom-loops/) | Call `Trainer`, `Artifact`, `Environment`, and `Rubric` directly in Python with built-in losses or your own PyTorch `CustomLoss`. | You want a custom research loop, multi-trainer setup, replay buffer, or custom rollout logic. |
+| [**Recipes**](/docs/training/recipes/) | Pick a recipe (`RouterRecipe`, `DecisionModelRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`, `RewardModelRecipe`, `EmbeddingRecipe`), chain stages with `.then(...)`, or run from YAML. | Almost always, including multi-turn agent RL (`GRPORecipe(env=...)`). You get calibrated defaults, held-out evaluations, automatic checkpoints, and can swap individual pieces without writing a training loop. |
+| [**Custom loops**](/docs/training/custom-loops/) | Call `Trainer`, `Artifact`, `Environment`, and `Rubric` directly in Python with built-in losses or your own PyTorch `CustomLoss`. | You are building a new algorithm: a custom research loop, multi-trainer setup, replay buffer, or rollout logic a recipe can't express. |
 
 You can export the full resolved config of any run as YAML (`grad runs inspect <run_id> --yaml > recipe.yaml`) to check it into Git.
 
@@ -358,10 +394,10 @@ Read https://gradiated.com/docs/training/recipes/router.md and integrate a Gradi
 
 ```text
 Read https://gradiated.com/docs/training/recipes/sft.md (and https://gradiated.com/docs/training/recipes/dpo.md) and set up a fine-tuning pipeline for our task:
-1. Export verified passing examples into a Gradiated `Dataset` (`input.messages`, `expected_output`, `session_id`, and `scores`).
-2. Score the dataset with a `Judge` (`dataset.score(judge).wait()`) and filter to high-scoring examples (`dataset.filter(lambda t: t.scores["clean"] >= 0.8)`), then configure an `SFTRecipe` (chaining into `DPORecipe` with `.then(...)` if needed) with `model="qwen/qwen3-8b"` and `splits.BySession()`.
-3. Validate with `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json` before starting training.
-4. Deploy with `run.deploy(canary=0.10)` (or download the LoRA for vLLM/SGLang) and wire `feedback.record()` so human fixes are captured as `expected_output`.
+1. Export verified passing examples as plain chat records (`{"messages": [...]}`, last assistant turn is the target) and push them with `client.datasets.push(name, records_or_jsonl_path)`.
+2. Score the dataset with a `Judge` (`dataset.score(judge).wait()`), keep high scorers with `dataset.filter(scores={"clean": ">=0.8"})`, and configure `SFTRecipe(model="qwen/qwen3-8b")` with its defaults (chain into `DPORecipe` with `.then(...)` if needed). Don't hand-set `lr`; the default `lr="auto"` is calibrated per model.
+3. Run `grad render <dataset> --model qwen/qwen3-8b --limit 3` to check the chat template and loss mask, then `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json` and fix every warning.
+4. Start the run with `max_cost_usd=` set, deploy with `run.deploy(canary=0.10)` (or download the LoRA for vLLM/SGLang), and wire `feedback.record()` so human fixes are captured as `expected_output`.
 ```
 
   </DocsCodeTab>
@@ -369,10 +405,10 @@ Read https://gradiated.com/docs/training/recipes/sft.md (and https://gradiated.c
 
 ```text
 Read https://gradiated.com/docs/training/environments.md and https://gradiated.com/docs/training/recipes/rl-agents.md:
-1. Subclass `grad.Environment` around our existing `docker-compose.yml` and seed script (`setup`, `step` returning `Observation(text=...)`, `evaluate` before `teardown`, and guaranteed `teardown`).
+1. If our agent is a set of Python tool functions, wrap them with `environments.Tools([...], tasks=dataset, rubric=rubric)`. Otherwise subclass `grad.Environment` around our existing `docker-compose.yml` (only `setup` and `step` are required; `step` gets parsed `action.tool_calls`).
 2. Write a `Rubric` with deterministic `StatefulScorer` assertions against the live container state.
-3. Run a 2-task smoke test against a base `Model` (`client.models.get(...)`, `max_concurrency=2`) to verify `loss_mask` masks tool outputs and containers clean up cleanly.
-4. Wire a GRPO / async CISPO loop using `with client.trainers.create(model="qwen/qwen3-8b", adapter=adapters.LoRA(rank=8)) as trainer:`.
+3. Smoke-test 2 tasks with `client.evals.create(model="qwen/qwen3-8b", tasks=..., env=env, samples=2)` and check that tool outputs are masked and containers clean up.
+4. Train with the managed `GRPORecipe(model="qwen/qwen3-8b", env=env)` and its defaults; run `client.runs.plan(...)` first and set `max_cost_usd=`. If containers must stay on our infra, run `grad env serve` and pass `env=environments.Remote(...)`.
 ```
 
   </DocsCodeTab>

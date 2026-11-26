@@ -943,9 +943,19 @@
   --pixel: 1px;
 }
 
-/* The upvote's chevron points up. */
-.gr-roadmap-up {
-  rotate: -90deg;
+/* The upvote's plus turns a quarter on hover. */
+.gr-roadmap-plus {
+  transition: rotate 0.5s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+.gr-button:is(:hover, :focus-visible) .gr-roadmap-plus {
+  rotate: 90deg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-roadmap-plus {
+    transition: none;
+  }
 }
 
 .gr-roadmap-actions {

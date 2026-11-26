@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 import { Arrow, Band, Module, PixelIcon } from "../components/design";
 import { ModelNameSuggestion } from "../components/ModelNameSuggestion";
 import { canSuggestName, roadmapEntries } from "../model-roadmap";
@@ -167,10 +167,20 @@ export const ModelRoadmap = (): ReactElement => {
                             onClick={() => toggleVote(entry)}
                             type="button"
                           >
-                            <PixelIcon
-                              className={voted ? undefined : "gr-roadmap-up"}
-                              name={voted ? "check" : "caret-right"}
-                            />
+                            {voted ? (
+                              <PixelIcon name="check" />
+                            ) : (
+                              <svg
+                                aria-hidden="true"
+                                className="gr-pixel-icon gr-roadmap-plus"
+                                fill="currentColor"
+                                shapeRendering="crispEdges"
+                                style={{ "--cells": 11 } as CSSProperties}
+                                viewBox="0 0 11 11"
+                              >
+                                <path d="M4 0h3v4h4v3H7v4H4V7H0V4h4z" />
+                              </svg>
+                            )}
                             {voted ? "Upvoted" : "Upvote"}
                           </button>
                         )}

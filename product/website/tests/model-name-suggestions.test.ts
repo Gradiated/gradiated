@@ -161,3 +161,30 @@ test("with a store, votes and suggestions are saved, not posted", async () => {
     suggestion: "Juniper",
   });
 });
+
+test("empty KV settings fall back to the Upstash names", async () => {
+  useStore();
+  vi.stubEnv("KV_REST_API_URL", "");
+  vi.stubEnv("KV_REST_API_TOKEN", "");
+  vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://other.upstash.io");
+  vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "test-only");
+  deliver.mockImplementation(async () =>
+    Response.json([{ result: 1 }, { result: 1 }]),
+  );
+  expect((await vote("code-review")).status).toBe(204);
+  expect(String(deliver.mock.calls[0][0])).toBe(
+    "https://other.upstash.io/pipeline",
+  );
+});
+
+test("if the store fails, the vote posts to Slack straight away", async () => {
+  useStore();
+  deliver.mockImplementation(async (url: unknown) =>
+    String(url).startsWith("https://store.upstash.io")
+      ? new Response("down", { status: 500 })
+      : new Response("ok"),
+  );
+  expect((await vote("code-review")).status).toBe(204);
+  const slack = JSON.parse(String(deliver.mock.calls[1][1].body));
+  expect(slack.text).toBe("User upvoted Code review");
+});

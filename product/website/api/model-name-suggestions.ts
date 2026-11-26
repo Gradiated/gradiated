@@ -169,12 +169,11 @@ export const POST = async (request: Request): Promise<Response> => {
   if (!acceptRequest(client)) return fail("Too many suggestions", 429);
 
   const text = isVote ? undefined : suggestion;
-  if (hasStore()) {
-    if (await store(entry, text)) return new Response(null, { status: 204 });
-    console.error("Roadmap store rejected the write");
-  } else if (await postNow(entry, text)) {
+  if (hasStore() && (await store(entry, text)))
     return new Response(null, { status: 204 });
-  }
+  // No store, or it failed: post straight away so nothing is lost.
+  if (hasStore()) console.error("Roadmap store rejected the write");
+  if (await postNow(entry, text)) return new Response(null, { status: 204 });
 
   return fail("Could not deliver the suggestion", 502);
 };

@@ -11,6 +11,8 @@ import {
 } from "./_roadmap.js";
 
 const SHOWN_SUGGESTIONS = 40;
+// Under Slack's 3,000-character section limit, even after escaping.
+const LINE_MAX = 2_800;
 
 const table = (today: Map<string, number>, totals: Map<string, number>) => {
   const rows = roadmapEntries
@@ -52,6 +54,20 @@ export const GET = async (request: Request): Promise<Response> => {
   if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`)
     return new Response(null, { status: 401 });
 
+  // One run at a time: a second, overlapping call finds the lock and stops.
+  const lock = await runInStore([
+    ["SET", "roadmap:digest:lock", "1", "NX", "EX", "120"],
+  ]);
+  if (!lock) return new Response("Store unavailable", { status: 503 });
+  if (lock[0] !== "OK") return Response.json({ posted: false, busy: true });
+  try {
+    return await digest();
+  } finally {
+    await runInStore([["DEL", "roadmap:digest:lock"]]);
+  }
+};
+
+const digest = async (): Promise<Response> => {
   const replies = await runInStore([
     ["HGETALL", KEYS.pendingVotes],
     ["LRANGE", KEYS.pendingSuggestions, "0", "-1"],
@@ -90,9 +106,11 @@ export const GET = async (request: Request): Promise<Response> => {
   if (suggestions.length) {
     const lines = suggestions
       .slice(0, SHOWN_SUGGESTIONS)
-      .map(
-        (item) =>
-          `• *${escapeSlack(modelName(item.modelId))}*: ${escapeSlack(item.suggestion).replaceAll("\n", " ")}`,
+      .map((item) =>
+        `• *${escapeSlack(modelName(item.modelId))}*: ${escapeSlack(item.suggestion).replaceAll("\n", " ")}`.slice(
+          0,
+          LINE_MAX,
+        ),
       );
     if (suggestions.length > SHOWN_SUGGESTIONS)
       lines.push(
@@ -114,7 +132,7 @@ export const GET = async (request: Request): Promise<Response> => {
     return new Response("Slack delivery failed", { status: 502 });
 
   // Clear only what was summarised, so activity during the run carries over.
-  await runInStore([
+  const cleared = await runInStore([
     ...[...today].map(([id, count]) => [
       "HINCRBY",
       KEYS.pendingVotes,
@@ -123,6 +141,14 @@ export const GET = async (request: Request): Promise<Response> => {
     ]),
     ["LTRIM", KEYS.pendingSuggestions, "0", String(-rawSuggestions.length - 1)],
   ]);
+  if (!cleared) {
+    // Posted but not cleared: the next summary would repeat it, so flag it.
+    console.error("Roadmap digest posted but could not clear the day");
+    return Response.json(
+      { posted: true, cleared: false, votes, suggestions: suggestions.length },
+      { status: 500 },
+    );
+  }
   return Response.json({
     posted: true,
     votes,

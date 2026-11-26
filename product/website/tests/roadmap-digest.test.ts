@@ -11,14 +11,33 @@ const run = (secret = "cron-test") =>
     }),
   );
 
+const storeCalls = () =>
+  deliver.mock.calls
+    .filter(([url]) => String(url).startsWith(store))
+    .map(([, init]) => JSON.parse(String(init.body)) as string[][]);
+const slackCalls = () =>
+  deliver.mock.calls
+    .filter(([url]) => !String(url).startsWith(store))
+    .map(([, init]) => JSON.parse(String(init.body)));
+
 const withActivity = (
   pending: string[],
   suggestions: string[],
   totals: string[],
+  { locked = false, cleanupFails = false, slackFails = false } = {},
 ) =>
   deliver.mockImplementation(async (url: unknown, init: RequestInit) => {
-    if (!String(url).startsWith(store)) return new Response("ok");
+    if (!String(url).startsWith(store))
+      return slackFails
+        ? new Response("no", { status: 500 })
+        : new Response("ok");
     const commands = JSON.parse(String(init.body)) as string[][];
+    if (commands[0][0] === "SET")
+      return Response.json([{ result: locked ? null : "OK" }]);
+    if (commands[0][0] === "HINCRBY" || commands[0][0] === "LTRIM")
+      return cleanupFails
+        ? new Response("down", { status: 500 })
+        : Response.json(commands.map(() => ({ result: 0 })));
     if (commands[0][0] === "HGETALL")
       return Response.json([
         { result: pending },
@@ -53,7 +72,7 @@ test("refuses calls without the cron secret", async () => {
 test("posts nothing on a quiet day", async () => {
   withActivity(["code-review", "0"], [], ["code-review", "4"]);
   expect(await (await run()).json()).toMatchObject({ posted: false });
-  expect(deliver).toHaveBeenCalledTimes(1);
+  expect(slackCalls()).toHaveLength(0);
 });
 
 test("posts the day's upvotes and suggestions, then clears what it sent", async () => {
@@ -75,7 +94,7 @@ test("posts the day's upvotes and suggestions, then clears what it sent", async 
     suggestions: 2,
   });
 
-  const slack = JSON.parse(String(deliver.mock.calls[1][1].body));
+  const [slack] = slackCalls();
   expect(slack.text).toBe("Roadmap today: 3 upvotes · 2 name suggestions");
   const table: string = slack.blocks[1].text.text;
   expect(table).toMatch(/Model\s+Today\s+Total/);
@@ -85,7 +104,7 @@ test("posts the day's upvotes and suggestions, then clears what it sent", async 
   expect(list.indexOf("Juniper")).toBeLessThan(list.indexOf("Sentinel"));
   expect(list).toContain("Juniper &lt;b&gt;");
 
-  const cleanup = JSON.parse(String(deliver.mock.calls[2][1].body));
+  const cleanup = storeCalls().find(([command]) => command[0] === "HINCRBY");
   expect(cleanup).toEqual([
     ["HINCRBY", "roadmap:upvotes:pending", "code-review", "-2"],
     ["HINCRBY", "roadmap:upvotes:pending", "task-routing", "-1"],
@@ -94,17 +113,28 @@ test("posts the day's upvotes and suggestions, then clears what it sent", async 
 });
 
 test("keeps the day's activity if Slack fails", async () => {
-  withActivity(["code-review", "1"], [], ["code-review", "1"]);
-  deliver.mockImplementationOnce(async () =>
-    Response.json([
-      { result: ["code-review", "1"] },
-      { result: [] },
-      { result: ["code-review", "1"] },
-    ]),
-  );
-  deliver.mockImplementationOnce(
-    async () => new Response("no", { status: 500 }),
-  );
+  withActivity(["code-review", "1"], [], ["code-review", "1"], {
+    slackFails: true,
+  });
   expect((await run()).status).toBe(502);
-  expect(deliver).toHaveBeenCalledTimes(2);
+  expect(storeCalls().some(([command]) => command[0] === "HINCRBY")).toBe(
+    false,
+  );
+});
+
+test("a second, overlapping run stops at the lock", async () => {
+  withActivity(["code-review", "1"], [], ["code-review", "1"], {
+    locked: true,
+  });
+  expect(await (await run()).json()).toMatchObject({ busy: true });
+  expect(slackCalls()).toHaveLength(0);
+});
+
+test("flags a summary that posted but could not clear the day", async () => {
+  withActivity(["code-review", "1"], [], ["code-review", "1"], {
+    cleanupFails: true,
+  });
+  const response = await run();
+  expect(response.status).toBe(500);
+  expect(await response.json()).toMatchObject({ posted: true, cleared: false });
 });

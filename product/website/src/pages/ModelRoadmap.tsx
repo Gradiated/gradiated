@@ -7,6 +7,8 @@ import type { RoadmapEntry } from "../model-roadmap";
 
 type RoadmapState = {
   votes: Partial<Record<RoadmapEntry["id"], boolean>>;
+  // Models this browser has already counted, so a re-vote isn't sent twice.
+  counted?: Partial<Record<RoadmapEntry["id"], boolean>>;
 };
 
 const releaseDate = new Intl.DateTimeFormat("en-GB", {
@@ -54,26 +56,40 @@ export const ModelRoadmap = (): ReactElement => {
     return true;
   };
 
-  const toggleVote = (entry: RoadmapEntry) => {
+  const toggleVote = async (entry: RoadmapEntry) => {
     const current = readRoadmap();
     const voted = !current.votes[entry.id];
-    const saved = save({
-      ...current,
-      votes: { ...current.votes, [entry.id]: voted },
-    });
-    // Each upvote goes to the team's Slack; removing one is local only.
-    if (voted)
-      void fetch("/api/model-name-suggestions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ modelId: entry.id, vote: "up" }),
-      }).catch(() => undefined);
+    const title = entry.name ?? entry.category;
+    const next = { ...current, votes: { ...current.votes, [entry.id]: voted } };
 
-    setFeedback(
-      saved
-        ? `${voted ? "Vote saved" : "Vote removed"} for ${entry.name ?? entry.category}.`
-        : "This browser could not save your vote.",
-    );
+    if (!voted || current.counted?.[entry.id]) {
+      setFeedback(
+        save(next)
+          ? `${voted ? "Vote saved" : "Vote removed"} for ${title}.`
+          : "This browser could not save your vote.",
+      );
+      return;
+    }
+
+    if (!save(next)) {
+      setFeedback("This browser could not save your vote.");
+      return;
+    }
+    const sent = await fetch("/api/model-name-suggestions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ modelId: entry.id, vote: "up" }),
+    })
+      .then((response) => response.status === 204)
+      .catch(() => false);
+
+    if (sent) {
+      save({ ...next, counted: { ...next.counted, [entry.id]: true } });
+      setFeedback(`Vote saved for ${title}.`);
+    } else {
+      save(current);
+      setFeedback("We couldn’t record your vote. Please try again later.");
+    }
   };
 
   return (
@@ -171,7 +187,7 @@ export const ModelRoadmap = (): ReactElement => {
                             aria-label={`Upvote ${title}`}
                             aria-pressed={voted}
                             className={`gr-button ${voted ? "gr-button--main" : "gr-button--secondary"}`}
-                            onClick={() => toggleVote(entry)}
+                            onClick={() => void toggleVote(entry)}
                             type="button"
                           >
                             {voted ? (

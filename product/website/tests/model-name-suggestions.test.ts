@@ -118,63 +118,46 @@ test("upvotes post the model name, without totals when no store is set", async (
   expect(body.blocks[0].text.text).toBe("User upvoted *Linden-2*");
 });
 
-test("upvotes add a table of totals from the store", async () => {
-  vi.stubEnv("KV_REST_API_URL", "https://store.upstash.io");
-  vi.stubEnv("KV_REST_API_TOKEN", "test-only");
-  deliver.mockImplementation(async (url: unknown) =>
-    String(url).startsWith("https://store.upstash.io")
-      ? Response.json([
-          { result: 3 },
-          { result: ["code-review", "3", "task-routing", "1"] },
-        ])
-      : new Response("ok"),
-  );
-
-  expect((await vote("code-review")).status).toBe(204);
-  const [storeUrl, storeInit] = deliver.mock.calls[0];
-  expect(String(storeUrl)).toBe("https://store.upstash.io/pipeline");
-  expect(JSON.parse(storeInit.body)[0]).toEqual([
-    "HINCRBY",
-    "roadmap:upvotes",
-    "code-review",
-    "1",
-  ]);
-
-  const table: string = JSON.parse(deliver.mock.calls[1][1].body).blocks[1].text
-    .text;
-  const lines = table.split("\n");
-  expect(lines[1]).toMatch(/^Model\s+Upvotes$/);
-  expect(lines[3]).toMatch(/^Code review\s+3$/);
-  expect(lines[4]).toMatch(/^Linden-2\s+1$/);
-  expect(table).toMatch(/Security review\s+0/);
-});
-
 test("rejects upvotes on released models and unknown vote values", async () => {
   expect((await vote("linden-1")).status).toBe(400);
   expect((await vote("code-review", "down")).status).toBe(400);
   expect(deliver).not.toHaveBeenCalled();
 });
 
-test("name suggestions are kept in the store as well as sent to Slack", async () => {
+const useStore = () => {
+  vi.stubEnv("KV_REST_API_URL", "https://store.upstash.io");
+  vi.stubEnv("KV_REST_API_TOKEN", "test-only");
   // A fresh rate-limit window: the handler counts requests per minute.
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(Date.now() + 10 * 60_000);
-  vi.stubEnv("KV_REST_API_URL", "https://store.upstash.io");
-  vi.stubEnv("KV_REST_API_TOKEN", "test-only");
-  deliver.mockImplementation(async (url: unknown) =>
-    String(url).startsWith("https://store.upstash.io")
-      ? Response.json([{ result: 1 }])
-      : new Response("ok"),
+};
+
+test("with a store, votes and suggestions are saved, not posted", async () => {
+  useStore();
+  deliver.mockImplementation(async () =>
+    Response.json([{ result: 1 }, { result: 1 }]),
   );
 
+  expect((await vote("code-review")).status).toBe(204);
   expect((await submit("code-review", "Juniper")).status).toBe(204);
-  const [command] = JSON.parse(deliver.mock.calls[0][1].body);
-  expect(command.slice(0, 2)).toEqual(["LPUSH", "roadmap:suggestions"]);
-  expect(JSON.parse(command[2])).toMatchObject({
+
+  const urls = deliver.mock.calls.map(([url]) => String(url));
+  expect(urls.every((url) => url === "https://store.upstash.io/pipeline")).toBe(
+    true,
+  );
+  const [voteCommands, suggestionCommands] = deliver.mock.calls.map(
+    ([, init]) => JSON.parse(init.body),
+  );
+  expect(voteCommands).toEqual([
+    ["HINCRBY", "roadmap:upvotes", "code-review", "1"],
+    ["HINCRBY", "roadmap:upvotes:pending", "code-review", "1"],
+  ]);
+  expect(suggestionCommands.map((c: string[]) => c.slice(0, 2))).toEqual([
+    ["LPUSH", "roadmap:suggestions"],
+    ["LPUSH", "roadmap:suggestions:pending"],
+  ]);
+  expect(JSON.parse(suggestionCommands[0][2])).toMatchObject({
     modelId: "code-review",
     suggestion: "Juniper",
   });
-  expect(String(deliver.mock.calls[1][0])).toMatch(
-    /^https:\/\/hooks\.slack\.com/,
-  );
 });

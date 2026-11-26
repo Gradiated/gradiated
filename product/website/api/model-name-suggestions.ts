@@ -4,6 +4,14 @@ import {
   roadmapEntries,
 } from "../src/model-roadmap.js";
 import type { RoadmapEntry } from "../src/model-roadmap.js";
+import {
+  hasStore,
+  KEYS,
+  modelName,
+  postToSlack,
+  runInStore,
+  slackWebhook,
+} from "./_roadmap.js";
 
 const bodyLimit = 4_096;
 const rateWindowMs = 60_000;
@@ -55,153 +63,59 @@ const readSubmission = async (request: Request): Promise<unknown> => {
   }
 };
 
-const slackWebhook = (): URL | undefined => {
-  const webhook = URL.parse(process.env.MODEL_NAME_SLACK_WEBHOOK_URL ?? "");
-  if (
-    webhook?.origin === "https://hooks.slack.com" &&
-    /^\/services\/[A-Za-z0-9]+\/[A-Za-z0-9]+\/[A-Za-z0-9_-]+$/.test(
-      webhook.pathname,
-    ) &&
-    !webhook.username &&
-    !webhook.password &&
-    !webhook.search &&
-    !webhook.hash
-  ) {
-    return webhook;
-  }
-
-  return undefined;
-};
-
-// Upvote totals live in the project's Upstash Redis, over its REST API.
-const voteStore = (): { url: string; token: string } | undefined => {
-  const url =
-    process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL ?? "";
-  const token =
-    process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN ?? "";
-  return url.startsWith("https://") && token ? { url, token } : undefined;
-};
-
-const VOTES_KEY = "roadmap:upvotes";
-const SUGGESTIONS_KEY = "roadmap:suggestions";
-
-const runInStore = async (
-  commands: string[][],
-): Promise<unknown[] | undefined> => {
-  const store = voteStore();
-  if (!store) return undefined;
-  try {
-    const response = await fetch(`${store.url}/pipeline`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${store.token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(commands),
-      signal: AbortSignal.timeout(3_000),
-    });
-    if (!response.ok) return undefined;
-    return ((await response.json()) as { result?: unknown }[]).map(
-      (reply) => reply?.result,
-    );
-  } catch {
-    return undefined;
-  }
-};
-
-// Keeps every name suggestion, newest first: the model, the text and when.
-const keepSuggestion = (entry: RoadmapEntry, suggestion: string) =>
-  runInStore([
-    [
-      "LPUSH",
-      SUGGESTIONS_KEY,
-      JSON.stringify({
-        modelId: entry.id,
-        category: entry.category,
-        suggestion,
-        at: new Date().toISOString(),
-      }),
-    ],
-  ]);
-
-// Adds one to a model's count and returns every model's total.
-const countVote = async (
-  modelId: string,
-): Promise<Map<string, number> | undefined> => {
-  const replies = await runInStore([
-    ["HINCRBY", VOTES_KEY, modelId, "1"],
-    ["HGETALL", VOTES_KEY],
-  ]);
-  if (!replies) return undefined;
-  const pairs = Array.isArray(replies[1]) ? (replies[1] as string[]) : [];
-  const totals = new Map<string, number>();
-  for (let n = 0; n + 1 < pairs.length; n += 2)
-    totals.set(pairs[n], Number(pairs[n + 1]) || 0);
-  return totals;
-};
-
-// Every model that can be upvoted, most votes first, as a fixed-width table.
-const votesTable = (totals: Map<string, number>): string => {
-  const rows: [string, number][] = roadmapEntries
-    .filter((entry) => !entry.release)
-    .map((entry): [string, number] => [
-      entry.name ?? entry.category,
-      totals.get(entry.id) ?? 0,
-    ])
-    .sort((a, b) => b[1] - a[1]);
-  const width = Math.max(5, ...rows.map(([name]) => name.length));
-  const line = (name: string, votes: string) =>
-    `${name.padEnd(width)}  ${votes.padStart(7)}`;
-  return [
-    line("Model", "Upvotes"),
-    line("-".repeat(width), "-------"),
-    ...rows.map(([name, votes]) => line(name, String(votes))),
-  ].join("\n");
-};
-
 const fail = (error: string, status: number): Response =>
   Response.json({ error }, { status });
 
-type Message = { text: string; blocks: object[] };
+// Saved for the daily summary (api/roadmap-digest.ts); suggestions are also
+// kept for good.
+const store = (entry: RoadmapEntry, suggestion: string | undefined) =>
+  suggestion === undefined
+    ? runInStore([
+        ["HINCRBY", KEYS.totals, entry.id, "1"],
+        ["HINCRBY", KEYS.pendingVotes, entry.id, "1"],
+      ])
+    : (() => {
+        const record = JSON.stringify({
+          modelId: entry.id,
+          suggestion,
+          at: new Date().toISOString(),
+        });
+        return runInStore([
+          ["LPUSH", KEYS.suggestions, record],
+          ["LPUSH", KEYS.pendingSuggestions, record],
+        ]);
+      })();
 
-const voteMessage = async (entry: RoadmapEntry): Promise<Message> => {
-  const name = entry.name ?? entry.category;
-  const totals = await countVote(entry.id);
-  return {
-    text: `User upvoted ${name}`,
-    blocks: [
-      {
-        type: "section",
-        text: { type: "mrkdwn", text: `User upvoted *${name}*` },
-      },
-      ...(totals
-        ? [
+// Without a store there is no summary, so it goes to Slack straight away.
+const postNow = (entry: RoadmapEntry, suggestion: string | undefined) =>
+  postToSlack(
+    suggestion === undefined
+      ? {
+          text: `User upvoted ${modelName(entry.id)}`,
+          blocks: [
             {
               type: "section",
               text: {
                 type: "mrkdwn",
-                text: "```\n" + votesTable(totals) + "\n```",
+                text: `User upvoted *${modelName(entry.id)}*`,
               },
             },
-          ]
-        : []),
-    ],
-  };
-};
-
-const suggestionMessage = (
-  entry: RoadmapEntry,
-  suggestion: string,
-): Message => {
-  const heading = `Model name suggestion for ${entry.category}`;
-  return {
-    text: heading,
-    blocks: [
-      { type: "section", text: { type: "plain_text", text: heading } },
-      { type: "section", text: { type: "plain_text", text: suggestion } },
-    ],
-  };
-};
+          ],
+        }
+      : {
+          text: `Model name suggestion for ${entry.category}`,
+          blocks: [
+            {
+              type: "section",
+              text: {
+                type: "plain_text",
+                text: `Model name suggestion for ${entry.category}`,
+              },
+            },
+            { type: "section", text: { type: "plain_text", text: suggestion } },
+          ],
+        },
+  );
 
 export const POST = async (request: Request): Promise<Response> => {
   if (request.method !== "POST")
@@ -246,39 +160,20 @@ export const POST = async (request: Request): Promise<Response> => {
     }
   }
 
-  const webhook = slackWebhook();
-  if (!webhook) return fail("Suggestions are temporarily unavailable", 503);
+  if (!hasStore() && !slackWebhook())
+    return fail("Suggestions are temporarily unavailable", 503);
 
   const client = process.env.VERCEL
     ? (request.headers.get("x-vercel-forwarded-for") ?? "unknown")
     : "local";
   if (!acceptRequest(client)) return fail("Too many suggestions", 429);
 
-  if (!isVote) await keepSuggestion(entry, suggestion);
-  const message = isVote
-    ? await voteMessage(entry)
-    : suggestionMessage(entry, suggestion);
-
-  try {
-    const response = await fetch(webhook, {
-      method: "POST",
-      redirect: "error",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...message,
-        unfurl_links: false,
-        unfurl_media: false,
-      }),
-      signal: AbortSignal.timeout(5_000),
-    });
-
-    if (response.ok && (await response.text()).trim() === "ok") {
-      return new Response(null, { status: 204 });
-    }
-
-    console.error("Model name webhook rejected delivery", response.status);
-  } catch {
-    console.error("Model name webhook delivery failed");
+  const text = isVote ? undefined : suggestion;
+  if (hasStore()) {
+    if (await store(entry, text)) return new Response(null, { status: 204 });
+    console.error("Roadmap store rejected the write");
+  } else if (await postNow(entry, text)) {
+    return new Response(null, { status: 204 });
   }
 
   return fail("Could not deliver the suggestion", 502);

@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useId,
+  useRef,
   useState,
 } from "react";
 import { Navigate, useLocation } from "react-router-dom";
@@ -341,9 +342,34 @@ const PageActions = ({
   path: string;
   title: string;
 }): ReactElement => {
+  const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState<"page" | "prompt" | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setOpen(false);
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
 
   const copy = async (mode: "page" | "prompt") => {
+    setOpen(false);
     try {
       const mdPath = markdownPathFor(path);
       const response = await fetch(mdPath);
@@ -378,23 +404,94 @@ const PageActions = ({
   };
 
   return (
-    <div className="gr-doc-actions">
+    <div className="gr-doc-actions" ref={containerRef}>
       <button
-        aria-label="Copy this page as Markdown"
+        aria-controls={menuId}
+        aria-expanded={open}
+        aria-haspopup="menu"
         className="gr-doc-copypage"
-        onClick={() => void copy("page")}
+        onClick={() => setOpen((prev) => !prev)}
         type="button"
       >
-        {copied === "page" ? "Copied" : "Copy page"}
+        {copied ? (
+          <svg
+            aria-hidden="true"
+            fill="none"
+            height="13"
+            stroke="currentColor"
+            strokeLinecap="square"
+            strokeLinejoin="miter"
+            strokeWidth="1.6"
+            viewBox="0 0 16 16"
+            width="13"
+          >
+            <path d="M3 8.5 6.5 12 13 4.5" />
+          </svg>
+        ) : (
+          <svg
+            aria-hidden="true"
+            fill="none"
+            height="13"
+            stroke="currentColor"
+            strokeLinecap="square"
+            strokeLinejoin="miter"
+            strokeWidth="1.5"
+            viewBox="0 0 16 16"
+            width="13"
+          >
+            <rect height="9" width="9" x="5.5" y="5.5" />
+            <path d="M10.5 5.5V2.5h-8v8h3" />
+          </svg>
+        )}
+        <span>
+          {copied === "page"
+            ? "Copied page"
+            : copied === "prompt"
+              ? "Copied prompt"
+              : "Copy"}
+        </span>
+        <svg
+          aria-hidden="true"
+          className="gr-doc-copypage-chevron"
+          fill="none"
+          height="11"
+          stroke="currentColor"
+          strokeLinecap="square"
+          strokeLinejoin="miter"
+          strokeWidth="1.6"
+          viewBox="0 0 12 12"
+          width="11"
+        >
+          <path d="M2.5 4.25 6 7.75l3.5-3.5" />
+        </svg>
       </button>
-      <button
-        aria-label="Copy a coding agent prompt for this page"
-        className="gr-doc-copypage"
-        onClick={() => void copy("prompt")}
-        type="button"
-      >
-        {copied === "prompt" ? "Copied" : "Copy prompt"}
-      </button>
+
+      {open ? (
+        <div className="gr-doc-copy-menu" id={menuId} role="menu">
+          <button
+            className="gr-doc-copy-item"
+            onClick={() => void copy("page")}
+            role="menuitem"
+            type="button"
+          >
+            <span className="gr-doc-copy-item-title">Copy page</span>
+            <span className="gr-doc-copy-item-desc">
+              Raw Markdown (.md)
+            </span>
+          </button>
+          <button
+            className="gr-doc-copy-item"
+            onClick={() => void copy("prompt")}
+            role="menuitem"
+            type="button"
+          >
+            <span className="gr-doc-copy-item-title">Copy prompt</span>
+            <span className="gr-doc-copy-item-desc">
+              Ready-to-paste coding agent prompt
+            </span>
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 };

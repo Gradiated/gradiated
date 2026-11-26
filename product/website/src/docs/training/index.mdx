@@ -265,7 +265,7 @@ Start at the cheapest layer that proves value: a CPU router or classifier on exi
 
 ## Using with coding agents
 
-Every docs page includes **Copy page** (raw Markdown) and **Copy prompt** (a ready-to-paste coding-agent prompt) in the top right, and every page is served as plain Markdown at `<url>.md`, indexed in [`/llms.txt`](/llms.txt) and `/llms-full.txt`.
+Every docs page includes a **Copy** menu (**Copy page** as raw Markdown or **Copy prompt** for coding agents) in the top right, and every page is served as plain Markdown at `<url>.md`, indexed in [`/llms.txt`](/llms.txt) and `/llms-full.txt`.
 
 The CLI is designed for non-interactive agent loops: pass `--json` to any `grad` command for a single JSON envelope on stdout, and run `--dry-run --json` (or `client.runs.plan(...)`) to validate dataset coverage and estimate compute before spending GPU time.
 

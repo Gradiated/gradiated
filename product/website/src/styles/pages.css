@@ -3826,15 +3826,17 @@ a.gr-read-author-name:focus-visible {
 
 /* Floated, so the page's first heading sits beside it rather than under it. */
 .gr-doc-actions {
+  position: relative;
   float: right;
   display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
   margin: 0 0 var(--u) var(--u);
 }
 
 .gr-doc-copypage {
-  padding: 0.5em 0.9em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.5em 0.85em;
   border: 1px solid var(--color-rule);
   /* A button, not a switch: it takes the system corner. */
   border-radius: var(--radius);
@@ -3851,9 +3853,78 @@ a.gr-read-author-name:focus-visible {
     color var(--dur-fast) var(--ease-response);
 }
 
-.gr-doc-copypage:hover {
+.gr-doc-copypage:hover,
+.gr-doc-copypage[aria-expanded="true"] {
   background: var(--color-interactive-fill);
   color: var(--color-inverse);
+}
+
+.gr-doc-copypage-chevron {
+  transition: transform var(--dur-fast) var(--ease-response);
+}
+
+.gr-doc-copypage[aria-expanded="true"] .gr-doc-copypage-chevron {
+  transform: rotate(180deg);
+}
+
+.gr-doc-copy-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 30;
+  min-width: 14.5rem;
+  padding: 0.25rem;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  background: var(--color-panel);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.gr-doc-copy-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.12rem;
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 0;
+  border-radius: calc(var(--radius) - 1px);
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-response),
+    color var(--dur-fast) var(--ease-response);
+}
+
+.gr-doc-copy-item:hover,
+.gr-doc-copy-item:focus-visible {
+  background: var(--color-interactive-fill);
+  color: var(--color-inverse);
+  outline: none;
+}
+
+.gr-doc-copy-item-title {
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.gr-doc-copy-item-desc {
+  font-size: 0.78rem;
+  line-height: 1.3;
+  color: var(--color-text-muted);
+}
+
+.gr-doc-copy-item:hover .gr-doc-copy-item-desc,
+.gr-doc-copy-item:focus-visible .gr-doc-copy-item-desc {
+  color: var(--color-inverse);
+  opacity: 0.8;
 }
 
 .gr-root .gr-doc-main h1 {

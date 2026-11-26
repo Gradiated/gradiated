@@ -22,6 +22,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
 });
@@ -152,4 +153,28 @@ test("rejects upvotes on released models and unknown vote values", async () => {
   expect((await vote("linden-1")).status).toBe(400);
   expect((await vote("code-review", "down")).status).toBe(400);
   expect(deliver).not.toHaveBeenCalled();
+});
+
+test("name suggestions are kept in the store as well as sent to Slack", async () => {
+  // A fresh rate-limit window: the handler counts requests per minute.
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(Date.now() + 10 * 60_000);
+  vi.stubEnv("KV_REST_API_URL", "https://store.upstash.io");
+  vi.stubEnv("KV_REST_API_TOKEN", "test-only");
+  deliver.mockImplementation(async (url: unknown) =>
+    String(url).startsWith("https://store.upstash.io")
+      ? Response.json([{ result: 1 }])
+      : new Response("ok"),
+  );
+
+  expect((await submit("code-review", "Juniper")).status).toBe(204);
+  const [command] = JSON.parse(deliver.mock.calls[0][1].body);
+  expect(command.slice(0, 2)).toEqual(["LPUSH", "roadmap:suggestions"]);
+  expect(JSON.parse(command[2])).toMatchObject({
+    modelId: "code-review",
+    suggestion: "Juniper",
+  });
+  expect(String(deliver.mock.calls[1][0])).toMatch(
+    /^https:\/\/hooks\.slack\.com/,
+  );
 });

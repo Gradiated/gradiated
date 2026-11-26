@@ -83,11 +83,11 @@ const voteStore = (): { url: string; token: string } | undefined => {
 };
 
 const VOTES_KEY = "roadmap:upvotes";
+const SUGGESTIONS_KEY = "roadmap:suggestions";
 
-// Adds one to a model's count and returns every model's total.
-const countVote = async (
-  modelId: string,
-): Promise<Map<string, number> | undefined> => {
+const runInStore = async (
+  commands: string[][],
+): Promise<unknown[] | undefined> => {
   const store = voteStore();
   if (!store) return undefined;
   try {
@@ -97,22 +97,47 @@ const countVote = async (
         Authorization: `Bearer ${store.token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify([
-        ["HINCRBY", VOTES_KEY, modelId, "1"],
-        ["HGETALL", VOTES_KEY],
-      ]),
+      body: JSON.stringify(commands),
       signal: AbortSignal.timeout(3_000),
     });
     if (!response.ok) return undefined;
-    const [, all] = (await response.json()) as { result?: unknown }[];
-    const pairs = Array.isArray(all?.result) ? (all.result as string[]) : [];
-    const totals = new Map<string, number>();
-    for (let n = 0; n + 1 < pairs.length; n += 2)
-      totals.set(pairs[n], Number(pairs[n + 1]) || 0);
-    return totals;
+    return ((await response.json()) as { result?: unknown }[]).map(
+      (reply) => reply?.result,
+    );
   } catch {
     return undefined;
   }
+};
+
+// Keeps every name suggestion, newest first: the model, the text and when.
+const keepSuggestion = (entry: RoadmapEntry, suggestion: string) =>
+  runInStore([
+    [
+      "LPUSH",
+      SUGGESTIONS_KEY,
+      JSON.stringify({
+        modelId: entry.id,
+        category: entry.category,
+        suggestion,
+        at: new Date().toISOString(),
+      }),
+    ],
+  ]);
+
+// Adds one to a model's count and returns every model's total.
+const countVote = async (
+  modelId: string,
+): Promise<Map<string, number> | undefined> => {
+  const replies = await runInStore([
+    ["HINCRBY", VOTES_KEY, modelId, "1"],
+    ["HGETALL", VOTES_KEY],
+  ]);
+  if (!replies) return undefined;
+  const pairs = Array.isArray(replies[1]) ? (replies[1] as string[]) : [];
+  const totals = new Map<string, number>();
+  for (let n = 0; n + 1 < pairs.length; n += 2)
+    totals.set(pairs[n], Number(pairs[n + 1]) || 0);
+  return totals;
 };
 
 // Every model that can be upvoted, most votes first, as a fixed-width table.
@@ -229,6 +254,7 @@ export const POST = async (request: Request): Promise<Response> => {
     : "local";
   if (!acceptRequest(client)) return fail("Too many suggestions", 429);
 
+  if (!isVote) await keepSuggestion(entry, suggestion);
   const message = isVote
     ? await voteMessage(entry)
     : suggestionMessage(entry, suggestion);

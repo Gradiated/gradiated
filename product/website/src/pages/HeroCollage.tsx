@@ -196,7 +196,7 @@ const GROUPS = [
   ["gr-lab-paper-map", "gr-lab-paper"],
   ["gr-lab-sticker-joules", "gr-lab-sticker-g"],
 ];
-const CLEARANCE = 40; /* px between the buttons and a dropped piece */
+const CLEARANCE = 72; /* px between the buttons and a dropped piece */
 
 const useTextClearance = (collage: RefObject<HTMLDivElement | null>) => {
   useEffect(() => {
@@ -250,15 +250,22 @@ const useTextClearance = (collage: RefObject<HTMLDivElement | null>) => {
         drops.set(group, Math.max(drops.get(group) ?? 0, need));
       }
 
-      let lowest = 0;
       for (const piece of pieces) {
         const drop = Math.ceil(drops.get(groupOf(piece)) ?? 0);
         if (drop) piece.style.setProperty("--drop", `${drop}px`);
-        if (piece.offsetParent !== null)
-          lowest = Math.max(
-            lowest,
-            piece.offsetTop + piece.offsetHeight + drop,
-          );
+      }
+
+      /* The stage grows to hold the pieces you can see, as they now sit
+         (offsets include the drop): one mostly off the frame's edge
+         doesn't count. */
+      let lowest = 0;
+      for (const piece of pieces) {
+        if (piece.offsetParent === null) continue;
+        const shown =
+          Math.min(piece.offsetLeft + piece.offsetWidth, element.offsetWidth) -
+          Math.max(piece.offsetLeft, 0);
+        if (shown > piece.offsetWidth / 2)
+          lowest = Math.max(lowest, piece.offsetTop + piece.offsetHeight);
       }
       const extra = Math.max(0, lowest + CLEARANCE - element.offsetHeight);
       if (extra)

@@ -19,7 +19,7 @@
 
   position: relative;
   /* The design's desk ends at about 1440: the stickers' lower edge. */
-  min-height: calc(1440 * var(--px) + var(--lab-extra, 0px));
+  min-height: calc(1440 * max(var(--px), 0.74px) + var(--lab-extra, 0px));
 }
 
 /* The homepage sits on a cool grey a step below the site's ground, so the
@@ -174,7 +174,10 @@
   );
   /* --drop: set by HeroCollage.tsx when the piece would run into the
      statement's text; it moves down below the buttons instead. */
-  top: calc(var(--y) * var(--P) + var(--drop, 0px));
+  /* Vertical positions scale with the piece's own size, not the sheet's
+     width, so the spacing between pieces grows with them and a narrow
+     window spreads the desk down rather than piling it up. */
+  top: calc(var(--y) * var(--px) + var(--drop, 0px));
   width: calc(var(--w) * var(--px));
   /* Decorative: nothing here takes a pointer, so it never feels clickable. */
   pointer-events: none;
@@ -260,11 +263,23 @@
   left: auto;
 }
 
-/* The right-hand pieces slide right. */
-.gr-lab-screen,
+/* The right-hand pieces slide right. The Thesis stack sits under the copy
+   rather than at an edge, so it holds its place (side 0) and stays close
+   to the stickers beside it. */
+.gr-lab-screen {
+  --side: 1;
+}
+
 .gr-lab-thesis,
 .gr-lab-thesis-map {
-  --side: 1;
+  --side: 0;
+}
+
+/* The stickers slide left only partway with the other left-hand pieces,
+   so they stay near the Thesis stack without crowding it. */
+.gr-lab-sticker-joules,
+.gr-lab-sticker-g {
+  --side: -0.45;
 }
 
 /* -- the coded pieces -------------------------------------------------------

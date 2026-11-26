@@ -15,6 +15,7 @@ ABLITERATED_MODEL_ID = 'yetalabs/kimi-k3.1-pro-abliterated'
 ACTIVE_REQUESTS = 5
 ABLITERATED_ACTIVE_REQUESTS = 16
 CYBER_PROFILE = {
+    'model_id': CYBER_MODEL_ID,
     'model': 'yetalabs/Kimi-K3.1-Pro-abliterated',
     'revision': '0911ef0765f49d26dfa25bb0d071f29463f8000b',
     'served_model_name': 'yetalabs/Kimi-K3.1-Pro-abliterated',

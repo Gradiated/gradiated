@@ -76,7 +76,7 @@ class Configuration(unittest.TestCase):
         for model_id in (config.CYBER_MODEL_ID, config.ABLITERATED_MODEL_ID):
             with self.subTest(model_id=model_id):
                 settings, backend, router = config.commands({**self.environment, 'MODEL_ID': model_id})
-                self.assertEqual(settings['model_id'], model_id)
+                self.assertEqual(settings['model_id'], config.CYBER_MODEL_ID)
                 self.assertEqual(settings['model'], 'yetalabs/Kimi-K3.1-Pro-abliterated')
                 self.assertEqual(settings['revision'], '0911ef0765f49d26dfa25bb0d071f29463f8000b')
                 self.assertEqual(settings['served_model_name'], 'yetalabs/Kimi-K3.1-Pro-abliterated')

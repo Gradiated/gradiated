@@ -733,10 +733,7 @@ async fn partial_mode_applies_only_to_models_that_declare_it() {
 
 #[tokio::test]
 async fn only_open_limit_models_leave_an_unset_output_limit_to_the_runtime() {
-    for model_id in [
-        "moonshotai/kimi-k3.1-pro",
-        "yetalabs/kimi-k3.1-pro-abliterated",
-    ] {
+    for model_id in ["moonshotai/kimi-k3.1-pro", "kimi-k3.1-pro-cyber"] {
         let kimi = || {
             let mut state = TestServingState::ready();
             state.model.as_mut().unwrap().id = model_id.to_owned();

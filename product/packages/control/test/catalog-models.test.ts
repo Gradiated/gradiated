@@ -107,6 +107,10 @@ describe("model configurations", () => {
       input: [1_600, 160],
       output: [8_000, 8_000],
     },
+    "kimi-k3.1-pro-cyber": {
+      input: [1_000, 100],
+      output: [5_000, 5_000],
+    },
     "yetalabs/kimi-k3.1-pro-abliterated": {
       input: [1_000, 100],
       output: [5_000, 5_000],
@@ -146,6 +150,7 @@ describe("model configurations", () => {
       "gradiated/linden-1": null,
       "perplexity-ai/pplx-decider-v1.2": null,
       "moonshotai/kimi-k3.1-pro": "moonshotai/kimi-k3.1-pro",
+      "kimi-k3.1-pro-cyber": null,
       "yetalabs/kimi-k3.1-pro-abliterated": null,
       "z-ai/glm-5.3": "z-ai/glm-5.3",
       "posthog/jeeves": null,
@@ -245,13 +250,20 @@ it("offers Kimi with exact OpenRouter capacity and its reasoning contract", () =
   });
 });
 
-it("offers YetaLabs' Kimi K3.1 Pro Cyber without OpenRouter fallback", () => {
+it("offers YetaLabs' Kimi K3.1 Pro Cyber without OpenRouter fallback and aliases NanoGPT's ID", () => {
   const model = catalogModels.find(
+    (item) => item.id === "kimi-k3.1-pro-cyber",
+  );
+  const retired = legacyModels.find(
     (item) => item.id === "yetalabs/kimi-k3.1-pro-abliterated",
   );
 
   expect(model?.status).toBe("available");
   expect(model?.name).toBe("Kimi K3.1 Pro Cyber");
+  expect(model && "aliases" in model ? model.aliases : undefined).toEqual([
+    "yetalabs/kimi-k3.1-pro-abliterated",
+  ]);
+  expect(retired?.status).toBe("retired");
   expect(
     model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
   ).toBeNull();

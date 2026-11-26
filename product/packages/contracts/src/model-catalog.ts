@@ -38,7 +38,7 @@ export const MODEL_CATALOG = [
     },
   },
   {
-    id: "yetalabs/kimi-k3.1-pro-abliterated",
+    id: "kimi-k3.1-pro-cyber",
     displayName: "Kimi K3.1 Pro Cyber",
     icon: null,
     supportedUses: ["judge", "comparison", "serving"],
@@ -264,6 +264,12 @@ const LEGACY_MODEL_CATALOG = [
     id: "dealignai/glm-5.3-flash-uncensored-nvfp4",
     displayName: "GLM-5.3 Flash Uncensored",
     icon: "/model-providers/zai.svg",
+    supportedUses: ["judge", "comparison", "serving"],
+  },
+  {
+    id: "yetalabs/kimi-k3.1-pro-abliterated",
+    displayName: "Kimi K3.1 Pro Cyber",
+    icon: null,
     supportedUses: ["judge", "comparison", "serving"],
   },
 ] as const satisfies readonly CatalogEntry[];

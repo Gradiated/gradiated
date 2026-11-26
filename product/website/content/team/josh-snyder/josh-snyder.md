@@ -1,7 +1,7 @@
 ---
 name: Josh Snyder
 role: Cofounder
-summary: Led AI engineering at PostHog. Specialized in the mathematics of graph neural networks, with a master's degree from Cambridge.
+summary: Previously led AI engineering at PostHog. Studied graph neural networks at Cambridge.
 order: 2
 # Where you are based, to the city. Public, and puts you on the map.
 location:
@@ -36,7 +36,7 @@ on each, and what the open question is. Keep this one current.
 - **An area of research.** What you are trying to find out.
 -->
 
-- **RL experiments.** Running reinforcement learning experiments - including post-training loops over production traces and reconstructing production environments from traces to turn smaller open-weight models into reliable, cost-effective specialists for real-world workloads.
+- **RL experiments.** Post-training smaller open-weight models on production traces and rebuilding environments from them, so smaller models can handle real workloads reliably and cheaply.
 
 ## Things I've done
 

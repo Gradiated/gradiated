@@ -15,14 +15,14 @@ General-purpose embedding models often miss internal acronyms, product names, an
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Model, adapters, losses, optim, pooling
+from grad import Grad, adapters, losses, optim, pooling
 from grad.recipes import EmbeddingRecipe
 
 client = Grad()
 dataset = client.datasets.get("docs-retrieval-triplets")
 
 recipe = EmbeddingRecipe(
-    model=Model("BAAI/bge-small-en-v1.5"),
+    model="BAAI/bge-small-en-v1.5",
     adapter=adapters.Full(),
     pool=pooling.Mean(),
     loss=losses.InfoNCE(temp=0.05),
@@ -38,7 +38,7 @@ print(run.artifact.id, run.eval_report)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Model, adapters, losses, optim, pooling, recipes } from "@gradiated/grad";
+import { Grad, adapters, losses, optim, pooling, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("docs-retrieval-triplets");
@@ -48,7 +48,7 @@ const run = await grad.runs
     dataset,
     name: "docs-embedder",
     recipe: recipes.embedding({
-      model: new Model("BAAI/bge-small-en-v1.5"),
+      model: "BAAI/bge-small-en-v1.5",
       adapter: adapters.full(),
       pool: pooling.mean(),
       loss: losses.infoNCE({ temp: 0.05 }),
@@ -79,7 +79,7 @@ grad deploy docs-embedder@latest
 
 ### Key parameters
 
-- **`model`:** start with a compact encoder like `Model("BAAI/bge-small-en-v1.5")` (sub-10 ms inference). Move to a larger encoder only if retrieval quality plateaus on long code or technical text.
+- **`model`:** start with a compact encoder like `"BAAI/bge-small-en-v1.5"` (sub-10 ms inference). Move to a larger encoder only if retrieval quality plateaus on long code or technical text.
 - **`adapter=adapters.Full()`:** because embedding encoders are small (~33M–300M parameters), training all weights is fast and usually beats LoRA.
 - **`pool=pooling.Mean()`:** averages token vectors into one vector per document (the standard choice for dense search).
 - **`losses.InfoNCE(temp=0.05)`:** pulls matching `(anchor, positive)` pairs together and pushes near-miss `negative` docs apart; lower `temp` (`0.03`–`0.05`) sharpens rankings when negatives are close.

@@ -7,7 +7,7 @@ If you just fine-tune a small model on saved outputs from a big model, it can go
 ## What data you need
 
 - **Only prompts:** you don't need labeled answers — 1,000–5,000 real prompts in `input.messages` ([trajectories](/docs/training/trajectories/)) are enough.
-- **A teacher model:** any larger `Model` (`Model("Qwen/Qwen3-32B")`) or a fine-tuned `.grad` [`Artifact`](/docs/training/artifacts/) you trained earlier.
+- **A teacher model:** any larger `Model` (`"Qwen/Qwen3-32B"`) or a fine-tuned `.grad` [`Artifact`](/docs/training/artifacts/) you trained earlier.
 
 ## Train with `DistillRecipe`
 
@@ -15,15 +15,15 @@ If you just fine-tune a small model on saved outputs from a big model, it can go
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Model, adapters, losses, optim
+from grad import Grad, adapters, losses, optim
 from grad.recipes import DistillRecipe, OnPolicy
 
 client = Grad()
 dataset = client.datasets.get("support-prompts")
 
 recipe = DistillRecipe(
-    model=Model("Qwen/Qwen3-4B"),
-    teacher=Model("Qwen/Qwen3-32B"),
+    model="Qwen/Qwen3-4B",
+    teacher="Qwen/Qwen3-32B",
     adapter=adapters.LoRA(rank=32),
     rollout=OnPolicy(max_new_tokens=512),
     loss=losses.TopKKLDistill(top_k=32),
@@ -39,7 +39,7 @@ print(run.artifact.id, run.eval_report)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Model, adapters, losses, optim, recipes } from "@gradiated/grad";
+import { Grad, adapters, losses, optim, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("support-prompts");
@@ -49,8 +49,8 @@ const run = await grad.runs
     dataset,
     name: "support-4b-distilled",
     recipe: recipes.distill({
-      model: new Model("Qwen/Qwen3-4B"),
-      teacher: new Model("Qwen/Qwen3-32B"),
+      model: "Qwen/Qwen3-4B",
+      teacher: "Qwen/Qwen3-32B",
       adapter: adapters.lora({ rank: 32 }),
       rollout: recipes.onPolicy({ maxNewTokens: 512 }),
       loss: losses.topKKLDistill({ topK: 32 }),
@@ -95,7 +95,7 @@ grad train -f distill-4b.yaml --wait
 
 ### Key parameters
 
-- **`teacher`:** the stronger model you want to copy — any catalog `Model` (like `Model("Qwen/Qwen3-32B")`) or a larger `.grad` [`Artifact`](/docs/training/artifacts/) you already fine-tuned.
+- **`teacher`:** the stronger model you want to copy — any catalog `Model` (like `"Qwen/Qwen3-32B"`) or a larger `.grad` [`Artifact`](/docs/training/artifacts/) you already fine-tuned.
 - **`rollout=OnPolicy(max_new_tokens=512)`:** generates answers from the student and grades them with the teacher so the student learns where it actually makes mistakes. Switch to `OffPolicy()` only if you already have fixed teacher completions you want to train on directly.
 - **`losses.TopKKLDistill(top_k=32)`:** matches the teacher's top 32 next-token probabilities at every step (`top_k=16..32` captures almost all the signal cleanly).
 - **`optim.AdamW(lr=...)`:** start around `1e-4` for LoRA distillation.

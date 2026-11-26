@@ -69,21 +69,21 @@ dataset.push([
 
 Choose your base `model`:
 
-- **`Model("gradiated/linden-1")`** *(default)* — best starting point when you want to specialize `linden-1` on your own questions and state format.
-- **`Model("Qwen/Qwen3-0.6B")`** — smallest general open model if you want to train a lightweight decision model from scratch.
+- **`"gradiated/linden-1"`** *(default)* — best starting point when you want to specialize `linden-1` on your own questions and state format.
+- **`"Qwen/Qwen3-0.6B"`** — smallest general open model if you want to train a lightweight decision model from scratch.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Model, splits
+from grad import Grad, splits
 from grad.recipes import DecisionModelRecipe
 
 client = Grad()
 dataset = client.datasets.get("ticket-triage")
 
 recipe = DecisionModelRecipe(
-    model=Model("gradiated/linden-1"),
+    model="gradiated/linden-1",
     split=splits.BySession(eval_fraction=0.15),
 )
 
@@ -97,13 +97,13 @@ print(run.eval_report)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Model, recipes, splits } from "@gradiated/grad";
+import { Grad, recipes, splits } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("ticket-triage");
 
 const recipe = recipes.decisionModel({
-  model: new Model("gradiated/linden-1"),
+  model: "gradiated/linden-1",
   split: splits.bySession({ evalFraction: 0.15 }),
 });
 
@@ -124,7 +124,7 @@ run, _ := client.Runs.Create(ctx, grad.RunParams{
 	Dataset: dataset,
 	Name:    "ticket-triage",
 	Recipe: grad.DecisionModelRecipe{
-		Model: grad.Model("gradiated/linden-1"),
+		Model: "gradiated/linden-1",
 		Split: grad.BySessionSplit{EvalFraction: 0.15},
 	},
 }).Wait(ctx)
@@ -150,7 +150,7 @@ grad deploy ticket-triage@latest
 
 ### Key parameters
 
-- **`model`:** defaults to `Model("gradiated/linden-1")` (best for specializing `linden-1` on your own questions). Pass `Model("Qwen/Qwen3-0.6B")` if you want to train a fresh lightweight model from scratch.
+- **`model`:** defaults to `"gradiated/linden-1"` (best for specializing `linden-1` on your own questions). Pass `"Qwen/Qwen3-0.6B"` if you want to train a fresh lightweight model from scratch.
 - **`loss`:** picked automatically from each question type (`losses.CrossEntropy()` for `choice`, `losses.BCEWithLogits()` for `noul`, `losses.OrdinalBCE()` for `score`); pass `loss=` only if you want to override it.
 - **`split`:** `splits.BySession(eval_fraction=0.15)` keeps related requests from the same `session_id` together so eval numbers stay honest.
 

@@ -28,17 +28,17 @@ By default, `RouterRecipe` fine-tunes `Qwen/Qwen3-0.6B` on your prompts and scor
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Judge, Model
+from grad import Grad, Judge
 from grad.recipes import RouterRecipe
 
 client = Grad()
 dataset = client.datasets.get("support-traces")
 
 recipe = RouterRecipe(
-    models=[Model("Qwen/Qwen3-8B"), Model("claude-opus-4-7")],
+    models=["Qwen/Qwen3-8B", "{{OPUS_MODEL}}"],
     score=Judge(
         name="resolved",
-        model=Model("claude-sonnet-4-6"),
+        model="{{SONNET_MODEL}}",
         prompt="Did the assistant solve the user's issue accurately?",
     ),
     max_quality_drop=0.02,
@@ -54,16 +54,16 @@ print(run.eval_report["pareto_summary"])
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Judge, Model, recipes } from "@gradiated/grad";
+import { Grad, Judge, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("support-traces");
 
 const recipe = recipes.router({
-  models: [new Model("Qwen/Qwen3-8B"), new Model("claude-opus-4-7")],
+  models: ["Qwen/Qwen3-8B", "{{OPUS_MODEL}}"],
   score: new Judge({
     name: "resolved",
-    model: new Model("claude-sonnet-4-6"),
+    model: "{{SONNET_MODEL}}",
     prompt: "Did the assistant solve the user's issue accurately?",
   }),
   maxQualityDrop: 0.02,
@@ -86,10 +86,10 @@ run, _ := client.Runs.Create(ctx, grad.RunParams{
 	Dataset: dataset,
 	Name:    "support-router",
 	Recipe: grad.RouterRecipe{
-		Models: []grad.Model{grad.Model("Qwen/Qwen3-8B"), grad.Model("claude-opus-4-7")},
+		Models: []string{"Qwen/Qwen3-8B", "{{OPUS_MODEL}}"},
 		Score: grad.Judge{
 			Name:   "resolved",
-			Model:  grad.Model("claude-sonnet-4-6"),
+			Model:  "{{SONNET_MODEL}}",
 			Prompt: "Did the assistant solve the user's issue accurately?",
 		},
 		MaxQualityDrop: 0.02,
@@ -120,7 +120,7 @@ grad deploy support-router@latest --canary 0.10
 - **`models`:** the list of candidate models to route between. If your dataset only contains logs from one model, Gradiated replays your prompts against the others automatically. If your logs already include multiple models in `metadata.model`, you can leave `models` out.
 - **`score`:** how quality is measured — pass a [`Judge`](/docs/training/rubrics/) with a prompt if your logs don't have scores yet, or pass an existing score name (`"task_success"`) or function (`lambda t: ...`).
 - **`max_quality_drop`:** how much quality drop vs. your best model you're willing to trade for cost savings (default `0.02`, or 2%).
-- **`model`:** the router backbone (`Model("Qwen/Qwen3-0.6B")` by default). Swap in a different model or a lightweight frozen-encoder fit in [Custom loops](/docs/training/custom-loops/) if you have strict CPU latency limits.
+- **`model`:** the router backbone (`"Qwen/Qwen3-0.6B"` by default). Swap in a different model or a lightweight frozen-encoder fit in [Custom loops](/docs/training/custom-loops/) if you have strict CPU latency limits.
 - **`split`:** defaults to `splits.BySession(eval_fraction=0.15)` so turns from the same conversation never leak between training and evaluation.
 - **Custom pricing:** Gradiated uses built-in model pricing automatically; include `metrics.cost_usd` in your dataset (or pass `pricing=`) only if you have negotiated or self-hosted rates.
 
@@ -131,7 +131,7 @@ Before deploying, check `run.eval_report`:
 ```json
 {
   "eval_examples": 480,
-  "fallback_model": "claude-opus-4-7",
+  "fallback_model": "{{OPUS_MODEL}}",
   "fallback_quality": 0.912,
   "pareto_summary": {
     "target_max_drop": 0.02,
@@ -157,7 +157,7 @@ Deploy your trained [`Artifact`](/docs/training/artifacts/) to an [`Endpoint`](/
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Model, strategies
+from grad import Grad, strategies
 
 client = Grad()
 capture = client.datasets.get("support-traces")
@@ -167,7 +167,7 @@ router = client.endpoints.create(
     artifact=run.artifact,
     capture_dataset=capture,
     strategy=strategies.SLALagrangian(
-        fallback=Model("claude-opus-4-7"),
+        fallback="{{OPUS_MODEL}}",
         max_quality_drop=0.02,
         hard_stop_drop=0.05,
     ),
@@ -185,7 +185,7 @@ decision.record_feedback(
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Model, strategies } from "@gradiated/grad";
+import { Grad, strategies } from "@gradiated/grad";
 
 const grad = new Grad();
 const capture = await grad.datasets.get("support-traces");
@@ -195,7 +195,7 @@ const router = await grad.endpoints.create({
   artifact: run.artifact,
   captureDataset: capture,
   strategy: strategies.slaLagrangian({
-    fallback: new Model("claude-opus-4-7"),
+    fallback: "{{OPUS_MODEL}}",
     maxQualityDrop: 0.02,
     hardStopDrop: 0.05,
   }),

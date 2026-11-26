@@ -52,7 +52,7 @@ When you want to set a custom fallback model, quality limit, or multi-model setu
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Model, strategies
+from grad import Grad, strategies
 
 client = Grad()
 artifact = client.artifacts.get("support-router@2026-11-25-1")
@@ -63,7 +63,7 @@ router = client.endpoints.create(
     artifact=artifact,
     capture_dataset=capture,
     strategy=strategies.SLALagrangian(
-        fallback=Model("claude-opus-4-7"),
+        fallback="{{OPUS_MODEL}}",
         max_quality_drop=0.02,
     ),
 )
@@ -76,7 +76,7 @@ reply = call_your_llm(decision.model, messages, tools)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Model, strategies } from "@gradiated/grad";
+import { Grad, strategies } from "@gradiated/grad";
 
 const grad = new Grad();
 const artifact = await grad.artifacts.get("support-router@2026-11-25-1");
@@ -87,7 +87,7 @@ const router = await grad.endpoints.create({
   artifact,
   captureDataset: capture,
   strategy: strategies.slaLagrangian({
-    fallback: new Model("claude-opus-4-7"),
+    fallback: "{{OPUS_MODEL}}",
     maxQualityDrop: 0.02,
   }),
 });
@@ -108,7 +108,7 @@ router, _ := client.Endpoints.Create(ctx, grad.EndpointParams{
 	Artifact:       artifact,
 	CaptureDataset: capture,
 	Strategy: grad.SLALagrangianStrategy{
-		Fallback:       grad.Model("claude-opus-4-7"),
+		Fallback:       "{{OPUS_MODEL}}",
 		MaxQualityDrop: 0.02,
 	},
 })
@@ -304,7 +304,7 @@ A `Strategy` controls how an endpoint picks models, checks outputs, and falls ba
 ### Multi-artifact example: cascade
 
 ```python
-from grad import Model, strategies
+from grad import strategies
 
 sql_agent = client.artifacts.get("sql-8b@v3")
 verifier = client.artifacts.get("sql-verifier@v2")
@@ -314,7 +314,7 @@ client.endpoints.create(
     artifact=sql_agent,
     strategy=strategies.Cascade(
         verifier=verifier,
-        frontier=Model("Qwen/Qwen3-32B"),
+        frontier="Qwen/Qwen3-32B",
         threshold=0.75,
     ),
 )

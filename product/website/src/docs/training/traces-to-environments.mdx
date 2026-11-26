@@ -15,14 +15,14 @@ Most teams start with thousands of logged requests in a [`Dataset`](/docs/traini
 Running RL on prompts the model already gets right 100% of the time (or never solves) wastes money because every attempt gets the same score. Score your dataset first with a `Judge` or your existing outcome scores, then keep **failures, escalations, and human-edited answers**:
 
 ```python
-from grad import Grad, Judge, Model
+from grad import Grad, Judge
 
 client = Grad()
 dataset = client.datasets.get("support-prod")
 
 judge = Judge(
     name="resolved",
-    model=Model("claude-sonnet-4-6"),
+    model="{{SONNET_MODEL}}",
     prompt="Did the assistant resolve the user's request accurately without policy errors?",
 )
 scored = dataset.score(judge).wait()
@@ -39,7 +39,7 @@ print(f"Selected {hard_traces.count()} candidate traces for environment tasks")
 If your task doesn't need multi-turn external state, turn your filtered logs into `Task`s with `Task.from_trajectory(t)`. Each `Task` keeps `input.messages`, `input.tools`, `expected_output`, and `metadata`, ready to pass into `GRPORecipe` or a custom loop:
 
 ```python
-from grad import Grad, Judge, Model, Rubric, Scorer, Task, validators
+from grad import Grad, Judge, Rubric, Scorer, Task, validators
 
 sql_valid = validators.SQL()
 
@@ -50,7 +50,7 @@ rubric = Rubric([
     Scorer("sql_syntax", weight=0.3, fn=valid_sql_syntax),
     Judge(
         name="matches_intent",
-        model=Model("claude-sonnet-4-6"),
+        model="{{SONNET_MODEL}}",
         prompt="Compare the generated SQL against expected_output and verify it returns the exact requested result.",
         weight=0.7,
     ),
@@ -73,7 +73,7 @@ Your multi-turn logs already contain the tool schemas, the read calls the agent 
 ```python
 import json
 from dataclasses import dataclass, field
-from grad import Environment, Judge, Model, Observation, Rubric, StatefulScorer, Task
+from grad import Environment, Judge, Observation, Rubric, StatefulScorer, Task
 
 @dataclass
 class MockStore:
@@ -115,7 +115,7 @@ rubric = Rubric([
     StatefulScorer("refund_state", weight=0.7, fn=correct_refund),
     Judge(
         name="policy_compliance",
-        model=Model("claude-sonnet-4-6"),
+        model="{{SONNET_MODEL}}",
         prompt="Verify the assistant explained the refund policy clearly and accurately.",
         weight=0.3,
     ),
@@ -156,7 +156,7 @@ Tasks generated from logs often have bugs: a test might already pass before any 
 
 ```python
 import grad
-from grad import Grad, Model, adapters, advantages, environments, losses, optim
+from grad import Grad, adapters, advantages, environments, losses, optim
 
 # 1. Load synthesized Harbor tasks and keep only verified fail-to-pass tasks
 env = environments.Harbor()
@@ -167,7 +167,7 @@ print(f"Kept {len(verified_tasks)}/{len(raw_tasks)} verified tasks")
 # 2. Train directly with GRPO on the verified Harbor suite
 client = Grad()
 with client.trainers.create(
-    model=Model("Qwen/Qwen3-8B"),
+    model="Qwen/Qwen3-8B",
     adapter=adapters.LoRA(rank=32),
 ) as trainer:
     for batch in chunked(verified_tasks, size=8):

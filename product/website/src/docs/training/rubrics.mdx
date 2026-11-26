@@ -13,13 +13,13 @@ A **`Rubric`** combines one or more weighted **`Scorer`**s into an overall score
 Mix fast code checks (syntax validators, unit tests, length checks) with a **`Judge`** so obvious errors are caught immediately and the model judge only grades nuance:
 
 ```python
-from grad import Judge, Model, Rubric, Scorer, validators
+from grad import Judge, Rubric, Scorer, validators
 
 rubric = Rubric([
     Scorer("valid_sql", weight=0.3, fn=validators.SQL()),
     Judge(
         name="accurate_query",
-        model=Model("claude-sonnet-4-6"),
+        model="{{SONNET_MODEL}}",
         prompt="Verify the SQL answers the user's question accurately without hallucinated columns.",
         weight=0.7,
     ),
@@ -33,7 +33,7 @@ Pick the scorer class that matches how you grade an answer:
 | Class | Signature | When to use it |
 | --- | --- | --- |
 | **`Scorer`** | `(traj: Trajectory) -> float` | Fast code checks (`validators.SQL()`, `validators.TypeScriptAST()`, `validators.JSONSchema(...)`), exact matches, or your own Python function. |
-| **`Judge(Scorer)`** | `Judge(name, model, prompt=...)` | Grade with a frontier `Model` (`Model("claude-sonnet-4-6")`) **or** a fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact` (no prompt needed for a reward model). |
+| **`Judge(Scorer)`** | `Judge(name, model, prompt=...)` | Grade with a frontier `Model` (`"{{SONNET_MODEL}}"`) **or** a fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact` (no prompt needed for a reward model). |
 | **`StatefulScorer(Scorer)`** | `(traj: Trajectory, handle: H) -> float` | Checks that query live Postgres rows, Redis keys, HTTP endpoints, or container files inside an [`Environment`](/docs/training/environments/) before cleanup. |
 | **`GroupScorer`** | `(group: list[Trajectory]) -> list[float]` | Compare multiple candidate answers for the same prompt side by side (for example, **`PairwiseJudge(GroupScorer)`**). |
 
@@ -44,14 +44,14 @@ To reuse a score already stored on your imported logs, pass `Scorer.from_score("
 `dataset.score(judge)` grades logs in parallel on the server and saves the results to `trajectory.scores`. Already-scored rows are skipped automatically, so you can change filter thresholds or reuse scores across [recipes](/docs/training/recipes/) without paying again:
 
 ```python
-from grad import Grad, Judge, Model
+from grad import Grad, Judge
 
 client = Grad()
 dataset = client.datasets.get("support-prod")
 
 judge = Judge(
     name="resolved",
-    model=Model("claude-sonnet-4-6"),
+    model="{{SONNET_MODEL}}",
     prompt="Did the assistant resolve the user's request accurately without policy errors?",
 )
 scored = dataset.score(judge).wait()

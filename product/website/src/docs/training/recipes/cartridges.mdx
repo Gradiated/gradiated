@@ -22,14 +22,14 @@ During training, the model reads `context` + each question to see what it *would
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Context, Grad, Model, losses, optim
+from grad import Context, Grad, losses, optim
 from grad.recipes import CartridgeRecipe
 
 client = Grad()
 dataset = client.datasets.get("api-docs-qa-prompts")
 
 recipe = CartridgeRecipe(
-    model=Model("Qwen/Qwen3-8B"),
+    model="Qwen/Qwen3-8B",
     context=Context.from_file("./api-docs-bundle.md"),  # or Context.from_uri("s3://...") / Context.from_text(...)
     num_tokens=256,
     loss=losses.TopKKLDistill(top_k=20),
@@ -45,7 +45,7 @@ print(run.artifact.id, run.eval_report)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Context, Grad, Model, losses, optim, recipes } from "@gradiated/grad";
+import { Context, Grad, losses, optim, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("api-docs-qa-prompts");
@@ -55,7 +55,7 @@ const run = await grad.runs
     dataset,
     name: "api-docs-cartridge",
     recipe: recipes.cartridge({
-      model: new Model("Qwen/Qwen3-8B"),
+      model: "Qwen/Qwen3-8B",
       context: Context.fromFile("./api-docs-bundle.md"),
       numTokens: 256,
       loss: losses.topKKLDistill({ topK: 20 }),
@@ -119,12 +119,12 @@ endpoint = run.deploy()
 If you only have **one** static prompt and want a single fine-tuned checkpoint with no prefix-KV tensors at serving time, pass `context=` to [`DistillRecipe`](/docs/training/recipes/distillation/):
 
 ```python
-from grad import Context, Model, adapters, losses
+from grad import Context, adapters, losses
 from grad.recipes import DistillRecipe, OnPolicy
 
 recipe = DistillRecipe(
-    model=Model("Qwen/Qwen3-8B"),
-    teacher=Model("Qwen/Qwen3-8B"),
+    model="Qwen/Qwen3-8B",
+    teacher="Qwen/Qwen3-8B",
     context=Context.from_uri("s3://my-bucket/api-docs-bundle.md"),
     adapter=adapters.LoRA(rank=32),
     rollout=OnPolicy(max_new_tokens=512),

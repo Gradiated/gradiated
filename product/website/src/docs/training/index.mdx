@@ -73,7 +73,7 @@ Already sending inference requests through Gradiated with the `x-gradiated-task`
 ✓ Split: 4,097 train / 723 eval (grouped by session_id — 0 leakage)
 ✓ Trained Qwen/Qwen3-0.6B router in 42s (~1.1M train tokens)
 
-  Eval report (vs. claude-opus-4-7 fallback, 95% bootstrap CI):
+  Eval report (vs. {{OPUS_MODEL}} fallback, 95% bootstrap CI):
     Fallback quality : 91.2%
     Routed quality   : 90.6%   (delta -0.6%, CI [-1.4%, +0.2%])
     Offload rate     : 64.1%   -> 57.4% cost reduction
@@ -293,9 +293,9 @@ Read https://gradiated.com/docs/training/recipes/router.md and integrate a Gradi
 ```text
 Read https://gradiated.com/docs/training/recipes/sft.md (and https://gradiated.com/docs/training/recipes/dpo.md) and set up a fine-tuning pipeline for our task:
 1. Export verified passing examples into a Gradiated `Dataset` (`input.messages`, `expected_output`, `session_id`, and `scores`).
-2. Score the dataset with a `Judge` (`dataset.score(judge).wait()`) and filter to high-scoring examples (`dataset.filter(lambda t: t.scores["clean"] >= 0.8)`), then configure an `SFTRecipe` (chaining into `DPORecipe` with `.then(...)` if needed) with `Model(...)` and `splits.BySession()`.
+2. Score the dataset with a `Judge` (`dataset.score(judge).wait()`) and filter to high-scoring examples (`dataset.filter(lambda t: t.scores["clean"] >= 0.8)`), then configure an `SFTRecipe` (chaining into `DPORecipe` with `.then(...)` if needed) with `model="Qwen/Qwen3-8B"` and `splits.BySession()`.
 3. Validate with `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json` before starting training.
-4. Deploy with `strategies.SyntaxFallback(fallback=Model(...))` and wire `feedback.record()` so human fixes are captured as `expected_output`.
+4. Deploy with `strategies.SyntaxFallback(fallback="Qwen/Qwen3-32B")` and wire `feedback.record()` so human fixes are captured as `expected_output`.
 ```
 
   </DocsCodeTab>
@@ -306,7 +306,7 @@ Read https://gradiated.com/docs/training/environments.md and https://gradiated.c
 1. Subclass `grad.Environment` around our existing `docker-compose.yml` and seed script (`setup`, `step` returning `Observation(text=...)`, `evaluate` before `teardown`, and guaranteed `teardown`).
 2. Write a `Rubric` with deterministic `StatefulScorer` assertions against the live container state.
 3. Run a 2-task smoke test against a base `Model` (`client.models.get(...)`, `max_concurrency=2`) to verify `loss_mask` masks tool outputs and containers clean up cleanly.
-4. Wire a GRPO / async CISPO loop using `with client.trainers.create(model=Model(...), adapter=adapters.LoRA(rank=32)) as trainer:`.
+4. Wire a GRPO / async CISPO loop using `with client.trainers.create(model="Qwen/Qwen3-8B", adapter=adapters.LoRA(rank=32)) as trainer:`.
 ```
 
   </DocsCodeTab>

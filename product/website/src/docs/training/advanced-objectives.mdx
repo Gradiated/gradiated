@@ -139,7 +139,7 @@ Fetch `top_k` opaque `TensorRef`s from the teacher and pass `gather_indices=t_re
 
 ```python
 import torch
-from grad import Grad, Model, adapters, losses, optim
+from grad import Grad, adapters, losses, optim
 
 class JSDLoss(losses.CustomLoss):
     outputs = ("topk_logprobs",)
@@ -160,7 +160,7 @@ class JSDLoss(losses.CustomLoss):
 client = Grad()
 teacher = client.models.get("Qwen/Qwen3-32B")
 
-with client.trainers.create(model=Model("Qwen/Qwen3-4B"), adapter=adapters.LoRA(rank=32)) as trainer:
+with client.trainers.create(model="Qwen/Qwen3-4B", adapter=adapters.LoRA(rank=32)) as trainer:
     rollouts = [g[0] for g in trainer.snapshot().sample(prompt_inputs, n=1, max_new_tokens=256)]
     t_refs = teacher.score_logprobs(rollouts, top_k=32).topk_refs
 
@@ -200,7 +200,7 @@ with client.trainers.create(model=teacher, adapter=adapters.LoRA(rank=64)) as tr
 import torch
 import torch.nn.functional as F
 import grad
-from grad import Grad, Model, adapters, heads, losses, optim
+from grad import Grad, adapters, heads, losses, optim
 
 class BradleyTerryLoss(losses.CustomLoss):
     outputs = ("heads",)
@@ -214,7 +214,7 @@ class BradleyTerryLoss(losses.CustomLoss):
 
 client = Grad()
 with client.trainers.create(
-    model=Model("Qwen/Qwen3-8B"),
+    model="Qwen/Qwen3-8B",
     adapter=adapters.LoRA(rank=32),
     heads={"rm": heads.Linear(dim=1)},
 ) as trainer:
@@ -230,7 +230,7 @@ with client.trainers.create(
   <DocsCodeTab label="Step-level PRM (BCESparsePositions)">
 
 ```python
-from grad import Grad, Model, Record, adapters, heads, losses, optim
+from grad import Grad, Record, adapters, heads, losses, optim
 
 client = Grad()
 records = [
@@ -242,7 +242,7 @@ records = [
 ]
 
 with client.trainers.create(
-    model=Model("Qwen/Qwen3-8B"),
+    model="Qwen/Qwen3-8B",
     adapter=adapters.LoRA(rank=32),
     heads={"prm": heads.Linear(dim=1, token_level=True)},
 ) as trainer:
@@ -303,7 +303,7 @@ class MatryoshkaColBERTLoss(losses.CustomLoss):
 import torch
 import torch.nn.functional as F
 import grad
-from grad import Grad, Model, adapters, heads, losses, optim
+from grad import Grad, adapters, heads, losses, optim
 
 class ListNetRerankLoss(losses.CustomLoss):
     outputs = ("heads",)
@@ -318,7 +318,7 @@ class ListNetRerankLoss(losses.CustomLoss):
 
 client = Grad()
 with client.trainers.create(
-    model=Model("BAAI/bge-reranker-base"),
+    model="BAAI/bge-reranker-base",
     adapter=adapters.Full(),
     heads={"rel": heads.Linear(dim=1)},
 ) as trainer:

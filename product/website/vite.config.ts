@@ -35,6 +35,9 @@ const { rehypeArticleExternalLinks } =
       file: { path?: string },
     ) => void;
   };
+const { remarkDocsModels } = require("./scripts/docs-models.cjs") as {
+  remarkDocsModels: () => (tree: unknown) => void;
+};
 const { renderPost } = require("./scripts/sand-renderer.cjs") as {
   renderPost(
     source: string,
@@ -46,7 +49,12 @@ const { renderPost } = require("./scripts/sand-renderer.cjs") as {
 };
 
 const mdxPlugin = mdx({
-  remarkPlugins: [remarkFrontmatter, remarkGfm, remarkArticleCitations],
+  remarkPlugins: [
+    remarkFrontmatter,
+    remarkGfm,
+    remarkDocsModels,
+    remarkArticleCitations,
+  ],
   rehypePlugins: [
     [rehypeHighlight, { detect: false, languages: all }],
     rehypeArticleExternalLinks,

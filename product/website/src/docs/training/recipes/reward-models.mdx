@@ -18,14 +18,14 @@ When unit tests or syntax checks aren't enough to grade an answer — or calling
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Model, adapters, optim, splits
+from grad import Grad, adapters, optim, splits
 from grad.recipes import RewardModelRecipe
 
 client = Grad()
 pairs_ds = client.datasets.get("sql-preferences")
 
 recipe = RewardModelRecipe(
-    model=Model("Qwen/Qwen3-8B"),
+    model="Qwen/Qwen3-8B",
     adapter=adapters.LoRA(rank=32),
     optimizer=optim.AdamW(lr=1e-4),
     split=splits.BySession(eval_fraction=0.10),
@@ -40,7 +40,7 @@ print(run.artifact.id, run.eval_report)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Model, adapters, optim, recipes, splits } from "@gradiated/grad";
+import { Grad, adapters, optim, recipes, splits } from "@gradiated/grad";
 
 const grad = new Grad();
 const pairsDs = await grad.datasets.get("sql-preferences");
@@ -50,7 +50,7 @@ const run = await grad.runs
     dataset: pairsDs,
     name: "sql-verifier",
     recipe: recipes.rewardModel({
-      model: new Model("Qwen/Qwen3-8B"),
+      model: "Qwen/Qwen3-8B",
       adapter: adapters.lora({ rank: 32 }),
       optimizer: optim.adamW({ lr: 1e-4 }),
       split: splits.bySession({ evalFraction: 0.1 }),
@@ -73,7 +73,7 @@ grad train --dataset sql-preferences --name sql-verifier --recipe reward-model -
 
 ### Key parameters
 
-- **`model`:** start with a fast 4B–8B model (`Model("Qwen/Qwen3-8B")`) — reward models only score an output in a single forward pass, so an 8B verifier runs in milliseconds.
+- **`model`:** start with a fast 4B–8B model (`"Qwen/Qwen3-8B"`) — reward models only score an output in a single forward pass, so an 8B verifier runs in milliseconds.
 - **`adapter`:** `adapters.LoRA(rank=32)` works well for 500–5,000 preference pairs.
 - **`optim.AdamW(lr=...)`:** start around `1e-4` for LoRA reward models.
 - **`split`:** `splits.BySession(eval_fraction=0.10)` keeps paired examples and multi-turn conversations together so eval accuracy isn't inflated.
@@ -96,7 +96,7 @@ scored = client.datasets.get("sql-prod").score(sql_judge).wait()
 Pair a fast fine-tuned specialist with your verifier so only uncertain outputs escalate to a frontier model:
 
 ```python
-from grad import Model, strategies
+from grad import strategies
 
 agent = client.artifacts.get("sql-agent@2026-11-25-2")
 verifier = run.artifact
@@ -108,7 +108,7 @@ client.endpoints.create(
     capture_dataset=capture,
     strategy=strategies.Cascade(
         verifier=verifier,
-        frontier=Model("Qwen/Qwen3-32B"),
+        frontier="Qwen/Qwen3-32B",
         threshold=0.75,
     ),
 )
@@ -117,7 +117,7 @@ client.endpoints.create(
 ## When to train a reward model vs. other graders
 
 - **Use a [`Scorer`](/docs/training/rubrics/) (code check)** first whenever correctness can be checked in Python (JSON schema, SQL parser, unit tests). It's instant and free.
-- **Use a frontier [`Judge`](/docs/training/rubrics/)** (`Model("claude-sonnet-4-6")`) while prototyping — no training data needed, just a prompt.
+- **Use a frontier [`Judge`](/docs/training/rubrics/)** (`"{{SONNET_MODEL}}"`) while prototyping — no training data needed, just a prompt.
 - **Train a reward model (`RewardModelRecipe`)** once you have 500–2,000 graded pairs and want fast, cheap scoring at scale (for RL training or live `Cascade` fallback checks).
 
 ## Want more control?

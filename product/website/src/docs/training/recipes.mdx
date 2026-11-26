@@ -155,18 +155,18 @@ Leave out any argument to keep the recipe's default, or override just the pieces
   <DocsCodeTab label="Router">
 
 ```python
-from grad import Grad, Judge, Model
+from grad import Grad, Judge
 from grad.recipes import RouterRecipe
 
 client = Grad()
 dataset = client.datasets.get("support-prod")
 
 recipe = RouterRecipe(
-    model=Model("Qwen/Qwen3-0.6B"),
-    models=[Model("Qwen/Qwen3-8B"), Model("claude-opus-4-7")],
+    model="Qwen/Qwen3-0.6B",
+    models=["Qwen/Qwen3-8B", "{{OPUS_MODEL}}"],
     score=Judge(
         name="resolved",
-        model=Model("claude-sonnet-4-6"),
+        model="{{SONNET_MODEL}}",
         prompt="Did the assistant solve the user's issue accurately?",
     ),
     max_quality_drop=0.02,
@@ -179,14 +179,14 @@ run = client.runs.create(dataset=dataset, name="support-router", recipe=recipe).
   <DocsCodeTab label="Decision model">
 
 ```python
-from grad import Grad, Model, splits
+from grad import Grad, splits
 from grad.recipes import DecisionModelRecipe
 
 client = Grad()
 dataset = client.datasets.get("ticket-triage")
 
 recipe = DecisionModelRecipe(
-    model=Model("gradiated/linden-1"),
+    model="gradiated/linden-1",
     split=splits.BySession(eval_fraction=0.15),
 )
 
@@ -197,13 +197,13 @@ run = client.runs.create(dataset=dataset, name="ticket-triage", recipe=recipe).w
   <DocsCodeTab label="SFT">
 
 ```python
-from grad import Grad, Judge, Model, adapters, optim, splits
+from grad import Grad, Judge, adapters, optim, splits
 from grad.recipes import SFTRecipe
 
 client = Grad()
 judge = Judge(
     name="clean_merge",
-    model=Model("claude-sonnet-4-6"),
+    model="{{SONNET_MODEL}}",
     prompt="Did the assistant apply the edit accurately without breaking surrounding code?",
 )
 dataset = client.datasets.get("diff-merge-prod").score(judge).wait().filter(
@@ -211,7 +211,7 @@ dataset = client.datasets.get("diff-merge-prod").score(judge).wait().filter(
 )
 
 recipe = SFTRecipe(
-    model=Model("Qwen/Qwen3-8B"),
+    model="Qwen/Qwen3-8B",
     adapter=adapters.LoRA(rank=32),
     optimizer=optim.AdamW(lr=2e-4),
     split=splits.BySession(eval_fraction=0.10),
@@ -245,7 +245,7 @@ run = client.runs.create(dataset=dataset, name="support-responder", recipe=recip
   <DocsCodeTab label="GRPO">
 
 ```python
-from grad import Grad, Judge, Model, Rubric, Scorer, adapters, losses, optim, validators
+from grad import Grad, Judge, Rubric, Scorer, adapters, losses, optim, validators
 from grad.recipes import GRPORecipe
 
 client = Grad()
@@ -259,7 +259,7 @@ recipe = GRPORecipe(
         Scorer("valid_ts", weight=0.4, fn=validators.TypeScriptAST()),
         Judge(
             name="exact_merge",
-            model=Model("claude-sonnet-4-6"),
+            model="{{SONNET_MODEL}}",
             prompt="Verify the merged file applies the edit cleanly without breaking surrounding code.",
             weight=0.6,
         ),
@@ -276,15 +276,15 @@ run = client.runs.create(dataset=dataset, name="fast-diff-merge", recipe=recipe)
   <DocsCodeTab label="Distill">
 
 ```python
-from grad import Grad, Model, adapters, losses, optim
+from grad import Grad, adapters, losses, optim
 from grad.recipes import DistillRecipe, OnPolicy
 
 client = Grad()
 dataset = client.datasets.get("support-prompts")
 
 recipe = DistillRecipe(
-    model=Model("Qwen/Qwen3-4B"),
-    teacher=Model("Qwen/Qwen3-32B"),
+    model="Qwen/Qwen3-4B",
+    teacher="Qwen/Qwen3-32B",
     adapter=adapters.LoRA(rank=32),
     rollout=OnPolicy(max_new_tokens=512),
     loss=losses.TopKKLDistill(top_k=32),
@@ -298,14 +298,14 @@ run = client.runs.create(dataset=dataset, name="support-fast-distill", recipe=re
   <DocsCodeTab label="Cartridge">
 
 ```python
-from grad import Context, Grad, Model, losses, optim
+from grad import Context, Grad, losses, optim
 from grad.recipes import CartridgeRecipe
 
 client = Grad()
 dataset = client.datasets.get("api-docs-corpus")
 
 recipe = CartridgeRecipe(
-    model=Model("Qwen/Qwen3-8B"),
+    model="Qwen/Qwen3-8B",
     context=Context.from_file("./api-docs-bundle.md"),
     num_tokens=256,
     loss=losses.TopKKLDistill(top_k=20),
@@ -325,7 +325,7 @@ You don't need to write a full training loop just to try a different loss functi
 ```python
 # Swap built-in losses.DPO() for your own SimPOLoss subclass inside DPORecipe:
 recipe = DPORecipe(
-    model=Model("Qwen/Qwen3-8B"),
+    model="Qwen/Qwen3-8B",
     adapter=adapters.LoRA(rank=32),
     loss=SimPOLoss(beta=2.0, gamma=0.5),
     optimizer=optim.AdamW(lr=3e-5),
@@ -370,7 +370,7 @@ Every recipe takes a `Model` (a base model or a trained `Artifact`) and produces
   <DocsCodeTab label="Chained (.then)">
 
 ```python
-from grad import Grad, Judge, Model, Rubric, Scorer, adapters, optim, validators
+from grad import Grad, Judge, Rubric, Scorer, adapters, optim, validators
 from grad.recipes import GRPORecipe, SFTRecipe
 
 client = Grad()
@@ -381,7 +381,7 @@ merge_rubric = Rubric([
     Scorer("valid_ts", weight=0.4, fn=validators.TypeScriptAST()),
     Judge(
         name="exact_merge",
-        model=Model("claude-sonnet-4-6"),
+        model="{{SONNET_MODEL}}",
         prompt="Verify the merged file applies the edit cleanly without breaking surrounding code.",
         weight=0.6,
     ),
@@ -392,7 +392,7 @@ run = (
     client.runs.create(
         dataset=gold_ds,
         name="fast-diff-merge",
-        recipe=SFTRecipe(model=Model("Qwen/Qwen3-8B"), adapter=adapters.LoRA(rank=32), optimizer=optim.AdamW(lr=2e-4)),
+        recipe=SFTRecipe(model="Qwen/Qwen3-8B", adapter=adapters.LoRA(rank=32), optimizer=optim.AdamW(lr=2e-4)),
     )
     .then(
         dataset=tasks_ds,
@@ -417,7 +417,7 @@ tasks_ds = client.datasets.get("diff-merge-tasks")
 sft = client.runs.create(
     dataset=gold_ds,
     name="fast-diff-merge",
-    recipe=SFTRecipe(model=Model("Qwen/Qwen3-8B"), adapter=adapters.LoRA(rank=32)),
+    recipe=SFTRecipe(model="Qwen/Qwen3-8B", adapter=adapters.LoRA(rank=32)),
 )
 
 rl = client.runs.create(

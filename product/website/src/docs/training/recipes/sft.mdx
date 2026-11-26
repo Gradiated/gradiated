@@ -31,7 +31,7 @@ Score your `Dataset` once with a [`Judge`](/docs/training/rubrics/) to keep only
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Judge, Model, adapters, optim, splits
+from grad import Grad, Judge, adapters, optim, splits
 from grad.recipes import SFTRecipe
 
 client = Grad()
@@ -40,7 +40,7 @@ dataset = client.datasets.get("diff-merge-prod")
 # Score logs once with a Judge and keep only high-quality examples
 judge = Judge(
     name="clean_merge",
-    model=Model("claude-sonnet-4-6"),
+    model="{{SONNET_MODEL}}",
     prompt="Did the assistant apply the edit accurately without breaking surrounding code?",
 )
 clean_dataset = dataset.score(judge).wait().filter(
@@ -48,7 +48,7 @@ clean_dataset = dataset.score(judge).wait().filter(
 )
 
 sft_recipe = SFTRecipe(
-    model=Model("Qwen/Qwen3-8B"),
+    model="Qwen/Qwen3-8B",
     adapter=adapters.LoRA(rank=32),
     optimizer=optim.AdamW(lr=2e-4),
     split=splits.BySession(eval_fraction=0.10),
@@ -69,14 +69,14 @@ print(sft.artifact.id)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Judge, Model, adapters, optim, recipes, splits } from "@gradiated/grad";
+import { Grad, Judge, adapters, optim, recipes, splits } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("diff-merge-prod");
 
 const judge = new Judge({
   name: "clean_merge",
-  model: new Model("claude-sonnet-4-6"),
+  model: "{{SONNET_MODEL}}",
   prompt: "Did the assistant apply the edit accurately without breaking surrounding code?",
 });
 const cleanDataset = (await dataset.score(judge).wait()).filter(
@@ -88,7 +88,7 @@ const sft = await grad.runs
     dataset: cleanDataset,
     name: "fast-diff-merge",
     recipe: recipes.sft({
-      model: new Model("Qwen/Qwen3-8B"),
+      model: "Qwen/Qwen3-8B",
       adapter: adapters.lora({ rank: 32 }),
       optimizer: optim.adamW({ lr: 2e-4 }),
       split: splits.bySession({ evalFraction: 0.1 }),
@@ -153,7 +153,7 @@ For JSON, SQL, or code [endpoints](/docs/training/endpoints/), pair your trained
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Model, strategies, validators
+from grad import Grad, strategies, validators
 
 client = Grad()
 capture = client.datasets.get("diff-merge-prod")
@@ -164,7 +164,7 @@ endpoint = client.endpoints.create(
     capture_dataset=capture,
     strategy=strategies.SyntaxFallback(
         validator=validators.TypeScriptAST(),
-        fallback=Model("Qwen/Qwen3-32B"),
+        fallback="Qwen/Qwen3-32B",
     ),
 )
 
@@ -180,7 +180,7 @@ merged.record_feedback(
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Model, strategies, validators } from "@gradiated/grad";
+import { Grad, strategies, validators } from "@gradiated/grad";
 
 const grad = new Grad();
 const capture = await grad.datasets.get("diff-merge-prod");
@@ -191,7 +191,7 @@ const endpoint = await grad.endpoints.create({
   captureDataset: capture,
   strategy: strategies.syntaxFallback({
     validator: validators.typeScriptAST(),
-    fallback: new Model("Qwen/Qwen3-32B"),
+    fallback: "Qwen/Qwen3-32B",
   }),
 });
 

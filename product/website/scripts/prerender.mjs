@@ -1,6 +1,10 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+
+const require = createRequire(import.meta.url);
+const { substituteDocModels } = require("./docs-models.cjs");
 
 const websiteRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outputRoot = join(websiteRoot, "dist");
@@ -100,7 +104,7 @@ const stripTags = (value) =>
     .trim();
 
 const toPortableMarkdown = (source) =>
-  source
+  substituteDocModels(source)
     .replace(
       /<DocsLead>\s*([\s\S]*?)\s*<\/DocsLead>/g,
       (_match, content) => `${content.replace(/^ {2}/gm, "").trim()}\n`,

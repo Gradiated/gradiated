@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { ReactElement, ReactNode } from "react";
 
+import { OPUS_MODEL, SONNET_MODEL } from "../../docs/models";
+
 /* ---------------------------------------------------------------------------
    Engineering callout — one hairline left trace + uppercase mono label.
    No filled alert banners; respects the site's visual restraint.
@@ -237,8 +239,8 @@ run = client.runs.create(
     dataset=dataset,
     name="support-router",
     recipe=RouterRecipe(
-        models=[Model("Qwen/Qwen3-8B"), Model("claude-opus-4-7")],
-        score=Judge(name="resolved", model=Model("claude-sonnet-4-6"), prompt="Did the assistant solve the issue?"),
+        models=["Qwen/Qwen3-8B", "${OPUS_MODEL}"],
+        score=Judge(name="resolved", model="${SONNET_MODEL}", prompt="Did the assistant solve the issue?"),
         max_quality_drop=0.02,
     ),
 ).wait()
@@ -256,7 +258,7 @@ endpoint = run.deploy(canary=0.10)`,
 run = client.runs.create(
     dataset=dataset,
     name="ticket-triage",
-    recipe=DecisionModelRecipe(model=Model("gradiated/linden-1")),
+    recipe=DecisionModelRecipe(model="gradiated/linden-1"),
 ).wait()
 endpoint = run.deploy()`,
   },
@@ -268,14 +270,14 @@ endpoint = run.deploy()`,
     typicalWin: "5–10x lower latency on structured edits & SQL",
     dataNeeded: "Logs filtered with a Judge (or chosen/rejected pairs)",
     href: "/docs/training/recipes/sft/",
-    snippet: `judge = Judge(name="clean", model=Model("claude-sonnet-4-6"), prompt="Is this answer accurate?")
+    snippet: `judge = Judge(name="clean", model="${SONNET_MODEL}", prompt="Is this answer accurate?")
 clean = client.datasets.get("diff-merge-prod").score(judge).wait().filter(
     lambda t: t.scores["clean"] >= 0.8,
 )
 sft = client.runs.create(
     dataset=clean,
     name="fast-diff-merge",
-    recipe=SFTRecipe(model=Model("Qwen/Qwen3-8B")),
+    recipe=SFTRecipe(model="Qwen/Qwen3-8B"),
 ).wait()`,
   },
   {
@@ -295,7 +297,7 @@ run = client.runs.create(
         model=sft_art,
         rubric=Rubric([
             Scorer("valid_sql", weight=0.3, fn=validators.SQL()),
-            Judge(name="correct", model=Model("claude-sonnet-4-6"), prompt="Verify SQL accuracy.", weight=0.7),
+            Judge(name="correct", model="${SONNET_MODEL}", prompt="Verify SQL accuracy.", weight=0.7),
         ]),
         group_size=8,
     ),
@@ -314,8 +316,8 @@ run = client.runs.create(
     dataset=dataset,
     name="support-4b",
     recipe=DistillRecipe(
-        model=Model("Qwen/Qwen3-4B"),
-        teacher=Model("Qwen/Qwen3-32B"),
+        model="Qwen/Qwen3-4B",
+        teacher="Qwen/Qwen3-32B",
         rollout=OnPolicy(max_new_tokens=512),
     ),
 ).wait()`,
@@ -333,7 +335,7 @@ run = client.runs.create(
     dataset=dataset,
     name="api-docs-cartridge",
     recipe=CartridgeRecipe(
-        model=Model("Qwen/Qwen3-8B"),
+        model="Qwen/Qwen3-8B",
         context=Context.from_file("./api-docs.md"),
         num_tokens=256,
     ),

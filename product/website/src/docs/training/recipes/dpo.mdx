@@ -61,7 +61,7 @@ print(dpo.artifact.id, dpo.eval_report)
   <DocsCodeTab label="Chain SFT → DPO (.then)">
 
 ```python
-from grad import Grad, Model, adapters, losses, optim, splits
+from grad import Grad, adapters, losses, optim, splits
 from grad.recipes import DPORecipe, SFTRecipe
 
 client = Grad()
@@ -75,7 +75,7 @@ dpo = (
         dataset=sft_ds,
         name="fast-diff-merge",
         recipe=SFTRecipe(
-            model=Model("Qwen/Qwen3-8B"),
+            model="Qwen/Qwen3-8B",
             adapter=adapters.LoRA(rank=32),
             optimizer=optim.AdamW(lr=2e-4),
             split=splits.BySession(eval_fraction=0.10),

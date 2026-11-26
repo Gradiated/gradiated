@@ -19,7 +19,7 @@ Pass a `Dataset` of prompts and a [`Rubric`](/docs/training/rubrics/) with code 
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Judge, Model, Rubric, Scorer, adapters, losses, optim, validators
+from grad import Grad, Judge, Rubric, Scorer, adapters, losses, optim, validators
 from grad.recipes import GRPORecipe
 
 client = Grad()
@@ -33,7 +33,7 @@ recipe = GRPORecipe(
         Scorer("valid_sql", weight=0.3, fn=validators.SQL()),
         Judge(
             name="correct_query",
-            model=Model("claude-sonnet-4-6"),
+            model="{{SONNET_MODEL}}",
             prompt="Verify the SQL answers the question accurately without hallucinated columns.",
             weight=0.7,
         ),
@@ -55,7 +55,7 @@ print(run.artifact.id)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Judge, Model, Rubric, Scorer, adapters, losses, optim, recipes, validators } from "@gradiated/grad";
+import { Grad, Judge, Rubric, Scorer, adapters, losses, optim, recipes, validators } from "@gradiated/grad";
 
 const grad = new Grad();
 const dataset = await grad.datasets.get("sql-benchmark-tasks");
@@ -72,7 +72,7 @@ const run = await grad.runs
         new Scorer("valid_sql", { weight: 0.3, fn: validators.sql() }),
         new Judge({
           name: "correct_query",
-          model: new Model("claude-sonnet-4-6"),
+          model: "{{SONNET_MODEL}}",
           prompt: "Verify the SQL answers the question accurately without hallucinated columns.",
           weight: 0.7,
         }),
@@ -115,7 +115,7 @@ console.log(run.artifact.id);
 An RL-trained 4B–8B model often matches a frontier model on 80–90% of requests. Pair your [`Artifact`](/docs/training/artifacts/) with a [reward model](/docs/training/recipes/reward-models/) in a `strategies.Cascade` [`Endpoint`](/docs/training/endpoints/) so hard requests fall back to a larger model automatically:
 
 ```python
-from grad import Model, strategies
+from grad import strategies
 
 agent = client.artifacts.get("sql-agent@2026-11-25-2")
 verifier = client.artifacts.get("sql-verifier@v1")
@@ -127,7 +127,7 @@ client.endpoints.create(
     capture_dataset=capture,
     strategy=strategies.Cascade(
         verifier=verifier,
-        frontier=Model("Qwen/Qwen3-32B"),
+        frontier="Qwen/Qwen3-32B",
         threshold=0.75,
     ),
 )

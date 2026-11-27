@@ -40,6 +40,17 @@
     padding-block-start: calc(var(--rhythm-section) / 2);
   }
 
+  /* A landscape tablet shows the collage hero side by side, as on desktop,
+     so its collage bleeds to the top rather than taking the offset. */
+  @media (min-width: 52.5rem) and (orientation: landscape) {
+    .gr-rail-sheet
+      .gr-root[data-tier]:not([data-tier="wide"])
+      .gr-band:first-of-type
+      > .gr-module.gr-collage-hero:first-child:not(.gr-module--profile) {
+      padding-block-start: 0;
+    }
+  }
+
   .gr-rail-sheet
     .gr-root[data-tier]:not([data-tier="wide"])
     .gr-team-overview-copy {

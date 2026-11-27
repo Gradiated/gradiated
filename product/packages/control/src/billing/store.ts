@@ -4,11 +4,16 @@ import {
   UuidSchema,
   type BalanceTransactionQuery,
 } from "@gradiated/contracts";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { z } from "zod";
 
 import type { ControlDatabase } from "../db/client.js";
-import { balanceTransactions } from "../db/schema/index.js";
+import {
+  ORGANIZATION_STATUSES,
+  balanceTransactions,
+  organizations,
+  workspaces,
+} from "../db/schema/index.js";
 
 const BalanceTransactionRecordSchema = z.object({
   id: UuidSchema,
@@ -63,4 +68,42 @@ export const listBalanceTransactionPage = async (
     .map((record) => BalanceTransactionRecordSchema.parse(record));
 
   return { data, nextCursor: records.length > limit ? data.at(-1)!.id : null };
+};
+
+const WorkspaceOwnerRecordSchema = z.object({
+  workspaceId: UuidSchema,
+  organizationId: UuidSchema,
+  organizationStatus: z.enum(ORGANIZATION_STATUSES),
+  archivedAt: z.date().nullable(),
+});
+
+export type WorkspaceOwnerRecord = z.infer<typeof WorkspaceOwnerRecordSchema>;
+
+export const readCustomerWorkspaceOwners = async (
+  database: ControlDatabase,
+  workspaceIds: string[],
+): Promise<Map<string, WorkspaceOwnerRecord>> => {
+  const rows = await database
+    .select({
+      workspaceId: workspaces.id,
+      organizationId: organizations.id,
+      organizationStatus: organizations.status,
+      archivedAt: workspaces.archivedAt,
+    })
+    .from(workspaces)
+    .innerJoin(organizations, eq(organizations.id, workspaces.organizationId))
+    .where(
+      and(
+        inArray(workspaces.id, workspaceIds),
+        eq(organizations.kind, "customer"),
+      ),
+    );
+
+  return new Map(
+    rows.map((row) => {
+      const owner = WorkspaceOwnerRecordSchema.parse(row);
+
+      return [owner.workspaceId, owner];
+    }),
+  );
 };

@@ -1,5 +1,5 @@
 {
-  "id": "9c0748bf-092a-4dd3-b790-438cc218127e",
+  "id": "77231c27-d8ec-4f20-99ef-95950855ad62",
   "prevId": "0452a2d0-4359-49b5-a8bd-17d422435d7f",
   "version": "7",
   "dialect": "postgresql",
@@ -1812,6 +1812,12 @@
           "notNull": true,
           "default": false
         },
+        "scopes": {
+          "name": "scopes",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_by": {
           "name": "created_by",
           "type": "uuid",
@@ -3404,111 +3410,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.task_production_changes": {
-      "name": "task_production_changes",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "task_id": {
-          "name": "task_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "from_version_id": {
-          "name": "from_version_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "to_version_id": {
-          "name": "to_version_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "actor": {
-          "name": "actor",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "task_production_changes_task_created_index": {
-          "name": "task_production_changes_task_created_index",
-          "columns": [
-            {
-              "expression": "task_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "task_production_changes_task_id_tasks_id_fk": {
-          "name": "task_production_changes_task_id_tasks_id_fk",
-          "tableFrom": "task_production_changes",
-          "tableTo": "tasks",
-          "columnsFrom": ["task_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "task_production_changes_from_version_id_task_versions_id_fk": {
-          "name": "task_production_changes_from_version_id_task_versions_id_fk",
-          "tableFrom": "task_production_changes",
-          "tableTo": "task_versions",
-          "columnsFrom": ["from_version_id"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "task_production_changes_to_version_id_task_versions_id_fk": {
-          "name": "task_production_changes_to_version_id_task_versions_id_fk",
-          "tableFrom": "task_production_changes",
-          "tableTo": "task_versions",
-          "columnsFrom": ["to_version_id"],
-          "columnsTo": ["id"],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "task_production_changes_actor_check": {
-          "name": "task_production_changes_actor_check",
-          "value": "\"task_production_changes\".\"actor\" ~ '^(user|key|service):[A-Za-z0-9_-]{1,64}$'"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.task_version_files": {
       "name": "task_version_files",
       "schema": "",
@@ -3639,44 +3540,6 @@
       },
       "isRLSEnabled": false
     },
-    "public.task_version_pin_releases": {
-      "name": "task_version_pin_releases",
-      "schema": "",
-      "columns": {
-        "version_id": {
-          "name": "version_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "artifact_id": {
-          "name": "artifact_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.task_versions": {
       "name": "task_versions",
       "schema": "",
@@ -3745,28 +3608,6 @@
         }
       },
       "indexes": {
-        "task_versions_task_artifact_unique": {
-          "name": "task_versions_task_artifact_unique",
-          "columns": [
-            {
-              "expression": "task_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "(\"adapter\"->'source'->>'artifact_id')",
-              "asc": true,
-              "isExpression": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"task_versions\".\"adapter\" ? 'source'",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "task_versions_task_created_index": {
           "name": "task_versions_task_created_index",
           "columns": [

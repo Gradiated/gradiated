@@ -46,6 +46,9 @@ const notServable = () =>
     "This artifact cannot be published.",
   );
 
+// Every call the product makes is on artifacts, under one scope.
+export type GradScope = "artifacts:pin";
+
 export const versionPinHolder = (versionId: string) =>
   `inference:version:${UuidSchema.parse(versionId)}`;
 
@@ -85,7 +88,7 @@ export const createGradArtifacts = ({
   baseUrl: string;
   authorization: (call: {
     workspaceId: string;
-    scopes: readonly string[];
+    scopes: readonly GradScope[];
   }) => Promise<string>;
   fetch?: typeof fetch;
   timeoutMs?: number;
@@ -94,7 +97,7 @@ export const createGradArtifacts = ({
     method: "GET" | "POST" | "PUT" | "DELETE",
     path: string,
     workspaceId: string,
-    scopes: readonly string[],
+    scopes: readonly GradScope[],
     body?: unknown,
   ) => {
     let response: Response;

@@ -92,7 +92,7 @@ More than 2–3 epochs over the same SFT data usually overfits. Prefer more data
 
 Gradiated renders chat templates with the base model's pinned tokenizer, so you never hand-build tokens or special tokens. Three options control what gets trained:
 
-- **`thinking="auto" | "on" | "off"`:** `"auto"` keeps the base model's default. For Qwen3, thinking is on, and assistant turns without a `<think>` block train with thinking off so the model learns to answer directly.
+- **`thinking="auto" | "on" | "off"`:** `"auto"` keeps the base model's default. For Qwen3, thinking is on, and assistant turns without a `<think>` block train with thinking off so the model learns to answer directly. There are no effort levels (`"low"`, `"high"`): the Qwen3 chat template only switches thinking on or off.
 - **`preserve_thinking=False`:** whether earlier assistant turns keep their reasoning in the prompt. Most chat templates strip it, which is the default. Set `True` for agents that rely on reasoning from previous turns.
 - **`train_on="last" | "all_assistant"`:** `"last"` (the default for chat records) trains only the final assistant turn. Use `"all_assistant"` for multi-turn agent traces. Tool outputs and user turns are never trained.
 

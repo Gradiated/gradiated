@@ -20,6 +20,7 @@ export const createEvalVersions = (
           eq(workspaces.id, UuidSchema.parse(workspaceId)),
           isNull(workspaces.archivedAt),
           eq(organizations.status, "active"),
+          eq(organizations.kind, "customer"),
         ),
       );
     if (!row)

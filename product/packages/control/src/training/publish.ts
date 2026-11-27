@@ -464,7 +464,13 @@ export const createArtifactPublisher = ({
     }
 
     const { adapter, base } = await verifiedAdapter(artifact, bundles);
-    if (existingTask && existingTask.baseModelId !== base.modelId)
+    // A workspace's one eval model holds versions of every base it evaluates;
+    // each version names its own base, which is what serving reads.
+    if (
+      !input.evalOnly &&
+      existingTask &&
+      existingTask.baseModelId !== base.modelId
+    )
       throw new PublishError(
         "model_base_mismatch",
         `The model ${existingTask.name} serves ${existingTask.baseModelId ?? "another base"}; this artifact adapts ${base.modelId}.`,

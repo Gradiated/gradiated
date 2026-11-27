@@ -29,6 +29,7 @@ import {
   tasks,
   taskVersions,
   taskVersionFiles,
+  taskVersionPinReleases,
   taskProductionChanges,
   trainingRuns,
   trainingRunEvents,
@@ -742,6 +743,29 @@ export const createTrainingStore = (database: ControlDatabase) => {
           .limit(1);
         if (file) return false;
 
+        // The delete cascades over published versions; their artifacts' pins
+        // are released by the same outbox as a deleted version's.
+        await tx
+          .insert(taskVersionPinReleases)
+          .select(
+            tx
+              .select({
+                versionId: taskVersions.id,
+                workspaceId: taskVersions.workspaceId,
+                artifactId: sql<string>`${taskVersions.adapter}->'source'->>'artifact_id'`.as(
+                  "artifact_id",
+                ),
+                createdAt: sql<Date>`now()`.as("created_at"),
+              })
+              .from(taskVersions)
+              .where(
+                and(
+                  eq(taskVersions.taskId, taskId),
+                  sql`${taskVersions.adapter}->'source'->>'artifact_id' is not null`,
+                ),
+              ),
+          )
+          .onConflictDoNothing();
         await tx.delete(tasks).where(eq(tasks.id, taskId));
         return true;
       });

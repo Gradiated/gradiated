@@ -182,6 +182,24 @@ describe("publishing grad artifacts", () => {
     });
   });
 
+  it("accepts grad's default rank 32 and refuses rank 64", async () => {
+    const { member, publisher, add } = await setup();
+    add(loraFiles(32));
+    const rank64 = add(loraFiles(64));
+
+    const { version } = await publisher.publish(
+      member.userId,
+      member.workspaceId,
+      { artifact: "fast-diff-merge@2026-11-26-1" },
+    );
+    expect(version.adapter).toMatchObject({ rank: 32 });
+    await expect(
+      publisher.publish(member.userId, member.workspaceId, {
+        artifact: rank64.id,
+      }),
+    ).rejects.toMatchObject({ code: "invalid_artifact" });
+  });
+
   it("publishes a cartridge bundle", async () => {
     const { member, publisher, add } = await setup();
     const file = cartridgeFile();

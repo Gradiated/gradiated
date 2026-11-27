@@ -651,7 +651,7 @@ export const EvaluationResultsSchema = z
   .max(64)
   .openapi("EvaluationResults");
 
-export const MAX_UPLOADED_ADAPTER_RANK = 8;
+export const MAX_UPLOADED_ADAPTER_RANK = 32;
 export const MAX_ADAPTER_BYTES = 512 * 1024 * 1024;
 export const MAX_CARTRIDGE_BYTES = 4 * 1024 * 1024 * 1024;
 const UploadTargetFields = {

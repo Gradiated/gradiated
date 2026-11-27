@@ -127,7 +127,9 @@ for the expected lifetime working set rather than just the CPU working set. The
 production GLM allocation budgets 256 GiB for adapters and reserves 350000 MiB
 of local disk for the cache plus runtime bundle. Each allocation has its own
 cache, including when TP2 and TP4 deployments share a node. Native GPU/CPU
-limits remain 8/64 adapters, with maximum rank 8. A measured full-layer rank-2
+limits remain 8/64 adapters, with maximum rank 32 (about 0.6 GiB of bf16
+adapter buffers per GPU on GLM TP2 and 0.5 GiB on DeepSeek TP4, checked by
+`packages/control/test/lora-pool-capacity.test.ts`). A measured full-layer rank-2
 artifact uses about 38 MiB on disk, including its retained archive; this is a
 working-set estimate for that artifact, not a bound for every model or rank.
 Pinned-disk alerts indicate that a new allocation with fresh cache capacity may

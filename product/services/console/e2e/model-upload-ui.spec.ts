@@ -498,7 +498,7 @@ for (const revision of [undefined, null, "main"]) {
   });
 }
 
-test("rejects an adapter above rank 8 before uploading", async ({ page }) => {
+test("rejects an adapter above rank 32 before uploading", async ({ page }) => {
   const state = await setup(page);
   await page.goto("/tasks");
   await page.getByRole("button", { name: "Add model", exact: true }).click();
@@ -508,12 +508,12 @@ test("rejects an adapter above rank 8 before uploading", async ({ page }) => {
     buffer: Buffer.from(
       JSON.stringify({
         base_model_name_or_path: task.base_model_id,
-        r: 9,
+        r: 33,
       }),
     ),
   });
   await expect(page.getByRole("alert")).toHaveText(
-    "Adapter rank 9 exceeds the maximum supported upload rank of 8.",
+    "Adapter rank 33 exceeds the maximum supported upload rank of 32.",
   );
   await expect(
     page.getByRole("button", { name: "Create task & upload" }),

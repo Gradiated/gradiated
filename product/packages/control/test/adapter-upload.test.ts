@@ -150,11 +150,11 @@ describe("external adapter validation", () => {
       ),
     ).rejects.toThrow("Side markers");
   });
-  it.each([1, 2, 4, 8])("accepts upload rank %i", async (rank) => {
+  it.each([1, 2, 8, 16, 32])("accepts upload rank %i", async (rank) => {
     const { config, weights } = adapterFiles(base, 1, undefined, rank);
     expect((await validateAdapterFiles(config, weights, base)).r).toBe(rank);
   });
-  it.each([9, 16, 32])("rejects upload rank %i above the cap", async (rank) => {
+  it.each([33, 64])("rejects upload rank %i above the cap", async (rank) => {
     const { config, weights } = adapterFiles(base, 1, undefined, rank);
     await expect(validateAdapterFiles(config, weights, base)).rejects.toThrow();
   });

@@ -1,3 +1,5 @@
+-- Fail fast instead of queueing the gateway's reads behind a lock wait.
+SET LOCAL lock_timeout = '5s';--> statement-breakpoint
 CREATE TABLE "task_production_changes" (
 	"id" uuid PRIMARY KEY NOT NULL,
 	"task_id" uuid NOT NULL,

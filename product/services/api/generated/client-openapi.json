@@ -1617,7 +1617,8 @@
               "generation_settlement_batch",
               "openrouter_payment",
               "operator",
-              "stripe_invoice"
+              "stripe_invoice",
+              "usage_event"
             ]
           },
           "stripe_id": {

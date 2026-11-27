@@ -14,7 +14,8 @@ repository or service framework.
 - `access.ts`: the active membership checks for organizations and workspaces.
 - `catalog/`: models and model deployments.
 - `billing/`: billing accounts and the balance ledger. Every balance change
-  goes through `postBalanceTransaction` in `billing/ledger.ts`.
+  goes through `postBalanceTransaction` in `billing/ledger.ts`. It also holds
+  the versioned price lists and training usage ingest and balance checks.
 - `organizations/`: organization creation with the default workspace, the
   billing account and the signup credit.
 - `workspaces/`: workspaces, API keys and the API-key secret format.
@@ -22,8 +23,8 @@ repository or service framework.
 - `usage/`: workspace usage summaries and the generation log from ClickHouse.
 - `settlement/`: the ClickHouse settlement reader and the PostgreSQL
   settlement store.
-- `clickhouse/`: the ClickHouse client, the generation and profiling writers,
-  and the migration runner.
+- `clickhouse/`: the ClickHouse client, the generation, profiling and usage
+  event writers, and the migration runner.
 - `deployment-status/`: runtime heartbeats. This is the only Valkey write in
   the package.
 - `waitlist/`: website waitlist signups.

@@ -143,7 +143,7 @@ const toPortableMarkdown = (source) =>
     )
     .replace(/<DocsApiKeyAction\s*\/>/g, "")
     .replace(
-      /<Docs(?:TrainingFlywheel|RecipeChooser|TokenAlignment|PipelineDiagram|EnvLifecycle|DeployFlow)\s*\/>/g,
+      /<Docs(?:RunLifecycle|RecipeFinder|CostEstimator|TokenMask|RunReplay|RouterFrontier|PipelineSchematic|DatumAnatomy)(?:\s[^>]*)?\s*\/>/g,
       "",
     )
     .replace(/<\/?Docs[A-Za-z]+(?:\s[^>]*)?>/g, "")

@@ -1,15 +1,18 @@
 import {
   Children,
-  createContext,
   isValidElement,
-  useContext,
   useEffect,
   useId,
   useRef,
   useState,
 } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from "react";
+import type {
+  ComponentPropsWithoutRef,
+  KeyboardEvent as ReactKeyboardEvent,
+  ReactElement,
+  ReactNode,
+} from "react";
 import {
   Band,
   Footer,
@@ -21,19 +24,28 @@ import {
 } from "../components/design";
 import type { SectionNavigationGroup } from "../components/design";
 import { useRailDocNav } from "../components/design/RailShell";
-import { DocsAccount } from "../components/docs/DocsAccount";
 import { DocsApiKeyAction } from "../components/docs/InteractiveQuickstart";
 import { DocsModelCatalog } from "../components/docs/DocsModelCatalog";
+import { DocsPager, DocsToc } from "../components/docs/DocsPageNav";
 import { DocsSessionProvider } from "../components/docs/DocsSession";
 import {
+  DocsLanguagePicker,
+  DocsLanguageProvider,
+  indexForLanguage,
+  languageOfLabel,
+  useDocsLanguage,
+} from "../components/docs/DocsLanguage";
+import {
   DocsCallout,
-  DocsDeployFlow,
-  DocsEnvLifecycle,
-  DocsPipelineDiagram,
-  DocsRecipeChooser,
+  DocsCostEstimator,
+  DocsDatumAnatomy,
+  DocsPipelineSchematic,
+  DocsRecipeFinder,
+  DocsRouterFrontier,
+  DocsRunLifecycle,
+  DocsRunReplay,
   DocsTerminal,
-  DocsTokenAlignment,
-  DocsTrainingFlywheel,
+  DocsTokenMask,
 } from "../components/docs/DocsTrainingInteractive";
 import {
   documents,
@@ -63,26 +75,70 @@ const getText = (node: ReactNode): string => {
   return "";
 };
 
+const LANGUAGE_NAMES: Record<string, string> = {
+  bash: "Shell",
+  sh: "Shell",
+  shell: "Shell",
+  console: "Shell",
+  python: "Python",
+  py: "Python",
+  ts: "TypeScript",
+  typescript: "TypeScript",
+  js: "JavaScript",
+  javascript: "JavaScript",
+  go: "Go",
+  rust: "Rust",
+  json: "JSON",
+  jsonl: "JSONL",
+  yaml: "YAML",
+  yml: "YAML",
+  toml: "TOML",
+  http: "HTTP",
+  sql: "SQL",
+  dockerfile: "Dockerfile",
+};
+
+const codeLanguage = (children: ReactNode): string | null => {
+  const child = Children.toArray(children)[0];
+  if (!isValidElement<{ className?: string }>(child)) return null;
+
+  return /language-([\w-]+)/.exec(child.props.className ?? "")?.[1] ?? null;
+};
+
 /** A sample and its copy control, as one object. */
 const DocsPre = ({
   children,
   ...props
-}: ComponentPropsWithoutRef<"pre">): ReactElement => {
+}: ComponentPropsWithoutRef<"pre"> & {
+  "data-title"?: string;
+}): ReactElement => {
   const [copied, setCopied] = useState(false);
+  const language = codeLanguage(children);
+  const title = props["data-title"];
+  const label = title ?? (language ? LANGUAGE_NAMES[language] : undefined);
 
   const copy = () => {
     void navigator.clipboard
       .writeText(getText(children).trimEnd())
-      .then(() => setCopied(true))
+      .then(() => {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1600);
+      })
       .catch(() => setCopied(false));
-    window.setTimeout(() => setCopied(false), 1600);
   };
 
   return (
-    <div className="gr-doc-code">
-      <button className="gr-doc-copy" onClick={copy} type="button">
-        {copied ? "Copied" : "Copy"}
-      </button>
+    <div
+      className="gr-doc-code"
+      data-lang={language ?? undefined}
+      data-titled={title ? "true" : undefined}
+    >
+      <div className="gr-doc-code-bar">
+        {label ? <span className="gr-doc-code-lang">{label}</span> : <span />}
+        <button className="gr-doc-copy" onClick={copy} type="button">
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
       <pre {...props}>{children}</pre>
     </div>
   );
@@ -153,54 +209,6 @@ const DocsH3 = (props: ComponentPropsWithoutRef<"h3">): ReactElement => (
   <DocsHeading {...props} as="h3" />
 );
 
-const SYNCED_LANGUAGES = new Set([
-  "Python",
-  "TypeScript",
-  "JavaScript",
-  "Go",
-  "Rust",
-  "CLI",
-  "CLI (YAML)",
-  "cURL",
-]);
-
-const DocsLanguageContext = createContext<{
-  language: string | null;
-  setLanguage: (lang: string) => void;
-}>({ language: null, setLanguage: () => {} });
-
-const DocsLanguageProvider = ({
-  children,
-}: {
-  children: ReactNode;
-}): ReactElement => {
-  const [language, setLanguageState] = useState<string | null>(null);
-
-  useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem("gradiated.docs.lang");
-      if (saved) setLanguageState(saved);
-    } catch {
-      // Ignore storage access errors.
-    }
-  }, []);
-
-  const setLanguage = (lang: string) => {
-    setLanguageState(lang);
-    try {
-      window.localStorage.setItem("gradiated.docs.lang", lang);
-    } catch {
-      // Ignore storage access errors.
-    }
-  };
-
-  return (
-    <DocsLanguageContext.Provider value={{ language, setLanguage }}>
-      {children}
-    </DocsLanguageContext.Provider>
-  );
-};
-
 type Labelled = { children: ReactNode; label: string };
 
 export const DocsCodeTab = ({ children }: Labelled): ReactElement => (
@@ -215,30 +223,52 @@ const useTabs = (children: ReactNode, syncLanguage = false) => {
   const items = Children.toArray(children).filter(
     (child): child is ReactElement<Labelled> => isValidElement<Labelled>(child),
   );
-  const { language, setLanguage } = useContext(DocsLanguageContext);
-  const [localSelected, setLocalSelected] = useState(0);
-
+  const { language, setLanguage } = useDocsLanguage();
+  const [localSelected, setLocalSelected] = useState<number | null>(null);
+  const labels = items.map((item) => item.props.label);
   const isLanguageGroup =
-    syncLanguage &&
-    items.length > 0 &&
-    items.some((item) => SYNCED_LANGUAGES.has(item.props.label));
+    syncLanguage && labels.some((label) => languageOfLabel(label) !== null);
+  const synced = isLanguageGroup ? indexForLanguage(labels, language) : -1;
 
-  const syncedIndex =
-    isLanguageGroup && language
-      ? items.findIndex((item) => item.props.label === language)
-      : -1;
+  /* A tab the reader picked in this group wins until the page-wide
+     language changes again. */
+  const selected = localSelected ?? (synced >= 0 ? synced : 0);
+  const missing =
+    isLanguageGroup && language && synced < 0 && localSelected === null
+      ? language
+      : null;
 
-  const selected = syncedIndex >= 0 ? syncedIndex : localSelected;
+  useEffect(() => setLocalSelected(null), [language]);
 
-  const setSelected = (index: number) => {
-    setLocalSelected(index);
-    const chosen = items[index]?.props.label;
-    if (isLanguageGroup && chosen && SYNCED_LANGUAGES.has(chosen)) {
-      setLanguage(chosen);
+  const setSelected = (index: number, anchor?: Element | null) => {
+    const chosen = languageOfLabel(labels[index] ?? "");
+    if (isLanguageGroup && chosen) {
+      setLanguage(chosen, anchor);
+      setLocalSelected(null);
+      return;
     }
+    setLocalSelected(index);
   };
 
-  return { id: useId(), items, selected, setSelected };
+  return { id: useId(), items, missing, selected, setSelected };
+};
+
+const onTabKeyDown = (
+  event: ReactKeyboardEvent<HTMLButtonElement>,
+  count: number,
+  selected: number,
+  setSelected: (index: number, anchor?: Element | null) => void,
+) => {
+  const step =
+    event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+  if (!step) return;
+
+  event.preventDefault();
+  const next = (selected + step + count) % count;
+  setSelected(next, event.currentTarget);
+  const sibling = event.currentTarget.parentElement?.children[next] as
+    HTMLElement | undefined;
+  sibling?.focus();
 };
 
 /** Language tabs, ruled off above the sample they choose. */
@@ -249,7 +279,7 @@ export const DocsCodeTabs = ({
   action?: ReactNode;
   children: ReactNode;
 }): ReactElement => {
-  const { id, items, selected, setSelected } = useTabs(children, true);
+  const { id, items, missing, selected, setSelected } = useTabs(children, true);
   const active = items[selected] ?? items[0];
 
   return (
@@ -267,14 +297,21 @@ export const DocsCodeTabs = ({
               className="gr-doc-tab"
               id={`${id}-tab-${index}`}
               key={tab.props.label}
-              onClick={() => setSelected(index)}
+              onClick={(event) => setSelected(index, event.currentTarget)}
+              onKeyDown={(event) =>
+                onTabKeyDown(event, items.length, selected, setSelected)
+              }
               role="tab"
+              tabIndex={selected === index ? 0 : -1}
               type="button"
             >
               {tab.props.label}
             </button>
           ))}
         </div>
+        {missing ? (
+          <span className="gr-doc-tabs-missing">No {missing} sample here</span>
+        ) : null}
         {action ? <div className="gr-doc-tabs-action">{action}</div> : null}
       </div>
       {active ? (
@@ -314,7 +351,11 @@ export const DocsCodeVariants = ({
             id={`${id}-tab-${index}`}
             key={variant.props.label}
             onClick={() => setSelected(index)}
+            onKeyDown={(event) =>
+              onTabKeyDown(event, items.length, selected, setSelected)
+            }
             role="tab"
+            tabIndex={selected === index ? 0 : -1}
             type="button"
           >
             {variant.props.label}
@@ -502,9 +543,24 @@ const PageActions = ({
   );
 };
 
+const order = navigation.flatMap((group) => group.items);
+
+const neighbour = (path: string, step: 1 | -1) => {
+  const index = order.findIndex((key) => documents[key].path === path);
+  const key = index < 0 ? undefined : order[index + step];
+  return key
+    ? { href: documents[key].path, label: documents[key].title }
+    : undefined;
+};
+
+/* The SDK picker belongs where samples come in several SDKs. */
+const hasSdkSamples = (path: string): boolean =>
+  path.startsWith("/docs/training/") || path.startsWith("/docs/reference/");
+
 const DocsBody = (): ReactElement => {
   const location = useLocation();
   const path = location.pathname;
+  const article = useRef<HTMLElement>(null);
 
   /* The site rail carries the docs' contents — doc mode is a state of
      the ONE nav, so the page draws no sidebar of its own. */
@@ -539,33 +595,46 @@ const DocsBody = (): ReactElement => {
               label="Chapters"
             />
 
-            <article className="gr-doc-main gr-prose">
-              <PageActions path={document.path} title={document.title} />
-              <Content
-                components={{
-                  h2: DocsH2,
-                  h3: DocsH3,
-                  pre: DocsPre,
-                  table: DocsTable,
-                  DocsApiKeyAction,
-                  DocsCallout,
-                  DocsCodeTab,
-                  DocsCodeTabs,
-                  DocsCodeVariant,
-                  DocsCodeVariants,
-                  DocsDeployFlow,
-                  DocsEnvLifecycle,
-                  DocsLead,
-                  DocsModelCatalog,
-                  DocsNext,
-                  DocsPipelineDiagram,
-                  DocsRecipeChooser,
-                  DocsTerminal,
-                  DocsTokenAlignment,
-                  DocsTrainingFlywheel,
-                }}
-              />
-            </article>
+            <div className="gr-doc-layout">
+              <article className="gr-doc-main gr-prose" ref={article}>
+                <div className="gr-doc-actions-row">
+                  {hasSdkSamples(document.path) ? <DocsLanguagePicker /> : null}
+                  <PageActions path={document.path} title={document.title} />
+                </div>
+                <Content
+                  components={{
+                    h2: DocsH2,
+                    h3: DocsH3,
+                    pre: DocsPre,
+                    table: DocsTable,
+                    DocsApiKeyAction,
+                    DocsCallout,
+                    DocsCodeTab,
+                    DocsCodeTabs,
+                    DocsCodeVariant,
+                    DocsCodeVariants,
+                    DocsCostEstimator,
+                    DocsDatumAnatomy,
+                    DocsLead,
+                    DocsModelCatalog,
+                    DocsNext,
+                    DocsPipelineSchematic,
+                    DocsRecipeFinder,
+                    DocsRouterFrontier,
+                    DocsRunLifecycle,
+                    DocsRunReplay,
+                    DocsTerminal,
+                    DocsTokenMask,
+                  }}
+                />
+                <DocsPager
+                  article={article}
+                  next={neighbour(document.path, 1)}
+                  previous={neighbour(document.path, -1)}
+                />
+              </article>
+              <DocsToc article={article} path={document.path} />
+            </div>
           </div>
         </Module>
       </Band>

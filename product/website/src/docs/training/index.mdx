@@ -106,27 +106,9 @@ grad artifacts download support-router@latest --output ./support-router
 
 The router examples train on the scores already in your traces. `support_traces.jsonl` is any OpenAI chat JSONL export with a `scores` field per record; the repository ships a synthetic one in `examples/support_traces.jsonl`.
 
-<DocsTerminal
-  title="Live training readout"
-  command="grad train --dataset support-prod --name support-router --recipe router --wait"
->
+`--wait` follows the run in a full-screen terminal view. This one is replayed from a recorded run:
 
-```text
-✓ Dataset support-prod: 4,820 trajectories (3 models, 0 schema errors)
-✓ Split: 4,097 train / 723 eval (grouped by session_id, 0 leakage)
-✓ Trained qwen/qwen3-0.6b router in 42s (~1.1M train tokens)
-
-  Eval report (vs. {{OPUS_MODEL}} fallback, 95% bootstrap CI):
-    Fallback quality : 91.2%
-    Routed quality   : 90.6%   (delta -0.6%, CI [-1.4%, +0.2%])
-    Offload rate     : 64.1%   -> 57.4% cost reduction
-    Calibration ECE  : 0.017
-
-✓ Exported artifact support-router@2026-11-26-1
-  Next: grad deploy support-router@2026-11-26-1
-```
-
-</DocsTerminal>
+<DocsRunReplay />
 
 ## Where to start
 
@@ -139,13 +121,13 @@ See [Supported models](/docs/training/models/) for trainable base models, the GP
 
 ## Pick a starting point
 
-<DocsRecipeChooser />
+<DocsRecipeFinder />
 
-## The four building blocks
+## From traces to a served model
 
-Every workflow in `grad` uses the same four stages, whether you are training a router or fine-tuning on multi-turn agent traces. Click any step to see what it does:
+Every workflow in `grad` follows the same loop, whether you are training a router or fine-tuning on multi-turn agent traces. Step through it:
 
-<DocsTrainingFlywheel />
+<DocsRunLifecycle />
 
 ## Install and connect
 

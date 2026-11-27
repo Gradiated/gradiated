@@ -164,6 +164,8 @@ Before deploying, check `run.eval_report`:
 - **`ece`:** how closely the router's predicted success rates match what actually happened on held-out examples (aim for under `0.05`).
 - **`routes_any_traffic`:** `false` when no threshold met your quality bar, so the router sends everything to the fallback model. Add data or loosen `max_quality_drop` before you ship it.
 
+<DocsRouterFrontier />
+
 ## Use the router
 
 The artifact is a `router_bundle`: a LoRA adapter for the backbone, a small scoring head and `router_config.json` with the candidates, prices, calibrated threshold and fallback. Download it and route requests in your own service with `transformers` and `peft`; the [artifact formats spec](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md#router_bundle) has the full reference loader:

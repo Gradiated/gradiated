@@ -38,6 +38,9 @@ const { rehypeArticleExternalLinks } =
 const { remarkDocsModels } = require("./scripts/docs-models.cjs") as {
   remarkDocsModels: () => (tree: unknown) => void;
 };
+const { rehypeDocsCodeMeta } = require("./scripts/docs-code-meta.cjs") as {
+  rehypeDocsCodeMeta: () => (tree: unknown) => void;
+};
 const { renderPost } = require("./scripts/sand-renderer.cjs") as {
   renderPost(
     source: string,
@@ -57,6 +60,7 @@ const mdxPlugin = mdx({
   ],
   rehypePlugins: [
     [rehypeHighlight, { detect: false, languages: all }],
+    rehypeDocsCodeMeta,
     rehypeArticleExternalLinks,
   ],
 });

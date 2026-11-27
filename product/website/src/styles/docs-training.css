@@ -1,0 +1,1770 @@
+/* ---------------------------------------------------------------------------
+   docs-training — the reading furniture of the docs (code blocks, callouts,
+   contents, pager, SDK picker) and the training widgets (.gr-dx-*).
+
+   Widgets borrow the code surface and the system's hairlines rather than
+   inventing a card: a widget is an instrument laid on the page, the same
+   object as a code sample, with its controls set in the chrome voice.
+   --------------------------------------------------------------------------- */
+
+/* -- page frame: text column, and contents beside it when there is room --- */
+
+.gr-doc {
+  container-type: inline-size;
+}
+
+.gr-doc-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  align-items: start;
+  width: 100%;
+}
+
+@container (min-width: 60rem) {
+  .gr-doc-layout {
+    grid-template-columns: minmax(0, 44em) 12rem;
+    justify-content: center;
+    justify-items: stretch;
+    column-gap: calc(2 * var(--u));
+  }
+}
+
+.gr-doc-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: calc(0.5 * var(--u)) calc(0.75 * var(--u));
+  margin-block-end: calc(1.6 * var(--u));
+}
+
+.gr-root .gr-prose > .gr-doc-actions-row + * {
+  margin-block-start: 0;
+}
+
+.gr-doc-actions-row .gr-doc-actions {
+  float: none;
+  margin: 0;
+}
+
+/* -- SDK picker ------------------------------------------------------------ */
+
+.gr-doc-langpick {
+  display: inline-flex;
+  margin-inline-end: auto;
+  padding: 2px;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+}
+
+.gr-doc-langpick-option {
+  padding: 0.4em 0.7em;
+  border: 0;
+  border-radius: calc(var(--radius) - 2px);
+  background: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-response),
+    color var(--dur-fast) var(--ease-response);
+}
+
+.gr-doc-langpick-option:hover {
+  color: var(--color-text);
+}
+
+.gr-doc-langpick-option[aria-checked="true"] {
+  background: var(--color-text);
+  color: var(--color-inverse);
+}
+
+/* -- code samples ---------------------------------------------------------- */
+
+/* The language sits in the corner the copy control uses; hovering or
+   focusing the sample swaps one for the other, so neither costs a line. */
+.gr-doc-code-bar {
+  position: absolute;
+  top: calc(0.5 * var(--u));
+  right: calc(0.5 * var(--u));
+  z-index: 1;
+  display: grid;
+  justify-items: end;
+}
+
+.gr-doc-code-bar > * {
+  grid-area: 1 / 1;
+}
+
+.gr-doc-code-lang {
+  padding: 0.3em 0.1em;
+  color: var(--color-code-muted);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-response);
+}
+
+.gr-doc-code-bar .gr-doc-copy {
+  position: static;
+}
+
+.gr-doc-code:hover .gr-doc-code-lang,
+.gr-doc-code:focus-within .gr-doc-code-lang {
+  opacity: 0;
+}
+
+.gr-doc-code:focus-within .gr-doc-copy {
+  opacity: 1;
+}
+
+/* No hover on a phone: the copy control is simply there. */
+@media (hover: none) {
+  .gr-doc-code-lang {
+    opacity: 0;
+  }
+
+  .gr-doc-copy {
+    opacity: 1;
+  }
+}
+
+/* A named file gets a real tab: the name is information, not decoration. */
+.gr-doc-code[data-titled] {
+  overflow: hidden;
+  border: 1px solid var(--color-code-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-raise);
+  background: var(--color-code-surface);
+}
+
+.gr-doc-code[data-titled] .gr-doc-code-bar {
+  position: static;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35em calc(0.5 * var(--u)) 0.35em calc(1.1 * var(--u));
+  border-block-end: 1px solid var(--color-code-border);
+}
+
+.gr-doc-code[data-titled] .gr-doc-code-lang {
+  color: var(--color-code-text);
+  font-family: var(--font-code);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 1;
+}
+
+.gr-doc-code[data-titled] .gr-doc-copy {
+  opacity: 1;
+}
+
+.gr-doc-main .gr-doc-code[data-titled] pre {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Highlighted lines: ```python {3-5}. */
+.gr-doc-main pre[data-highlights] code {
+  display: grid;
+  min-width: 100%;
+  width: max-content;
+}
+
+.gr-line {
+  display: block;
+  margin-inline: calc(-1.1 * var(--u));
+  padding-inline: calc(1.1 * var(--u));
+}
+
+.gr-line[data-highlight] {
+  background: color-mix(in srgb, var(--color-interactive) 12%, transparent);
+  box-shadow: inset 2px 0 0 var(--color-interactive);
+}
+
+/* Output and other plain text: no syntax, a quieter ink. */
+.gr-doc-code[data-lang="text"] pre {
+  color: color-mix(
+    in srgb,
+    var(--color-code-text) 82%,
+    var(--color-code-muted)
+  );
+}
+
+.gr-doc-tabs-missing {
+  align-self: center;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+/* -- callouts -------------------------------------------------------------- */
+
+.gr-doc-callout {
+  margin-block: calc(1.4 * var(--u));
+  padding: 0.15em 0 0.15em calc(0.9 * var(--u));
+  border-inline-start: 2px solid var(--color-rule);
+}
+
+.gr-doc-callout--tip {
+  border-inline-start-color: var(--color-interactive);
+}
+
+.gr-doc-callout--warn {
+  border-inline-start-color: var(--color-emphasis);
+}
+
+/* Unbuilt features: a broken rule says "not yet" without shouting. */
+.gr-doc-callout--soon {
+  border-inline-start: 2px dashed
+    color-mix(in srgb, var(--color-text-muted) 70%, transparent);
+}
+
+.gr-root .gr-doc-callout-label {
+  margin: 0 0 0.35em;
+  color: var(--color-text);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.gr-doc-callout--soon .gr-doc-callout-label {
+  color: var(--color-text-muted);
+}
+
+.gr-doc-callout-body {
+  color: color-mix(in srgb, var(--color-text) 86%, var(--color-text-muted));
+  font-size: 0.9444em;
+}
+
+.gr-root .gr-doc-callout-body > * + * {
+  margin-block-start: 0.6em;
+}
+
+.gr-root .gr-doc-callout-body > * {
+  margin-block-end: 0;
+}
+
+/* -- a command and its output ---------------------------------------------- */
+
+.gr-doc-terminal {
+  margin-inline: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-code-border);
+  border-radius: var(--radius);
+  background: var(--color-code-surface);
+  box-shadow: var(--shadow-raise);
+}
+
+.gr-doc-terminal-cmd {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6em;
+  padding: calc(0.7 * var(--u)) calc(0.6 * var(--u)) calc(0.7 * var(--u))
+    calc(1.1 * var(--u));
+  border-block-end: 1px solid var(--color-code-border);
+  font-family: var(--font-code);
+  font-size: var(--text-ui);
+}
+
+.gr-doc-terminal-cmd code {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  overflow-wrap: anywhere;
+  background: none;
+  color: var(--color-code-text);
+  font-size: inherit;
+}
+
+.gr-doc-terminal-prompt {
+  color: var(--color-code-muted);
+  user-select: none;
+}
+
+.gr-doc-terminal-copy {
+  align-self: center;
+  padding: 0.3em 0.6em;
+  border: 1px solid var(--color-code-border);
+  border-radius: var(--radius);
+  background: none;
+  color: var(--color-code-muted);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.gr-doc-terminal-copy:hover,
+.gr-doc-terminal-copy:focus-visible {
+  color: var(--color-code-text);
+}
+
+.gr-doc-terminal-title {
+  padding: calc(0.6 * var(--u)) calc(1.1 * var(--u)) 0;
+  color: var(--color-code-muted);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.gr-doc-terminal-out .gr-doc-code {
+  margin: 0;
+}
+
+.gr-doc-main .gr-doc-terminal-out pre {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding-block-start: calc(0.5 * var(--u));
+}
+
+.gr-doc-terminal-out .gr-doc-code-bar {
+  display: none;
+}
+
+/* -- on this page ---------------------------------------------------------- */
+
+.gr-doc-toc {
+  display: none;
+}
+
+@container (min-width: 60rem) {
+  .gr-doc-toc {
+    position: sticky;
+    top: calc(var(--nav-h) + var(--u));
+    display: block;
+    max-height: calc(100vh - var(--nav-h) - 2 * var(--u));
+    overflow-y: auto;
+    padding-block-start: 0.4em;
+    overscroll-behavior: contain;
+  }
+
+  .gr-doc-toc-inline {
+    display: none;
+  }
+}
+
+.gr-root .gr-doc-toc-title,
+.gr-doc-toc-fold > summary {
+  margin: 0 0 0.8em;
+  color: var(--color-text);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.gr-root .gr-doc-toc-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.gr-root .gr-doc-toc-list li + li {
+  margin-block-start: 0.15em;
+}
+
+.gr-root .gr-doc-toc-list a {
+  position: relative;
+  display: block;
+  padding: 0.3em 0 0.3em 1.1em;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+.gr-doc-toc-list [data-level="3"] a {
+  padding-inline-start: 2em;
+  font-size: 0.8125rem;
+}
+
+.gr-root .gr-doc-toc-list a:hover {
+  color: var(--color-text);
+}
+
+/* The rail's square, on the section being read. */
+.gr-doc-toc-list a::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.78em;
+  width: 0.4em;
+  height: 0.4em;
+  background: var(--color-text);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-response);
+}
+
+.gr-root .gr-doc-toc-list a[aria-current] {
+  color: var(--color-text);
+}
+
+.gr-doc-toc-list a[aria-current]::before {
+  opacity: 1;
+}
+
+.gr-doc-toc-fold {
+  padding-block: 0.6em;
+  border-block: 1px solid var(--color-rule);
+}
+
+.gr-doc-toc-fold > summary {
+  margin: 0;
+  cursor: pointer;
+  list-style: none;
+}
+
+.gr-doc-toc-fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.gr-doc-toc-fold > summary::after {
+  content: "+";
+  float: right;
+  color: var(--color-text-muted);
+}
+
+.gr-doc-toc-fold[open] > summary::after {
+  content: "−";
+}
+
+.gr-doc-toc-fold .gr-doc-toc-list {
+  margin-block-start: 0.6em;
+}
+
+/* -- previous / next ------------------------------------------------------- */
+
+.gr-doc-pager {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--u);
+  margin-block-start: calc(3 * var(--u));
+  padding-block-start: var(--u);
+  border-block-start: 1px solid var(--color-rule);
+}
+
+.gr-root .gr-prose .gr-doc-pager a {
+  display: grid;
+  gap: 0.25em;
+  padding: 0.6em 0;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.gr-doc-pager a[data-next] {
+  text-align: right;
+}
+
+.gr-doc-pager small {
+  color: var(--color-text-muted);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.gr-doc-pager span {
+  font-family: var(--font-title);
+  font-weight: 600;
+  letter-spacing: var(--tracking-subheading);
+}
+
+.gr-doc-pager a:hover span {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.gr-doc-pager a[rel="prev"] span::before {
+  content: "← ";
+  color: var(--color-text-muted);
+}
+
+.gr-doc-pager a[rel="next"] span::after {
+  content: " →";
+  color: var(--color-text-muted);
+}
+
+/* -- widgets: the shared vocabulary ---------------------------------------- */
+
+.gr-dx {
+  position: relative;
+  margin-inline: 0;
+  padding: var(--u);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  font-size: var(--text-ui);
+  line-height: 1.5;
+  letter-spacing: 0;
+}
+
+.gr-root .gr-dx p,
+.gr-root .gr-dx h3,
+.gr-root .gr-dx dl,
+.gr-root .gr-dx dd,
+.gr-root .gr-dx ol,
+.gr-root .gr-dx ul {
+  margin: 0;
+}
+
+.gr-dx-placeholder {
+  border-style: dashed;
+  opacity: 0.5;
+}
+
+.gr-root .gr-dx-kicker,
+.gr-root .gr-dx-small-label,
+.gr-dx-question-label,
+.gr-dx-field label,
+.gr-dx-seg legend,
+.gr-dx-facts dt {
+  color: var(--color-text-muted);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.gr-root .gr-dx-caption {
+  margin-block-start: calc(0.8 * var(--u));
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.gr-dx-caption strong {
+  color: var(--color-text);
+}
+
+.gr-dx-muted {
+  color: var(--color-text-muted);
+}
+
+.gr-dx-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.5em 0.85em;
+  border: 1px solid var(--color-text);
+  border-radius: var(--radius);
+  background: var(--color-text);
+  color: var(--color-inverse);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity var(--dur-fast) var(--ease-response);
+}
+
+.gr-dx-button:hover {
+  opacity: 0.85;
+}
+
+.gr-dx-button--quiet {
+  border-color: var(--color-rule);
+  background: none;
+  color: var(--color-text);
+}
+
+.gr-dx-button:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.gr-dx :is(button, input, select, a, summary):focus-visible {
+  outline: 2px solid var(--color-interactive);
+  outline-offset: 2px;
+}
+
+.gr-root .gr-dx-more {
+  display: inline-block;
+  color: var(--color-text);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.gr-dx-more::after {
+  content: " →";
+}
+
+.gr-dx-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  color: var(--color-text);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.gr-dx-check input {
+  accent-color: var(--color-text);
+}
+
+/* A row of mutually exclusive options, drawn like the SDK picker. */
+.gr-dx-seg {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.gr-dx-seg legend {
+  margin-block-end: 0.4em;
+  padding: 0;
+}
+
+.gr-dx-seg > div {
+  display: inline-flex;
+  flex-wrap: wrap;
+  padding: 2px;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+}
+
+.gr-dx-seg label {
+  position: relative;
+  cursor: pointer;
+}
+
+.gr-dx-seg input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gr-dx-seg span {
+  display: block;
+  padding: 0.35em 0.65em;
+  border-radius: calc(var(--radius) - 2px);
+  color: var(--color-text-muted);
+  font-family: var(--font-code);
+  font-size: 0.8125rem;
+  transition:
+    background var(--dur-fast) var(--ease-response),
+    color var(--dur-fast) var(--ease-response);
+}
+
+.gr-dx-seg label:hover span {
+  color: var(--color-text);
+}
+
+.gr-dx-seg input:checked + span {
+  background: var(--color-text);
+  color: var(--color-inverse);
+}
+
+.gr-dx-seg input:focus-visible + span {
+  outline: 2px solid var(--color-interactive);
+  outline-offset: 1px;
+}
+
+.gr-dx-field {
+  display: grid;
+  align-content: start;
+  gap: 0.35em;
+  min-width: 0;
+}
+
+.gr-dx-field input[type="number"],
+.gr-dx-field select {
+  width: 100%;
+  min-width: 0;
+  padding: 0.45em 0.55em;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  background: var(--color-code-surface);
+  color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: 0.875rem;
+}
+
+.gr-dx-field input[type="range"] {
+  width: 100%;
+  accent-color: var(--color-text);
+}
+
+.gr-dx-field-hint {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.gr-dx-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(0.6 * var(--u)) var(--u);
+}
+
+.gr-dx-facts--four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.gr-dx-facts dt {
+  font-family: var(--font-code);
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.gr-dx-facts dd {
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.gr-dx-facts--four dd {
+  font-family: var(--font-title);
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Samples inside a widget sit flush with it. */
+.gr-dx .gr-doc-code {
+  margin: 0;
+}
+
+.gr-root .gr-dx pre {
+  margin: 0;
+}
+
+/* -- recipe finder --------------------------------------------------------- */
+
+.gr-dx-finder {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(1.2 * var(--u));
+}
+
+.gr-dx-finder-questions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--u);
+}
+
+.gr-root .gr-dx-question-label {
+  margin-block-end: 0.6em;
+}
+
+.gr-dx-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(17rem, 100%), 1fr));
+  gap: 0.15em var(--u);
+}
+
+.gr-dx-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75em;
+  padding: 0.4em 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.9375rem;
+  text-align: left;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+.gr-dx-choice::before {
+  content: "";
+  flex: none;
+  margin-block-start: 0.45em;
+  width: 0.55em;
+  height: 0.55em;
+  border: 1px solid currentcolor;
+  transition: background var(--dur-fast) var(--ease-response);
+}
+
+.gr-dx-choice:hover {
+  color: var(--color-text);
+}
+
+.gr-dx-choice[aria-checked="true"] {
+  color: var(--color-text);
+}
+
+.gr-dx-choice[aria-checked="true"]::before {
+  background: currentcolor;
+}
+
+.gr-dx-finder-result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(0.7 * var(--u));
+  padding-block-start: calc(1.2 * var(--u));
+  border-block-start: 1px solid var(--color-rule);
+}
+
+.gr-root .gr-dx-finder-recipe {
+  margin-block-start: -0.3em;
+  font-size: clamp(1.375rem, 3vw, 1.75rem);
+  line-height: 1.1;
+}
+
+.gr-root .gr-dx-finder-recipe code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.gr-dx-finder-why {
+  max-width: 40em;
+  font-size: var(--text-body);
+  letter-spacing: var(--tracking-body);
+}
+
+.gr-root .gr-dx-record {
+  overflow-x: auto;
+  padding: 0.7em 0.9em;
+  border: 1px dashed var(--color-code-border);
+  border-radius: var(--radius);
+  background: none;
+  box-shadow: none;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.gr-dx-finder-code {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(0.6 * var(--u));
+  min-width: 0;
+}
+
+.gr-dx-langtabs {
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* -- lifecycle -------------------------------------------------------------- */
+
+.gr-dx-life {
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(1.2 * var(--u));
+}
+
+.gr-dx-life-track {
+  position: relative;
+  overflow-x: auto;
+  padding-block-end: 0.8em;
+  scrollbar-width: thin;
+}
+
+.gr-dx-life-stations {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  min-width: 36rem;
+}
+
+/* The wire the stations hang on. */
+.gr-dx-life-stations::before {
+  content: "";
+  position: absolute;
+  top: 0.95rem;
+  left: 0.4rem;
+  right: 0.4rem;
+  height: 1px;
+  background: var(--color-rule);
+}
+
+.gr-dx-life-station {
+  position: relative;
+  display: grid;
+  justify-items: start;
+  gap: 0.2em;
+  padding: 0.6rem 0.6rem 0.5rem 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gr-dx-life-mark {
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-block-end: 0.5em;
+  border: 1px solid currentcolor;
+  background: var(--color-module);
+  transition:
+    background var(--dur-base) var(--ease-response),
+    transform var(--dur-base) var(--ease-spring);
+}
+
+.gr-dx-life-station[data-past] .gr-dx-life-mark {
+  background: color-mix(in srgb, var(--color-text) 35%, var(--color-module));
+  border-color: transparent;
+}
+
+.gr-dx-life-station[aria-selected="true"] {
+  color: var(--color-text);
+}
+
+.gr-dx-life-station[aria-selected="true"] .gr-dx-life-mark {
+  background: var(--color-text);
+  transform: scale(1.25);
+}
+
+.gr-dx-life-name {
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.gr-dx-life-gives {
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--color-text-muted);
+  font-family: var(--font-code);
+  font-size: 0.6875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The return path: serve feeds the next dataset version. */
+.gr-dx-life-loop {
+  position: relative;
+  min-width: 35rem;
+  height: 1.6rem;
+  margin-inline: 0.35rem calc(100% / 7 - 0.6rem);
+  border: 1px dashed var(--color-rule);
+  border-block-start: 0;
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+.gr-dx-life-loop span {
+  position: absolute;
+  left: 50%;
+  bottom: -0.65em;
+  padding-inline: 0.5em;
+  transform: translateX(-50%);
+  background: var(--color-module);
+  color: var(--color-text-muted);
+  font-family: var(--font-code);
+  font-size: 0.6875rem;
+  white-space: nowrap;
+}
+
+.gr-dx-life-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--u);
+  padding-block-start: calc(0.4 * var(--u));
+}
+
+@container (min-width: 40rem) {
+  .gr-dx-life-panel {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: start;
+  }
+}
+
+.gr-dx-life-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.7em;
+}
+
+.gr-dx-life-step {
+  color: var(--color-text-muted);
+  font-family: var(--font-code);
+  font-size: 0.75rem;
+}
+
+.gr-root .gr-dx-life-copy h3 {
+  font-size: var(--text-subheading);
+}
+
+.gr-dx-life-copy > p:not(.gr-dx-life-step) {
+  font-size: 1rem;
+  letter-spacing: var(--tracking-body);
+}
+
+.gr-dx-life-code {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(0.5 * var(--u));
+  min-width: 0;
+}
+
+.gr-root .gr-dx-life-code pre,
+.gr-root .gr-dx-life-code pre code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.gr-root .gr-dx-output pre {
+  overflow-x: auto;
+  margin-block-start: 0.4em;
+  padding: 0.8em 1em;
+  border: 1px dashed var(--color-code-border);
+  border-radius: var(--radius);
+  background: none;
+  box-shadow: none;
+  color: color-mix(
+    in srgb,
+    var(--color-code-text) 82%,
+    var(--color-code-muted)
+  );
+  font-size: 0.75rem;
+  line-height: 1.55;
+  white-space: pre;
+}
+
+.gr-root .gr-dx-life-phases {
+  display: grid;
+  gap: 0.1em;
+  padding: 0;
+  list-style: none;
+}
+
+.gr-dx-life-phases button {
+  position: relative;
+  padding: 0.25em 0 0.25em 1.3em;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gr-dx-life-phases button::before {
+  content: "";
+  position: absolute;
+  left: 0.1em;
+  top: 0.8em;
+  width: 0.45em;
+  height: 0.45em;
+  border: 1px solid currentcolor;
+}
+
+.gr-dx-life-phases [data-state] button {
+  color: var(--color-text);
+}
+
+.gr-dx-life-phases [data-state] button::before {
+  background: currentcolor;
+}
+
+.gr-dx-life-phases [data-state="now"] button {
+  font-weight: 600;
+}
+
+.gr-dx-life-phases [data-tone="warn"][data-state] button::before {
+  border-color: var(--color-emphasis);
+  background: var(--color-emphasis);
+}
+
+.gr-dx-life-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6em var(--u);
+  margin-block-start: 0.4em;
+}
+
+@container (max-width: 34rem) {
+  .gr-dx-life-stations {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    row-gap: 0.4em;
+    min-width: 0;
+  }
+
+  .gr-dx-life-stations::before,
+  .gr-dx-life-loop,
+  .gr-dx-life-gives {
+    display: none;
+  }
+}
+
+/* -- run replay ------------------------------------------------------------- */
+
+.gr-dx-replay {
+  padding: 0;
+  overflow: hidden;
+  border-color: var(--color-code-border);
+  background: var(--color-code-surface);
+}
+
+.gr-dx-replay-cmd {
+  display: flex;
+  gap: 0.6em;
+  padding: 0.75em var(--u);
+  border-block-end: 1px solid var(--color-code-border);
+  color: var(--color-code-muted);
+  font-family: var(--font-code);
+  font-size: 0.8125rem;
+}
+
+.gr-dx-replay-cmd code {
+  padding: 0;
+  overflow-wrap: anywhere;
+  background: none;
+  color: var(--color-code-text);
+  font-size: inherit;
+}
+
+.gr-dx-replay-screen {
+  container-type: inline-size;
+  padding: calc(0.6 * var(--u)) calc(0.8 * var(--u));
+}
+
+/* 100 columns of a 0.6em-advance monospace fill the width exactly. */
+.gr-root .gr-dx-replay-screen pre.gr-tty {
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--color-code-text);
+  font-family: var(--font-code);
+  font-size: clamp(5px, calc(100cqi / 60.5), 13px);
+  font-variant-ligatures: none;
+  line-height: 1.28;
+  letter-spacing: 0;
+  white-space: pre;
+}
+
+.gr-root .gr-dx-replay-screen[data-narrow] pre.gr-tty {
+  font-size: clamp(7px, calc(100cqi / 36.5), 13px);
+}
+
+.gr-tty-row {
+  display: block;
+  min-height: 1.28em;
+}
+
+.gr-tty-cell {
+  display: inline-block;
+  width: 1ch;
+  overflow: hidden;
+  text-align: center;
+  vertical-align: top;
+}
+
+.gr-tty-c {
+  color: var(--color-aegean-600);
+}
+.gr-tty-m {
+  color: var(--color-plum-500);
+}
+.gr-tty-g {
+  color: var(--color-grove-600);
+}
+.gr-tty-y {
+  color: var(--color-kiln-600);
+}
+.gr-tty-r {
+  color: var(--color-energy-red);
+}
+.gr-tty-b {
+  font-weight: 600;
+}
+.gr-tty-d {
+  opacity: 0.6;
+}
+.gr-tty-i {
+  font-style: italic;
+}
+.gr-tty-u {
+  text-decoration: underline;
+}
+
+.gr-tty-v {
+  background: var(--color-code-text);
+  color: var(--color-code-surface);
+}
+
+[data-theme="dark"] .gr-tty-c {
+  color: var(--color-aegean-400);
+}
+[data-theme="dark"] .gr-tty-m {
+  color: var(--color-plum-400);
+}
+[data-theme="dark"] .gr-tty-g {
+  color: var(--color-grove-400);
+}
+[data-theme="dark"] .gr-tty-y {
+  color: var(--color-energy-yellow);
+}
+
+.gr-dx-replay-empty {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 100 / 38;
+  color: var(--color-code-muted);
+  font-size: 0.875rem;
+}
+
+.gr-dx-replay-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6em var(--u);
+  padding: 0.75em var(--u) 0.6em;
+  border-block-start: 1px solid var(--color-code-border);
+}
+
+.gr-dx-replay-controls > button:nth-child(2) {
+  margin-inline-start: -0.6em;
+}
+
+.gr-dx-replay-scrub {
+  position: relative;
+  flex: 1 1 14rem;
+  min-width: 10rem;
+  padding-block-end: 0.7em;
+}
+
+.gr-dx-replay-scrub input {
+  width: 100%;
+  margin: 0;
+  accent-color: var(--color-code-text);
+}
+
+.gr-dx-replay-marks span {
+  position: absolute;
+  bottom: 0.1em;
+  width: 1px;
+  height: 0.55em;
+  background: var(--color-code-muted);
+}
+
+.gr-dx-replay .gr-dx-check {
+  color: var(--color-code-text);
+}
+
+.gr-dx-replay .gr-dx-caption {
+  margin: 0;
+  padding: 0 var(--u) var(--u);
+}
+
+@container (max-width: 34rem) {
+  .gr-dx-replay-marks {
+    display: none;
+  }
+
+  .gr-dx-replay-scrub {
+    padding-block-end: 0;
+  }
+}
+
+/* -- token mask ------------------------------------------------------------- */
+
+.gr-dx-mask {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(0.8 * var(--u));
+}
+
+.gr-dx-mask-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: calc(0.7 * var(--u)) var(--u);
+}
+
+.gr-dx-mask-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3em 1.2em;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.gr-dx-mask-legend span {
+  white-space: nowrap;
+}
+
+.gr-dx-mask-swatch {
+  display: inline-block;
+  width: 0.9em;
+  height: 0.9em;
+  margin-inline-end: 0.3em;
+  vertical-align: -0.1em;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--color-text-muted) 18%, transparent);
+}
+
+.gr-dx-mask-swatch[data-trained] {
+  background: color-mix(in srgb, var(--color-interactive) 30%, transparent);
+  box-shadow: inset 0 -2px 0 var(--color-interactive);
+}
+
+.gr-dx-mask-swatch[data-stripped] {
+  background: none;
+  border: 1px dashed var(--color-text-muted);
+}
+
+.gr-root .gr-dx-mask-render {
+  overflow-x: auto;
+  padding: 0.9em 1em;
+  font-size: 0.8125rem;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.gr-dx-mask-header {
+  color: var(--color-code-muted);
+}
+
+.gr-dx-mask-body {
+  color: color-mix(
+    in srgb,
+    var(--color-code-text) 55%,
+    var(--color-code-muted)
+  );
+}
+
+.gr-dx-mask-body[data-trained] {
+  padding: 0.1em 0;
+  background: color-mix(in srgb, var(--color-interactive) 18%, transparent);
+  box-shadow: inset 0 -2px 0 var(--color-interactive);
+  color: var(--color-code-text);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.gr-dx-mask-stripped {
+  color: var(--color-code-muted);
+  text-decoration-color: var(--color-code-muted);
+  opacity: 0.75;
+}
+
+.gr-dx-mask-override {
+  margin-inline-start: 0.8em;
+  padding: 0 0.45em;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: none;
+  color: var(--color-code-muted);
+  font: inherit;
+  font-size: 0.6875rem;
+  vertical-align: 0.1em;
+  cursor: pointer;
+}
+
+.gr-dx-mask-override:hover,
+.gr-dx-mask-override[data-set] {
+  color: var(--color-code-text);
+  border-color: var(--color-code-text);
+}
+
+.gr-dx-mask-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2em 1em;
+  font-variant-numeric: tabular-nums;
+}
+
+.gr-dx-mask-stats strong {
+  font-weight: 600;
+}
+
+.gr-root .gr-dx-mask-error {
+  padding: 0.8em 1em;
+  border-inline-start: 2px solid var(--color-emphasis);
+  background: color-mix(in srgb, var(--color-emphasis) 8%, transparent);
+  font-size: 0.875rem;
+}
+
+.gr-dx-mask-call {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+}
+
+.gr-dx-mask-call code {
+  font-size: 0.8125rem;
+}
+
+/* -- cost estimator --------------------------------------------------------- */
+
+.gr-dx-cost {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--u);
+}
+
+.gr-dx-cost-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: calc(0.7 * var(--u)) calc(0.7 * var(--u));
+}
+
+.gr-dx-field--wide {
+  grid-column: 1 / -1;
+  max-width: 24rem;
+}
+
+.gr-root .gr-dx-plan {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  padding: 0.9em 1em;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+.gr-dx-plan strong {
+  color: var(--color-code-text);
+  font-weight: 700;
+}
+
+.gr-dx-plan-warn {
+  color: var(--color-code-muted);
+}
+
+.gr-dx-cost-math {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gr-dx-cost-math strong {
+  color: var(--color-text);
+}
+
+.gr-root .gr-dx-cost-compare ul {
+  display: grid;
+  gap: 0.15em;
+  margin-block-start: 0.5em;
+  padding: 0;
+  list-style: none;
+}
+
+.gr-root .gr-dx-cost-compare li + li {
+  margin: 0;
+}
+
+.gr-dx-cost-compare button {
+  display: grid;
+  grid-template-columns: minmax(8.5rem, 11rem) minmax(0, 1fr) 4.5rem;
+  align-items: center;
+  gap: 0.8em;
+  width: 100%;
+  padding: 0.3em 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gr-dx-cost-name {
+  font-family: var(--font-code);
+}
+
+.gr-dx-cost-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--color-text-muted) 12%, transparent);
+}
+
+.gr-dx-cost-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--color-text-muted) 55%, transparent);
+  transition: width var(--dur-base) var(--ease-response);
+}
+
+.gr-dx-cost-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.gr-dx-cost-compare li[aria-current] button {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.gr-dx-cost-compare li[aria-current] .gr-dx-cost-bar span {
+  background: var(--color-interactive);
+}
+
+/* -- router frontier -------------------------------------------------------- */
+
+.gr-dx-frontier {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(0.8 * var(--u));
+}
+
+.gr-dx-frontier-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--u);
+}
+
+.gr-dx-frontier-head .gr-dx-field {
+  max-width: 22rem;
+}
+
+.gr-dx-frontier-head .gr-dx-field label {
+  font-family: var(--font-code);
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 400;
+}
+
+.gr-dx-frontier-head .gr-dx-field label strong {
+  color: var(--color-text);
+}
+
+.gr-dx-frontier-chart {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  touch-action: pan-y;
+}
+
+.gr-dx-grid {
+  stroke: var(--color-rule);
+  stroke-width: 1;
+}
+
+.gr-dx-axis {
+  fill: var(--color-text-muted);
+  font-family: var(--font-code);
+  font-size: 11px;
+}
+
+.gr-dx-label {
+  fill: var(--color-text);
+  font-size: 12px;
+}
+
+.gr-dx-label--muted {
+  fill: var(--color-text-muted);
+}
+
+.gr-dx-curve {
+  fill: none;
+  stroke: var(--color-interactive);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.gr-dx-random {
+  stroke: var(--color-text-muted);
+  stroke-dasharray: 3 4;
+  stroke-width: 1;
+}
+
+.gr-dx-target {
+  stroke: var(--color-emphasis);
+  stroke-dasharray: 6 4;
+  stroke-width: 1.25;
+}
+
+.gr-dx-cross {
+  stroke: var(--color-text-muted);
+  stroke-width: 1;
+}
+
+.gr-dx-dot {
+  fill: var(--color-interactive);
+  stroke: var(--color-module);
+  stroke-width: 2;
+}
+
+.gr-dx-dot--end {
+  fill: var(--color-text);
+}
+
+.gr-dx-dot--chosen {
+  fill: var(--color-module);
+  stroke: var(--color-interactive);
+  stroke-width: 3;
+}
+
+.gr-dx-table summary {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.gr-root .gr-dx-table table {
+  width: auto;
+  margin-block-start: 0.6em;
+  font-family: var(--font-code);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gr-dx-table th,
+.gr-dx-table td {
+  padding: 0.25em 1.2em 0.25em 0;
+  text-align: right;
+}
+
+.gr-dx-table th {
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+/* -- schematics ------------------------------------------------------------- */
+
+.gr-dx-pipe {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(0.6 * var(--u));
+}
+
+.gr-dx-pipe-chart {
+  width: 100%;
+  height: auto;
+}
+
+.gr-dx-pipe-bar {
+  fill: var(--color-text);
+}
+
+.gr-dx-pipe-bar--opt {
+  fill: var(--color-interactive);
+}
+
+.gr-dx-pipe-bar--idle {
+  fill: none;
+  stroke: var(--color-emphasis);
+  stroke-dasharray: 4 3;
+}
+
+.gr-dx-pipe-label {
+  fill: var(--color-text-muted);
+  font-family: var(--font-code);
+  font-size: 11px;
+}
+
+.gr-dx-pipe-call {
+  fill: var(--color-text);
+  font-family: var(--font-code);
+  font-size: 11px;
+}
+
+.gr-dx-pipe-hop {
+  stroke: var(--color-text-muted);
+  stroke-width: 1.25;
+}
+
+.gr-dx-pipe-head {
+  fill: var(--color-text-muted);
+}
+
+.gr-dx-datum-scroll {
+  overflow-x: auto;
+}
+
+.gr-root .gr-dx-datum table {
+  width: auto;
+  border-collapse: collapse;
+  font-family: var(--font-code);
+  font-size: 0.75rem;
+}
+
+.gr-root .gr-dx-datum th,
+.gr-root .gr-dx-datum td {
+  padding: 0.35em 0.55em;
+  border: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.gr-root .gr-dx-datum th {
+  padding-inline-start: 0;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  text-align: left;
+}
+
+.gr-dx-datum td[data-trained] {
+  background: color-mix(in srgb, var(--color-interactive) 14%, transparent);
+}
+
+.gr-root .gr-dx-datum code {
+  padding: 0;
+  background: none;
+}
+
+/* -- small screens ----------------------------------------------------------- */
+
+@media (max-width: 40rem) {
+  .gr-dx {
+    padding: calc(0.75 * var(--u));
+  }
+
+  .gr-dx-replay {
+    padding: 0;
+  }
+
+  .gr-dx-facts--four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gr-doc-pager {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gr-doc-pager a[data-next] {
+    text-align: left;
+  }
+
+  .gr-dx-cost-compare button {
+    grid-template-columns: minmax(0, 1fr) 4rem;
+  }
+
+  .gr-dx-cost-bar {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-dx *,
+  .gr-doc-toc-list a::before {
+    transition: none !important;
+  }
+}

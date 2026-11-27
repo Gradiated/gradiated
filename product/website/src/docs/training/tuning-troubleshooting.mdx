@@ -131,6 +131,10 @@ print(preview)  # trained spans in [[...]], plus the trained-token share per rec
   </DocsCodeTab>
 </DocsCodeTabs>
 
+Try the rules on a sample record. This runs the same masking rules as the server's render preview:
+
+<DocsTokenMask />
+
 `runs.plan()` also warns about records longer than the model's context window, and counts every record the recipe can't use, with the reasons and a few example IDs: `120 of 2400 records cannot be used by 'sft' and will be skipped (record has no assistant turn to train on); for example 'r_12', 'r_40', 'r_77'.` The run's warnings report the same skips. The trainer caps each training sequence at 8,192 tokens and truncates longer ones; the run's eval report says how many were cut.
 
 ## Checkpoints, resuming, and spend caps
@@ -188,6 +192,10 @@ for point in run.metrics(follow=True):
 
   </DocsCodeTab>
 </DocsCodeTabs>
+
+In a terminal, `grad train --wait` and `grad runs watch RUN` open a full-screen view of the same stream (`--plain` keeps the line output):
+
+<DocsRunReplay />
 
 ### Experiment tracking (W&B and MLflow)
 

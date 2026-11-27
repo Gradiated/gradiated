@@ -147,8 +147,6 @@ Environments written for the old v0 API (`vf.load_environment("name")`, `vf.Sing
 
 When an agent changes live state (writing to Postgres, calling an internal API, or editing files), each parallel attempt needs its own isolated sandbox and reliable cleanup. Subclass `Environment` and implement two methods; the other two have sensible defaults:
 
-<DocsEnvLifecycle />
-
 1. **`setup(task, rollout_id)`** _(required)_: start or borrow an isolated sandbox, seed its initial state, and return a handle.
 2. **`step(handle, action)`** _(required)_: run the model's turn and return `Observation(text=..., done=...)`. Tool calls arrive already parsed in `action.tool_calls` (a list of `ToolCall(name, arguments)`); `action.text` holds any plain-text answer.
 3. **`evaluate(handle, trajectory)`** _(optional)_: by default, scores the finished attempt with `self.rubric` **while the sandbox is still up**, passing `handle` as `state` so `StatefulScorer` checks can query Postgres, Redis, or your API. Override it only for custom scoring.

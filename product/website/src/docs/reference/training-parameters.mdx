@@ -33,16 +33,16 @@ Live metrics from `run.metrics(follow=True)` include `step`, `loss`, `grad_norm`
 
 ## Optimization
 
-| Parameter            | Default                                                                                  | What it does                                                                                                                                                                                                     |
-| -------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lr`                 | `"auto"`                                                                                 | Looked up per base model and recipe, then scaled for your batch size. See [How "auto" values resolve](#how-auto-values-resolve). Pass a float to override.                                                       |
-| `lr_scale`           | `1.0`                                                                                    | Multiplies the resolved `lr`. Sweep `0.5`, `1.0` and `2.0` to tune without picking raw numbers.                                                                                                                  |
-| `adapter`            | `adapters.LoRA(rank=32)`                                                                 | `alpha` stays at `32` by default, so changing `rank` doesn't change the right learning rate. Ranks `8`–`16` are enough for datasets under about 5,000 records; use `64`–`128` for SFT on more than about 50,000. |
-| `optimizer`          | `optim.AdamW(lr="auto", betas=(0.9, 0.95), weight_decay=0.0, grad_clip=1.0)`             | Standard settings for LoRA. AdamW is the only optimizer; `grad_clip=0` disables clipping.                                                                                                                        |
-| `schedule`, `warmup` | `"linear"`, `0.03`                                                                       | Linear decay to zero after a 3% warmup. `schedule` also takes `"cosine"` or `"constant"`; `warmup` is a fraction of steps up to `0.5`.                                                                           |
+| Parameter            | Default                                                                                                                                                                             | What it does                                                                                                                                                                                                     |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lr`                 | `"auto"`                                                                                                                                                                            | Looked up per base model and recipe, then scaled for your batch size. See [How "auto" values resolve](#how-auto-values-resolve). Pass a float to override.                                                       |
+| `lr_scale`           | `1.0`                                                                                                                                                                               | Multiplies the resolved `lr`. Sweep `0.5`, `1.0` and `2.0` to tune without picking raw numbers.                                                                                                                  |
+| `adapter`            | `adapters.LoRA(rank=32)`                                                                                                                                                            | `alpha` stays at `32` by default, so changing `rank` doesn't change the right learning rate. Ranks `8`–`16` are enough for datasets under about 5,000 records; use `64`–`128` for SFT on more than about 50,000. |
+| `optimizer`          | `optim.AdamW(lr="auto", betas=(0.9, 0.95), weight_decay=0.0, grad_clip=1.0)`                                                                                                        | Standard settings for LoRA. AdamW is the only optimizer; `grad_clip=0` disables clipping.                                                                                                                        |
+| `schedule`, `warmup` | `"linear"`, `0.03`                                                                                                                                                                  | Linear decay to zero after a 3% warmup. `schedule` also takes `"cosine"` or `"constant"`; `warmup` is a fraction of steps up to `0.5`.                                                                           |
 | `batch_size`         | `128` examples (SFT records, DPO pairs, router and decision records, embedding triplets); a quarter of the training examples (at least 8) when that's smaller, except for embedding | Examples per optimizer step.                                                                                                                                                                                     |
-| `epochs`             | `1`                                                                                      | Passes over the data (`1`–`20`). The dry run warns when a run has fewer than 100 optimizer steps and suggests a smaller batch.                                                                                   |
-| `loss`               | set per recipe (see each recipe below)                                                   |                                                                                                                                                                                                                  |
+| `epochs`             | `1`                                                                                                                                                                                 | Passes over the data (`1`–`20`). The dry run warns when a run has fewer than 100 optimizer steps and suggests a smaller batch.                                                                                   |
+| `loss`               | set per recipe (see each recipe below)                                                                                                                                              |                                                                                                                                                                                                                  |
 
 ## Data and chat templates
 
@@ -242,20 +242,10 @@ For `client.evals.create(...)` and `client.evals.plan(...)`.
 ## Deploy
 
 <DocsCallout label="Coming soon on Gradiated Cloud">
-  Hosted deployments aren't live yet. Today, download the artifact and serve it
-  on vLLM or SGLang; see [Serve it
-  yourself](/docs/training/deploying/#serve-it-yourself).
+  Publishing an artifact as a model version happens in the Gradiated console or
+  the Models API, not in grad, and isn't live yet. Today, download the artifact
+  and serve it on vLLM or SGLang; see [Deploying](/docs/training/deploying/).
 </DocsCallout>
-
-For `run.deploy(...)`, `artifact.deploy(...)`, and `grad deploy`.
-
-| Parameter                | Default           | What it does                                                    |
-| ------------------------ | ----------------- | --------------------------------------------------------------- |
-| `name`                   | the artifact name | The stable deployment name.                                     |
-| `fallback` (routers)     | none              | The model that receives the traffic the router doesn't offload. |
-| `explore_rate` (routers) | `0.0`             | Share of router traffic (`0`–`0.5`) used for exploration.       |
-
-Deploying points `your-org/<name>` at the new artifact version after qualification. To roll back, run `grad deployments rollback <name>` (or `client.deployments.rollback(name)`), or deploy an earlier version (`grad deploy <name>@<prev-version>`).
 
 ## How "auto" values resolve
 

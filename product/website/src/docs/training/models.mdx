@@ -82,12 +82,13 @@ Every run and eval records what it processed in a usage ledger as it goes: a row
 - **Zero-cost pre-flight estimate:** run `grad train --dry-run` or `client.runs.plan(...)` to see `estimated_tokens`, `estimated_cost_usd`, `estimated_duration_s` (on one H100, excluding queueing) and `min_gpu_memory_gb` before you start. The token estimate errs high, by about 15% for English chat, so the run usually costs a little less than planned.
 - **Spend cap:** pass `max_cost_usd=` on any run. It stops cleanly with status `stopped_budget` and saves a checkpoint when the cap is reached; resume it with a higher cap.
 - **Checkpoint retention:** the best and final checkpoints of every run never expire; other checkpoints expire after 30 days unless you promote them.
-- **The ledger:** `grad usage` (or `client.usage.list()`) lists one row per billed increment, newest first, with its run or eval, attempt, token range and cost.
+- **The ledger:** `grad usage` totals this month by kind (training, eval, scoring, labeling, teacher) with the top runs and evals; `grad usage list` (or `client.usage.list()`) lists the billed rows, newest first, with their run or eval, attempt, tokens and cost. On Gradiated Cloud, eval rows say `billed_by: gateway`: the gateway bills them with your inference usage.
 
 ```bash
 grad train --dataset support-sft --name support-sft --recipe sft --dry-run
 grad train --dataset support-sft --name support-sft --recipe sft --wait
-grad usage --limit 5
+grad usage
+grad usage list --run support-sft
 ```
 
 Estimate a run before you plan it. The arithmetic is the planner's; the token count is yours:

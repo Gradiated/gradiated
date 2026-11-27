@@ -144,34 +144,34 @@ pip install --pre grad-sdk
   <DocsCodeTab label="TypeScript">
 
 ```bash
-npm install @gradiated/grad
+npm install @gradiated/grad@next
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="Go">
 
 ```bash
-go get github.com/Gradiated/grad/sdks/go@v0.2.0-alpha.2
+go get github.com/Gradiated/grad/sdks/go@v0.2.0-alpha.3
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="Rust">
 
 ```bash
-cargo add grad-sdk@0.2.0-alpha.2
+cargo add grad-sdk@0.2.0-alpha.3
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="CLI">
 
 ```bash
-cargo install --locked grad-cli@0.2.0-alpha.2
+cargo install --locked grad-cli@0.2.0-alpha.3
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Until 0.2.0 is out the packages are prereleases, so pip needs `--pre` and Go and Cargo need the version. The Rust crate is published as `grad-sdk` and imported as `grad` (`use grad::Client;`). To try unreleased changes, install from the repository instead, for example `pip install "grad-sdk @ git+https://github.com/Gradiated/grad#subdirectory=sdks/python"` or `cargo install --locked --git https://github.com/Gradiated/grad grad-cli`.
+Until 0.2.0 is out the packages are prereleases, so pip needs `--pre`, npm the `next` tag, and Go and Cargo the version. The Rust crate is published as `grad-sdk` and imported as `grad` (`use grad::Client;`). To try unreleased changes, install from the repository instead, for example `pip install "grad-sdk @ git+https://github.com/Gradiated/grad#subdirectory=sdks/python"` or `cargo install --locked --git https://github.com/Gradiated/grad grad-cli`.
 
 Then start a local stack (it needs Docker with the Compose plugin) and point the CLI and SDKs at it:
 

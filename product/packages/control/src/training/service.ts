@@ -74,9 +74,10 @@ export const createTrainingService = (
     return result;
   };
 
+  // Eval-only models are grad's, hidden from the workspace's own model calls.
   const findTask = async (workspaceId: string, name: string) => {
     const task = await records.getTask(workspaceId, name);
-    if (!task) throw notFound("task");
+    if (!task || task.purpose === "eval") throw notFound("task");
 
     return task;
   };
@@ -183,14 +184,18 @@ export const createTrainingService = (
     async listTasks(userId: string, workspaceId: string) {
       await member(userId, workspaceId);
 
-      const tasks = await records.listTasks(workspaceId);
+      const tasks = (await records.listTasks(workspaceId)).filter(
+        (task) => task.purpose === "serving",
+      );
       const changed = await Promise.all(
         tasks.map(({ latestRun }) =>
           latestRun ? reconcileTrainingRun(database, engine, latestRun) : false,
         ),
       );
       const current = changed.some(Boolean)
-        ? await records.listTasks(workspaceId)
+        ? (await records.listTasks(workspaceId)).filter(
+            (task) => task.purpose === "serving",
+          )
         : tasks;
       const files = await createVersionFileStore(database).listReadyNamed(
         workspaceId,

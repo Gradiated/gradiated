@@ -194,6 +194,7 @@ export {
   type PublishResult,
 } from "./training/publish.js";
 export type { ProductionChangeRecord } from "./training/production-changes.js";
+export { createEvalVersions, type EvalVersions } from "./training/evals.js";
 export { ADAPTER_DEMOS, seedAdapterDemos } from "./training/adapter-demos.js";
 export {
   createAdapterHostingService,

@@ -5475,9 +5475,10 @@
                     "enum": [
                       "passed",
                       "rejected",
-                      "pending"
+                      "pending",
+                      "skipped"
                     ],
-                    "description": "passed: the version loaded on serving capacity and is available. rejected: the runtime refused it. pending: no capacity could test it yet; promote retries."
+                    "description": "passed: the version loaded on serving capacity and is available. rejected: the runtime refused it. pending: no capacity could test it yet; promote retries. skipped: eval-only versions, which are never promoted."
                   },
                   "detail": {
                     "type": "string"

@@ -7,6 +7,7 @@ import {
   UuidSchema,
   type TaskVersionAdapter,
 } from "@gradiated/contracts";
+import type { TaskPurpose, TaskVersionRecord } from "./records.js";
 import type { ControlDatabase } from "../db/client.js";
 import {
   tasks,
@@ -56,6 +57,9 @@ export const createPublishStore = (database: ControlDatabase) => ({
     baseModelId: string;
     name: string;
     adapter: TaskVersionAdapter;
+    purpose: TaskPurpose;
+    expiresAt: Date | null;
+    status: TaskVersionRecord["status"];
   }) {
     return database
       .transaction(async (tx) => {
@@ -82,6 +86,7 @@ export const createPublishStore = (database: ControlDatabase) => ({
               judgeModelId: EvaluationJudgeSchema.parse(workspace.judge),
               productionVersionId: null,
               trainingSchedule: null,
+              purpose: input.purpose,
             }),
           )
           .onConflictDoNothing();
@@ -96,6 +101,8 @@ export const createPublishStore = (database: ControlDatabase) => ({
           )
           .for("update");
         const task = TaskRecordSchema.parse(rawTask);
+        if (task.purpose !== input.purpose)
+          return { outcome: "purpose_mismatch" as const, task };
         if (task.baseModelId !== input.baseModelId)
           return { outcome: "base_mismatch" as const, task };
 
@@ -129,7 +136,8 @@ export const createPublishStore = (database: ControlDatabase) => ({
               name: input.name,
               baseModelId: input.baseModelId,
               adapter: input.adapter,
-              status: "unavailable",
+              status: input.status,
+              expiresAt: input.expiresAt,
             }),
           )
           .onConflictDoNothing()
@@ -162,6 +170,32 @@ export const createPublishStore = (database: ControlDatabase) => ({
       .returning();
 
     return row && VersionRecordSchema.parse(row);
+  },
+
+  async extendExpiry(versionId: string, expiresAt: Date) {
+    const [row] = await database
+      .update(taskVersions)
+      .set({ expiresAt, updatedAt: new Date() })
+      .where(
+        and(
+          eq(taskVersions.id, UuidSchema.parse(versionId)),
+          lt(taskVersions.expiresAt, expiresAt),
+        ),
+      )
+      .returning();
+
+    return row && VersionRecordSchema.parse(row);
+  },
+
+  async expiredVersions(now: Date, limit = 50) {
+    return VersionRecordSchema.array().parse(
+      await database
+        .select()
+        .from(taskVersions)
+        .where(lt(taskVersions.expiresAt, now))
+        .orderBy(asc(taskVersions.expiresAt))
+        .limit(limit),
+    );
   },
 
   // Deletes a version that is not in production, recording the pin its

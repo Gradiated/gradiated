@@ -27,6 +27,11 @@ const ApiOnlyEnvironmentSchema = z.object({
   GRAD_ARTIFACTS_BUCKET: z.string().min(1).optional(),
   // grad-server's internal listener, such as http://grad-internal.training.svc:8789.
   GRAD_SERVER_URL: z.url().optional(),
+  // The private listener grad-server calls; it stays off unless a token is set.
+  TRAINING_INTERNAL_TOKEN: z.string().trim().min(32).optional(),
+  TRAINING_INTERNAL_TOKEN_PREVIOUS: z.string().trim().min(32).optional(),
+  TRAINING_INTERNAL_HOST: z.string().min(1).default("0.0.0.0"),
+  TRAINING_INTERNAL_PORT: PortSchema.default(3_005),
   CONTENTS_BUCKET: z.string().min(1).optional(),
   METRICS_PORT: PortSchema.default(9_464),
   MCP_RESOURCE_URL: z.url().default("https://mcp.gradiated.com/mcp"),

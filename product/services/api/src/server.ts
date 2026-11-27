@@ -28,6 +28,7 @@ import {
   createTraceService,
   createTrainingService,
   createAdapterDownloads,
+  createEvalVersions,
   createGradArtifacts,
   createAdapterHostingService,
   createAdapterQualifier,
@@ -81,6 +82,7 @@ import { parseApiEnvironment } from "./environment.js";
 import { createProfilingIngestApp } from "./ingest/profiling.js";
 import { serviceLog } from "./logging.js";
 import { createServiceTokens } from "./auth/service-tokens.js";
+import { createTrainingInternalApp } from "./training-internal.js";
 import { ApiMetrics, startApiMetricsServer } from "./metrics.js";
 import { createReadinessCheck } from "./readiness.js";
 
@@ -259,10 +261,28 @@ const training = createTrainingService(
 );
 const pinReleases = grad
   ? setInterval(() => {
-      training.artifacts.releasePendingPins().catch((error: unknown) => {
-        serviceLog("warn", "grad_pin_release_failed", { error });
-      });
+      training.artifacts
+        .deleteExpiredVersions()
+        .then(() => training.artifacts.releasePendingPins())
+        .catch((error: unknown) => {
+          serviceLog("warn", "grad_pin_release_failed", { error });
+        });
     }, 60_000).unref()
+  : undefined;
+const trainingInternalServer = environment.TRAINING_INTERNAL_TOKEN
+  ? serve({
+      fetch: createTrainingInternalApp({
+        tokens: [
+          environment.TRAINING_INTERNAL_TOKEN,
+          ...(environment.TRAINING_INTERNAL_TOKEN_PREVIOUS
+            ? [environment.TRAINING_INTERNAL_TOKEN_PREVIOUS]
+            : []),
+        ],
+        evals: createEvalVersions(database, training.artifacts),
+      }).fetch,
+      hostname: environment.TRAINING_INTERNAL_HOST,
+      port: environment.TRAINING_INTERNAL_PORT,
+    })
   : undefined;
 
 const app = createApp({
@@ -407,6 +427,9 @@ const shutdown = async (signal: NodeJS.Signals) => {
       : undefined,
     profilingServer
       ? release("profiling", () => closeServer(profilingServer))
+      : undefined,
+    trainingInternalServer
+      ? release("training-internal", () => closeServer(trainingInternalServer))
       : undefined,
   ]);
 

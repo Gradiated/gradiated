@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  TASK_PURPOSES,
   TaskSchema,
   TaskVersionSchema,
   TrainingRunSchema,
@@ -19,6 +20,7 @@ export const TaskRecordSchema = z.object({
   judgeModelId: TaskSchema.shape.judge_model_id,
   productionVersionId: TaskSchema.shape.production_version_id,
   trainingSchedule: TaskSchema.shape.training_schedule,
+  purpose: z.enum(TASK_PURPOSES).default("serving"),
   ...timestamps,
 });
 
@@ -47,6 +49,7 @@ export const VersionRecordSchema = z.object({
   baseModelId: TaskVersionSchema.shape.base_model_id,
   adapter: TaskVersionSchema.shape.adapter,
   status: TaskVersionSchema.shape.status,
+  expiresAt: z.date().nullable().default(null),
   ...timestamps,
 });
 
@@ -98,6 +101,7 @@ export const TaskUpdateSchema = TaskRecordSchema.pick({
 }).partial();
 
 export type TaskRecord = z.infer<typeof TaskRecordSchema>;
+export type TaskPurpose = TaskRecord["purpose"];
 export type TaskVersionRecord = z.infer<typeof VersionRecordSchema>;
 export type TrainingRunRecord = z.infer<typeof RunRecordSchema> & {
   task: string;

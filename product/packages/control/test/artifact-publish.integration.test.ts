@@ -7,6 +7,9 @@ import {
   taskVersions,
 } from "../src/db/schema/index.js";
 import { createArtifactPublisher } from "../src/training/publish.js";
+import { createEvalVersions } from "../src/training/evals.js";
+import { createTrainingService } from "../src/training/service.js";
+import { createMemoryContentStore } from "./support/content-store.js";
 import { createTrainingStore } from "../src/training/store.js";
 import type { GradArtifact, GradArtifacts } from "../src/training/grad.js";
 import type { AdapterQualifier } from "../src/training/qualification.js";
@@ -396,5 +399,69 @@ describe("publishing grad artifacts", () => {
         .from(taskProductionChanges)
         .where(eq(taskProductionChanges.taskId, first.task.id)),
     ).toHaveLength(3);
+  });
+
+  describe("eval-only versions", () => {
+    it("publishes eval-only versions into a hidden model that never serves production", async () => {
+      const { member, publisher, pins, add } = await setup();
+      const evals = createEvalVersions(db.database, publisher);
+      const artifact = add(loraFiles());
+
+      const published = await evals.publish(
+        member.workspaceId,
+        "fast-diff-merge@2026-11-26-1",
+      );
+
+      expect(published.model).toMatch(
+        new RegExp(
+          `^[a-z0-9-]+/grad-eval-${member.workspaceId}/fast-diff-merge\\.2026-11-26-1$`,
+        ),
+      );
+      expect(published.task).toMatchObject({ purpose: "eval" });
+      expect(published).toMatchObject({
+        version: { status: "available" },
+        qualification: { outcome: "skipped" },
+      });
+      expect(published.version.expiresAt!.getTime()).toBeGreaterThan(
+        Date.now() + 6 * 24 * 3600_000,
+      );
+      const again = await evals.publish(member.workspaceId, artifact.id);
+      expect(again.version.id).toBe(published.version.id);
+      expect(pins.size).toBe(1);
+
+      const training = createTrainingService(
+        db.database,
+        createMemoryContentStore(new Map()),
+      );
+      expect(
+        (await training.listTasks(member.userId, member.workspaceId)).map(
+          (task) => task.name,
+        ),
+      ).toEqual([member.task.name]);
+      await expect(
+        training.promote(
+          member.userId,
+          member.workspaceId,
+          published.task.name,
+          published.version.id,
+        ),
+      ).rejects.toMatchObject({ code: "not_found" });
+      await expect(
+        publisher.publish(member.userId, member.workspaceId, {
+          artifact: artifact.id,
+          task: published.task.name,
+        }),
+      ).rejects.toMatchObject({ code: "invalid_artifact" });
+
+      expect(await publisher.deleteExpiredVersions(new Date())).toEqual({
+        deleted: 0,
+      });
+      expect(
+        await publisher.deleteExpiredVersions(
+          new Date(Date.now() + 8 * 24 * 3600_000),
+        ),
+      ).toEqual({ deleted: 1 });
+      expect(pins.size).toBe(0);
+    });
   });
 });

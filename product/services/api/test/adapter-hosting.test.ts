@@ -31,6 +31,7 @@ const row = {
     judgeModelId: "openai/gpt-5" as const,
     productionVersionId: versionId,
     trainingSchedule: null,
+    purpose: "serving" as const,
     createdAt: at,
     updatedAt: at,
   },
@@ -42,6 +43,7 @@ const row = {
     name: "triage-v1",
     baseModelId: "gradiated/base",
     status: "available" as const,
+    expiresAt: null,
     adapter: {
       format: "peft_lora" as const,
       artifact_uri: "s3://bucket/adapter",

@@ -27,6 +27,7 @@ const task = {
   judgeModelId: "openai/gpt-5" as const,
   productionVersionId: runId,
   trainingSchedule: "0 3 * * MON",
+  purpose: "serving" as const,
   createdAt: at,
   updatedAt: at,
 };
@@ -443,6 +444,7 @@ describe("training routes", () => {
         rank: 16,
       },
       status: "available" as const,
+      expiresAt: null,
       createdAt: at,
       updatedAt: at,
     });

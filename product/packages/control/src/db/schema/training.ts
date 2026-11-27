@@ -21,6 +21,7 @@ import {
   DEFAULT_EVALUATION_JUDGE,
   DEFAULT_COMPARISON_MODEL,
   type EvaluationJudge,
+  TASK_PURPOSES,
   TASK_VERSION_STATUSES,
   TRAINING_TRIGGERS,
   type RunDatasetSummary,
@@ -72,6 +73,10 @@ export const tasks = pgTable(
       (): AnyPgColumn => taskVersions.id,
       { onDelete: "set null" },
     ),
+    // `eval` tasks hold grad's eval-only versions: hidden and never promoted.
+    purpose: text("purpose", { enum: TASK_PURPOSES })
+      .default("serving")
+      .notNull(),
     ...timestamps,
   },
   (table) => [
@@ -88,6 +93,10 @@ export const tasks = pgTable(
     unique("tasks_workspace_name_unique").on(table.workspaceId, table.name),
     unique("tasks_id_workspace_unique").on(table.id, table.workspaceId),
     check("tasks_name_routable_check", sql`${table.name} not in ('.', '..')`),
+    check(
+      "tasks_purpose_check",
+      sql`${table.purpose} in (${inList(TASK_PURPOSES)}) and (${table.purpose} = 'serving' or ${table.productionVersionId} is null)`,
+    ),
     check(
       "tasks_model_name_check",
       sql`${table.organizationId} is null or (strpos(${table.name}, '/') = 0 and char_length(${table.name}) <= 128)`,
@@ -183,9 +192,14 @@ export const taskVersions = pgTable(
       .references(() => models.id, { onDelete: "restrict" }),
     adapter: jsonb("adapter").$type<TaskVersionAdapter>().notNull(),
     status: text("status", { enum: TASK_VERSION_STATUSES }).notNull(),
+    // Eval-only versions are deleted, and their pins released, after this.
+    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }),
     ...timestamps,
   },
   (table) => [
+    index("task_versions_expires_index")
+      .on(table.expiresAt)
+      .where(sql`${table.expiresAt} is not null`),
     check(
       "task_versions_status_check",
       sql`${table.status} in (${inList(TASK_VERSION_STATUSES)})`,

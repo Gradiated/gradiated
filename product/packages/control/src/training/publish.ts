@@ -68,7 +68,8 @@ export class PublishError extends Error {
   }
 }
 
-export type QualificationOutcome = "passed" | "rejected" | "pending";
+export type QualificationOutcome =
+  "passed" | "rejected" | "pending" | "skipped";
 
 export type PublishResult = {
   task: TaskRecord;
@@ -76,6 +77,19 @@ export type PublishResult = {
   created: boolean;
   qualification: { outcome: QualificationOutcome; detail?: string };
 };
+
+export type PublishInput = {
+  artifact: string;
+  task?: string;
+  name?: string;
+  evalOnly?: boolean;
+};
+
+// Eval-only versions live in one hidden model per workspace, named by artifact ID.
+export const EVAL_TASK_PREFIX = "grad-eval-";
+export const EVAL_VERSION_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
+export const evalTaskName = (workspaceId: string) =>
+  `${EVAL_TASK_PREFIX}${workspaceId}`;
 
 export const artifactBundleKey = (workspaceId: string, sha256: string) =>
   `artifacts/${workspaceId}/${sha256}.grad.tar.gz`;
@@ -351,9 +365,13 @@ export const createArtifactPublisher = ({
 
   const publish = async (
     workspaceId: string,
-    input: { artifact: string; task?: string; name?: string },
+    input: PublishInput,
   ): Promise<PublishResult> => {
     const { grad, bundles } = requireGrad();
+    const purpose = input.evalOnly ? "eval" : "serving";
+    const expiresAt = input.evalOnly
+      ? new Date(Date.now() + EVAL_VERSION_LIFETIME_MS)
+      : null;
     const artifact = await grad
       .resolve(workspaceId, input.artifact)
       .catch((error: unknown) => {
@@ -366,24 +384,42 @@ export const createArtifactPublisher = ({
 
     checkArtifactFormat(artifact);
     const taskName = ModelNameSegmentSchema.safeParse(
-      input.task ?? artifact.name,
+      input.evalOnly
+        ? evalTaskName(workspaceId)
+        : (input.task ?? artifact.name),
     );
     const versionName = VersionNameSchema.safeParse(
-      input.name ?? artifact.version,
+      input.evalOnly
+        ? `${artifact.name}.${artifact.version}`
+        : (input.name ?? artifact.version),
     );
     if (!taskName.success || !versionName.success)
       throw invalid(
         "The model or version name is invalid. Pass a name made of letters, digits, '.', '_' and '-'.",
       );
+    if (!input.evalOnly && taskName.data.startsWith(EVAL_TASK_PREFIX))
+      throw invalid(
+        `Model names starting with ${EVAL_TASK_PREFIX} are reserved.`,
+      );
 
     const existingTask = await records.getTask(workspaceId, taskName.data);
     if (existingTask) {
+      if (existingTask.purpose !== purpose)
+        throw invalid(
+          `Model names starting with ${EVAL_TASK_PREFIX} are reserved.`,
+        );
+
       const existing = await store.findArtifactVersion(
         existingTask.id,
         artifact.id,
       );
       if (existing) {
-        const { version, ...qualification } = await qualify(existing);
+        const current = expiresAt
+          ? ((await store.extendExpiry(existing.id, expiresAt)) ?? existing)
+          : existing;
+        const { version, ...qualification } = input.evalOnly
+          ? { version: current, outcome: "skipped" as const }
+          : await qualify(current);
         return { task: existingTask, version, created: false, qualification };
       }
     } else {
@@ -425,12 +461,22 @@ export const createArtifactPublisher = ({
         baseModelId: base.modelId,
         name: versionName.data,
         adapter,
+        purpose,
+        expiresAt,
+        // Eval-only versions are never promoted, and the loader still checks them
+        // when an eval first calls one; testing them first would need capacity
+        // that a scaled-to-zero pool only gets from the eval's own requests.
+        status: input.evalOnly ? "available" : "unavailable",
       });
     } catch (error) {
       await unpin();
       throw error;
     }
     if (inserted.outcome !== "created") await unpin();
+    if (inserted.outcome === "purpose_mismatch")
+      throw invalid(
+        `Model names starting with ${EVAL_TASK_PREFIX} are reserved.`,
+      );
     if (inserted.outcome === "base_mismatch")
       throw new PublishError(
         "model_base_mismatch",
@@ -442,7 +488,9 @@ export const createArtifactPublisher = ({
         `The model ${inserted.task.name} already has a version named ${versionName.data}. Pass another name.`,
       );
 
-    const { version, ...qualification } = await qualify(inserted.version);
+    const { version, ...qualification } = input.evalOnly
+      ? { version: inserted.version, outcome: "skipped" as const }
+      : await qualify(inserted.version);
     return {
       task: inserted.task,
       version,
@@ -475,10 +523,10 @@ export const createArtifactPublisher = ({
     async publish(
       userId: string,
       workspaceId: string,
-      input: { artifact: string; task?: string; name?: string },
+      input: Omit<PublishInput, "evalOnly">,
     ) {
       await requireWorkspaceEditor(database, { userId, workspaceId });
-      return publish(workspaceId, input);
+      return publish(workspaceId, { ...input, evalOnly: false });
     },
 
     publishAsService: publish,
@@ -491,7 +539,7 @@ export const createArtifactPublisher = ({
     ) {
       await requireWorkspaceEditor(database, { userId, workspaceId });
       const task = await records.getTask(workspaceId, taskName);
-      if (!task)
+      if (!task || task.purpose === "eval")
         throw new ControlServiceError("not_found", "The task was not found.");
 
       const version = await records.findVersion(task.id, reference);
@@ -509,6 +557,20 @@ export const createArtifactPublisher = ({
         );
 
       if (deleted.release) await releasePin(deleted.release);
+    },
+
+    // Deletes eval-only versions past their expiry; their pins go through the outbox.
+    async deleteExpiredVersions(now = new Date()) {
+      let deleted = 0;
+      for (const version of await store.expiredVersions(now)) {
+        const result = await store.deleteVersion(version.taskId, version.id);
+        if (!result) continue;
+
+        deleted++;
+        if (result.release) await releasePin(result.release);
+      }
+
+      return { deleted };
     },
 
     // Retries releases that grad did not confirm when their version was deleted.

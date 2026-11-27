@@ -7,7 +7,7 @@ import type { ReactElement } from "react";
  *
  * Neat (neat.firecms.co) drives the material. Each card wears one of the
  * editor's authored presets, extracted verbatim: Oil Slick on DeepSeek,
- * Neat on GLM, Time on Kev. The slug seeds the field so each card is
+ * Neat on GLM. The slug seeds the field so each card is
  * deterministic across loads.
  *
  * Reduced motion pins speed to zero — Neat renders one still frame's
@@ -95,57 +95,6 @@ const NEAT: NeatPreset = {
   cameraLock: true,
 };
 
-const TIME: NeatPreset = {
-  colors: [
-    { color: "#167CB3", enabled: true },
-    { color: "#CB9854", enabled: true },
-    { color: "#CE96CE", enabled: true },
-    { color: "#E0115F", enabled: true },
-    { color: "#FFFFFF", enabled: false },
-    { color: "#000000", enabled: false },
-  ],
-  speed: 2.5,
-  horizontalPressure: 5,
-  verticalPressure: 5,
-  waveFrequencyX: 2,
-  waveFrequencyY: 3,
-  waveAmplitude: 6,
-  shadows: 2,
-  highlights: 0,
-  colorBrightness: 0.9,
-  colorSaturation: -3,
-  wireframe: false,
-  colorBlending: 5,
-  backgroundColor: "#A1A4B7",
-  backgroundAlpha: 1,
-  resolution: 0.4,
-  flowDistortionA: 3.7,
-  flowDistortionB: 0.8,
-  flowScale: 1.6,
-  flowEase: 0.32,
-  flowEnabled: true,
-  domainWarpEnabled: true,
-  domainWarpIntensity: 0.1,
-  domainWarpScale: 2.4,
-  vignetteIntensity: 0.45,
-  vignetteRadius: 0.55,
-  bloomIntensity: 1.9,
-  bloomThreshold: 0.6,
-  chromaticAberration: 17,
-  shapeType: "ribbon",
-  shapeRotationX: 0.348,
-  shapeRotationY: -26.783,
-  shapeRotationZ: -0.29,
-  planeBend: 2.3,
-  planeTwist: -2.9,
-  silhouetteFade: 0.83,
-  ribbonFade: 0.31,
-  flatShading: false,
-  cameraLock: false,
-  cameraRotationX: -0.014,
-  cameraRotationY: -0.238,
-};
-
 /* Each provider's core colours, worn over the preset's physics: the
    materials keep their distinct motion, the paint stays on-brand so the
    row reads as one family. */
@@ -157,10 +106,6 @@ const BRAND: Record<string, { colors: string[]; bg: string }> = {
   "glm-5-3-flash": {
     colors: ["#5E5CE6", "#9D8CFF", "#E4DEFF", "#3634A3"],
     bg: "#3634A3",
-  },
-  "kev-9b": {
-    colors: ["#E9B748", "#BE5E31", "#F6E7C8", "#5E6043"],
-    bg: "#C8C1B4",
   },
 };
 
@@ -218,7 +163,6 @@ const BLOOM: NeatPreset = {
 const PRESETS: Record<string, NeatPreset> = {
   "deepseek-v4-1-flash": OIL_SLICK,
   "glm-5-3-flash": NEAT,
-  "kev-9b": TIME,
 };
 
 /* EXPERIMENT: one material for every card — differentiated by the
@@ -234,7 +178,6 @@ const TINT: Record<string, string> = {
     "linear-gradient(160deg, #2B3FA8 0%, #4D6BFE 55%, #8FA5FF 100%)",
   "glm-5-3-flash":
     "linear-gradient(160deg, #3634A3 0%, #5E5CE6 55%, #9D8CFF 100%)",
-  "kev-9b": "linear-gradient(160deg, #BE5E31 0%, #E9B748 60%, #F6E7C8 100%)",
 };
 
 /* Domain-bound to gradiated.com (and localhost for dev) — public by

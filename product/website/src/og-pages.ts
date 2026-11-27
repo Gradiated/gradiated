@@ -55,7 +55,6 @@ export const ogPages: Record<string, [name: string, line: string]> = {
     "Served on Gradiated",
   ],
   "/models/glm-5-3-flash/": ["GLM-5.3 Flash", "Served on Gradiated"],
-  "/models/kev-9b/": ["Kev 9B", "A decision model"],
   "/privacy/": ["Privacy", "Privacy policy"],
   "/sla/": ["SLA", "99.5% inference uptime"],
   "/subprocessors/": ["Subprocessors", "Who processes request data"],

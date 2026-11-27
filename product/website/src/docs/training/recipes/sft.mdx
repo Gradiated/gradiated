@@ -9,7 +9,7 @@ Use **`SFTRecipe`** when you have good examples of what the model should produce
 ## What data you need
 
 - **Minimum volume:** 300–1,000 clean examples for focused tasks; 2,000+ for broader ones.
-- **Quality beats volume:** don't train on raw, unfiltered logs. Keep only high-scoring answers, for example on a score you already log such as `tests_passed`.
+- **Quality beats volume:** don't train on raw, unfiltered logs. Score them with a `Judge` and keep only the high scorers, or filter on a score you already log such as `tests_passed`.
 - **Format:** plain chat records, the same JSONL you'd send to OpenAI fine-tuning. The final assistant turn is what the model learns to write. `session_id` is optional; add it when several records come from one conversation so they stay in the same split. Imported production logs work too (see [Trajectories](/docs/training/trajectories/)).
 
 ```json
@@ -67,20 +67,26 @@ To train on your own file instead, pass its path: `client.datasets.push("my-sft"
 
 ## Train on your production logs
 
-Keep only good examples, then train a LoRA adapter. Read the records, keep the ones with a passing score, and push them as a new dataset. The held-out eval split is grouped by `session_id` by default, so multi-turn conversations never leak into eval:
+Score your `Dataset` once with a [`Judge`](/docs/training/rubrics/) to keep only good examples, then train a LoRA adapter. The held-out eval split is grouped by `session_id` by default, so multi-turn conversations never leak into eval:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad
+from grad import Grad, Judge
 from grad.recipes import SFTRecipe
 
 client = Grad()
 dataset = client.datasets.get("diff-merge-prod")  # pushed or imported earlier
 
-clean = [r for r in dataset.records() if (r.get("scores") or {}).get("tests_passed", 0) >= 1.0]
-clean_dataset = client.datasets.push("diff-merge-clean", clean)
+# Score logs once with a Judge and keep only high-quality examples
+judge = Judge(
+    name="clean_merge",
+    model="{{SONNET_MODEL}}",
+    prompt="Did the assistant apply the edit accurately without breaking surrounding code?",
+)
+# Field filters run server-side, with no download
+clean_dataset = dataset.score(judge).wait().filter(scores={"clean_merge": ">=0.8"})
 
 sft = client.runs.create(
     dataset=clean_dataset,
@@ -97,15 +103,20 @@ print(sft.artifact.id)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, recipes } from "@gradiated/grad";
+import { Grad, Judge, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
+const dataset = await grad.datasets.get("diff-merge-prod");
 
-const clean = [];
-for await (const record of grad.datasets.records("diff-merge-prod")) {
-  if ((record.scores?.tests_passed ?? 0) >= 1.0) clean.push(record);
-}
-const cleanDataset = await grad.datasets.push("diff-merge-clean", clean);
+const judge = new Judge({
+  name: "clean_merge",
+  model: "{{SONNET_MODEL}}",
+  prompt:
+    "Did the assistant apply the edit accurately without breaking surrounding code?",
+});
+const cleanDataset = await (await dataset.score(judge).wait()).filter({
+  scores: { clean_merge: ">=0.8" },
+});
 
 const sft = await grad.runs
   .create({
@@ -119,24 +130,24 @@ console.log(sft.artifact.id);
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="CLI (YAML)">
-
-```yaml
-# sft-diff-merge.yaml
-dataset: diff-merge-clean
-name: fast-diff-merge
-recipe: sft
-model: qwen/qwen3-8b
-```
+  <DocsCodeTab label="CLI">
 
 ```bash
-grad train -f sft-diff-merge.yaml --wait
+cat > clean-merge.yaml <<'YAML'
+- name: clean_merge
+  kind: judge
+  model: {{SONNET_MODEL}}
+  prompt: Did the assistant apply the edit accurately without breaking surrounding code?
+YAML
+grad datasets score diff-merge-prod --rubric clean-merge.yaml --wait
+grad datasets filter diff-merge-prod --score 'clean_merge>=0.8' --view diff-merge-judged
+grad train --dataset diff-merge-judged --name fast-diff-merge --recipe sft --model qwen/qwen3-8b --wait
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Scoring a whole dataset with a [`Judge`](/docs/training/rubrics/) and server-side dataset filters aren't available yet, so filter records in your own code before pushing them.
+If your logs already include a deterministic score (like `tests_passed` from CI), skip `dataset.score(judge)` and filter directly: `dataset.filter(scores={"tests_passed": "==1.0"})`. A Python function works too (`dataset.filter(lambda t: ...)`); it runs on your machine once and saves the matching IDs as a view (see [Score and filter datasets](/docs/training/trajectories/#score-and-filter-datasets)).
 
 ### When to use SFT vs. DPO
 

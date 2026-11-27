@@ -181,6 +181,7 @@ Managed runs execute on Gradiated's servers, so closing your laptop never stops 
 - **Built-in checks run on Gradiated's servers:** `Judge` and the built-in `validators` (`JSON`, `NonEmpty`, `ExactMatch`, `Regex`).
 - **Your Python functions run in your own process.** In an [evaluation](/docs/training/evaluations/), a `Scorer(fn=...)` runs where you call `ev.wait()`: the SDK pulls the model outputs, calls your function and posts the scores. `requirements=[...]` is checked against your installed packages before the eval starts.
 - **Training recipes take built-in checks only.** `RouterRecipe(rubric=...)` accepts a `Judge`, validators, or the name of a score already on your records. Python functions inside training recipes are coming soon.
+- **Filtering data:** field filters such as `dataset.filter(scores={"resolved": ">=0.8"})` run on the server. `dataset.filter(fn)` with a Python function runs on your machine and saves the matching IDs as a server-side view.
 
 Details are in the [reference](/docs/reference/training-parameters/#where-code-runs).
 

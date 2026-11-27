@@ -261,9 +261,109 @@ grad import ./traces.parquet --format otel --dataset support-prod --json
 
 The import result lists how many trajectories were parsed, how many were dropped, and every `scores` key detected in the file so you can check target coverage before training.
 
-## Filter datasets
+## Score and filter datasets
 
-Server-side scoring and filtering (`dataset.score(judge)` and `dataset.filter(...)`) is coming soon. Until then, filter records before you push them, or read a dataset with `client.datasets.records(name)`, keep the records you want, and push them to a new dataset. To score outputs with a [`Judge`](/docs/training/rubrics/), run an [evaluation](/docs/training/evaluations/).
+Filter a `Dataset` by field to get a new view of it. Field filters run on the server and call no model, so re-running one with a new threshold costs nothing:
+
+```python
+from grad import Grad
+
+client = Grad()
+dataset = client.datasets.get("support-prod")
+
+recent_good = dataset.filter(scores={"resolved": ">=0.8"}, created_after="2026-11-01")
+print(recent_good.count())
+```
+
+A score condition is an operator (`>=`, `<=`, `>`, `<`, `==`, `!=`) and a number; a record without that score doesn't match. `metadata={"env": "prod"}` matches metadata fields exactly, and `created_after` / `created_before` compare the record `timestamp`. The view is saved as a dataset named `<dataset>-f-<hash>` (pass `name=` to choose one), so you can train or evaluate on it like any other dataset, and the same filter on the same version returns the same view.
+
+If you want to filter by something a human or LLM needs to judge (like "did the assistant answer accurately?"), score the dataset once with a [`Judge`](/docs/training/rubrics/). `dataset.score(...)` grades each record's own answer on the server, skips records that already have every score, and saves the results to `trajectory.scores` in the dataset's next version, so you can tweak thresholds or reuse the scores across runs without paying again. It is billed like an [evaluation](/docs/training/evaluations/): judge tokens at the judge's price, and validators and regexes for free:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, Judge
+
+client = Grad()
+dataset = client.datasets.get("support-prod")
+
+# Score once (server-side, persisted into `trajectory.scores["resolved"]`)
+judge = Judge(
+    name="resolved",
+    model="{{SONNET_MODEL}}",
+    prompt="Did the assistant accurately resolve the user's request without hallucinating?",
+)
+scored = dataset.score(judge).wait()
+
+# Filter on the stored score (server-side, $0 to re-run with a new threshold)
+passing = scored.filter(scores={"resolved": ">=0.8"})
+print(passing.count())
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```typescript
+import { Grad, Judge } from "@gradiated/grad";
+
+const grad = new Grad();
+const dataset = await grad.datasets.get("support-prod");
+
+const judge = new Judge({
+  name: "resolved",
+  model: "{{SONNET_MODEL}}",
+  prompt: "Did the assistant accurately resolve the user's request without hallucinating?",
+});
+const scored = await dataset.score(judge).wait();
+
+const passing = await scored.filter({ scores: { resolved: ">=0.8" } });
+console.log(passing.recordCount);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+dataset, _ := client.Datasets.Get(ctx, "support-prod")
+judge := grad.Judge{Name: "resolved", Model: "{{SONNET_MODEL}}",
+	Prompt: "Did the assistant accurately resolve the user's request without hallucinating?"}
+scored, _ := dataset.Score(ctx, grad.Rubric{judge}, grad.ScoreOptions{}).Wait(ctx)
+
+passing, _ := scored.Filter(ctx, grad.FilterOptions{Scores: map[string]string{"resolved": ">=0.8"}})
+fmt.Println(passing.RecordCount)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+cat > judge.yaml <<'YAML'
+- name: resolved
+  kind: judge
+  model: {{SONNET_MODEL}}
+  prompt: Did the assistant accurately resolve the user's request without hallucinating?
+YAML
+grad datasets score support-prod --rubric judge.yaml --wait
+grad datasets filter support-prod --score 'resolved>=0.8'
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+A scoring job is an eval with `mode: "score"`: `scored = dataset.score(...)` returns before it finishes, and its progress and cost are visible with `grad eval status <id>`. Python `Scorer` functions work too; `.wait()` runs them on your machine, like an eval's local scorers. Records need an `id` to receive scores (`push` and imports assign one).
+
+For logic a field filter can't express, pass any Python function `(Trajectory) -> bool`. The SDK streams the dataset to your machine, runs the function there once, and saves the selected IDs as a server-side view. Training on the view doesn't need your machine afterwards:
+
+```python
+from grad import Grad
+
+client = Grad()
+dataset = client.datasets.get("support-prod")
+
+short_chats = dataset.filter(lambda t: len(t.input.messages) <= 6)
+print(short_chats.count())
+```
 
 ## Sync from observability providers
 

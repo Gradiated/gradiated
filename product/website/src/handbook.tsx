@@ -53,9 +53,9 @@ export const handbookPages: HandbookPageDefinition[] = [
   {
     slug: "mission",
     section: "Foundations",
-    title: "Affordable and open intelligence",
+    title: "Let's create a distributed, open model future.",
     pageTitle: "Mission",
-    description: "The mission of Gradiated.",
+    description: "Make it practical for anyone to build with intelligence they can run, adapt, and afford.",
     Content: MissionContent,
   },
   {

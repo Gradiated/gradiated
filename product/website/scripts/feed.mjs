@@ -1,9 +1,3 @@
-// The Library's Atom feed (/feed.xml), built from the prerendered pages.
-//
-// Each entry carries the title, a 150-character excerpt, the full article as
-// HTML, the URL (also its id), the author and the poster art. Journey pieces
-// are interactive pages with no article body, so they carry the excerpt only.
-
 const EXCERPT_LENGTH = 150;
 
 const IMAGE_TYPES = {
@@ -39,11 +33,6 @@ const imageType = (path) =>
 
 const atomTime = (date) => `${date}T00:00:00Z`;
 
-/**
- * The article body from a rendered page: the inside of its `.gr-prose` block,
- * without scripts, styles or buttons, and with site-relative links and images
- * made absolute so they work in a feed reader. Empty when the page has none.
- */
 export const articleBody = (html, absoluteUrl) => {
   const open = html.match(/<div[^>]*\bclass="gr-prose[" ][^>]*>/);
   if (!open) return "";
@@ -74,10 +63,6 @@ export const articleBody = (html, absoluteUrl) => {
   return "";
 };
 
-/**
- * The opening paragraphs of an article body as plain text, cut at a word
- * boundary to at most 150 characters. Falls back when the body has none.
- */
 export const excerpt = (body, fallback) => {
   const text = decodeEntities(
     [...body.matchAll(/<p[\s>][\s\S]*?<\/p>/g)]
@@ -103,6 +88,7 @@ const renderEntry = ({ body, metadata, url }, absoluteUrl) => {
     `    <id>${url}</id>`,
     `    <link rel="alternate" type="text/html" href="${url}" />`,
     `    <link rel="enclosure" type="${imageType(metadata.image)}" href="${imageUrl}" />`,
+    // Atom has no entry image, so readers take it from Media RSS.
     `    <media:thumbnail url="${imageUrl}" />`,
     `    <published>${atomTime(metadata.publishedAt)}</published>`,
     `    <updated>${atomTime(metadata.updatedAt ?? metadata.publishedAt)}</updated>`,
@@ -113,11 +99,6 @@ const renderEntry = ({ body, metadata, url }, absoluteUrl) => {
   ];
 };
 
-/**
- * Renders the feed. `articles` are `{ html, metadata, url }` for each
- * published piece, `html` being its prerendered page. Newest first; pieces
- * published the same day are ordered by URL so the output is stable.
- */
 export const renderFeed = ({ absoluteUrl, articles, description }) => {
   const entries = articles
     .map(({ html, metadata, url }) => ({

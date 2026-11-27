@@ -5,7 +5,9 @@ import {
   tasks,
   taskVersionPinReleases,
   taskVersions,
+  workspaces,
 } from "../src/db/schema/index.js";
+import { deleteArchivedTasks } from "../src/training/artifact-cleanup.js";
 import {
   createArtifactPublisher,
   servingBase,
@@ -437,6 +439,38 @@ describe("publishing grad artifacts", () => {
         .where(eq(taskVersionPinReleases.versionId, version.id)),
     ).toHaveLength(1);
 
+    expect(
+      await publisher.releasePendingPins(new Date(Date.now() + 120_000)),
+    ).toMatchObject({ released: 1 });
+    expect(pins.size).toBe(0);
+  });
+
+  it("releases the pins of versions removed with an archived workspace's models", async () => {
+    const { member, publisher, pins, add } = await setup();
+    add(loraFiles());
+    const { task, version } = await publisher.publish(
+      member.userId,
+      member.workspaceId,
+      { artifact: "fast-diff-merge@2026-11-26-1" },
+    );
+    await db.database
+      .update(workspaces)
+      .set({ archivedAt: new Date() })
+      .where(eq(workspaces.id, member.workspaceId));
+
+    await deleteArchivedTasks(db.database, {
+      updateSchedule: async () => undefined,
+    });
+
+    expect(
+      await db.database.select().from(tasks).where(eq(tasks.id, task.id)),
+    ).toEqual([]);
+    expect(
+      await db.database
+        .select()
+        .from(taskVersionPinReleases)
+        .where(eq(taskVersionPinReleases.versionId, version.id)),
+    ).toHaveLength(1);
     expect(
       await publisher.releasePendingPins(new Date(Date.now() + 120_000)),
     ).toMatchObject({ released: 1 });

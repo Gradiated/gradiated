@@ -35,10 +35,12 @@ pub enum GatewayError {
     },
     ModelNotFound,
     ModelUnavailable,
-    /// An eval request found its pool at zero and no replica arrived in time.
-    /// The model is the pool's, for its scale-from-zero signal; it is never sent.
+    /// An eval request found no ready replica, and none arrived in time. `wake`
+    /// names the model whose pool is at zero, for its scale-from-zero signal; it
+    /// is `None` when the pool has a replica that cannot take requests right now.
+    /// It is never sent.
     CapacityUnavailable {
-        model: String,
+        wake: Option<String>,
     },
     ServingStateUnavailable,
     RuntimeUnavailable,

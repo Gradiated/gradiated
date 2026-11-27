@@ -103,7 +103,10 @@ export const createPublishStore = (database: ControlDatabase) => ({
         const task = TaskRecordSchema.parse(rawTask);
         if (task.purpose !== input.purpose)
           return { outcome: "purpose_mismatch" as const, task };
-        if (task.baseModelId !== input.baseModelId)
+        if (
+          input.purpose === "serving" &&
+          task.baseModelId !== input.baseModelId
+        )
           return { outcome: "base_mismatch" as const, task };
 
         const artifactId = input.adapter.source?.artifact_id;

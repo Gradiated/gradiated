@@ -215,7 +215,7 @@ run = client.runs.create(
 
 In a run file for `grad train -f`, the same trackers go under `loggers:` (for example `- {kind: wandb, project: support-sft, secret: wandb-key}`, or `kind: mlflow` with `tracking_uri`). TypeScript uses `loggers.wandb({ project, secret })` and Go `grad.WandB(project, secret, entity)`.
 
-A misconfigured or unreachable tracker never blocks a run: the dry run warns about a secret it can't find, and a tracker that errors during training is dropped and reported once as a run warning. The secret must allow the tracker's host (`grad secrets set wandb-key --allowed-host api.wandb.ai`; W&B's public host is allowed by default). Self-hosted workers reach the tracker from their own network, so open egress to it.
+A misconfigured or unreachable tracker never blocks a run: the dry run warns about a secret it can't find, and a tracker that errors during training is dropped and reported once as a run warning. The secret must allow the tracker's host (`grad secrets set wandb-key --allowed-host api.wandb.ai`; W&B's public host is allowed by default). Self-hosted workers reach the tracker from their own network and, like source syncs, only public `https` hosts; for an MLflow server on a private address, set `GRAD_SOURCES_EGRESS_ALLOW` to its CIDR on the train workers (Helm: `workers.train.env`).
 
 ## Troubleshooting common failure modes
 

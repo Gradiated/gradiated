@@ -81,6 +81,21 @@ export {
   type BillingService,
 } from "./billing/service.js";
 export {
+  UsageEventRejectedError,
+  createTrainingBillingService,
+  type TrainingBillingService,
+  type UsageEventIngestResult,
+} from "./billing/training-billing.js";
+export {
+  amountForQuantity,
+  type PriceListRecord,
+} from "./billing/price-lists.js";
+export {
+  createUsageEventWriter,
+  type UsageEventRow,
+  type UsageEventWriter,
+} from "./clickhouse/usage-event-ingestion.js";
+export {
   createTopUpChargeStore,
   type AutoTopUpClaim,
   type TopUpChargeRecord,
@@ -145,6 +160,7 @@ export {
   type ApiKeyRecord,
   type CreatedApiKey,
   type PlaygroundCredentialRecord,
+  type TrainingMemberRecord,
   type WorkspaceApiKeyService,
   type WorkspaceRecord,
 } from "./workspaces/service.js";

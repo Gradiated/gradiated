@@ -264,15 +264,50 @@
     {
       "idx": 37,
       "version": "7",
-      "when": 1795805255330,
-      "tag": "0037_grad_artifact_versions",
+      "when": 1795804954193,
+      "tag": "0037_api_key_scopes",
       "breakpoints": true
     },
     {
       "idx": 38,
       "version": "7",
-      "when": 1795807902686,
-      "tag": "0038_grad_eval_versions",
+      "when": 1795804958545,
+      "tag": "0038_auth_principals_v1",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1795805317828,
+      "tag": "0039_jwt_signing_keys",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1795808803742,
+      "tag": "0040_training_price_lists",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1795808804880,
+      "tag": "0041_placeholder_training_prices",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1795809719180,
+      "tag": "0042_grad_artifact_versions",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1795809995066,
+      "tag": "0043_grad_eval_versions",
       "breakpoints": true
     }
   ]

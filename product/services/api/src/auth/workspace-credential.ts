@@ -6,7 +6,8 @@ import {
 import type { SessionUser } from "../types.js";
 
 // Credentials cannot mint or revoke credentials, and cannot change or delete their workspace.
-const DENIED_WORKSPACE_PATHS = /^\/(api-keys|playground-credentials)(\/|$)/;
+const DENIED_WORKSPACE_PATHS =
+  /^\/(api-keys|playground-credentials|training-tokens)(\/|$)/;
 
 const CREDENTIAL = new RegExp(
   `^Bearer\\s+((?:grad_|${OAUTH_ACCESS_TOKEN_PREFIX})\\S+)$`,

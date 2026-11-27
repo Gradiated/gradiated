@@ -147,6 +147,11 @@ pub(super) struct RuntimeCall {
     pub(super) price_cap: PriceCap,
     pub(super) plan: CapacityPlan,
     pub(super) route: Option<HeldRoute>,
+    #[expect(
+        dead_code,
+        reason = "held for the call; dropping it frees the eval slot"
+    )]
+    pub(super) eval: Option<super::eval_permit::EvalPermit>,
     pub(super) local_attempts: u8,
     pub(super) attempts: u8,
     pub(super) capacity_metrics: CapacityMetrics,
@@ -538,6 +543,7 @@ impl RuntimeCall {
                 completion: 0,
             },
             route: None,
+            eval: None,
             local_attempts: 0,
             attempts: 0,
             capacity_metrics: crate::GatewayMetrics::new().capacity("model-a", false),

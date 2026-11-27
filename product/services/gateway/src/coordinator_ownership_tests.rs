@@ -124,6 +124,7 @@ async fn a_retired_hosted_model_yields_its_name_to_a_private_model() {
             format: crate::AdapterFormat::PeftLora,
             num_tokens: None,
             source_kind: None,
+            eval_only: false,
         });
         let state = Arc::new(state);
 

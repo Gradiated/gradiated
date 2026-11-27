@@ -63,6 +63,8 @@ pub(super) fn qualified(max_tokens: Option<u64>) -> QualifiedRequest {
             api_key_id: test_support::API_KEY_ID,
             organization_id: test_support::ORGANIZATION_ID,
             workspace_id: test_support::WORKSPACE_ID,
+            lane: crate::auth::Lane::Standard,
+            eval_id: None,
         },
         local: Some(LocalCapacity {
             deployment: routing::fixtures::deployment(0),

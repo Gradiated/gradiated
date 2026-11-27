@@ -30,6 +30,9 @@ pub struct PrivateAdapter {
     /// `grad` for a version published from a grad artifact.
     #[serde(default)]
     pub source_kind: Option<String>,
+    /// grad's eval-only versions answer eval-lane keys only.
+    #[serde(default)]
+    pub eval_only: bool,
 }
 
 impl PrivateAdapter {
@@ -114,6 +117,7 @@ mod tests {
             format,
             num_tokens,
             source_kind: None,
+            eval_only: false,
         }
     }
 

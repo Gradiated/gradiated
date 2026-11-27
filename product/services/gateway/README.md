@@ -121,6 +121,40 @@ Hosting remains opt-in. Existing hosts need the runtime-readable renewal identit
 installed before enabling LoRA; real-artifact and TP2/TP4 co-location qualification
 are required. See the [loader configuration](../../inference/lora/README.md).
 
+### Eval lane
+
+grad's eval workers hold one service token (`GATEWAY_EVAL_SERVICE_TOKENS`: the
+current value and, while rotating, the previous one; compared as SHA-256
+digests in constant time). Each request names the workspace it bills to:
+
+| Header                  | Value                                         |
+| ----------------------- | --------------------------------------------- |
+| `Authorization`         | `Bearer <eval service token>`                 |
+| `X-Gradiated-Source`    | `eval`; the token is refused without it       |
+| `X-Gradiated-Workspace` | workspace UUID; `400` when missing or unknown |
+| `X-Gradiated-Eval-Id`   | optional `ev_…`, copied onto the generation   |
+
+The token is not an `api_keys` row: it is configured only on the gateway, is
+accepted only with `X-Gradiated-Source: eval`, never authenticates the product
+API or grad, and every request it authenticates logs an audit line
+(`gradiated_gateway::audit`, `event=eval_service_credential`) naming the
+workspace and eval. The workspace's archive and organization checks apply as
+for its own keys.
+Only this lane may call eval-only versions (tasks with `purpose = 'eval'`); to
+any other caller such a version is an unknown model, and a workspace key that
+sends `X-Gradiated-Source: eval` stays on the standard lane. Eval requests:
+
+- send runtime priority 20, below every service tier, so the engine schedules
+  them after customer traffic;
+- share a per-workspace limit of their own, checked before the organization's
+  admission: `GATEWAY_EVAL_CONCURRENCY_CAP` in-flight generations and
+  `GATEWAY_EVAL_REQUESTS_PER_MINUTE` admissions per minute (Valkey script
+  `admit_eval_v1`). A full lane answers `429 eval_lane_limited` with
+  `Retry-After: 5`; the slot is released when the generation ends, or when its
+  lease expires;
+- bill as normal generations whose settled properties carry `lane: "eval"`
+  and the `eval_id`.
+
 ## Native SystemOne
 
 `POST /v1/systemone` accepts an exact model, text/object/array `state`, and
@@ -280,6 +314,9 @@ The local endpoints are:
 | `GATEWAY_EXPIRED_LEASE_CLEANUP_GRACE_SECONDS`   | no       | `300`                           |
 | `GATEWAY_ORGANIZATION_CONCURRENCY_CAP`          | no       | `500`                           |
 | `GATEWAY_BALANCE_PER_CONCURRENCY_SLOT_NANO_USD` | no       | `1000000000`                    |
+| `GATEWAY_EVAL_CONCURRENCY_CAP`                  | no       | `20`                            |
+| `GATEWAY_EVAL_REQUESTS_PER_MINUTE`              | no       | `600`                           |
+| `GATEWAY_EVAL_SERVICE_TOKENS`                   | no       | eval lane off                   |
 | `SGLANG_API_KEY`                                | no       | no upstream authentication      |
 | `GATEWAY_FALLBACK_ROUTES`                       | no       | embedded `fallback_routes.json` |
 | `OPENROUTER_API_KEY`                            | no       | loopback test peer only         |

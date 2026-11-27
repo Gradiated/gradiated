@@ -1,4 +1,5 @@
 mod dispatch;
+mod eval_permit;
 mod route_lease;
 mod settlement;
 mod stream;
@@ -20,6 +21,7 @@ use uuid::Uuid;
 
 use self::{
     dispatch::{CapacityPlan, LocalTier, RuntimeCall, Target},
+    eval_permit::EvalPermit,
     route_lease::HeldRoute,
     settlement::{
         Delivery, FailedGeneration, GenerationEnd, GenerationSettlement, GenerationTerminal,
@@ -294,6 +296,49 @@ impl CompletionService {
         )))
     }
 
+    /// Eval-lane keys share a per-workspace concurrency and per-minute limit of
+    /// their own, checked before the organization's admission.
+    async fn admit_eval(
+        &self,
+        request: &QualifiedRequest,
+        now: chrono::DateTime<Utc>,
+    ) -> Result<Option<EvalPermit>, GatewayError> {
+        if request.identity.lane != crate::auth::Lane::Eval {
+            return Ok(None);
+        }
+
+        let lease = crate::serving_state::EvalLease {
+            workspace_id: request.identity.workspace_id,
+            generation_id: request.metadata.generation_id,
+            now,
+            expires_at: AdmissionLease::new(
+                request.metadata.generation_id,
+                request.metadata.received_at,
+                now,
+                &self.config,
+            )?
+            .lease_expires_at(),
+        };
+        let admission = self
+            .serving_state
+            .admit_eval(&lease, &self.config)
+            .await
+            .map_err(|error| {
+                crate::diagnostics::limited_warn!(generation_id = %lease.generation_id,
+                    phase = "eval_admission", error_code = error.diagnostic_code(),
+                    "eval admission failed");
+                GatewayError::ServingStateUnavailable
+            })?;
+
+        match admission {
+            crate::serving_state::EvalAdmission::Admitted => {
+                Ok(Some(EvalPermit::new(self.serving_state.clone(), lease)))
+            }
+            crate::serving_state::EvalAdmission::ConcurrencyCapped
+            | crate::serving_state::EvalAdmission::RateCapped => Err(GatewayError::EvalLaneLimited),
+        }
+    }
+
     async fn admit(
         &self,
         request: QualifiedRequest,
@@ -313,6 +358,7 @@ impl CompletionService {
         })?;
 
         let admitted_at = cmp::max(Utc::now(), request.metadata.received_at);
+        let eval = self.admit_eval(&request, admitted_at).await?;
         let admission = self
             .serving_state
             .admit(
@@ -352,6 +398,7 @@ impl CompletionService {
             request,
             plan,
             route,
+            eval,
             generation_identity,
             lease,
             serving_state: self.serving_state.clone(),
@@ -538,6 +585,7 @@ struct Generation {
     request: QualifiedRequest,
     plan: CapacityPlan,
     route: Option<HeldRoute>,
+    eval: Option<EvalPermit>,
     generation_identity: GenerationIdentity,
     lease: AdmissionLease,
     serving_state: Arc<dyn ServingState>,
@@ -575,6 +623,7 @@ impl Generation {
             price_cap: pricing.price_cap(),
             plan: self.plan,
             route: self.route,
+            eval: self.eval,
             local_attempts: 0,
             attempts: 0,
             capacity_metrics: self.capacity,

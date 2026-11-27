@@ -2,9 +2,9 @@ use std::{error::Error, future::IntoFuture, process::ExitCode, sync::Arc, time::
 
 use axum::http::HeaderValue;
 use gradiated_gateway::{
-    browser_cors, router, CompletionService, DependencyReadiness, FallbackRouter, GatewayConfig,
-    GatewayState, ModelTokenizer, OpenRouterClient, PostgresReader, RequestCoordinator,
-    RuntimeTlsConfig, SglangClient, ValkeyServingState,
+    browser_cors, router, CompletionService, DependencyReadiness, EvalServiceTokens,
+    FallbackRouter, GatewayConfig, GatewayState, ModelTokenizer, OpenRouterClient, PostgresReader,
+    RequestCoordinator, RuntimeTlsConfig, SglangClient, ValkeyServingState,
 };
 use tokio::signal::unix::{signal, Signal, SignalKind};
 use tracing::{error, info, warn};
@@ -190,7 +190,10 @@ fn application(
         completions.metrics(),
     ));
     let coordinator = RequestCoordinator::new(serving_state)
-        .with_verification_workspace(config.verification_workspace_id);
+        .with_verification_workspace(config.verification_workspace_id)
+        .with_eval_service_tokens(EvalServiceTokens::new(
+            config.eval_service_tokens.iter().map(String::as_str),
+        ));
     let coordinator = if config.use_openrouter_fallback() {
         coordinator.with_legacy_openrouter_fallback()
     } else {

@@ -35,6 +35,7 @@ mod tokenizer;
 mod valkey_auth;
 
 pub use adapter::{AdapterFormat, PrivateAdapter};
+pub use auth::EvalServiceTokens;
 pub use completion::CompletionService;
 pub use config::GatewayConfig;
 pub use coordinator::RequestCoordinator;

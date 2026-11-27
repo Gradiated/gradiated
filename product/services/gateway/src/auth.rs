@@ -16,11 +16,98 @@ pub(crate) const X_API_KEY: HeaderName = HeaderName::from_static("x-api-key");
 const X_GRADIATED_API_KEY: HeaderName = HeaderName::from_static("x-gradiated-api-key");
 const MAX_SECRET_BYTES: usize = 4096;
 
+/// `Eval` is grad's eval workers, authenticated by the eval service token: lowest
+/// runtime priority, a per-workspace rate limit of their own, and the only
+/// callers of eval-only versions.
+#[derive(Clone, Copy, Debug, Default, serde::Deserialize, serde::Serialize, Eq, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum Lane {
+    #[default]
+    Standard,
+    Eval,
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AuthenticatedIdentity {
     pub api_key_id: Uuid,
     pub organization_id: Uuid,
     pub workspace_id: Uuid,
+    pub lane: Lane,
+    /// The grad eval an eval-lane request belongs to, from `X-Gradiated-Eval-Id`.
+    pub eval_id: Option<String>,
+}
+
+pub(crate) const X_GRADIATED_SOURCE: HeaderName = HeaderName::from_static("x-gradiated-source");
+pub(crate) const X_GRADIATED_WORKSPACE: HeaderName =
+    HeaderName::from_static("x-gradiated-workspace");
+pub(crate) const X_GRADIATED_EVAL_ID: HeaderName = HeaderName::from_static("x-gradiated-eval-id");
+
+/// The bearer tokens grad's eval workers present: the current one and, during a
+/// rotation, the previous one. Compared as SHA-256 digests, in constant time.
+#[derive(Clone, Default)]
+pub struct EvalServiceTokens(Vec<[u8; 32]>);
+
+impl EvalServiceTokens {
+    pub fn new<'a>(tokens: impl IntoIterator<Item = &'a str>) -> Self {
+        Self(
+            tokens
+                .into_iter()
+                .map(|token| Sha256::digest(token.as_bytes()).into())
+                .collect(),
+        )
+    }
+
+    /// The bearer, when it is an eval service token.
+    pub(crate) fn matches(&self, headers: &HeaderMap) -> Result<bool, AuthenticationError> {
+        if self.0.is_empty() {
+            return Ok(false);
+        }
+
+        let Some(value) = single_value(headers, &AUTHORIZATION)? else {
+            return Ok(false);
+        };
+        let Ok(token) = bearer_token(value) else {
+            return Ok(false);
+        };
+        let presented: [u8; 32] = Sha256::digest(token.as_bytes()).into();
+
+        Ok(self.0.iter().fold(false, |matched, expected| {
+            let difference = expected
+                .iter()
+                .zip(presented)
+                .fold(0_u8, |bits, (left, right)| bits | (left ^ right));
+            matched | (difference == 0)
+        }))
+    }
+}
+
+/// The workspace and eval an eval-service request names; `None` when it is not
+/// tagged `X-Gradiated-Source: eval`, which the token is refused without.
+pub(crate) fn eval_target(
+    headers: &HeaderMap,
+) -> Result<Option<(Uuid, Option<String>)>, crate::GatewayError> {
+    if single_value(headers, &X_GRADIATED_SOURCE)? != Some("eval") {
+        return Ok(None);
+    }
+
+    let workspace_id = single_value(headers, &X_GRADIATED_WORKSPACE)?
+        .and_then(|value| Uuid::parse_str(value).ok())
+        .ok_or_else(|| crate::GatewayError::invalid_request(Some("x-gradiated-workspace")))?;
+    let eval_id = single_value(headers, &X_GRADIATED_EVAL_ID)?
+        .map(|value| {
+            let valid = value.split_once('_').is_some_and(|(prefix, rest)| {
+                !prefix.is_empty()
+                    && prefix.bytes().all(|byte| byte.is_ascii_lowercase())
+                    && (1..=64).contains(&rest.len())
+                    && rest.bytes().all(|byte| byte.is_ascii_alphanumeric())
+            });
+            valid
+                .then(|| value.to_owned())
+                .ok_or_else(|| crate::GatewayError::invalid_request(Some("x-gradiated-eval-id")))
+        })
+        .transpose()?;
+
+    Ok(Some((workspace_id, eval_id)))
 }
 
 fn is_api_key(key: &str) -> bool {
@@ -134,6 +221,8 @@ pub fn authenticate_credential(
         api_key_id: credential.api_key_id,
         organization_id: credential.organization_id,
         workspace_id: credential.workspace_id,
+        lane: Lane::Standard,
+        eval_id: None,
     })
 }
 

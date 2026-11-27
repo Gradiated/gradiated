@@ -579,6 +579,8 @@ mod records {
             api_key_id: Uuid::from_u128(1),
             organization_id,
             workspace_id,
+            lane: crate::auth::Lane::Standard,
+            eval_id: None,
         };
         let member = identity(owner, Uuid::from_u128(9));
         let outsider = identity(Uuid::from_u128(8), Uuid::from_u128(10));
@@ -616,6 +618,8 @@ mod records {
             api_key_id: Uuid::now_v7(),
             organization_id,
             workspace_id: Uuid::now_v7(),
+            lane: crate::auth::Lane::Standard,
+            eval_id: None,
         };
 
         assert_eq!(model.organization_id, Some(owner));
@@ -1576,5 +1580,57 @@ mod routes {
             .await;
 
         assert_eq!(result.unwrap_err().code(), Some("PLACE_ROUTE_V1"));
+    }
+
+    #[tokio::test]
+    #[ignore = "requires the local one-node Valkey cluster"]
+    async fn the_eval_lane_caps_concurrency_and_requests_per_minute() {
+        let state = local_cluster().await;
+        let mut config = GatewayConfig::for_tests();
+        config.eval_concurrency_cap = 2;
+        config.eval_requests_per_minute = 3;
+        let workspace_id = Uuid::now_v7();
+        let now = Utc::now();
+        let lease = || EvalLease {
+            workspace_id,
+            generation_id: Uuid::now_v7(),
+            now,
+            expires_at: now + TimeDelta::seconds(60),
+        };
+
+        let first = lease();
+        assert_eq!(
+            state.admit_eval(&first, &config).await.unwrap(),
+            EvalAdmission::Admitted
+        );
+        assert_eq!(
+            state.admit_eval(&lease(), &config).await.unwrap(),
+            EvalAdmission::Admitted
+        );
+        assert_eq!(
+            state.admit_eval(&lease(), &config).await.unwrap(),
+            EvalAdmission::ConcurrencyCapped
+        );
+
+        state.release_eval(&first).await.unwrap();
+        assert_eq!(
+            state.admit_eval(&lease(), &config).await.unwrap(),
+            EvalAdmission::Admitted
+        );
+
+        let other = EvalLease {
+            workspace_id: Uuid::now_v7(),
+            ..lease()
+        };
+        assert_eq!(
+            state.admit_eval(&other, &config).await.unwrap(),
+            EvalAdmission::Admitted
+        );
+
+        config.eval_concurrency_cap = 10;
+        assert_eq!(
+            state.admit_eval(&lease(), &config).await.unwrap(),
+            EvalAdmission::RateCapped
+        );
     }
 }

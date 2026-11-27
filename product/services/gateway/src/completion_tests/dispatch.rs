@@ -321,6 +321,7 @@ async fn adapter_capacity_pressure_is_counted_against_its_base_model() {
         format: crate::AdapterFormat::PeftLora,
         num_tokens: None,
         source_kind: None,
+        eval_only: false,
     });
     let harness = Harness::new(request, []);
     for status in harness.state.statuses.lock().unwrap().iter_mut() {

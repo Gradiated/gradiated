@@ -208,4 +208,19 @@ impl ServingState for FailingState {
     ) -> Result<(), ServingStateError> {
         unreachable!("serving-state fixtures never route")
     }
+
+    async fn admit_eval(
+        &self,
+        _lease: &crate::serving_state::EvalLease,
+        _config: &crate::GatewayConfig,
+    ) -> Result<crate::serving_state::EvalAdmission, ServingStateError> {
+        Ok(crate::serving_state::EvalAdmission::Admitted)
+    }
+
+    async fn release_eval(
+        &self,
+        _lease: &crate::serving_state::EvalLease,
+    ) -> Result<(), ServingStateError> {
+        Ok(())
+    }
 }

@@ -331,6 +331,7 @@ pub(super) struct RecordingServingState {
     pub(super) placed: Mutex<Option<Uuid>>,
     pub(super) placement_error: Mutex<Option<ServingStateError>>,
     pub(super) routes: Mutex<Vec<RouteStep>>,
+    pub(super) eval_admission: Mutex<crate::serving_state::EvalAdmission>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -338,6 +339,8 @@ pub(super) enum RouteStep {
     Place(Vec<Uuid>),
     Claim(Uuid),
     Release(Uuid),
+    AdmitEval(Uuid),
+    ReleaseEval(Uuid),
 }
 
 impl RecordingServingState {
@@ -358,6 +361,7 @@ impl RecordingServingState {
             placed: Mutex::new(None),
             placement_error: Mutex::new(None),
             routes: Mutex::new(Vec::new()),
+            eval_admission: Mutex::new(crate::serving_state::EvalAdmission::Admitted),
         }
     }
 }
@@ -507,6 +511,29 @@ impl ServingState for RecordingServingState {
             .push(RouteStep::Release(lease.deployment_id));
         Ok(())
     }
+
+    async fn admit_eval(
+        &self,
+        lease: &crate::serving_state::EvalLease,
+        _config: &crate::GatewayConfig,
+    ) -> Result<crate::serving_state::EvalAdmission, ServingStateError> {
+        self.routes
+            .lock()
+            .unwrap()
+            .push(RouteStep::AdmitEval(lease.generation_id));
+        Ok(*self.eval_admission.lock().unwrap())
+    }
+
+    async fn release_eval(
+        &self,
+        lease: &crate::serving_state::EvalLease,
+    ) -> Result<(), ServingStateError> {
+        self.routes
+            .lock()
+            .unwrap()
+            .push(RouteStep::ReleaseEval(lease.generation_id));
+        Ok(())
+    }
 }
 
 pub(super) fn qualified_request(deployment_count: u128) -> QualifiedRequest {
@@ -524,6 +551,8 @@ pub(super) fn qualified_request(deployment_count: u128) -> QualifiedRequest {
             api_key_id: Uuid::now_v7(),
             organization_id: Uuid::now_v7(),
             workspace_id: Uuid::now_v7(),
+            lane: crate::auth::Lane::Standard,
+            eval_id: None,
         },
         local: Some(LocalCapacity {
             release_digest: template.served_release_digest().unwrap(),

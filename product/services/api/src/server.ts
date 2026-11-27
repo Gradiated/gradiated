@@ -275,13 +275,20 @@ const training = createTrainingService(
       : {}),
   },
 );
+// One sweep at a time: while grad is down, each call waits out its timeout.
+let releasingPins = false;
 const pinReleases = grad
   ? setInterval(() => {
+      if (releasingPins) return;
+      releasingPins = true;
       training.artifacts
         .deleteExpiredVersions()
         .then(() => training.artifacts.releasePendingPins())
         .catch((error: unknown) => {
           serviceLog("warn", "grad_pin_release_failed", { error });
+        })
+        .finally(() => {
+          releasingPins = false;
         });
     }, 60_000).unref()
   : undefined;

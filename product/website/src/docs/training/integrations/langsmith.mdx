@@ -165,7 +165,7 @@ A [router](/docs/training/recipes/router/) can use the raw dataset as is: it lea
 
 ### Private hosts
 
-Sync workers only call public `https://` hosts, so a provider key can't be pointed at an internal service by mistake. To sync from a provider on your own network, list its address range in `GRAD_SOURCES_EGRESS_ALLOW` (comma-separated CIDRs, such as `10.20.0.0/16`) on the import workers; plain `http://` is then allowed to those addresses too. On Helm, set it in `workers.import.env` and allow the range in `networkPolicy.workerEgress` (see [Self-hosting](/docs/training/self-hosting/)).
+Sync workers only call public `https://` hosts, so a provider key can't be pointed at an internal service by mistake. To sync from a provider on your own network, list its address range in `GRAD_SOURCES_EGRESS_ALLOW` (comma-separated CIDRs, such as `10.20.0.0/16`) on the import workers; plain `http://` is then allowed to those addresses too. Store the key with that host too (`grad secrets set NAME --allowed-host HOST`, or `allowed_hosts=[...]`): a secret only goes to the public provider hosts unless it names others. On Helm, set it in `workers.import.env` and allow the range in `networkPolicy.workerEgress` (see [Self-hosting](/docs/training/self-hosting/)).
 
 <DocsNext>
   <a href="/docs/training/integrations/">

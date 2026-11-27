@@ -67,7 +67,13 @@ Base models get replaced as better open models ship. When we retire one, you get
 
 ## Judge and comparison models
 
-[`Judge`](/docs/training/rubrics/) items and [evaluations](/docs/training/evaluations/) call models through the OpenAI-compatible endpoint the server is configured with (`INFERENCE_BASE_URL` and `JUDGE_BASE_URL` on a [self-hosted](/docs/training/self-hosting/#server-configuration) server), so a judge or comparison model is any model that endpoint serves under the name you pass, including a chat model `Artifact` you fine-tuned and loaded as a LoRA module.
+[`Judge`](/docs/training/rubrics/) items and [evaluations](/docs/training/evaluations/) call models through the OpenAI-compatible endpoint the server is configured with (`INFERENCE_BASE_URL` and `JUDGE_BASE_URL` on a [self-hosted](/docs/training/self-hosting/#server-configuration) server). Every judge call is priced and billed, so a judge must be one of:
+
+- a catalog model, at its catalog price;
+- a judge model the server lists with a price (self-hosted: `GRAD_JUDGE_MODELS_JSON`, such as a frontier model behind your gateway);
+- a chat model `Artifact` from your own workspace, priced at its base model and loaded on your inference endpoint.
+
+Anything else is `422 unknown_judge_model`. A model you only compare in an eval follows the same rule.
 
 ## Usage and billing
 

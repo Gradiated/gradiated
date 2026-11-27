@@ -409,7 +409,7 @@ print(short_chats.count())
 
 ## Sync from observability providers
 
-Connect an observability tool to a `Dataset` to pull in new traces and scores on a schedule. Save your provider key once as a workspace secret (`grad secrets set langfuse-prod`, or `client.secrets.set(name, value)`) and pass it via `client.secrets.get(...)`: the value is encrypted on the server and never returned, so raw keys never end up in code, datasets or artifacts. A source feeds one dataset; a dataset can have several sources.
+Connect an observability tool to a `Dataset` to pull in new traces and scores on a schedule. Save your provider key once as a workspace secret (`grad secrets set langfuse-prod`, or `client.secrets.set(name, value)`) and pass it via `client.secrets.get(...)`: the value is encrypted on the server and never returned, so raw keys never end up in code, datasets or artifacts. A secret only goes to the hosts it allows: by default the public hosts of the supported providers, Hugging Face and W&B. For a self-hosted tool, name its host when you store the key (`grad secrets set phoenix-prod --allowed-host phoenix.internal.example`, or `allowed_hosts=[...]`). Naming a secret in a source, import or run logger needs the `secrets:read` scope. A source feeds one dataset; a dataset can have several sources.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">

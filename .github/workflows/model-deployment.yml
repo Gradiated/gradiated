@@ -26,6 +26,7 @@ on:
       - product/inference/runtimes/glm/**
       - product/inference/runtimes/glm-sglang/**
       - product/inference/runtimes/deepseek-sglang/**
+      - product/inference/runtimes/qwen3-sglang/**
       - product/inference/runtimes/kimi-k31/**
       - product/inference/runtimes/energy/**
       - product/inference/lora/**
@@ -104,6 +105,7 @@ jobs:
         run: |
           python3 -m unittest discover -s product/inference/runtimes/glm-sglang -p test_config.py
           python3 -m unittest discover -s product/inference/runtimes/deepseek-sglang -p test_config.py
+          python3 -m unittest discover -s product/inference/runtimes/qwen3-sglang -p test_config.py
           python3 -m unittest discover -s product/inference/runtimes/kimi-k31 -p test_config.py
           python3 -m unittest discover -s product/inference/bundles/kimi-k31-pro/tests -p test_verify_environment.py
           python3 -m unittest discover -s product/inference/bundles/glm-5-3-flash-sglang/tests -p 'test_*.py'

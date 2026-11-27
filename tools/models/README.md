@@ -23,7 +23,7 @@ bundle. Build/import checks do not establish GPU serving correctness.
 SMG wheels compile in a separate minimal Ubuntu/Python/Rust stage. Only the
 pinned toolchain, SMG source, wheel builder and SMG patches feed that stage, so
 Depot can reuse the compiled wheel when SGLang dependencies or runtime helpers
-change. GLM and DeepSeek share the LoRA variant; Kimi uses the base variant.
+change. GLM, DeepSeek and Qwen3 8B share the LoRA variant; Kimi uses the base variant.
 Changing any compiler input rebuilds and reruns its native tests. Every bundle
 still installs the wheel into its own environment and verifies the complete
 packaged runtime. A cold build still pays the compilation cost.

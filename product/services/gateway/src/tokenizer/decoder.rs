@@ -22,25 +22,17 @@ impl TokenDecoder {
     pub(crate) async fn decode(self, token_ids: Vec<u32>) -> Result<String, ModelTokenizerError> {
         let tokenizer = self.tokenizer;
 
-        tokio::task::spawn_blocking(move || {
-            tokenizer
-                .tokenizer
-                .decode(&token_ids, true)
-                .map_err(|error| ModelTokenizerError::Tokenizer(error.to_string()))
-        })
-        .await
-        .map_err(ModelTokenizerError::Task)?
+        tokio::task::spawn_blocking(move || tokenizer.decode(&token_ids))
+            .await
+            .map_err(ModelTokenizerError::Task)?
     }
 
     pub(crate) fn step(&mut self, token_id: u32) -> Result<Option<String>, ModelTokenizerError> {
-        tokenizers::tokenizer::step_decode_stream(
-            &self.tokenizer.tokenizer,
-            vec![token_id],
-            true,
+        self.tokenizer.step_decode(
+            token_id,
             &mut self.ids,
             &mut self.prefix,
             &mut self.prefix_index,
         )
-        .map_err(|error| ModelTokenizerError::Tokenizer(error.to_string()))
     }
 }

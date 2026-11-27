@@ -80,6 +80,31 @@ capture or commit screenshots; the local command above remains available for
 ad hoc checks. Website build and SEO checks remain part of the Product tests
 PR gate.
 
+## Model name suggestions
+
+Visitors can suggest names for unnamed roadmap models. The website forwards
+the selected category and suggestion to Slack for manual review. Suggestions
+never appear on the website automatically. Set the name in `src/model-roadmap.ts`
+after the team chooses one.
+
+Set `MODEL_NAME_SLACK_WEBHOOK_URL` as a server-side secret in Vercel for the
+private review channel. Use a dedicated Slack incoming webhook. Keep this
+variable out of the client bundle and use a separate webhook for preview
+testing. Without a configured webhook the local form reports that delivery is
+unavailable. The endpoint throttles per function instance, so add a Vercel
+Firewall rule on `/api/model-name-suggestions` for rate limiting across instances
+if enabling public submissions at scale.
+
+Roadmap upvotes and name suggestions are saved to the project's Upstash Redis
+(Vercel Storage; `KV_REST_API_URL`/`KV_REST_API_TOKEN`, or the
+`UPSTASH_REDIS_REST_*` names). Once a day, at 18:00 UTC (`crons` in
+`vercel.json`), `api/roadmap-digest.ts` posts one message to the same channel:
+the day's upvotes as a table of today and total per model, then the day's name
+suggestions. Quiet days post nothing. Set `CRON_SECRET` in Vercel so only the
+scheduler can run it. Without a store, each upvote and suggestion posts
+immediately instead. Suggestions stay in `roadmap:suggestions`; totals in
+`roadmap:upvotes`.
+
 ## Deploy with Vercel
 
 ### Analytics

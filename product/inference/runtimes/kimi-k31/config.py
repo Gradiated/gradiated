@@ -7,11 +7,43 @@ import sys
 
 MODEL = 'moonshotai/Kimi-K3.1-Pro'
 REVISION = 'd9e99b0792a5e93b78ea9bea62a68167e36ddd9e'
+STOCK_MODEL_ID = 'moonshotai/kimi-k3.1-pro'
+CYBER_MODEL_ID = 'kimi-k3.1-pro-cyber'
+# Public model ID (MODEL_ID) -> pinned checkpoint and qualified serving profile.
+# Runtimes without MODEL_ID serve stock Kimi K3.1 Pro with its 5-slot profile.
+ACTIVE_REQUESTS = 5
+CYBER_ACTIVE_REQUESTS = 16
+MODELS = {
+    STOCK_MODEL_ID: {
+        'model': MODEL,
+        'revision': REVISION,
+        'served_model_name': MODEL,
+        'active_requests': ACTIVE_REQUESTS,
+        'mem_fraction_static': '0.85',
+        'chunked_prefill_size': '8192',
+        'mamba_full_memory_ratio': '0.45',
+        'extra_backend_args': (),
+    },
+    CYBER_MODEL_ID: {
+        'model': 'yetalabs/Kimi-K3.1-Pro-abliterated',
+        'revision': '0911ef0765f49d26dfa25bb0d071f29463f8000b',
+        'served_model_name': 'yetalabs/Kimi-K3.1-Pro-abliterated',
+        'active_requests': CYBER_ACTIVE_REQUESTS,
+        'mem_fraction_static': '0.88',
+        'chunked_prefill_size': '16384',
+        'mamba_full_memory_ratio': '1.5',
+        'extra_backend_args': (
+            '--ep-size', '8',
+            '--dcp-size', '8',
+            '--speculative-draft-kv-cache-dtype', 'fp8_e4m3',
+            '--enable-int8-mamba-checkpoint',
+        ),
+    },
+}
 SGLANG_SOURCE = 'afcd7d6b487a9cbe73e25941971b4cc107e6f9ae'
 KIMI_OVERLAY_FINGERPRINT = '6509efad47e02e681caa9cdb49bb9b9375fb94aa30276fcfa5a082e9bfcdab3e'
 DRAFT_MODEL = 'RadixArk/Kimi-K3.1-Dflash2-Preview'
 DRAFT_REVISION = 'd0d8bc2e3c6d0a195d2e00a49017e71ca8d881f1'
-ACTIVE_REQUESTS = 5
 # No frontend queue: a full replica rejects at once with 429, so the gateway
 # can try the other replica and otherwise tell the caller to go elsewhere.
 QUEUED_REQUESTS = 0
@@ -50,6 +82,10 @@ def settings(environment):
     root = Path(environment['GRADIATED_RUNTIME_ROOT'])
     if not root.is_absolute():
         raise ValueError('Runtime root must be absolute')
+    model_id = environment.get('MODEL_ID', STOCK_MODEL_ID)
+    if model_id not in MODELS:
+        raise ValueError('Unknown Kimi K3.1 model')
+    selected = MODELS[model_id]
     if environment.get('LORA_ENABLED', 'false') != 'false':
         raise ValueError('Kimi K3.1 Pro has no qualified adapters')
     if environment.get('TENSOR_PARALLEL_SIZE', '8') != '8':
@@ -65,7 +101,7 @@ def settings(environment):
     if not all(1024 <= p <= 65535 for p in ports) or len(set(ports)) != 4 or warmup in [front + 1, front + 2]:
         raise ValueError('Runtime ports overlap or are outside the host allocation')
     return {'root': root, 'front': front, 'warmup': warmup, 'backend': backend,
-            'metrics': metrics, 'active_requests': ACTIVE_REQUESTS}
+            'metrics': metrics, 'model_id': model_id, **selected}
 
 
 def validate_hardware(environment):
@@ -79,8 +115,10 @@ def validate_hardware(environment):
 def commands(environment):
     config = settings(environment)
     python = str(config['root'] / 'python/bin/python3')
-    backend = [python, str(config['root'] / 'energy/launch.py'), '--model-path', MODEL,
-               '--revision', REVISION, '--served-model-name', MODEL, '--tp-size', '8', '--trust-remote-code',
+    active_requests = str(config['active_requests'])
+    backend = [python, str(config['root'] / 'energy/launch.py'), '--model-path', config['model'],
+               '--revision', config['revision'], '--served-model-name', config['served_model_name'],
+               '--tp-size', '8', '--trust-remote-code',
                '--reasoning-parser', 'kimi_k3', '--tool-call-parser', 'kimi_k3',
                '--moe-runner-backend', 'flashinfer_mxfp4', '--flashinfer-mxfp4-moe-precision', 'default',
                '--speculative-algorithm', 'DFLASH', '--speculative-draft-model-path',
@@ -89,23 +127,26 @@ def commands(environment):
                '--speculative-draft-attention-backend', 'cutedsl_mla',
                '--speculative-dflash-block-size', '5', '--disable-overlap-schedule',
                '--enable-linear-replayssm-spec', '--mamba-ssm-dtype', 'float32',
-               '--max-running-requests', str(ACTIVE_REQUESTS), '--context-length', '1048576',
-               '--mem-fraction-static', '0.85', '--chunked-prefill-size', '8192',
-               '--mamba-full-memory-ratio', '0.45',
+               '--max-running-requests', active_requests, '--context-length', '1048576',
+               '--mem-fraction-static', config['mem_fraction_static'],
+               '--chunked-prefill-size', config['chunked_prefill_size'],
+               '--mamba-full-memory-ratio', config['mamba_full_memory_ratio'],
                # Short prompts jump ahead of a long chunked prefill, and running
                # streams get four decode rounds after every prefill chunk instead
                # of freezing for the whole prefill. An idle replica still
                # prefills back to back.
                '--schedule-policy', 'shortest-prefill-first', '--prefill-decode-interval', '4',
                '--prefill-decode-interval-min-bs', '1',
-               '--max-prefill-tokens', '8192', '--cuda-graph-max-bs-decode', str(ACTIVE_REQUESTS),
+               '--max-prefill-tokens', config['chunked_prefill_size'],
+               '--cuda-graph-max-bs-decode', active_requests,
+               *config['extra_backend_args'],
                '--enable-metrics', '--random-seed', '42',
                '--host', '127.0.0.1', '--port', str(config['backend'])]
     router = [python, '-m', 'smg.launch_router', '--worker-urls',
               f"http://127.0.0.1:{config['backend']}", '--policy', 'round_robin',
               '--host', '127.0.0.1', '--port', str(config['front']),
               '--prometheus-host', '127.0.0.1', '--prometheus-port', str(config['metrics']),
-              '--max-concurrent-requests', str(ACTIVE_REQUESTS), '--queue-size', str(QUEUED_REQUESTS),
+              '--max-concurrent-requests', active_requests, '--queue-size', str(QUEUED_REQUESTS),
               '--queue-timeout-secs', str(QUEUE_TIMEOUT_SECONDS),
               '--rate-limit-tokens-per-second', '0', '--request-timeout-secs', '3600',
               '--worker-startup-timeout-secs', '3600', '--disable-retries']

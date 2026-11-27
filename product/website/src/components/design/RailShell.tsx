@@ -79,6 +79,24 @@ const RailBackContext = createContext<(back: RailBack | null) => void>(
   () => {},
 );
 
+/* Fades the docs nav at its foot while there is more below (its scrollbar is hidden). */
+const fadeWhileMore = (nav: HTMLElement | null) => {
+  if (!nav) return;
+  const update = () => {
+    const more = nav.scrollTop + nav.clientHeight < nav.scrollHeight - 1;
+    if (more) nav.dataset.overflow = "";
+    else delete nav.dataset.overflow;
+  };
+  update();
+  nav.addEventListener("scroll", update, { passive: true });
+  const sized = new ResizeObserver(update);
+  sized.observe(nav);
+  return () => {
+    nav.removeEventListener("scroll", update);
+    sized.disconnect();
+  };
+};
+
 export const useRailBack = (back: RailBack): void => {
   const register = useContext(RailBackContext);
   useEffect(() => {
@@ -486,7 +504,11 @@ export const RailShell = ({
             <img alt="Gradiated" src="/brand/wordmark-hx-white.svg" />
           </a>
           {shown && (
-            <nav className="gr-rail-docnav" data-leaving={leaving || undefined}>
+            <nav
+              className="gr-rail-docnav"
+              data-leaving={leaving || undefined}
+              ref={fadeWhileMore}
+            >
               {shown.groups.map((group, index) => (
                 <div
                   className="gr-rail-docnav-group"

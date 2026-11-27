@@ -6,7 +6,10 @@
   "outputDirectory": "dist",
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- . && node scripts/ashby-jobs-unchanged.ts",
   "trailingSlash": true,
+  "crons": [{ "path": "/api/roadmap-digest/", "schedule": "0 18 * * *" }],
   "redirects": [
+    { "source": "/hardware", "destination": "/", "permanent": true },
+    { "source": "/hardware/", "destination": "/", "permanent": true },
     {
       "source": "/library/",
       "has": [

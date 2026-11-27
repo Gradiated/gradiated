@@ -12,12 +12,14 @@ use tokio::{sync::OnceCell, time::Instant};
 
 use super::{
     compiled::{CompiledTokenizer, TokenizerArtifacts},
+    kimi_k31::is_kimi_tiktoken_config,
     ModelTokenizerError,
 };
 use crate::{ModelDeploymentRelease, TokenizerMode};
 
 pub(super) const TOKENIZER_FILE: &str = "tokenizer.json";
 pub(super) const TOKENIZER_CONFIG_FILE: &str = "tokenizer_config.json";
+pub(super) const TIKTOKEN_FILE: &str = "tiktoken.model";
 const CHAT_TEMPLATE_FILE: &str = "chat_template.jinja";
 const LOAD_TIMEOUT: Duration = Duration::from_secs(30);
 pub(super) const LOAD_RETRY_BACKOFF: Duration = Duration::from_secs(10);
@@ -153,8 +155,17 @@ impl ModelTokenizer {
             RepoType::Model,
             release.revision.clone(),
         ));
-        let tokenizer = repository.get(TOKENIZER_FILE).await?;
         let config = repository.get(TOKENIZER_CONFIG_FILE).await?;
+        let config_check = config.clone();
+        let is_kimi = tokio::task::spawn_blocking(move || is_kimi_tiktoken_config(&config_check))
+            .await
+            .map_err(ModelTokenizerError::Task)??;
+        if is_kimi {
+            let vocab = repository.get(TIKTOKEN_FILE).await?;
+            return Ok(TokenizerArtifacts::KimiK31 { vocab, config });
+        }
+
+        let tokenizer = repository.get(TOKENIZER_FILE).await?;
         let template = match repository.get(CHAT_TEMPLATE_FILE).await {
             Ok(template) => Some(template),
             Err(ApiError::RequestError(error))
@@ -165,7 +176,7 @@ impl ModelTokenizer {
             Err(error) => return Err(error.into()),
         };
 
-        Ok(TokenizerArtifacts {
+        Ok(TokenizerArtifacts::HuggingFace {
             tokenizer,
             config,
             template,

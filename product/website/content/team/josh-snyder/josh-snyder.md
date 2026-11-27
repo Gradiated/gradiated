@@ -1,7 +1,7 @@
 ---
 name: Josh Snyder
 role: Cofounder
-summary: Led AI engineering at PostHog. Specialized in the mathematics of graph neural networks, with a master's degree from Cambridge.
+summary: Previously led AI engineering at PostHog, and before that founded TimeNavi. Based in Cambridge, UK.
 order: 2
 # Where you are based, to the city. Public, and puts you on the map.
 location:
@@ -27,6 +27,10 @@ is not shown, so delete nothing: fill in what you want. -->
 <!-- Who you are and how you got here, in your own words. A few short
 paragraphs read better than one long one. Until you write this, your summary
 above is shown as your bio. -->
+
+Previously led AI and growth engineering at PostHog, where I worked on making the product easier to get started with and built AI-powered developer tools. Before that, I founded TimeNavi, a calendar-based time-tracking app used by over 250,000 people.
+
+I live in Cambridge, UK with my wife Hania and son Benio. Outside of work, you'll usually find me travelling with family, hiking, and eating a lot of popcorn.
 
 ## Working on
 

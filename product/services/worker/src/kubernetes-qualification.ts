@@ -79,9 +79,15 @@ export const runSdkQualification = (
 export const qualifyKubernetesPod = async (
   namespace: string,
   request: (path: string, method?: string, body?: unknown) => Promise<unknown>,
-  availableModelIds: ReadonlySet<string>,
+  availableModels: ReadonlySet<string> | ReadonlyMap<string, string>,
   verify: (input: unknown) => Promise<void>,
 ) => {
+  const resolveModelId = (modelId: string): string | undefined =>
+    "get" in availableModels
+      ? availableModels.get(modelId)
+      : availableModels.has(modelId)
+        ? modelId
+        : undefined;
   const list = z.object({
     items: z.array(z.unknown()),
     metadata: z.object({ continue: z.string().optional() }),
@@ -99,14 +105,15 @@ export const qualifyKubernetesPod = async (
   } while (cursor);
   const candidate = values
     .map(qualificationCandidate)
-    .find((c) => c !== undefined && availableModelIds.has(c.modelId));
+    .find((c) => c !== undefined && resolveModelId(c.modelId) !== undefined);
   if (!candidate) return;
+  const targetModelId = resolveModelId(candidate.modelId)!;
   const path = `/api/v1/namespaces/${namespace}/pods/${candidate.pod.metadata.name}`;
   let succeeded = true;
   try {
     await verify({
       stage: "canary",
-      modelId: candidate.modelId,
+      modelId: targetModelId,
       runtimeRevision: candidate.release.runtime_revision,
       ...(candidate.release.protocol
         ? { protocol: candidate.release.protocol }

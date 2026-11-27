@@ -146,4 +146,48 @@ describe("Kubernetes deployment ownership", () => {
     });
     expect(await rows()).toHaveLength(0);
   });
+
+  it("maps pods carrying a retired alias onto the canonical model ID without downtime", async () => {
+    const instances = createInstanceService(database.database);
+    const host = await instances.register({
+      provider: "runpod",
+      providerAccountId: "test",
+      providerInstanceId: randomUUID(),
+      region: "US-NE-1",
+      sku: "B300",
+      faultDomain: "alias-host",
+    });
+    const catalog = createCatalogService(database.database);
+    const legacy = await catalog.upsertModel(modelInput({ status: "retired" }));
+    const canonical = await catalog.upsertModel(
+      modelInput({ aliases: [legacy.id] }),
+    );
+    const podId = randomUUID();
+    const store = createKubernetesDeploymentStore(database.database);
+
+    await store.reconcile({
+      running: async () => [
+        {
+          id: podId,
+          name: "glm-legacy-pod",
+          instanceId: host.id,
+          modelId: legacy.id,
+          release: deploymentRelease(),
+          qualified: true,
+          draining: false,
+        },
+      ],
+      isGone: async () => false,
+    });
+
+    const [row] = await database.database
+      .select()
+      .from(modelDeployments)
+      .where(eq(modelDeployments.id, podId));
+    expect(row).toMatchObject({
+      id: podId,
+      modelId: canonical.id,
+      status: "available",
+    });
+  });
 });

@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/fake"
 	corelisters "k8s.io/client-go/listers/core/v1"
+	"k8s.io/client-go/rest"
 	ktesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/cache"
 )
@@ -215,5 +216,19 @@ func TestPodLostByAReachableHostFailsSoItIsReplaced(t *testing.T) {
 	status, err = p.GetPodStatus(context.Background(), pod.Namespace, pod.Name)
 	if err != nil || status.Phase != v1.PodRunning || status.Reason != "HostUnreachable" {
 		t.Fatalf("an unrelated 404 failed the pod: %v %v", status, err)
+	}
+}
+
+func TestConfigureClientRateLimitRaisesDefaultsWithoutOverridingExplicitValues(t *testing.T) {
+	config := &rest.Config{}
+	configureClientRateLimit(config)
+	if config.QPS != kubernetesClientQPS || config.Burst != kubernetesClientBurst {
+		t.Fatalf("unexpected default rate limit: qps=%v burst=%d", config.QPS, config.Burst)
+	}
+
+	custom := &rest.Config{QPS: 80, Burst: 160}
+	configureClientRateLimit(custom)
+	if custom.QPS != 80 || custom.Burst != 160 {
+		t.Fatalf("explicit rate limit overwritten: qps=%v burst=%d", custom.QPS, custom.Burst)
 	}
 }

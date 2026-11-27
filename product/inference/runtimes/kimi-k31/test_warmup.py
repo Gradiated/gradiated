@@ -31,6 +31,20 @@ class Warmup(unittest.TestCase):
         self.assertEqual(payload['model'], launch.MODEL)
         self.assertTrue(payload['stream_options']['include_usage'])
 
+    def test_probe_uses_selected_served_model_name(self):
+        output = stream({'choices': [{'delta': {'reasoning_content': 'ok'}}]},
+                        {'usage': {'prompt_tokens': 40, 'completion_tokens': 4}, 'choices': []})
+        supervisor = launch.Supervisor(
+            ['unused'],
+            tokenizer_path='yetalabs/Kimi-K3.1-Pro-abliterated',
+            revision='0911ef0765f49d26dfa25bb0d071f29463f8000b',
+            served_model_name='yetalabs/Kimi-K3.1-Pro-abliterated',
+        )
+        with patch.object(launch.urllib.request, 'urlopen', return_value=output) as open_request:
+            supervisor.probe(32, 5)
+        payload = json.loads(open_request.call_args.args[0].data)
+        self.assertEqual(payload['model'], 'yetalabs/Kimi-K3.1-Pro-abliterated')
+
     def test_truncated_empty_and_error_streams_do_not_qualify(self):
         for output in [stream({'choices': [{'delta': {'content': 'hello'}}]}, done=False),
                        stream({'usage': {'prompt_tokens': 40, 'completion_tokens': 0}}),

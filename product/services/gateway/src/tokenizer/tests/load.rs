@@ -115,6 +115,24 @@ fn only_a_bounded_path_at_a_full_commit_is_a_valid_pin() {
 }
 
 #[tokio::test]
+async fn a_cached_kimi_tiktoken_release_loads_without_requesting_tokenizer_json() {
+    let hub = Hub::answering(StatusCode::NOT_FOUND).await;
+    let revision = "d9e99b0792a5e93b78ea9bea62a68167e36ddd9e";
+    hub.cache_kimi_release("moonshotai/Kimi-K3.1-Pro", revision);
+    let mut qualified = qualified(None);
+    qualified.local = None;
+    qualified.tokenizer = Some(crate::PinnedTokenizer {
+        path: "moonshotai/Kimi-K3.1-Pro".to_owned(),
+        revision: revision.to_owned(),
+    });
+
+    let count = hub.tokenizer.count(&qualified).await.unwrap();
+
+    assert!(count > 0);
+    assert_eq!(hub.requests(), 0);
+}
+
+#[tokio::test]
 async fn a_model_without_a_deployment_has_no_tokenizer_to_count_with() {
     let mut qualified = qualified(None);
     qualified.local = None;

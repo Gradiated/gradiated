@@ -153,7 +153,7 @@ If your logs already include a deterministic score (like `tests_passed` from CI)
 
 - **Use SFT (`SFTRecipe`)** when you have verified examples of the exact outputs you want (or high-scoring production answers).
 - **Follow with [DPO (`DPORecipe`)](/docs/training/recipes/dpo/)** when the model already follows your format but keeps making specific mistakes you can contrast as `(chosen, rejected)` pairs.
-- **[Distillation (`DistillRecipe`)](/docs/training/recipes/distillation/)** is coming soon, for when you have prompts and a larger teacher model but no gold answers yet.
+- **Use [distillation (`DistillRecipe`)](/docs/training/recipes/distillation/)** when you have prompts and a larger teacher model but no gold answers yet.
 
 ### Parameters you might change
 

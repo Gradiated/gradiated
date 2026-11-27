@@ -107,7 +107,7 @@ Cartridges need a much higher learning rate than LoRA adapters, and `lr="auto"` 
 ## When to use Cartridges vs. distillation vs. RAG
 
 - **Use `CartridgeRecipe`** whenever you have a long system prompt, instructions, or large chunk of reference docs you don't want to resend on every request.
-- **Use [Model distillation](/docs/training/recipes/distillation/) (`DistillRecipe`)** when you want a smaller model to imitate a bigger teacher model overall, or to bake a prompt straight into a LoRA fine-tune with `context=`. It is coming soon.
+- **Use [Model distillation](/docs/training/recipes/distillation/) (`DistillRecipe`)** when you want a smaller model to imitate a bigger teacher model overall, or to bake a prompt straight into a LoRA fine-tune with `context=`.
 - **Use RAG ([Embeddings](/docs/training/recipes/embeddings/))** when your knowledge base changes every minute or has millions of documents. Cartridges work best for context that fits in the model's window and stays mostly stable.
 
 ## Want more control?

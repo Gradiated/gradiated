@@ -15,11 +15,11 @@ These apply to every recipe and to `client.runs.create(...)`.
 
 | Parameter      | Default                                                                                                                         | What it does                                                                                                                                                                                                                                                                                                                          |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `model`        | `"qwen/qwen3-8b"`; `"qwen/qwen3-0.6b"` for `RouterRecipe`; chosen by the recipe for `DecisionModelRecipe` and `EmbeddingRecipe` | Base model ID, or an `Artifact` from `SFTRecipe` or `DPORecipe` to keep training its LoRA adapter (rank and alpha are inherited; merged exports can't be continued). Router, decision, cartridge and embedding runs start from a base model. The dry run names the model it resolved. See [Supported models](/docs/training/models/). |
+| `model`        | `"qwen/qwen3-8b"`; `"qwen/qwen3-0.6b"` for `RouterRecipe`; `"qwen/qwen3-4b"` for `DistillRecipe`; chosen by the recipe for `DecisionModelRecipe` and `EmbeddingRecipe` | Base model ID, or an `Artifact` from `SFTRecipe` or `DPORecipe` to keep training its LoRA adapter (rank and alpha are inherited; merged exports can't be continued). Router, decision, cartridge, embedding, distillation and reward-model runs start from a base model. The dry run names the model it resolved. See [Supported models](/docs/training/models/). |
 | `dataset`      | required                                                                                                                        | A `Dataset` from `client.datasets.push(name, records_or_path)`, `client.datasets.from_hf(...)` or an import with `client.datasets.import_file(...)`.                                                                                                                                                                                  |
 | `name`         | required                                                                                                                        | Output name. Artifacts are versioned under it (`name@<date>-<n>`).                                                                                                                                                                                                                                                                    |
 | `max_cost_usd` | none                                                                                                                            | Spend cap. When it's reached, the run stops gracefully, saves a checkpoint and ends with status `stopped_budget`. Raise it and continue with `client.runs.resume(run_id, max_cost_usd=...)`.                                                                                                                                          |
-| `split`        | `splits.BySession(eval_fraction=0.10)`; `0.15` for routers and decision models; `splits.ByGroup` for DPO                        | Holds out sessions for evaluation. Records with the same `session_id` (or preference pairs with the same `group_id`) stay on the same side. `splits.Random(...)` holds out single records. Every split takes `seed=` (default `42`).                                                                                                  |
+| `split`        | `splits.BySession(eval_fraction=0.10)`; `0.15` for routers and decision models; `splits.ByGroup` for DPO and reward models      | Holds out sessions for evaluation. Records with the same `session_id` (or preference pairs with the same `group_id`) stay on the same side. `splits.Random(...)` holds out single records. Every split takes `seed=` (default `42`).                                                                                                  |
 
 Recipes don't take `evals=` or `loggers=` (passing either is a `TypeError`); extra evaluations during training and experiment trackers arrive in Wave 2.
 
@@ -120,17 +120,20 @@ RL metrics: `mean_reward`; `truncation_rate`, the share of attempts cut off at `
 
 ## `DistillRecipe`
 
-Arrives in Wave 2; see [Distillation](/docs/training/recipes/distillation/).
+See [Distillation](/docs/training/recipes/distillation/).
 
-| Parameter | Default                           | What it does                                                                                                          |
-| --------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `teacher` | required                          | Catalog model or `Artifact` to learn from. It must share the student's tokenizer for token-level KL.                  |
-| `rollout` | `OnPolicy(max_new_tokens="auto")` | The student generates and the teacher scores those tokens. `OffPolicy()` trains on fixed teacher completions instead. |
-| `loss`    | `losses.TopKKLDistill(top_k=32)`  | Matches the teacher's top-k next-token probabilities. `top_k` of 16–32 captures almost all the signal.                |
-| `context` | none                              | A `Context` to bake into a LoRA fine-tune: the teacher reads it and the student doesn't.                              |
-| `lr`      | `"auto"` (about `2e-4`)           |                                                                                                                       |
+| Parameter | Default                           | What it does |
+| --------- | --------------------------------- | ------------ |
+| `model`   | `"qwen/qwen3-4b"`                 | The student: a LoRA (`adapters.LoRA(rank=32)`) on this base model. |
+| `teacher` | required                          | On-policy: a catalog model that shares the student's tokenizer, loaded by the trainer. Off-policy: also an `Artifact` or any model your inference endpoint serves. |
+| `rollout` | `OnPolicy(max_new_tokens="auto")` | The student writes each answer (temperature 1) and the teacher scores those tokens. `OffPolicy(max_new_tokens=1024)` has the teacher answer each prompt once in a labeling eval before training (greedy, billed as an eval, estimated in `runs.plan().labeling`) and trains on those answers. |
+| `loss`    | `losses.TopKKLDistill(top_k=32)`  | On-policy: matches the teacher's top-k next-token probabilities; `top_k` of 16–32 captures almost all the signal. Off-policy: `losses.CrossEntropy()` on the teacher's answers. |
+| `context` | none                              | A `Context` to bake into a LoRA fine-tune: the teacher reads it before every prompt and the student doesn't (on-policy only). |
+| `lr`      | `"auto"` (about `2e-4`)           |              |
 
-Best checkpoint by KL to the teacher on held-out prompts.
+On-policy runs meter each prompt's tokens twice at the student's price (it writes an answer, then trains on it), plus the teacher's prompt and answer tokens at the teacher's catalog price; the teacher also answers the held-out prompts once. `runs.plan().teacher` shows the teacher's share, which `estimated_cost_usd` includes. Metrics report `answer_tokens` and `truncation_rate`.
+
+Best checkpoint by KL to the teacher on held-out prompts (`eval_kl`, on the teacher's own answers; `base_kl` is the untrained student's), or by held-out loss off-policy.
 
 ## `RouterRecipe`
 
@@ -156,15 +159,16 @@ Best checkpoint by held-out loss.
 
 ## `RewardModelRecipe`
 
-Arrives in Wave 2; see [Reward models](/docs/training/recipes/reward-models/).
+See [Reward models](/docs/training/recipes/reward-models/).
 
 | Parameter | Default                  | What it does                                      |
 | --------- | ------------------------ | ------------------------------------------------- |
 | `model`   | `"qwen/qwen3-8b"`        | 4B–8B models score in milliseconds.               |
-| `adapter` | `adapters.LoRA(rank=32)` | Rank `8`–`16` is enough for a few thousand pairs. |
+| `adapter` | `adapters.LoRA(rank=32)` | Rank `8`–`16` is enough for a few thousand pairs. `adapters.FrozenHead()` trains only the head. |
+| `rubric`  | none                     | A score name in `[0, 1]` on records ending in an assistant turn, trained pointwise (`BCEWithLogits`) next to the Bradley-Terry loss on pairs. |
 | `lr`      | `"auto"` (about `1e-4`)  |                                                   |
 
-Pairs stay on the same side of the split. Best checkpoint by held-out pair accuracy.
+Pairs stay on the same side of the split. Best checkpoint by held-out pair accuracy (`preference_accuracy`), or by held-out loss when there are only scored answers.
 
 ## `EmbeddingRecipe`
 
@@ -246,7 +250,7 @@ Deploying points `your-org/<name>` at the new artifact version after qualificati
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `lr="auto"`                                           | A per-model, per-recipe table, calibrated by a learning-rate sweep on each base model. Each entry is measured at `batch_size=128`, `LoRA(rank=32, alpha=32)`, linear decay with 3% warmup and `AdamW(betas=(0.9, 0.95))`, then scaled by the square root of your batch size over 128 and by `lr_scale`. A model trains only the recipes it has an entry for (`GET /v1/models` lists them as `recipes` and `calibrated_lrs`); self-hosted servers register extra models, with their learning rates, through `GRAD_EXTRA_MODELS_JSON`. |
 | `loss="auto"` (GRPO, Wave 2)                          | `losses.GRPO(clip_low=0.2, clip_high=0.28)` for on-policy runs. With `max_staleness > 0` it adds `mask_ratio=(0.5, 2.0)`, which drops tokens whose probability under the current weights has moved more than 2× from the sampler's. `auto` never picks `losses.CISPO`, and the dry run warns if you combine CISPO with `max_staleness > 0`.                                                                                                                                                                                          |
-| `max_new_tokens="auto"` (RL and distillation, Wave 2) | The 95th-percentile completion length of the base model on 64 of your prompts, measured during `runs.plan()` and capped by the context window. Metrics report `truncation_rate`.                                                                                                                                                                                                                                                                                                                                                     |
+| `max_new_tokens="auto"` (distillation)               | The 95th-percentile length of the assistant turns already in your records, rounded up to a multiple of 32 and kept between 32 and 1024, or 256 when the records have none. Metrics report `truncation_rate`. (GRPO's rule arrives with it in Wave 2.)                                                                                                                                                                                                                                                                                 |
 | `thinking="auto"`                                     | The base model's own default. For Qwen3, thinking is on, and records with no `<think>` block train with thinking off.                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 Resolved learning rates on each recipe's default model at `batch_size=128`:
@@ -259,6 +263,8 @@ Resolved learning rates on each recipe's default model at `batch_size=128`:
 | Decision model       | `gradiated/linden-1`     | `3e-4` |
 | Context Cartridge    | `qwen/qwen3-8b`          | `1e-2` |
 | Embeddings (encoder) | `baai/bge-small-en-v1.5` | `2e-5` |
+| Distillation         | `qwen/qwen3-4b`          | `2e-4` |
+| Reward model         | `qwen/qwen3-8b`          | `1e-4` |
 
 **Rule versions.** The `auto` rules are versioned. Each run's `resolved_config` records the version it used (`rule_version: auto@2`) and where its `lr` came from (`lr_source`, for example `auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling`). If we change what a rule resolves to, it gets a new version, and existing run configs keep the old one.
 

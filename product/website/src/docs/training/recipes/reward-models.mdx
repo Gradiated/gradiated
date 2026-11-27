@@ -4,11 +4,6 @@
   Train a small model to score how good another model's answers are.
 </DocsLead>
 
-<DocsCallout label="Coming soon">
-  `RewardModelRecipe` is coming soon. Until then the server rejects it with
-  `recipe_deferred`.
-</DocsCallout>
-
 ## When to train a reward model
 
 Most teams do not need to train a reward model. Pick the simplest grader that fits your task:
@@ -35,9 +30,9 @@ rubric = Rubric([
 
 If a prompted judge is still missing subtle preferences you can demonstrate with examples, train a dedicated reward model with **`RewardModelRecipe`**. You can use the trained [`Artifact`](/docs/training/artifacts/) to:
 
-- Plug into a [`Judge`](/docs/training/rubrics/) to score a [`Dataset`](/docs/training/trajectories/) or grade [`GRPORecipe`](/docs/training/recipes/rl-agents/) runs.
 - Score draft answers from a fast 8B model in your app so low-scoring answers fall back to a larger model.
 - Rank multiple candidate answers (best-of-N) and return the highest-scoring one.
+- Score a [`Dataset`](/docs/training/trajectories/) offline before filtering it.
 
 ## What data you need
 
@@ -98,40 +93,58 @@ grad train --dataset sql-preferences --name sql-verifier --recipe reward-model -
 ### Parameters you might change
 
 - **`model`:** start with a fast 4B to 8B model (`"qwen/qwen3-8b"`). A reward model scores an output in a single forward pass, so an 8B model runs in milliseconds.
+- **`adapter`:** `adapters.LoRA(rank=32)` by default; `adapters.FrozenHead()` trains only the scoring head on a frozen model.
+- **`rubric`:** also train on single scored answers. Pass the name of a score in `[0, 1]` already on your records (`rubric="resolved"`), and records that end in an assistant turn with that score train the head pointwise, next to the pairs.
 
-Pairs always stay together in the same train or eval split, and `run.artifact` is the checkpoint with the best held-out pair accuracy. Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#rewardmodelrecipe).
+Pairs always stay together in the same train or eval split, and `run.artifact` is the checkpoint with the best held-out pair accuracy (`run.eval_report.preference_accuracy`; the report also has `reward_margin` and, with `rubric=`, `pointwise_brier`). Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#rewardmodelrecipe).
 
 ## Use your reward model
 
-### 1. Plug straight into a `Judge` (for datasets or RL)
-
-Pass `run.artifact` straight into [`Judge`](/docs/training/rubrics/) with no prompt required:
+The artifact is a `reward_bundle`: a LoRA adapter for the base model, a small scoring head (`reward_head.safetensors`) and `reward_config.json`. A score is `sigmoid(head(h))`, where `h` is the base model's last hidden state at the end of the whole conversation, answer included. Download it and load it with `transformers` and `peft` (the [artifact formats spec](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md#reward_bundle) has the full reference loader):
 
 ```python
-from grad import Judge
+import json
+from pathlib import Path
 
-sql_judge = Judge(name="sql_quality", model=run.artifact)
-scored = client.datasets.get("sql-prod").score(sql_judge).wait()
+import torch
+from peft import PeftModel
+from safetensors.torch import load_file
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+path = Path(run.artifact.download("./sql-verifier"))
+config = json.loads((path / "reward_config.json").read_text())
+pin = {"revision": config["base_model_revision"]}
+tokenizer = AutoTokenizer.from_pretrained(config["base_model_repo"], **pin)
+model = AutoModelForCausalLM.from_pretrained(config["base_model_repo"], dtype=torch.bfloat16, **pin)
+if config["adapter"]["kind"] == "lora":
+    model = PeftModel.from_pretrained(model, str(path)).get_base_model()
+head = load_file(str(path / config["head_file"]))
+
+
+@torch.no_grad()
+def score(messages):
+    """A score in [0, 1] for the last assistant turn of `messages`."""
+    text = tokenizer.apply_chat_template(messages, tokenize=False, **config["chat_template_kwargs"])
+    ids = tokenizer(text, add_special_tokens=False, return_tensors="pt").input_ids[:, -config["max_seq_len"] :]
+    h = model.model(input_ids=ids).last_hidden_state[0, -1].float()
+    return torch.sigmoid(head["weight"][0] @ h + head["bias"][0]).item()
 ```
 
-### 2. Gate a fast model in your app code
-
-You can also [deploy](/docs/training/deploying/) your reward model (or download it to your own server) and use it to check answers from a fast 8B model before returning them, falling back to a larger model only when the score is low:
+Then gate a fast model in your app: check its draft before returning it, and fall back to a larger model only when the score is low:
 
 ```python
 import os
 from openai import OpenAI
-from grad import Record
 
 oai = OpenAI(base_url="https://api.gradiated.com/v1", api_key=os.environ["GRADIATED_API_KEY"])
 messages = [{"role": "user", "content": "How many orders shipped to Canada last month?"}]
 
 draft = oai.chat.completions.create(model="your-org/sql-agent", messages=messages).choices[0].message.content
-score = run.artifact.infer(Record(messages=[*messages, {"role": "assistant", "content": draft}])).score
-
-if score < 0.75:
+if score([*messages, {"role": "assistant", "content": draft}]) < 0.75:
     draft = oai.chat.completions.create(model="qwen/qwen3-32b", messages=messages).choices[0].message.content
 ```
+
+With pairs only, scores rank answers to the same prompt; they are not calibrated probabilities, so pick the threshold on held-out answers. Hosted reward-model serving on Gradiated Cloud and passing a reward model to a [`Judge`](/docs/training/rubrics/) are coming soon.
 
 ## Want more control?
 

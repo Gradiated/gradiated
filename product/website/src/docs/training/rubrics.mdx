@@ -91,8 +91,10 @@ Python scorers in training recipes (`RouterRecipe(rubric=Scorer(...))`) run in a
 <DocsCallout label="When to train a reward model instead" tone="tip">
   A frontier or open model `Judge` with a clear rubric is the right default for
   most teams. Training a dedicated verifier with
-  [`RewardModelRecipe`](/docs/training/recipes/reward-models/), to pass as
-  `Judge(name="resolved", model=verifier_artifact)`, is coming soon.
+  [`RewardModelRecipe`](/docs/training/recipes/reward-models/) pays off when a
+  judge misses preferences you can show as pairs, or when you need millisecond
+  scoring. Passing it to a `Judge` (`Judge(name="resolved", model=verifier_artifact)`)
+  is coming soon; today you score with the downloaded artifact.
 </DocsCallout>
 
 ## Grading live state inside an `Environment`

@@ -126,7 +126,7 @@ grad train -f support-router.yaml --wait
 ### When to use a router vs. fine-tuning vs. distillation
 
 - **Start with a router (`RouterRecipe`)** when a cheap model already handles most of your requests well and you only need a frontier model for the hard ones. It's the fastest way to cut LLM spend without training a new generator.
-- **Use [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/)** when no cheap model is good enough on its own yet and you want to teach a small model to handle the task directly. [Distillation](/docs/training/recipes/distillation/) is coming soon.
+- **Use [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/)** when no cheap model is good enough on its own yet and you want to teach a small model to handle the task directly, or use [distillation](/docs/training/recipes/distillation/) to copy a larger model on your prompts.
 - **Combine them** once you have a fine-tuned 8B model by putting it alongside a frontier model in your router.
 
 ### Parameters you might change

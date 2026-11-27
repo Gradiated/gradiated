@@ -5,7 +5,7 @@
   defaults.
 </DocsLead>
 
-A **recipe** is a Python class that wires up a common training workflow (`RouterRecipe`, `DecisionModelRecipe`, `SFTRecipe`, `DPORecipe`, `CartridgeRecipe`, `EmbeddingRecipe`). When a run finishes, it saves a versioned `.grad` [`Artifact`](/docs/training/artifacts/) along with its held-out evaluation report.
+A **recipe** is a Python class that wires up a common training workflow (`RouterRecipe`, `DecisionModelRecipe`, `SFTRecipe`, `DPORecipe`, `CartridgeRecipe`, `EmbeddingRecipe`, `DistillRecipe`, `RewardModelRecipe`). When a run finishes, it saves a versioned `.grad` [`Artifact`](/docs/training/artifacts/) along with its held-out evaluation report.
 
 <DocsRecipeChooser />
 
@@ -19,8 +19,10 @@ A **recipe** is a Python class that wires up a common training workflow (`Router
 | `DPORecipe`           | [Preference tuning (DPO)](/docs/training/recipes/dpo/)      | `prompt` + `chosen` + `rejected` records, or paired `group_id` trajectories                               |
 | `CartridgeRecipe`     | [Context Cartridges](/docs/training/recipes/cartridges/)    | Static corpus (`Context`) + QA prompts (`num_tokens`)                                                     |
 | `EmbeddingRecipe`     | [Embeddings](/docs/training/recipes/embeddings/)            | `Triplet` examples (`query`, `positive` doc, optional `negatives`)                                        |
+| `DistillRecipe`       | [Model distillation](/docs/training/recipes/distillation/)  | Prompts only (`messages` ending in a user turn) + a `teacher` model                                       |
+| `RewardModelRecipe`   | [Reward models](/docs/training/recipes/reward-models/)      | `prompt` + `chosen` + `rejected` pairs, and optionally answers with a score (`rubric=`)                   |
 
-[RL for agents](/docs/training/recipes/rl-agents/) (`GRPORecipe`), [distillation](/docs/training/recipes/distillation/) (`DistillRecipe`) and [reward models](/docs/training/recipes/reward-models/) (`RewardModelRecipe`) are coming soon.
+[RL for agents](/docs/training/recipes/rl-agents/) (`GRPORecipe`) is coming soon.
 
 Any dataset works as input: a list of plain chat records or a `.jsonl` file (`client.datasets.push(name, records_or_path)`), a Hugging Face dataset (`client.datasets.from_hf(...)`), or traces imported from your observability tool. See [Trajectories](/docs/training/trajectories/).
 

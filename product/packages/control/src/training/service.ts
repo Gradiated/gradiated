@@ -28,7 +28,7 @@ import { createTrainingStore } from "./store.js";
 import type { TaskVersionRecord } from "./records.js";
 import { userActor } from "./production-changes.js";
 import type { GradArtifacts } from "./grad.js";
-import { createArtifactPublisher } from "./publish.js";
+import { createArtifactPublisher, type ServingBases } from "./publish.js";
 import { TrainingAdmissionError, type TrainingEngine } from "./types.js";
 
 export type {
@@ -56,6 +56,7 @@ export const createTrainingService = (
     grad?: GradArtifacts;
     bundles?: Pick<ObjectStorage, "stream" | "uri">;
     uploadsClosed?: boolean;
+    servingBases?: ServingBases;
   } = {},
 ) => {
   const records = createTrainingStore(database);
@@ -63,6 +64,7 @@ export const createTrainingService = (
     database,
     ...(artifacts.grad ? { grad: artifacts.grad } : {}),
     ...(artifacts.bundles ? { bundles: artifacts.bundles } : {}),
+    ...(artifacts.servingBases ? { servingBases: artifacts.servingBases } : {}),
     ...(qualifyAdapter ? { qualifyAdapter } : {}),
     ...(lockQualification ? { lockQualification } : {}),
   });

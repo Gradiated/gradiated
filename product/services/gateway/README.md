@@ -153,7 +153,17 @@ sends `X-Gradiated-Source: eval` stays on the standard lane. Eval requests:
   `Retry-After: 5`; the slot is released when the generation ends, or when its
   lease expires;
 - bill as normal generations whose settled properties carry `lane: "eval"`
-  and the `eval_id`.
+  and the `eval_id`;
+- carry the metric label `model="eval:<model>"`, so pool autoscaling, which
+  reads gateway metrics by model, never counts them;
+- wait for a pool at zero instead of failing: while no replica can take the
+  request, the gateway records one capacity rejection for the pool's model
+  every 10 seconds, which asks the autoscaler for one replica (a pool steps to
+  ready + 1, and ready is 0), and retries. Each retry starts the generation
+  deadline afresh. After `GATEWAY_EVAL_COLD_START_WAIT_SECONDS` (600) it answers
+  `503 capacity_unavailable` with `Retry-After: 30`, which grad retries later.
+  Once one replica runs, eval traffic no longer signals demand, so it never
+  scales a pool past one.
 
 ## Native SystemOne
 
@@ -317,6 +327,7 @@ The local endpoints are:
 | `GATEWAY_EVAL_CONCURRENCY_CAP`                  | no       | `20`                            |
 | `GATEWAY_EVAL_REQUESTS_PER_MINUTE`              | no       | `600`                           |
 | `GATEWAY_EVAL_SERVICE_TOKENS`                   | no       | eval lane off                   |
+| `GATEWAY_EVAL_COLD_START_WAIT_SECONDS`          | no       | `600`                           |
 | `SGLANG_API_KEY`                                | no       | no upstream authentication      |
 | `GATEWAY_FALLBACK_ROUTES`                       | no       | embedded `fallback_routes.json` |
 | `OPENROUTER_API_KEY`                            | no       | loopback test peer only         |

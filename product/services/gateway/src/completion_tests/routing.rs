@@ -135,6 +135,12 @@ async fn an_eval_generation_holds_an_eval_slot_and_is_billed_as_eval() {
         steps.contains(&RouteStep::ReleaseEval(generation_id)),
         "{steps:?}"
     );
+    // Pool autoscaling reads these by model, so eval traffic never scales a pool.
+    assert_eq!(
+        harness.metric("admissions_total", "model=\"eval:model-a\""),
+        1
+    );
+    assert_eq!(harness.metric("admissions_total", "model=\"model-a\""), 0);
     let finalized = harness.only_finalized();
     assert_eq!(
         (&finalized["lane"], &finalized["eval_id"]),

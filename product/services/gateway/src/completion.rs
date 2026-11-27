@@ -282,7 +282,7 @@ impl CompletionService {
 
         plan.promote(placed.deployment_id);
         self.metrics
-            .session_routed(metric_model(request), placed.outcome.as_str());
+            .session_routed(&metric_model(request), placed.outcome.as_str());
 
         Ok(Some(HeldRoute::new(
             self.serving_state.clone(),
@@ -370,8 +370,9 @@ impl CompletionService {
             )
             .await;
 
+        let model = metric_model(&request).into_owned();
         let scope = GenerationScope {
-            model: metric_model(&request),
+            model: &model,
             deployment: plan.target.metric_label(),
             protocol: plan.target.protocol_label(),
             stream: request.request.stream,
@@ -389,7 +390,7 @@ impl CompletionService {
         let metrics = self.metrics.generation_admitted(&scope);
         let capacity = self
             .metrics
-            .capacity(metric_model(&request), request.is_verification);
+            .capacity(&metric_model(&request), request.is_verification);
         if let Some(reason) = plan.reason {
             capacity.fell_back(plan.target.capacity(), reason);
         }
@@ -486,13 +487,24 @@ async fn unless_panicked<T>(
 }
 
 /// Metrics name an adapter's base model, which keeps their labels bounded.
-fn metric_model(request: &QualifiedRequest) -> &str {
+fn base_model(request: &QualifiedRequest) -> &str {
     request
         .adapter
         .as_ref()
         .map_or(request.request.model.as_str(), |adapter| {
             adapter.base_model_id.as_str()
         })
+}
+
+/// Eval traffic is labelled apart, so pool autoscaling, which reads these
+/// metrics by model, never counts it. A cold pool is woken explicitly instead.
+fn metric_model(request: &QualifiedRequest) -> std::borrow::Cow<'_, str> {
+    let model = base_model(request);
+    if request.identity.lane == crate::auth::Lane::Eval {
+        std::borrow::Cow::Owned(format!("eval:{model}"))
+    } else {
+        std::borrow::Cow::Borrowed(model)
+    }
 }
 
 fn served_release_digest(request: &QualifiedRequest, local: &LocalCapacity) -> String {
@@ -523,7 +535,14 @@ impl Unroutable {
 
     fn reject(self, request: &QualifiedRequest, metrics: &GatewayMetrics) -> GatewayError {
         if self.reason == FallbackReason::AtCapacity {
-            metrics.routing_capacity_rejected(metric_model(request), request.is_verification);
+            metrics.routing_capacity_rejected(&metric_model(request), request.is_verification);
+        }
+        if self.reason == FallbackReason::Unavailable
+            && request.identity.lane == crate::auth::Lane::Eval
+        {
+            return GatewayError::CapacityUnavailable {
+                model: base_model(request).to_owned(),
+            };
         }
 
         if let Some(diagnostics) = self.diagnostics {

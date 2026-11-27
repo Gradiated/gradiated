@@ -193,7 +193,8 @@ fn application(
         .with_verification_workspace(config.verification_workspace_id)
         .with_eval_service_tokens(EvalServiceTokens::new(
             config.eval_service_tokens.iter().map(String::as_str),
-        ));
+        ))
+        .with_eval_cold_start_wait(Duration::from_secs(config.eval_cold_start_wait_seconds));
     let coordinator = if config.use_openrouter_fallback() {
         coordinator.with_legacy_openrouter_fallback()
     } else {

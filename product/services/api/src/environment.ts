@@ -32,6 +32,10 @@ const ApiOnlyEnvironmentSchema = z.object({
     .enum(["true", "false"])
     .default("false")
     .transform((value) => value === "true"),
+  // JSON map from grad's base model ID to the serving base that hosts its
+  // adapters: {"qwen/qwen3-8b": {"model_id", "repository", "revision"}}. Bases
+  // not listed fall back to the catalog's training profiles.
+  GRAD_SERVING_BASES: z.string().min(2).optional(),
   CONTENTS_BUCKET: z.string().min(1).optional(),
   METRICS_PORT: PortSchema.default(9_464),
   MCP_RESOURCE_URL: z.url().default("https://mcp.gradiated.com/mcp"),

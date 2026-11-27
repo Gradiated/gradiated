@@ -4,7 +4,7 @@ CREATE TABLE "price_list_items" (
 	"unit" text NOT NULL,
 	"price_nano_usd_per_million" bigint NOT NULL,
 	CONSTRAINT "price_list_items_price_list_id_sku_pk" PRIMARY KEY("price_list_id","sku"),
-	CONSTRAINT "price_list_items_sku_check" CHECK ("price_list_items"."sku" ~ '^train:[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$'),
+	CONSTRAINT "price_list_items_sku_check" CHECK ("price_list_items"."sku" ~ '^(train|inference):[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$'),
 	CONSTRAINT "price_list_items_unit_check" CHECK ("price_list_items"."unit" in ('token')),
 	CONSTRAINT "price_list_items_price_check" CHECK ("price_list_items"."price_nano_usd_per_million" >= 0)
 );

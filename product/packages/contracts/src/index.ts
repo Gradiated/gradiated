@@ -254,6 +254,7 @@ export {
   BalanceCheckSchema,
   PriceListQuerySchema,
   PriceListSchema,
+  PriceSkuSchema,
   PriceVersionSchema,
   TrainingSkuSchema,
   UsageEventBatchSchema,

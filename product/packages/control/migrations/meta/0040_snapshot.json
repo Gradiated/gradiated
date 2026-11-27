@@ -1,5 +1,5 @@
 {
-  "id": "160773a0-199c-43b5-9d2c-1e447768d32f",
+  "id": "09fd2d4e-4d7d-4d9d-a50d-a6ff854e8fb6",
   "prevId": "87344054-50b8-4f5e-a931-59e7bb36dc98",
   "version": "7",
   "dialect": "postgresql",
@@ -3023,7 +3023,7 @@
       "checkConstraints": {
         "price_list_items_sku_check": {
           "name": "price_list_items_sku_check",
-          "value": "\"price_list_items\".\"sku\" ~ '^train:[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$'"
+          "value": "\"price_list_items\".\"sku\" ~ '^(train|inference):[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$'"
         },
         "price_list_items_unit_check": {
           "name": "price_list_items_unit_check",

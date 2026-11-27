@@ -71,8 +71,9 @@ export const createTrainingBillingService = (
 
   const priceEvent = async (event: UsageEvent) => {
     const list = await priceListVersion(event.price_version);
+    // inference: SKUs are eval estimates; the gateway bills that usage.
     const item =
-      list?.product === event.product
+      list?.product === event.product && event.sku.startsWith("train:")
         ? list.items.find((candidate) => candidate.sku === event.sku)
         : undefined;
     if (!item)

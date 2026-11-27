@@ -17,6 +17,15 @@ export const TrainingSkuSchema = z
   .describe("train:<base model>, priced per million tokens.")
   .openapi({ example: "train:qwen/qwen3-8b" });
 
+export const PriceSkuSchema = z
+  .string()
+  .max(220)
+  .regex(/^(train|inference):[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*$/)
+  .describe(
+    "train:<base model> is billed through usage ingest; inference:<gateway model> is a blended prompt and completion price grad uses only to estimate evals and to allow judges.",
+  )
+  .openapi({ example: "inference:anthropic/claude-sonnet-5-5" });
+
 const NanoUsdSchema = z
   .union([
     z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
@@ -42,7 +51,7 @@ export const PriceListSchema = z
       .describe("True while the prices are made up and not final."),
     skus: z.array(
       z.strictObject({
-        sku: TrainingSkuSchema,
+        sku: PriceSkuSchema,
         unit: z.literal("token"),
         price_nano_usd_per_mtok: z.number().int().nonnegative(),
       }),

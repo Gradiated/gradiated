@@ -1,6 +1,6 @@
 {
-  "id": "44d8ab62-4835-43ec-9360-990e88155896",
-  "prevId": "160773a0-199c-43b5-9d2c-1e447768d32f",
+  "id": "a9b48c90-5dce-4d4c-9ad6-f000461135b0",
+  "prevId": "09fd2d4e-4d7d-4d9d-a50d-a6ff854e8fb6",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -3023,7 +3023,7 @@
       "checkConstraints": {
         "price_list_items_sku_check": {
           "name": "price_list_items_sku_check",
-          "value": "\"price_list_items\".\"sku\" ~ '^train:[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$'"
+          "value": "\"price_list_items\".\"sku\" ~ '^(train|inference):[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$'"
         },
         "price_list_items_unit_check": {
           "name": "price_list_items_unit_check",

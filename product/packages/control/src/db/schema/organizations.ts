@@ -661,7 +661,7 @@ export const priceListItems = pgTable(
     primaryKey({ columns: [table.priceListId, table.sku] }),
     check(
       "price_list_items_sku_check",
-      sql`${table.sku} ~ '^train:[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$'`,
+      sql`${table.sku} ~ '^(train|inference):[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$'`,
     ),
     check("price_list_items_unit_check", sql`${table.unit} in ('token')`),
     check(

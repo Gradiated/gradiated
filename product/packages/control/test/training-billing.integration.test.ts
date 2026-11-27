@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
 
-import { UsageEventSchema, type UsageEvent } from "@gradiated/contracts";
+import {
+  DEFAULT_EVALUATION_JUDGE,
+  UsageEventSchema,
+  type UsageEvent,
+} from "@gradiated/contracts";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
@@ -115,11 +119,40 @@ describe("training billing", () => {
       const price = (sku: string) =>
         list.items.find((item) => item.sku === sku)?.priceNanoUsdPerMillion;
 
-      expect(list.items).toHaveLength(8);
+      expect(
+        list.items.filter((item) => item.sku.startsWith("train:")),
+      ).toHaveLength(8);
       const qwen = ["0.6b", "1.7b", "4b", "8b", "14b", "32b"].map((size) =>
         price(`train:qwen/qwen3-${size}`),
       );
       expect(qwen).toEqual([...qwen].sort((a, b) => Number(a! - b!)));
+    });
+
+    it("prices the default judge and eval targets as inference SKUs", async () => {
+      const list = await service().priceList({ product: "training" });
+      const price = (sku: string) =>
+        list.items.find((item) => item.sku === sku)?.priceNanoUsdPerMillion;
+
+      expect(price(`inference:${DEFAULT_EVALUATION_JUDGE}`)).toBeGreaterThan(
+        0n,
+      );
+      expect(price("inference:anthropic/claude-sonnet-5-5")).toBe(
+        6_000_000_000n,
+      );
+      expect(price("inference:qwen/qwen3-8b")).toBe(150_000_000n);
+    });
+
+    it("never bills an inference SKU through ingest", async () => {
+      const { workspaceId } = await customer();
+      const event = {
+        ...usageEvent(workspaceId),
+        sku: "inference:anthropic/claude-sonnet-5-5",
+      };
+
+      expect(UsageEventSchema.safeParse(event).success).toBe(false);
+      await expect(service().ingestUsageEvents([event])).rejects.toMatchObject({
+        code: "price_mismatch",
+      });
     });
 
     it("serves an older version by id after a newer one takes effect", async () => {

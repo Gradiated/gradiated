@@ -32,6 +32,8 @@ const phase = (
   step: 0,
   workersOnline: null,
   autoscaling: null,
+  queuePosition: null,
+  message: null,
   gpu: gpu ? { name: "NVIDIA H100 80GB", memoryGb: 80 } : null,
 });
 
@@ -120,6 +122,23 @@ describe("mergeRunEvents", () => {
 
     expect(merged.map((event) => event.type)).toEqual(["phase", "attempt"]);
     expect(isRunFinished(merged)).toBe(false);
+  });
+
+  it("thins a long run's loss points but keeps eval points and the newest", () => {
+    const events = Array.from({ length: 12 }, (_, index) =>
+      index === 4
+        ? metric(index + 1, 1, (index + 1) * 10, 1, 1.1)
+        : metric(index + 1, 1, (index + 1) * 10, 1),
+    );
+
+    const merged = mergeRunEvents([phase(0, 1, "training")], events, 8);
+    const seqs = merged.map((event) => event.seq);
+
+    expect(merged.filter((event) => event.type === "metric").length).toBe(7);
+    expect(seqs).toContain(0);
+    expect(seqs).toContain(5);
+    expect(seqs.at(-1)).toBe(12);
+    expect(lastEventSeq(merged)).toBe(12);
   });
 
   it("starts from zero without events", () => {

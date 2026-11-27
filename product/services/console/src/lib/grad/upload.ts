@@ -1,16 +1,23 @@
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
+
 export const MAX_IMPORT_BYTES = 5 * 1024 ** 3;
 
 export const IMPORT_FILE_TYPES = ".jsonl,.json,.parquet,.gz";
 
+// Streams the file through the hash: Web Crypto would need the whole file
+// (up to 5 GiB) in memory at once.
 export const sha256Hex = async (file: Blob) => {
-  const digest = await crypto.subtle.digest(
-    "SHA-256",
-    await file.arrayBuffer(),
-  );
+  const hash = sha256.create();
+  const reader = file.stream().getReader();
 
-  return [...new Uint8Array(digest)]
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    hash.update(value);
+  }
+
+  return bytesToHex(hash.digest());
 };
 
 // Browsers set Content-Length from the body and refuse to send it themselves.

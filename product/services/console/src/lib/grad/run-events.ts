@@ -3,11 +3,36 @@ import type { RunEvent, RunPhase } from "@/lib/grad/types";
 
 export const MAX_CHART_POINTS = 400;
 
+export const MAX_STORED_METRICS = 4_000;
+
+const hasEval = (event: RunEvent) =>
+  event.type === "metric" &&
+  (typeof event.metric?.evalLoss === "number" ||
+    Object.keys(event.metric?.evalMetrics ?? {}).length > 0);
+
+// A long run's stream would otherwise grow without bound in memory. Past the
+// cap, every other training-loss point goes; eval points and the newest
+// point stay. Charts draw at most MAX_CHART_POINTS anyway.
+const thinMetrics = (events: RunEvent[], max: number) => {
+  const metrics = events.filter((event) => event.type === "metric").length;
+  if (metrics <= max) return events;
+
+  let index = 0;
+
+  return events.filter((event) => {
+    if (event.type !== "metric") return true;
+    index += 1;
+
+    return index % 2 === 0 || index === metrics || hasEval(event);
+  });
+};
+
 // `completed` repeats the last stored seq, so it is kept apart from the
 // sequence. A resumed run continues the sequence past it, which drops it.
 export const mergeRunEvents = (
   current: readonly RunEvent[],
   incoming: readonly RunEvent[],
+  maxMetrics = MAX_STORED_METRICS,
 ): RunEvent[] => {
   const bySeq = new Map<number, RunEvent>();
   let completed: RunEvent | undefined;
@@ -17,7 +42,10 @@ export const mergeRunEvents = (
     else bySeq.set(event.seq, event);
   }
 
-  const ordered = [...bySeq.values()].sort((a, b) => a.seq - b.seq);
+  const ordered = thinMetrics(
+    [...bySeq.values()].sort((a, b) => a.seq - b.seq),
+    maxMetrics,
+  );
   const last = ordered.at(-1)?.seq ?? 0;
 
   return completed && completed.seq >= last ? [...ordered, completed] : ordered;

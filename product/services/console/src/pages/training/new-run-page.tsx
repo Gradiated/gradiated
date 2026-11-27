@@ -44,7 +44,7 @@ import { ConsolePage } from "@/pages/console-page";
 
 export const NewRunPage = () => {
   const { workspaceId } = useProductContext();
-  const { dataset } = useSearch({ from: "/training/runs/new" });
+  const { dataset } = useSearch({ from: "/_training/training/runs/new" });
 
   return <NewRunForm key={workspaceId} initialDataset={dataset ?? ""} />;
 };

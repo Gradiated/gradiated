@@ -33,7 +33,7 @@ const back = <BackLink to="/training/evals">Evals</BackLink>;
 
 export const EvalPage = () => {
   const { workspaceId } = useProductContext();
-  const { evalId } = useParams({ from: "/training/evals/$evalId" });
+  const { evalId } = useParams({ from: "/_training/training/evals/$evalId" });
 
   return <EvalPageBody key={`${workspaceId}:${evalId}`} id={evalId} />;
 };

@@ -58,7 +58,7 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useFeatureFlag } from "@/lib/feature-flags";
+import { useTrainingAvailable } from "@/lib/grad/config";
 import { canManageOrganization } from "@/lib/roles";
 import { useScopeCreation } from "@/hooks/use-product-context";
 import type { SignOutResult } from "@/hooks/use-session";
@@ -116,7 +116,7 @@ export const AppSidebar = ({
 }) => {
   const { isMobile } = useSidebar();
   const matchRoute = useMatchRoute();
-  const gradTraining = useFeatureFlag("grad-training") === true;
+  const gradTraining = useTrainingAvailable() === true;
   const groups = gradTraining
     ? NAV_GROUPS.map((group) =>
         group.label === "Research"

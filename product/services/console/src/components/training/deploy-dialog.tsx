@@ -19,9 +19,17 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import type { PublishedVersion } from "@/api/grad";
 import { usePublishArtifact } from "@/hooks/use-grad";
 import { errorMessage } from "@/lib/errors";
 import type { Artifact } from "@/lib/grad/types";
+
+export const publishedState = ({ qualification }: PublishedVersion) =>
+  qualification?.outcome === "passed"
+    ? "It loaded on serving capacity and can serve requests."
+    : qualification?.outcome === "rejected"
+      ? `Serving refused it${qualification.detail ? `: ${qualification.detail}` : "."}`
+      : "It can serve requests once it qualifies on serving capacity.";
 
 export const DeployDialog = ({
   artifact,
@@ -65,9 +73,9 @@ export const DeployDialog = ({
                 Published
               </DialogTitle>
               <DialogDescription>
-                {model} / {publish.data.name} is a new version of the model. It
-                can serve requests once it qualifies on serving capacity.
-                Promote it on the model page to send it production traffic.
+                {model} / {publish.data.name} is a version of the model.{" "}
+                {publishedState(publish.data)} Promote it on the model page to
+                send it production traffic.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>

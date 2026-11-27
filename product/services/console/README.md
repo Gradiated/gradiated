@@ -103,21 +103,26 @@ under ignored `.agents/runtime/`.
 ## Training platform pages
 
 `/training/runs`, `/training/datasets`, `/training/evals` and `/training/usage`
-are the console pages for grad, the training platform. The sidebar shows them
-behind the `grad-training` feature flag; direct URLs work without it. The
-browser calls grad's public API (`VITE_GRAD_API_URL`, default
-`https://api.gradiated.com`) through the `@gradiated/grad` SDK and never reads
-grad's database. Each request carries a five-minute JWT (`aud=training`) from
-`POST /api/v1/workspaces/{workspace_id}/training-tokens`; the query cache renews
-it a minute before expiry and after a 401, and sign-out clears it.
+are the console pages for grad, the training platform. They exist only when the
+`grad-training` feature flag is on and the build sets `VITE_GRAD_API_URL`
+(unset by default, until `api.gradiated.com` routes grad's `/v1` paths). Off,
+the sidebar hides them, direct URLs go home, and nothing mints a token or calls
+grad. The browser calls grad's public API through the `@gradiated/grad` SDK and
+never reads grad's database. Each request carries a ten-minute JWT
+(`aud=training`) from `POST /api/v1/workspaces/{workspace_id}/training-tokens`,
+cached per workspace; the query cache renews it a minute before expiry and
+once after a 401, and sign-out clears it. A 401 from grad never signs the
+member out of the console. Presigned storage URLs never get the token.
 
 Run pages follow the run's event stream over SSE and resume after the last
 event with `Last-Event-ID`. Interruptions are worded as compute reclaimed,
 worker lost, worker error or out of GPU memory. Deploy publishes the run's
 artifact as a version of a model through the product API's
-`POST …/tasks/{task}/versions`; until that route exists, the dialog says deploy
-is not available yet. Members can import files, plan, start, cancel and resume
-runs; syncing sources and deploying need an admin. `Pages/Training *` and
+`POST …/tasks/{task}/versions` (`{artifact: "name@version", name}`); a 405 or
+501 shows that deploy is not available yet. Downloads open grad's presigned
+URL (`GET /v1/artifacts/{id}/download-url`), so bundles stream to disk.
+Members can import files, plan, start, cancel and resume runs; syncing sources
+and deploying need an admin. `Pages/Training *` and
 `Components/Training/*` stories mock grad under `/grad-api` with MSW.
 
 ## Brand assets

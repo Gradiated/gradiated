@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -349,6 +350,16 @@ describe("uploads", () => {
   it("hashes the file the way grad's upload ticket expects", async () => {
     await expect(sha256Hex(new Blob(["abc"]))).resolves.toBe(
       "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+    );
+  });
+
+  it("streams a multi-chunk file through the hash", async () => {
+    const bytes = new Uint8Array(3 * 1024 * 1024 + 7).map(
+      (_, index) => index % 251,
+    );
+
+    await expect(sha256Hex(new Blob([bytes]))).resolves.toBe(
+      createHash("sha256").update(bytes).digest("hex"),
     );
   });
 

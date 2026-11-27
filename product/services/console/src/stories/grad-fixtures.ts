@@ -150,6 +150,9 @@ const runBase = {
   lastInterruption: null,
   workersOnline: null,
   autoscaling: null,
+  queuePosition: null,
+  queueMessage: null,
+  minGpuMemoryGb: 38,
   latestMetric: null,
   evalReport: null,
   checkpointEvals: [],
@@ -248,7 +251,7 @@ export const completedRun: Run = {
       error: null,
     },
   ],
-  artifactId: "art_01jdwsupportdpo",
+  artifactId: "support-dpo@2026-11-24-1",
   createdAt: day("24", "13:58:00"),
   updatedAt: day("24", "15:21:00"),
   finishedAt: day("24", "15:21:00"),
@@ -276,6 +279,9 @@ export const queuedRun: Run = {
   phaseSince: day("26", "10:30:00"),
   workersOnline: 2,
   autoscaling: false,
+  queuePosition: 3,
+  queueMessage: "Queued behind 3 runs",
+  minGpuMemoryGb: 12,
   createdAt: day("26", "10:24:00"),
   updatedAt: day("26", "10:30:00"),
 };
@@ -361,6 +367,8 @@ const buildEvents = (
     step: 0,
     workersOnline: null,
     autoscaling: null,
+    queuePosition: null,
+    message: null,
     gpu: null,
   });
   push({
@@ -382,6 +390,8 @@ const buildEvents = (
     step: 0,
     workersOnline: null,
     autoscaling: null,
+    queuePosition: null,
+    message: null,
     gpu: { name: "NVIDIA H100 80GB", memoryGb: 80 },
   });
   push({
@@ -392,6 +402,8 @@ const buildEvents = (
     step: 0,
     workersOnline: null,
     autoscaling: null,
+    queuePosition: null,
+    message: null,
     gpu: null,
   });
   push({
@@ -402,6 +414,8 @@ const buildEvents = (
     step: 0,
     workersOnline: null,
     autoscaling: null,
+    queuePosition: null,
+    message: null,
     gpu: null,
   });
 
@@ -449,6 +463,8 @@ const buildEvents = (
       step: 800,
       workersOnline: null,
       autoscaling: true,
+      queuePosition: null,
+      message: null,
       gpu: null,
     });
     push({
@@ -470,6 +486,8 @@ const buildEvents = (
       step: 800,
       workersOnline: null,
       autoscaling: null,
+      queuePosition: null,
+      message: null,
       gpu: { name: "NVIDIA H100 80GB", memoryGb: 80 },
     });
     push({
@@ -480,6 +498,8 @@ const buildEvents = (
       step: 800,
       workersOnline: null,
       autoscaling: null,
+      queuePosition: null,
+      message: null,
       gpu: null,
     });
 
@@ -514,6 +534,8 @@ const buildEvents = (
       step: lastStep,
       workersOnline: null,
       autoscaling: null,
+      queuePosition: null,
+      message: null,
       gpu: null,
     });
     push({
@@ -524,6 +546,8 @@ const buildEvents = (
       step: lastStep,
       workersOnline: null,
       autoscaling: null,
+      queuePosition: null,
+      message: null,
       gpu: null,
     });
     events.push({
@@ -554,6 +578,8 @@ export const runEvents: Record<string, RunEvent[]> = {
       step: 0,
       workersOnline: 2,
       autoscaling: false,
+      queuePosition: null,
+      message: null,
       gpu: null,
     },
     {
@@ -566,6 +592,8 @@ export const runEvents: Record<string, RunEvent[]> = {
       step: 0,
       workersOnline: 2,
       autoscaling: false,
+      queuePosition: null,
+      message: null,
       gpu: null,
     },
   ],
@@ -600,7 +628,7 @@ export const checkpoints = (run: Run): Checkpoint[] =>
   );
 
 export const artifact: Artifact = {
-  id: "art_01jdwsupportdpo",
+  id: "support-dpo@2026-11-24-1",
   workspaceId,
   name: "support-dpo",
   version: "2026-11-24-1",
@@ -613,6 +641,12 @@ export const artifact: Artifact = {
   sizeBytes: 167_772_160,
   manifest: {},
   evalReport: completedRun.evalReport,
+  provenance: {
+    source: "run",
+    runId: completedRun.id,
+    uploader: null,
+    uri: null,
+  },
   createdAt: day("24", "15:20:00"),
 };
 
@@ -693,6 +727,15 @@ export const records: DatasetRecord[] = [
   timestamp: day("25", `0${index}:15:00`),
 }));
 
+const sourceLimits = {
+  sampleRate: 1,
+  maxRecordsPerSync: null,
+  maxRecordsPerDay: null,
+  recordsToday: 0,
+  versionInterval: 900,
+  pendingRecords: 0,
+} satisfies Partial<Source>;
+
 export const sources: Source[] = [
   {
     id: "src_langfuse",
@@ -706,6 +749,7 @@ export const sources: Source[] = [
       filters: {},
     },
     schedule: "0 */6 * * *",
+    ...sourceLimits,
     nextSyncAt: day("26", "12:00:00"),
     status: "active",
     pausedReason: null,
@@ -738,6 +782,7 @@ export const sources: Source[] = [
       filters: {},
     },
     schedule: "*/30 * * * *",
+    ...sourceLimits,
     nextSyncAt: null,
     status: "paused",
     pausedReason:
@@ -948,6 +993,7 @@ export const plan: PlanRunResponse = {
   estimatedSteps: 1_550,
   estimatedTokens: 25_400_000,
   estimatedCostUsd: 50.8,
+  costBreakdown: { trainUsd: 50.8, teacherUsd: 0, evalUsd: 0 },
   estimatedDurationS: 6_900,
   minGpuMemoryGb: 38,
   pricePerMillionTokens: 2,

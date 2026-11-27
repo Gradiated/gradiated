@@ -4,18 +4,10 @@ import { z } from "zod";
 
 import { ApiError } from "@/api/client";
 import { authorizedFetch, type TokenSource } from "@/lib/grad/authorized-fetch";
-import {
-  usageSummarySchema,
-  type UsageGroupBy,
-  type UsageSummary,
-} from "@/lib/grad/usage";
 
 const PRODUCT_API_URL = import.meta.env.VITE_API_URL ?? "";
 
-export const GRAD_API_URL =
-  import.meta.env.VITE_GRAD_API_URL ?? "https://api.gradiated.com";
-
-export const TRAINING_TOKEN_LIFETIME_MS = 5 * 60_000;
+export const TRAINING_TOKEN_LIFETIME_MS = 10 * 60_000;
 export const TRAINING_TOKEN_RENEWAL_MS = 60_000;
 
 const trainingTokenSchema = z.object({
@@ -34,7 +26,7 @@ const productJson = async (response: Response) => {
   return body;
 };
 
-// POST /api/v1/workspaces/{workspace_id}/training-tokens: a five-minute JWT
+// POST /api/v1/workspaces/{workspace_id}/training-tokens: a ten-minute JWT
 // (aud=training) for the signed-in member, minted with Better Auth's jwt().
 export const fetchTrainingToken = async (
   workspaceId: string,
@@ -68,8 +60,8 @@ export const trainingTokenQuery = (
     retry: false,
   });
 
-export const gradBaseUrl = (origin: string) =>
-  new URL(GRAD_API_URL, origin).toString().replace(/\/+$/, "");
+export const gradBaseUrl = (apiUrl: string, origin: string) =>
+  new URL(apiUrl, origin).toString().replace(/\/+$/, "");
 
 export interface GradSession {
   grad: Grad;
@@ -100,29 +92,15 @@ export const createGradSession = ({
   };
 };
 
-// The published SDK (0.2.0-alpha.3) predates `grad.usage.summary()`.
-export const getUsageSummary = async (
-  session: GradSession,
-  { from, to, groupBy }: { from: string; to: string; groupBy: UsageGroupBy },
-  signal?: AbortSignal,
-): Promise<UsageSummary> => {
-  const url = new URL(`${session.baseURL}/v1/usage/summary`);
-  url.search = new URLSearchParams({ from, to, group_by: groupBy }).toString();
-
-  const response = await session.fetch(url, {
-    headers: { Accept: "application/json" },
-    ...(signal ? { signal } : {}),
-  });
-  const body: unknown = await response.json().catch(() => undefined);
-
-  if (!response.ok) throw new ApiError(response.status, body);
-
-  return usageSummarySchema.parse(body);
-};
-
 const publishedVersionSchema = z.object({
   id: z.string(),
   name: z.string(),
+  qualification: z
+    .object({
+      outcome: z.enum(["passed", "rejected", "pending"]),
+      detail: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type PublishedVersion = z.infer<typeof publishedVersionSchema>;
@@ -134,11 +112,12 @@ export class DeployUnavailableError extends Error {
   }
 }
 
-// 404/405/501 mean the inference API has no publish-from-artifact route yet.
-const UNAVAILABLE_STATUSES = new Set([404, 405, 501]);
+// 405/501 mean the product API has no publish route yet. A 404 is a real
+// answer (unknown artifact or model), so its detail is shown.
+const UNAVAILABLE_STATUSES = new Set([405, 501]);
 
-// POST /api/v1/workspaces/{ws}/tasks/{task}/versions with an artifact_id
-// publishes a grad artifact as an unpromoted Version of the Model.
+// POST /api/v1/workspaces/{ws}/tasks/{task}/versions {artifact: "name@version",
+// name} publishes a grad artifact as an unpromoted Version of the Model.
 export const publishArtifactVersion = async ({
   workspaceId,
   model,
@@ -163,7 +142,7 @@ export const publishArtifactVersion = async ({
         "Content-Type": "application/json",
         "Idempotency-Key": idempotencyKey,
       },
-      body: JSON.stringify({ artifact_id: artifactId, name: version }),
+      body: JSON.stringify({ artifact: artifactId, name: version }),
     },
   );
 

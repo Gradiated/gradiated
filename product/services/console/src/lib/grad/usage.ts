@@ -1,4 +1,4 @@
-import { z } from "zod";
+import type { models } from "@gradiated/grad";
 
 import type { Option } from "@/components/option-select";
 
@@ -43,15 +43,8 @@ export const usageRange = (key: UsageRangeKey, now: Date) => {
   return { from: isoDay(from), to };
 };
 
-const usageKind = z.enum([
-  "training",
-  "eval",
-  "scoring",
-  "labeling",
-  "teacher",
-]);
-
-export type UsageKind = z.infer<typeof usageKind>;
+export type UsageKind = models.UsageKind;
+export type UsageSummary = models.UsageSummary;
 
 export const USAGE_KIND_LABEL: Record<UsageKind, string> = {
   training: "Training",
@@ -60,54 +53,3 @@ export const USAGE_KIND_LABEL: Record<UsageKind, string> = {
   labeling: "Labeling",
   teacher: "Teacher answers",
 };
-
-const totals = { cost_usd: z.number(), tokens: z.number().int() };
-
-const refTotal = z
-  .object({
-    id: z.string(),
-    name: z.string().nullable(),
-    kind: usageKind,
-    ...totals,
-  })
-  .transform(({ cost_usd, ...rest }) => ({ ...rest, costUsd: cost_usd }));
-
-// Mirrors `grad.usage.summary()` from SDKs after 0.2.0-alpha.3.
-export const usageSummarySchema = z
-  .object({
-    from: z.string(),
-    to: z.string(),
-    ...totals,
-    records: z.number().int(),
-    by_kind: z.array(
-      z
-        .object({ kind: usageKind, ...totals, records: z.number().int() })
-        .transform(({ cost_usd, ...rest }) => ({ ...rest, costUsd: cost_usd })),
-    ),
-    top_runs: z.array(refTotal),
-    top_evals: z.array(refTotal),
-    group_by: z.string().nullable(),
-    groups: z.array(
-      z
-        .object({
-          key: z.string().nullable(),
-          ...totals,
-          records: z.number().int(),
-        })
-        .transform(({ cost_usd, ...rest }) => ({ ...rest, costUsd: cost_usd })),
-    ),
-  })
-  .transform((summary) => ({
-    from: summary.from,
-    to: summary.to,
-    costUsd: summary.cost_usd,
-    tokens: summary.tokens,
-    records: summary.records,
-    byKind: summary.by_kind,
-    topRuns: summary.top_runs,
-    topEvals: summary.top_evals,
-    groupBy: summary.group_by,
-    groups: summary.groups,
-  }));
-
-export type UsageSummary = z.infer<typeof usageSummarySchema>;

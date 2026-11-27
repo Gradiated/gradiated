@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 const queueDetail = (run: Run) => {
   if (run.phase !== "queued" && run.phase !== "waiting_for_compute")
     return null;
+  // grad words why the run waits ("Queued behind 3 runs", GPU size, limits).
+  if (run.queueMessage) return run.queueMessage;
   if (run.autoscaling) return "A worker is starting.";
   if (run.workersOnline) {
     return `${run.workersOnline} worker${run.workersOnline === 1 ? " is" : "s are"} busy; this run starts when one is free.`;

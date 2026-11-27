@@ -11,13 +11,13 @@ import { useMemo } from "react";
 
 import {
   createGradSession,
-  getUsageSummary,
   gradBaseUrl,
   publishArtifactVersion,
   trainingTokenQuery,
   type GradSession,
 } from "@/api/grad";
 import { useProductContext } from "@/hooks/use-product-context";
+import { GRAD_API_URL, useTrainingAvailable } from "@/lib/grad/config";
 import { isTerminalEval, isTerminalRun } from "@/lib/grad/labels";
 import type { PlanRunRequest } from "@/lib/grad/types";
 import { sha256Hex, uploadHeaders, uploadTarget } from "@/lib/grad/upload";
@@ -28,7 +28,11 @@ const ACTIVE_POLL_MS = 10_000;
 
 const sessions = new WeakMap<QueryClient, Map<string, GradSession>>();
 
-const sessionFor = (queryClient: QueryClient, workspaceId: string) => {
+const sessionFor = (
+  queryClient: QueryClient,
+  apiUrl: string,
+  workspaceId: string,
+) => {
   const byWorkspace =
     sessions.get(queryClient) ?? new Map<string, GradSession>();
   sessions.set(queryClient, byWorkspace);
@@ -38,7 +42,7 @@ const sessionFor = (queryClient: QueryClient, workspaceId: string) => {
 
   const query = trainingTokenQuery(workspaceId);
   const session = createGradSession({
-    baseURL: gradBaseUrl(window.location.origin),
+    baseURL: gradBaseUrl(apiUrl, window.location.origin),
     token: async (renew) =>
       (await queryClient.fetchQuery(renew ? { ...query, staleTime: 0 } : query))
         .token,
@@ -63,12 +67,17 @@ export const gradKeys = {
   evals: (workspaceId: string) => ["grad", workspaceId, "evals"] as const,
 };
 
+// No session (so no token and no grad request) unless training is available.
 export const useGrad = () => {
   const { workspaceId } = useProductContext();
   const queryClient = useQueryClient();
+  const available = useTrainingAvailable() === true;
   const session = useMemo(
-    () => (workspaceId ? sessionFor(queryClient, workspaceId) : undefined),
-    [queryClient, workspaceId],
+    () =>
+      available && GRAD_API_URL && workspaceId
+        ? sessionFor(queryClient, GRAD_API_URL, workspaceId)
+        : undefined,
+    [available, queryClient, workspaceId],
   );
 
   return { workspaceId, session, queryClient };
@@ -310,11 +319,11 @@ export const useUsageSummary = (
 
   return useQuery({
     queryKey: [...gradKeys.all(workspaceId), "usage", range, groupBy],
-    queryFn: ({ signal }) => {
-      if (!session) throw new Error("No workspace is selected.");
-
-      return getUsageSummary(session, { ...range, groupBy }, signal);
-    },
+    queryFn: ({ signal }) =>
+      requireSession(session).getUsageSummary(
+        { ...range, groupBy },
+        { signal },
+      ),
     enabled: Boolean(session),
     placeholderData: keepPreviousData,
   });
@@ -474,26 +483,22 @@ export const usePublishArtifact = () => {
   });
 };
 
+// The browser downloads the bundle straight from storage (a presigned GET with
+// no Authorization header), so large bundles stream to disk.
 export const useDownloadArtifact = () => {
   const { session } = useGrad();
 
   return useMutation({
-    mutationFn: async ({ id, fileName }: { id: string; fileName: string }) => {
-      const response = await requireSession(session).downloadArtifact(id);
-      const blob = await new Response(response.body).blob();
-      const expected = response.headers.get("X-Artifact-Sha256");
-
-      if (expected && expected !== (await sha256Hex(blob))) {
-        throw new Error("The download was corrupted. Try again.");
-      }
-
-      const url = URL.createObjectURL(blob);
+    mutationFn: async (id: string) => {
+      const download = await requireSession(session).getArtifactDownloadUrl(id);
+      if (!/^https?:$/.test(new URL(download.url).protocol))
+        throw new Error("The download URL is not an HTTP URL.");
 
       const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName;
+      link.href = download.url;
+      link.download = download.filename;
+      link.rel = "noopener";
       link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 60_000);
     },
     meta: { errorMessage: "Could not download the artifact." },
   });

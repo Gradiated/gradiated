@@ -56,12 +56,7 @@ export const ArtifactCard = ({
             variant="outline"
             size="sm"
             disabled={download.isPending}
-            onClick={() =>
-              download.mutate({
-                id: artifact.id,
-                fileName: `${artifact.name}-${artifact.version}.grad.tar.gz`,
-              })
-            }
+            onClick={() => download.mutate(artifact.id)}
           >
             {download.isPending ? (
               <LoaderCircle className="animate-spin" />

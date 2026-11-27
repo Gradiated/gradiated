@@ -47,7 +47,7 @@ const back = <BackLink to="/training/datasets">Datasets</BackLink>;
 export const DatasetPage = () => {
   const { workspaceId } = useProductContext();
   const { datasetName } = useParams({
-    from: "/training/datasets/$datasetName",
+    from: "/_training/training/datasets/$datasetName",
   });
 
   return (
@@ -87,7 +87,9 @@ const DatasetPageBody = ({ name }: { name: string }) => {
 
 const DatasetDetail = ({ dataset }: { dataset: Dataset }) => {
   const navigate = useNavigate();
-  const search = useSearch({ from: "/training/datasets/$datasetName" });
+  const search = useSearch({
+    from: "/_training/training/datasets/$datasetName",
+  });
   const { selectedOrganization } = useProductContext();
   const sources = useSources();
   const imports = useImports();

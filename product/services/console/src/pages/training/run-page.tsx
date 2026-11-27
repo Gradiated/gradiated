@@ -40,7 +40,7 @@ import { ConsolePage, LoadFailed } from "@/pages/console-page";
 
 export const RunPage = () => {
   const { workspaceId } = useProductContext();
-  const { runId } = useParams({ from: "/training/runs/$runId" });
+  const { runId } = useParams({ from: "/_training/training/runs/$runId" });
 
   return <RunPageBody key={`${workspaceId}:${runId}`} runId={runId} />;
 };

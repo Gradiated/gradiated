@@ -107,13 +107,17 @@ export const gradHandlers = ({
     ),
     http.post("/api/v1/workspaces/:workspaceId/tasks/:task/versions", () =>
       deploy === "published"
-        ? HttpResponse.json({
-            id: "00000000-0000-4000-8000-0000000000aa",
-            name: artifact.version,
-          })
+        ? HttpResponse.json(
+            {
+              id: "00000000-0000-4000-8000-0000000000aa",
+              name: artifact.version,
+              qualification: { outcome: "pending" },
+            },
+            { status: 201 },
+          )
         : HttpResponse.json(
-            { code: "not_found", detail: "Not found" },
-            { status: 404 },
+            { code: "not_implemented", detail: "Not implemented" },
+            { status: 501 },
           ),
     ),
     http.get(`${API}/runs`, async () => {
@@ -172,6 +176,15 @@ export const gradHandlers = ({
         : json(plan),
     ),
     http.post(`${API}/runs`, () => json(runRows[0])),
+    http.get(`${API}/artifacts/:id/download-url`, () =>
+      json({
+        url: "https://storage.example.com/artifact.grad.tar.gz",
+        expiresAt: "2030-01-01T00:00:00Z",
+        sha256: artifact.sha256,
+        sizeBytes: artifact.sizeBytes,
+        filename: `${artifact.name}-${artifact.version}.grad.tar.gz`,
+      }),
+    ),
     http.get(`${API}/artifacts/:id`, () => json(artifact)),
     http.get(`${API}/base-models`, () => json({ data: baseModels })),
     http.get(`${API}/datasets`, async () => {

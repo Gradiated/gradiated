@@ -5,6 +5,12 @@
   adding containers only when you need them.
 </DocsLead>
 
+<DocsCallout label="Coming in Wave 2">
+  Environments arrive in Wave 2. In v0 you can already push these traces and
+  train on them with [SFT](/docs/training/recipes/sft/) or a
+  [router](/docs/training/recipes/router/).
+</DocsCallout>
+
 Most teams start with thousands of logged requests in a [`Dataset`](/docs/training/trajectories/), not a ready-made RL simulator. You don't need to build containers on day one. Start at the simplest level that fits your task and move up using the same [`Task` and `Environment`](/docs/training/environments/) and [`Rubric`](/docs/training/rubrics/) classes:
 
 | Level                            | Best for                                                                  | Setup time | How it works                                                                                                                      |

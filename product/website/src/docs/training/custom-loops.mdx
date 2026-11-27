@@ -5,6 +5,11 @@
   algorithm.
 </DocsLead>
 
+<DocsCallout label="Coming in Wave 2">
+  The `Trainer` API arrives in Wave 2. In v0, train with a
+  [recipe](/docs/training/recipes/).
+</DocsCallout>
+
 Most teams never need this page. A managed [recipe](/docs/training/recipes/) handles SFT, DPO, distillation, and RL, including multi-turn agent RL with `GRPORecipe(env=...)` against any [`Environment`](/docs/training/environments/). Recipes also pick the learning rate, checkpoint automatically, and keep running after you close your laptop. Use the `Trainer` when you want to change the algorithm itself: a new loss, a new advantage estimator, or a schedule a recipe doesn't offer.
 
 Custom loops drive the remote `Trainer` and `Artifact` APIs from any machine (your laptop, CI, or an orchestrator) with the same adapters, losses, and optimizers the recipes use. The standard `grad-sdk` package covers every built-in loss. To write your own loss in PyTorch (a [`CustomLoss`](#example-2-custom-objectives-with-customloss), where your code computes the loss locally while Gradiated's GPUs run the forward and backward passes), install the `torch` extra:
@@ -42,9 +47,7 @@ with client.trainers.create(model="qwen/qwen3-8b") as trainer:
     print(fb.result().loss)                                           # waits once
 ```
 
-With the async client (`AsyncGrad`), each call is a coroutine and one `await` returns the result: `metrics = await trainer.forward_backward(...)`. There is no `.result()` in async code. `client.trainers.create(...)` is awaitable too.
-
-Errors raise where you read the result (`.result()` or `await`), not where you make the call, so a bad batch surfaces on the line that reads its loss. Each result's `metrics` include `tokens` and `cost_usd` for that call, and `trainer.usage()` returns the running totals for the session. Leaving the `with` block closes the session and records how it ended (`completed`, `failed` or `interrupted`), so the console never shows a crashed session as still running. See [High-concurrency async rollouts](#high-concurrency-async-rollouts-asyncgrad) for overlapping calls.
+Errors raise where you read the result (`.result()`), not where you make the call, so a bad batch surfaces on the line that reads its loss. Each result's `metrics` include `tokens` and `cost_usd` for that call, and `trainer.usage()` returns the running totals for the session. Leaving the `with` block closes the session and records how it ended (`completed`, `failed` or `interrupted`), so the console never shows a crashed session as still running.
 
 ## How tokens and masks line up
 
@@ -286,51 +289,6 @@ with client.trainers.create(model="qwen/qwen3-8b") as trainer:
             # Held-out eval without retaining autograd graphs on the GPU
             eval_out = trainer.evaluate(val_records, outputs=("logprobs",)).result()
             print(f"step={step} train_loss={mean_loss:.4f} eval_loss={eval_out.loss:.4f}")
-```
-
-### High-concurrency async rollouts (`AsyncGrad`)
-
-When you drive hundreds of concurrent tool-calling or browser rollouts with your own agent code in `asyncio`, use `AsyncGrad`. Every call takes one `await`. Under `AsyncGrad`, `snap.openai_client()` yields an `AsyncOpenAI` client that records each attempt as a `Trajectory`:
-
-```python
-import asyncio
-import itertools
-import re
-
-import grad
-from grad import AsyncGrad, advantages, losses, optim
-
-def last_number(text: str) -> str | None:
-    nums = re.findall(r"-?\d+(?:\.\d+)?", text.replace(",", ""))
-    return nums[-1] if nums else None
-
-async def attempt(snap, task):
-    async with snap.openai_client() as (oai, recorder):
-        res = await oai.chat.completions.create(model=snap.id, messages=task.messages, max_tokens=1024)
-        correct = last_number(res.choices[0].message.content or "") == last_number(task.expected)
-        return recorder.to_trajectory(scores={"reward": 1.0 if correct else 0.0})
-
-async def main():
-    async with AsyncGrad() as client:
-        tasks = await client.datasets.from_hf(
-            "openai/gsm8k", subset="main", split="train", prompt="question", answer="answer"
-        )
-        async with client.trainers.create(model="qwen/qwen3-8b") as trainer:
-            for task_batch in itertools.islice(tasks.batches(32), 50):
-                snap = await trainer.snapshot()
-                groups = await asyncio.gather(*(
-                    asyncio.gather(*(attempt(snap, task) for _ in range(8)))
-                    for task in task_batch
-                ))
-                batch = grad.with_advantages(groups, advantage=advantages.GroupStd(), skip_zero_var=True)
-
-                # Start both calls before awaiting so they run back-to-back on the server.
-                fb = asyncio.create_task(trainer.forward_backward(batch, loss=losses.GRPO()))
-                opt = asyncio.create_task(trainer.optim_step(optim.AdamW(lr=5e-5)))
-                metrics, _ = await asyncio.gather(fb, opt)
-                print(metrics.loss)
-
-asyncio.run(main())
 ```
 
 ### Multimodal (VLM and audio) inputs

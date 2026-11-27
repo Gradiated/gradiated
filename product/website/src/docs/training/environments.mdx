@@ -5,6 +5,11 @@
   reinforcement learning and evaluation.
 </DocsLead>
 
+<DocsCallout label="Coming in Wave 2">
+  Environments, `grad env serve` and environment evals arrive in Wave 2. In v0
+  you train and evaluate on [datasets](/docs/training/trajectories/).
+</DocsCallout>
+
 An environment is where an agent attempts a task: it receives the model's tool calls, runs them, returns the results, and scores the finished attempt with a [`Rubric`](/docs/training/rubrics/). Pass one to the managed recipe with `GRPORecipe(env=env)` (single-turn or multi-turn, no training loop to write), to [`client.evals.create(...)`](/docs/training/evaluations/), or to `env.rollout_groups(...)` in a [custom loop](/docs/training/custom-loops/).
 
 Built-in environments run on Gradiated's sandboxes. Environments you write in Python are packaged and run in an isolated sandbox too, or on your own machines when containers, seed data, or credentials have to stay in your network. See [Where your code runs](/docs/training/recipes/#where-your-code-runs) and [Run rollouts on your own machines](#run-rollouts-on-your-own-machines).

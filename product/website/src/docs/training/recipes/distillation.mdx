@@ -4,6 +4,11 @@
   Train a small, fast model to copy a larger one using your own prompts.
 </DocsLead>
 
+<DocsCallout label="Coming in Wave 2">
+  `DistillRecipe` arrives in Wave 2. Until then the server rejects it with
+  `recipe_deferred`.
+</DocsCallout>
+
 If you just fine-tune a small model on saved outputs from a big model, it can go off the rails as soon as it starts writing its own slightly different wording. **`DistillRecipe`** fixes that by training on-policy: the small **student** generates answers to your prompts, and the larger **teacher** scores those exact tokens so the student learns to recover from its own mistakes.
 
 ## What data you need

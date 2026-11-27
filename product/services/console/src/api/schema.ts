@@ -1373,6 +1373,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace_id}/training-tokens": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Create a training token
+     * @description Signs a ten-minute JWT with which the console calls the training API for this workspace as the signed-in member. Workspace credentials cannot call it.
+     */
+    post: operations["createTrainingToken"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/v1/systemone": {
     parameters: {
       query?: never;
@@ -1967,7 +1987,8 @@ export interface components {
         | "generation_settlement_batch"
         | "openrouter_payment"
         | "operator"
-        | "stripe_invoice";
+        | "stripe_invoice"
+        | "usage_event";
       /** @description The Stripe Checkout Session, invoice, refund or dispute behind the transaction. */
       stripe_id: string | null;
       /**
@@ -3412,6 +3433,15 @@ export interface components {
       size_bytes: number;
       /** @default application/octet-stream */
       content_type: string;
+    };
+    TrainingToken: {
+      /** @description An ES256 JWT for the training API with audience training. It names the member (sub user:<id>), organization (org), workspace (ws) and role, and is verified against the keys at /api/auth/jwks. */
+      token: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      expires_at: string;
     };
     /** @description Completed native SystemOne inference response. */
     SystemOneResponse: {
@@ -9609,6 +9639,66 @@ export interface operations {
         };
       };
       /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  createTrainingToken: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description A signed training token. */
+      201: {
+        headers: {
+          /** @description Prevents storage of the token. */
+          "Cache-Control"?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TrainingToken"];
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The workspace is archived or the organization is suspended. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The workspace was not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The session store is unavailable. */
       503: {
         headers: {
           [name: string]: unknown;

@@ -39,6 +39,8 @@ import {
   createMemberService,
   createOrganizationService,
   createProfilingWriter,
+  createTrainingBillingService,
+  createUsageEventWriter,
   createUsageService,
   createWaitlistService,
   createWorkspaceApiKeyService,
@@ -80,9 +82,8 @@ import {
 } from "./email/waitlist-welcome.js";
 import { parseApiEnvironment } from "./environment.js";
 import { createProfilingIngestApp } from "./ingest/profiling.js";
-import { serviceLog } from "./logging.js";
-import { createServiceTokens } from "./auth/service-tokens.js";
 import { createTrainingInternalApp } from "./training-internal.js";
+import { serviceLog } from "./logging.js";
 import { ApiMetrics, startApiMetricsServer } from "./metrics.js";
 import { createReadinessCheck } from "./readiness.js";
 
@@ -221,13 +222,19 @@ const artifactStorage = environment.TRAINING_ARTIFACTS_BUCKET
 const gradBundles = environment.GRAD_ARTIFACTS_BUCKET
   ? new ObjectStorage(environment.GRAD_ARTIFACTS_BUCKET)
   : undefined;
-const grad =
-  environment.GRAD_SERVER_URL && auth.signJwt
-    ? createGradArtifacts({
-        baseUrl: environment.GRAD_SERVER_URL,
-        authorization: createServiceTokens(auth.signJwt),
-      })
-    : undefined;
+const grad = environment.GRAD_SERVER_URL
+  ? createGradArtifacts({
+      baseUrl: environment.GRAD_SERVER_URL,
+      authorization: async ({ workspaceId, scopes }) =>
+        (
+          await auth.signServiceToken({
+            service: "inference",
+            workspaceId,
+            scopes,
+          })
+        ).token,
+    })
+  : undefined;
 const adapterDownloads = createAdapterDownloads(artifactStorage, gradBundles);
 
 const deploymentStore = createDeploymentStore(database);
@@ -269,21 +276,6 @@ const pinReleases = grad
           serviceLog("warn", "grad_pin_release_failed", { error });
         });
     }, 60_000).unref()
-  : undefined;
-const trainingInternalServer = environment.TRAINING_INTERNAL_TOKEN
-  ? serve({
-      fetch: createTrainingInternalApp({
-        tokens: [
-          environment.TRAINING_INTERNAL_TOKEN,
-          ...(environment.TRAINING_INTERNAL_TOKEN_PREVIOUS
-            ? [environment.TRAINING_INTERNAL_TOKEN_PREVIOUS]
-            : []),
-        ],
-        evals: createEvalVersions(database, training.artifacts),
-      }).fetch,
-      hostname: environment.TRAINING_INTERNAL_HOST,
-      port: environment.TRAINING_INTERNAL_PORT,
-    })
   : undefined;
 
 const app = createApp({
@@ -394,6 +386,26 @@ const profilingServer = environment.PROFILING_INGEST_TOKEN
       }).fetch,
       hostname: environment.PROFILING_HOST,
       port: environment.PROFILING_PORT,
+    })
+  : undefined;
+
+const trainingInternalServer = environment.TRAINING_INTERNAL_TOKEN
+  ? serve({
+      fetch: createTrainingInternalApp({
+        tokens: [
+          environment.TRAINING_INTERNAL_TOKEN,
+          ...(environment.TRAINING_INTERNAL_TOKEN_PREVIOUS
+            ? [environment.TRAINING_INTERNAL_TOKEN_PREVIOUS]
+            : []),
+        ],
+        billing: createTrainingBillingService(
+          database,
+          createUsageEventWriter(clickhouse),
+        ),
+        evals: createEvalVersions(database, training.artifacts),
+      }).fetch,
+      hostname: environment.TRAINING_INTERNAL_HOST,
+      port: environment.TRAINING_INTERNAL_PORT,
     })
   : undefined;
 

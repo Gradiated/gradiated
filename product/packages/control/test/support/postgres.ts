@@ -172,7 +172,18 @@ const openServer = async (template: string): Promise<Server> => {
   };
 };
 
+// Infrastructure creates this role in deployed databases; the migrations grant it.
+const createAuthReaderRole = (adminUrl: string) =>
+  runAdmin(
+    adminUrl,
+    `DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'grad_auth_reader')
+      THEN CREATE ROLE grad_auth_reader NOLOGIN; END IF;
+    END $$`,
+  );
+
 const migrateTemplate = async (adminUrl: string, template: string) => {
+  await createAuthReaderRole(adminUrl);
   await runAdmin(adminUrl, `CREATE DATABASE "${template}"`);
 
   const pool = new Pool({

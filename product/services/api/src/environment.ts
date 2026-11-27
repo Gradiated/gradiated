@@ -32,17 +32,18 @@ const ApiOnlyEnvironmentSchema = z.object({
     .enum(["true", "false"])
     .default("false")
     .transform((value) => value === "true"),
-  // The private listener grad-server calls; it stays off unless a token is set.
-  TRAINING_INTERNAL_TOKEN: z.string().trim().min(32).optional(),
-  TRAINING_INTERNAL_TOKEN_PREVIOUS: z.string().trim().min(32).optional(),
-  TRAINING_INTERNAL_HOST: z.string().min(1).default("0.0.0.0"),
-  TRAINING_INTERNAL_PORT: PortSchema.default(3_005),
   CONTENTS_BUCKET: z.string().min(1).optional(),
   METRICS_PORT: PortSchema.default(9_464),
   MCP_RESOURCE_URL: z.url().default("https://mcp.gradiated.com/mcp"),
   PROFILING_INGEST_TOKEN: z.string().min(32).optional(),
   PROFILING_HOST: z.string().min(1).default("0.0.0.0"),
   PROFILING_PORT: PortSchema.default(3_003),
+  // The private listener grad calls for prices, balance checks and usage;
+  // the previous token keeps working during a rotation.
+  TRAINING_INTERNAL_TOKEN: z.string().min(32).optional(),
+  TRAINING_INTERNAL_TOKEN_PREVIOUS: z.string().min(32).optional(),
+  TRAINING_INTERNAL_HOST: z.string().min(1).default("0.0.0.0"),
+  TRAINING_INTERNAL_PORT: PortSchema.default(3_005),
   GPU_CONTROL_HOST: z.string().min(1).default("0.0.0.0"),
   GPU_CONTROL_PORT: PortSchema.default(3_004),
   // Lets the playground reach MCP servers on loopback and private networks; local development only.
@@ -86,6 +87,11 @@ export const parseApiEnvironment = (
   )
     throw new Error(
       "MCP_PROXY_ALLOW_PRIVATE_NETWORKS cannot be enabled in production.",
+    );
+
+  if (own.TRAINING_INTERNAL_TOKEN_PREVIOUS && !own.TRAINING_INTERNAL_TOKEN)
+    throw new Error(
+      "TRAINING_INTERNAL_TOKEN_PREVIOUS needs TRAINING_INTERNAL_TOKEN.",
     );
 
   const shared = parseEnvironment(environment);

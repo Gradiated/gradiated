@@ -120,7 +120,7 @@ Email/password is the launch path, so the OAuth fields are initially null.
 
 ### 4a. `jwks`
 
-Signing keys of Better Auth's JWT plugin, which signs the console's training tokens (`POST /api/v1/workspaces/{workspace_id}/training-tokens`: ES256, `aud = training`, ten minutes, claims `sub = user:<id>`, `org`, `ws`, `role`). The plugin creates the first key on first use and a new one every 90 days; `GET /api/auth/jwks` publishes the public keys, including retired ones for 30 days.
+Signing keys of Better Auth's JWT plugin, which signs the console's training tokens (`POST /api/v1/workspaces/{workspace_id}/training-tokens`: ES256, `aud = training`, ten minutes, claims `sub = user:<id>`, `org`, `ws`, `role`) and the product's service tokens for grad's internal listener (five minutes, `sub = service:<name>`, `ws`, `scopes`). The plugin creates the first key on first use and a new one every 90 days; `GET /api/auth/jwks` publishes the public keys, including retired ones for 30 days.
 
 | Field         | Type        | Null | Rules                                            |
 | ------------- | ----------- | ---- | ------------------------------------------------ |

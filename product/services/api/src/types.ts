@@ -13,6 +13,7 @@ import type {
 } from "@gradiated/control";
 
 import type {
+  ServiceTokenSubject,
   TrainingToken,
   TrainingTokenSubject,
 } from "./auth/training-tokens.js";
@@ -48,6 +49,8 @@ export interface AuthService {
   githubAccessToken?(headers: Headers): Promise<string | null>;
   handler(request: Request): Promise<Response>;
   signTrainingToken(subject: TrainingTokenSubject): Promise<TrainingToken>;
+  // For the product's calls to grad's internal listener.
+  signServiceToken(subject: ServiceTokenSubject): Promise<TrainingToken>;
   authorizationServerMetadata(request: Request): Promise<Response>;
   resolveSession(headers: Headers): Promise<SessionUser | null>;
 }

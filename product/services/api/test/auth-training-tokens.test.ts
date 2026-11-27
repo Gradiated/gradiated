@@ -125,3 +125,45 @@ it("does not serve the plugin's workspace-less session token", async () => {
 
   expect(response.status).toBe(404);
 });
+
+it("signs a short-lived service token for grad's internal listener", async () => {
+  const auth = createAuth();
+  const consoleToken = await auth.signTrainingToken(subject);
+
+  const { token, expiresAt } = await auth.signServiceToken({
+    service: "inference",
+    workspaceId: subject.workspaceId,
+    scopes: ["artifacts:pin"],
+  });
+
+  const [header = "", payload = ""] = token.split(".");
+  const claims = decode(payload);
+  expect(decode(header)).toMatchObject({
+    alg: "ES256",
+    kid: decode(consoleToken.token.split(".")[0] ?? "").kid,
+  });
+  expect(claims).toEqual({
+    iss: baseUrl,
+    aud: "training",
+    sub: "service:inference",
+    ws: subject.workspaceId,
+    scopes: ["artifacts:pin"],
+    jti: expect.any(String),
+    iat: expect.any(Number),
+    exp: (claims.iat as number) + 300,
+  });
+  expect(claims).not.toHaveProperty("role");
+  expect(expiresAt.getTime()).toBe((claims.exp as number) * 1000);
+});
+
+it.each([
+  { service: "Inference", scopes: ["artifacts:pin" as const] },
+  { service: "inference", scopes: [] },
+])("refuses a service token for $service with $scopes", async (input) => {
+  await expect(
+    createAuth().signServiceToken({
+      ...input,
+      workspaceId: subject.workspaceId,
+    }),
+  ).rejects.toThrow();
+});

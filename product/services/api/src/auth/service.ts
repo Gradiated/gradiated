@@ -13,6 +13,7 @@ import {
 } from "./impersonation.js";
 import {
   DISABLED_JWT_PATHS,
+  signServiceToken,
   signTrainingToken,
   trainingJwt,
 } from "./training-tokens.js";
@@ -196,6 +197,8 @@ export const createAuthService = (
     handler: (request) => auth.handler(request),
     signTrainingToken: (subject) =>
       signTrainingToken((input) => auth.api.signJWT(input), subject),
+    signServiceToken: (subject) =>
+      signServiceToken((input) => auth.api.signJWT(input), subject),
     authorizationServerMetadata,
     resolveSession: async (headers) => {
       const result = await auth.api

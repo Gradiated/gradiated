@@ -18,6 +18,7 @@ export const unservedDependencies = (): AppDependencies => ({
     authorizationServerMetadata: unserved("auth.authorizationServerMetadata"),
     resolveSession: unserved("auth.resolveSession"),
     signTrainingToken: unserved("auth.signTrainingToken"),
+    signServiceToken: unserved("auth.signServiceToken"),
   },
   checkDependencies: unserved("checkDependencies"),
   consoleUrl: "https://console.gradiated.com",

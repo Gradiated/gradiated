@@ -38,6 +38,9 @@ export const authenticated: AuthService = {
   signTrainingToken: async () => {
     throw new Error("No test signs training tokens through this service.");
   },
+  signServiceToken: async () => {
+    throw new Error("No test signs service tokens through this service.");
+  },
 };
 
 export const anonymous: AuthService = {
@@ -45,6 +48,7 @@ export const anonymous: AuthService = {
   authorizationServerMetadata: authenticated.authorizationServerMetadata,
   resolveSession: async () => null,
   signTrainingToken: authenticated.signTrainingToken,
+  signServiceToken: authenticated.signServiceToken,
 };
 
 export class SessionStoreError extends Error {}
@@ -56,6 +60,7 @@ export const sessionStoreDown: AuthService = {
     throw new SessionStoreError("session store unreachable");
   },
   signTrainingToken: authenticated.signTrainingToken,
+  signServiceToken: authenticated.signServiceToken,
 };
 
 export const workspaceRecord: WorkspaceRecord = {

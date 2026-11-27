@@ -1,20 +1,20 @@
 # Evaluations
 
 <DocsLead>
-  Benchmark base models, frontier models, and trained artifacts side by side
-  using the same Rubric before you ship.
+  Compare base models and trained artifacts side by side using the same Rubric
+  before you ship.
 </DocsLead>
 
 Every training run produces an automatic held-out `eval_report`, and you can also run standalone evaluations anytime with **`client.evals.create(...)`** or **`grad eval`**. Use standalone evals to:
 
-- **Measure your baseline before training:** see how `"qwen/qwen3-8b"` compares against `"{{SONNET_MODEL}}"` on your exact tasks before spending tokens on training.
-- **Compare checkpoints apples-to-apples:** score a base model, an SFT artifact, a DPO artifact, and a frontier reference on the same held-out dataset.
+- **Measure your baseline before training:** see how `"qwen/qwen3-8b"` compares against a larger model such as `"qwen/qwen3-32b"` on your exact tasks before spending tokens on training.
+- **Compare checkpoints apples-to-apples:** score a base model, an SFT artifact, a DPO artifact and a larger base model on the same held-out dataset.
 - **Catch regressions:** evaluate on a public benchmark next to your own tasks so a fine-tune that wins on your data doesn't quietly lose general ability.
 - **Mine hard examples:** export failing predictions directly into a new [`Dataset`](/docs/training/trajectories/) for your next training run.
 
 ## Evaluate a dataset with a `Rubric`
 
-Pass one or more models (base model strings, frontier models, or trained [`Artifact`](/docs/training/artifacts/) IDs), a held-out `Dataset`, and the same [`Rubric`](/docs/training/rubrics/) you use for training:
+Pass one or more models (catalog base models or trained [`Artifact`](/docs/training/artifacts/) refs such as `sql-agent@latest`), a held-out `Dataset`, and the same [`Rubric`](/docs/training/rubrics/) you use for training:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -37,7 +37,7 @@ rubric = Rubric([
 
 ev = client.evals.create(
     name="sql-baseline-vs-sft",
-    models=["qwen/qwen3-8b", "sql-agent@latest", "{{SONNET_MODEL}}"],
+    models=["qwen/qwen3-8b", "sql-agent@latest", "qwen/qwen3-32b"],
     dataset=eval_ds,
     rubric=rubric,
     samples=4,          # attempts per task, for pass@k and tighter error bars
@@ -74,7 +74,7 @@ const rubric = new Rubric([
 const ev = await grad.evals
   .create({
     name: "sql-baseline-vs-sft",
-    models: ["qwen/qwen3-8b", "sql-agent@latest", "{{SONNET_MODEL}}"],
+    models: ["qwen/qwen3-8b", "sql-agent@latest", "qwen/qwen3-32b"],
     dataset: evalDs,
     rubric,
     samples: 4,
@@ -105,7 +105,7 @@ EOF
 
 grad eval \
   --name sql-baseline-vs-sft \
-  --models qwen/qwen3-8b,sql-agent@latest,{{SONNET_MODEL}} \
+  --models qwen/qwen3-8b,sql-agent@latest,qwen/qwen3-32b \
   --dataset sql-eval-holdout \
   --rubric ./rubric.yaml \
   --samples 4 --temperature 0.7 \
@@ -120,7 +120,7 @@ The CLI takes rubric files in YAML or JSON with `regex`, `validator`, and `judge
 
 <DocsTerminal
   title="Side-by-side evaluation summary"
-  command="grad eval --models qwen/qwen3-8b,sql-agent@latest,{{SONNET_MODEL}} --dataset sql-eval-holdout --rubric ./rubric.yaml --samples 4 --temperature 0.7 --baseline qwen/qwen3-8b --wait"
+  command="grad eval --models qwen/qwen3-8b,sql-agent@latest,qwen/qwen3-32b --dataset sql-eval-holdout --rubric ./rubric.yaml --samples 4 --temperature 0.7 --baseline qwen/qwen3-8b --wait"
 >
 
 ```text
@@ -129,7 +129,7 @@ Eval sql-baseline-vs-sft (eval_5b2e8c0d41f7a9e3c6d10b28): completed  · 4 sample
 MODEL             OVERALL  95% CI          VS BASELINE  PASS@K                     TASKS  ERRORS  $/1K TASKS
 qwen/qwen3-8b     66.4%    [63.1%, 69.6%]  -            pass@1=61.2% pass@4=78.0%  400    0       $0.21
 sql-agent@latest  94.0%    [92.4%, 95.5%]  +27.6%       pass@1=91.8% pass@4=97.5%  400    0       $0.20
-{{SONNET_MODEL}}  95.0%    [93.6%, 96.3%]  +28.6%       pass@1=93.0% pass@4=98.0%  400    0       $6.40
+qwen/qwen3-32b    95.0%    [93.6%, 96.3%]  +28.6%       pass@1=93.0% pass@4=98.0%  400    0       $0.84
 ```
 
 </DocsTerminal>

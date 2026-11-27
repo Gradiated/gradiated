@@ -214,7 +214,7 @@ dataset = client.datasets.get("support-prod")
 
 recipe = RouterRecipe(
     model="qwen/qwen3-0.6b",
-    models=["qwen/qwen3-8b", "{{OPUS_MODEL}}"],
+    models=["qwen/qwen3-8b", "qwen/qwen3-32b"],
     rubric=Judge(
         name="resolved",
         model="{{SONNET_MODEL}}",

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { ReactElement, ReactNode } from "react";
 
-import { OPUS_MODEL, SONNET_MODEL } from "../../docs/models";
+import { SONNET_MODEL } from "../../docs/models";
 
 /* ---------------------------------------------------------------------------
    Engineering callout: one hairline left trace + uppercase mono label.
@@ -101,11 +101,10 @@ const PRIMITIVES: PrimitiveNode[] = [
     summary:
       "One shared format stored in a Dataset for production logs, labeled examples, and agent runs.",
     ops: [
-      "dataset.push()",
+      "datasets.push()",
       "dataset.import_file()",
-      "dataset.score()",
-      "dataset.filter()",
-      "dataset.add_source()",
+      "datasets.from_hf()",
+      "dataset.render()",
     ],
     detail:
       "Filled automatically from Gradiated inference, pushed from your DB, or synced from OTel, Langfuse, and Braintrust.",
@@ -113,14 +112,14 @@ const PRIMITIVES: PrimitiveNode[] = [
   {
     id: "environment",
     index: "02",
-    name: "Rubric & Environment",
-    role: "Grading & tools",
+    name: "Rubric",
+    role: "Grading",
     href: "/docs/training/rubrics/",
     summary:
-      "Grade answers with Python checks or a Judge, or run multi-turn agents against your own containers and tools.",
-    ops: ["Rubric()", "Judge()", "setup()", "step()", "evaluate()"],
+      "Grade answers with a Judge, built-in validators, or your own Python checks.",
+    ops: ["Rubric()", "Judge()", "Scorer()", "validators.Regex()"],
     detail:
-      "Environments run in Gradiated sandboxes, or on your own machines with grad env serve. evaluate() checks live containers before teardown() cleans up.",
+      "Judges and validators run on the server. Python scorers run in your own process during an eval. Environments for multi-turn agents arrive in Wave 2.",
   },
   {
     id: "trainer",
@@ -129,16 +128,10 @@ const PRIMITIVES: PrimitiveNode[] = [
     role: "Model training",
     href: "/docs/training/recipes/",
     summary:
-      "Managed training engine (billed per million tokens) driven by a built-in Recipe or your own Python loop.",
-    ops: [
-      "runs.create()",
-      "forward_backward()",
-      "optim_step()",
-      "save_state()",
-      "snapshot()",
-    ],
+      "Managed training engine (billed per million tokens) driven by a built-in Recipe.",
+    ops: ["runs.plan()", "runs.create()", "run.wait()", "runs.resume()"],
     detail:
-      "Runs forward, backward, and optimizer steps back-to-back and supports built-in losses or custom PyTorch CustomLoss classes.",
+      "Plans the run for $0, trains under a hard max_cost_usd cap, checkpoints as it goes, and resumes from the latest checkpoint. Your own training loop on the Trainer API arrives in Wave 2.",
   },
   {
     id: "artifact",
@@ -148,12 +141,7 @@ const PRIMITIVES: PrimitiveNode[] = [
     href: "/docs/training/deploying/",
     summary:
       "A versioned .grad artifact (PEFT LoRA or merged Safetensors) you can host on Gradiated Cloud or download for vLLM / SGLang.",
-    ops: [
-      "run.deploy()",
-      "grad artifacts download",
-      "artifacts.merge()",
-      "feedback.record()",
-    ],
+    ops: ["run.deploy()", "grad artifacts download", "feedback.record()"],
     detail:
       "Deploy on Gradiated Cloud in one command via the OpenAI, Anthropic, or SystemOne SDK, or serve the LoRA weights on your own GPUs.",
   },
@@ -259,15 +247,15 @@ const RECIPE_CHOICES: RecipeChoice[] = [
     profile: "Fine-tuned Qwen3-0.6B router",
     typicalWin: "45–70% cost drop within your quality bar",
     dataNeeded:
-      "Prompts + a Judge (or existing scores); model pricing is built in",
+      "Prompts + a Judge (or existing scores), plus pricing= or metrics.cost_usd",
     href: "/docs/training/recipes/router/",
     snippet: `dataset = client.datasets.get("support-traces")
 run = client.runs.create(
     dataset=dataset,
     name="support-router",
     recipe=RouterRecipe(
-        models=["qwen/qwen3-8b", "${OPUS_MODEL}"],
-        score=Judge(name="resolved", model="${SONNET_MODEL}", prompt="Did the assistant solve the issue?"),
+        models=["qwen/qwen3-8b", "qwen/qwen3-32b"],
+        rubric=Judge(name="resolved", model="${SONNET_MODEL}", prompt="Did the assistant solve the issue?"),
         max_quality_drop=0.02,
     ),
 ).wait()
@@ -295,58 +283,17 @@ endpoint = run.deploy()`,
     recipe: "SFTRecipe + DPORecipe",
     profile: "LoRA adapter (rank 32)",
     typicalWin: "5–10x lower latency on structured edits & SQL",
-    dataNeeded: "Logs filtered with a Judge (or chosen/rejected pairs)",
+    dataNeeded: "Chat records you trust (or chosen/rejected pairs for DPO)",
     href: "/docs/training/recipes/sft/",
-    snippet: `judge = Judge(name="clean", model="${SONNET_MODEL}", prompt="Is this answer accurate?")
-clean = client.datasets.get("diff-merge-prod").score(judge).wait().filter(
-    lambda t: t.scores["clean"] >= 0.8,
-)
-sft = client.runs.create(
-    dataset=clean,
-    name="fast-diff-merge",
+    snippet: `sft = client.runs.create(
+    dataset=client.datasets.get("diff-merge-gold"),
+    name="fast-diff-merge-sft",
     recipe=SFTRecipe(model="qwen/qwen3-8b"),
-).wait()`,
-  },
-  {
-    id: "grpo",
-    goal: "RL-train an agent against real tests or tools",
-    recipe: "GRPORecipe",
-    profile: "LoRA + Rubric, Harbor, or Docker env",
-    typicalWin: "Learns error recovery & multi-turn tool use",
-    dataNeeded: "Task prompts + Rubric (Judge / validators) or Environment",
-    href: "/docs/training/recipes/rl-agents/",
-    snippet: `dataset = client.datasets.get("sql-tasks")
-sft_art = client.artifacts.get("sql-agent@sft-v1")
-run = client.runs.create(
-    dataset=dataset,
-    name="sql-agent",
-    recipe=GRPORecipe(
-        model=sft_art,
-        rubric=Rubric([
-            Scorer("valid_sql", weight=0.3, fn=validators.SQL()),
-            Judge(name="correct", model="${SONNET_MODEL}", prompt="Verify SQL accuracy.", weight=0.7),
-        ]),
-        group_size=8,
-    ),
-).wait()`,
-  },
-  {
-    id: "distill",
-    goal: "Shrink a 32B/frontier teacher into a 4B student",
-    recipe: "DistillRecipe",
-    profile: "On-policy top-k KL distillation",
-    typicalWin: "Matches teacher quality on your prompts only",
-    dataNeeded: "1,000+ unlabelled prompts (no gold answers needed)",
-    href: "/docs/training/recipes/distillation/",
-    snippet: `dataset = client.datasets.get("support-prompts")
-run = client.runs.create(
-    dataset=dataset,
-    name="support-4b",
-    recipe=DistillRecipe(
-        model="qwen/qwen3-4b",
-        teacher="qwen/qwen3-32b",
-        rollout=OnPolicy(max_new_tokens=512),
-    ),
+).wait()
+dpo = client.runs.create(
+    dataset=client.datasets.get("diff-merge-preferences"),
+    name="fast-diff-merge",
+    recipe=DPORecipe(model=sft.artifact),
 ).wait()`,
   },
   {

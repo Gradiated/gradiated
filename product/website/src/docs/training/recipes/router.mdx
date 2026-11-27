@@ -12,7 +12,7 @@ All you need to start is a [`Dataset`](/docs/training/trajectories/) of real pro
 
 - **How the router compares models:**
   - **Already logging multiple models?** If your logs include responses from both cheap and strong models (in `metadata.model`), Gradiated trains directly on them.
-  - **Only logging one model so far?** Pass `models=[...]` to `RouterRecipe` (for example, a cheap model and your current frontier model) together with a `Judge` rubric. Gradiated replays your logged prompts against the candidate models in a labeling eval and scores each answer before training. Candidates must be catalog models or artifacts from your workspace that the inference endpoint serves.
+  - **Only logging one model so far?** Pass `models=[...]` to `RouterRecipe` (for example, a small and a large Qwen3 model) together with a `Judge` rubric. Gradiated replays your logged prompts against the candidate models in a labeling eval and scores each answer before training. Candidates must be catalog models or artifacts from your workspace that the inference endpoint serves.
 - **How quality is scored:**
   - **No scores yet?** Pass a [`Judge`](/docs/training/rubrics/) with a plain-English prompt (or a `Rubric` of judges and validators) and Gradiated grades each response for you.
   - **Already have scores in your logs?** Pass the score name (`rubric="task_success"`) to reuse them directly. You need the name when a record carries more than one score. Python scorer functions in training recipes arrive in [Wave 2](/docs/training/recipes/#where-your-code-runs).
@@ -37,7 +37,7 @@ client = Grad()
 dataset = client.datasets.get("support-traces")
 
 recipe = RouterRecipe(
-    models=["qwen/qwen3-8b", "{{OPUS_MODEL}}"],
+    models=["qwen/qwen3-8b", "qwen/qwen3-32b"],
     rubric=Judge(
         name="resolved",
         model="{{SONNET_MODEL}}",
@@ -61,7 +61,7 @@ const grad = new Grad();
 const dataset = await grad.datasets.get("support-traces");
 
 const recipe = recipes.router({
-  models: ["qwen/qwen3-8b", "{{OPUS_MODEL}}"],
+  models: ["qwen/qwen3-8b", "qwen/qwen3-32b"],
   rubric: new Judge({
     name: "resolved",
     model: "{{SONNET_MODEL}}",
@@ -88,7 +88,7 @@ run, _ := client.Runs.Create(ctx, grad.RunParams{
 	Dataset: dataset,
 	Name:    "support-router",
 	Recipe: grad.RouterRecipe{
-		Models: []string{"qwen/qwen3-8b", "{{OPUS_MODEL}}"},
+		Models: []string{"qwen/qwen3-8b", "qwen/qwen3-32b"},
 		Rubric: grad.Judge{
 			Name:   "resolved",
 			Model:  "{{SONNET_MODEL}}",
@@ -107,7 +107,7 @@ fmt.Println(run.Artifact.ID, run.EvalReport.ParetoSummary)
 dataset: support-traces
 name: support-router
 recipe: router
-models: [qwen/qwen3-8b, "{{OPUS_MODEL}}"]
+models: [qwen/qwen3-8b, "qwen/qwen3-32b"]
 rubric:
   - name: resolved
     kind: judge
@@ -144,8 +144,8 @@ Before deploying, check `run.eval_report`:
 
 ```json
 {
-  "eval_examples": 480,
-  "fallback_model": "{{OPUS_MODEL}}",
+  "eval_records": 480,
+  "fallback_model": "qwen/qwen3-32b",
   "fallback_quality": 0.912,
   "pareto_summary": {
     "target_max_drop": 0.02,

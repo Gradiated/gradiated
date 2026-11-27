@@ -76,8 +76,8 @@ Training on Gradiated Cloud uses the same token-metered model as inference:
 - **Checkpoint retention:** the best and final checkpoints of every run never expire; other checkpoints expire after 30 days unless you promote them.
 
 ```bash
-grad train --dataset support-prod --name support-sft --recipe sft --dry-run
-grad train --dataset support-prod --name support-sft --recipe sft --wait
+grad train --dataset support-sft --name support-sft --recipe sft --dry-run
+grad train --dataset support-sft --name support-sft --recipe sft --wait
 ```
 
 For current per-token rates and service tiers, see [Models and pricing](/docs/models-pricing/).

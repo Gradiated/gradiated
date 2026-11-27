@@ -204,6 +204,8 @@ export {
   type GradArtifacts,
 } from "./training/grad.js";
 export {
+  ServingBasesSchema,
+  type ServingBases,
   PublishError,
   type ArtifactPublisher,
   type PublishErrorCode,

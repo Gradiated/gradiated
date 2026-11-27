@@ -16,7 +16,7 @@ const version = {
   baseModelId: "Qwen/Qwen3-0.6B",
   adapter: {
     format: "peft_lora",
-    artifact_uri: `s3://grad/artifacts/${workspaceId}/${"a".repeat(64)}.grad.tar.gz`,
+    artifact_uri: `s3://grad/artifacts/${workspaceId}/${"a".repeat(64)}`,
     sha256: "a".repeat(64),
     size_bytes: 10,
     rank: 32,

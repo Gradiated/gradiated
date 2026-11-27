@@ -103,15 +103,13 @@ describe("publishing grad artifacts", () => {
         format: bundleOptions.format ?? "peft_lora",
         recipe_kind: "sft",
         base_model: "qwen/qwen3-0.6b",
+        key: `artifacts/${member.workspaceId}/${bundle.sha256}`,
         sha256: bundle.sha256,
         size_bytes: bundle.sizeBytes,
         ...overrides,
       };
       artifacts.set(artifact.id, artifact);
-      objects.set(
-        `artifacts/${member.workspaceId}/${artifact.sha256}.grad.tar.gz`,
-        bundle.bytes,
-      );
+      objects.set(artifact.key, bundle.bytes);
       return artifact;
     };
     return { member, publisher, grad, pins, add, qualify };
@@ -133,7 +131,7 @@ describe("publishing grad artifacts", () => {
     });
     expect(result.version.adapter).toEqual({
       format: "peft_lora",
-      artifact_uri: `s3://grad-test/artifacts/${member.workspaceId}/${artifact.sha256}.grad.tar.gz`,
+      artifact_uri: `s3://grad-test/artifacts/${member.workspaceId}/${artifact.sha256}`,
       sha256: artifact.sha256,
       size_bytes: artifact.size_bytes,
       rank: 2,
@@ -159,6 +157,20 @@ describe("publishing grad artifacts", () => {
       version: { id: result.version.id },
     });
     expect(pins.size).toBe(1);
+  });
+
+  it("reads a release made before grad stored bundles under artifacts/ at its job key", async () => {
+    const { member, publisher, add } = await setup();
+    const key = `ws/${member.workspaceId}/jobs/job_1/1/${"c".repeat(64)}`;
+    const artifact = add(loraFiles(), { key });
+
+    const { version } = await publisher.publish(
+      member.userId,
+      member.workspaceId,
+      { artifact: artifact.id },
+    );
+
+    expect(version.adapter.artifact_uri).toBe(`s3://grad-test/${key}`);
   });
 
   it("publishes into a named model and keeps an unqualified version unavailable", async () => {

@@ -8,6 +8,7 @@ import {
 } from "@gradiated/contracts";
 import type { ObjectStorage } from "../storage/object-storage.js";
 import { ControlServiceError } from "../errors.js";
+import { isWorkspaceObjectKey } from "./grad.js";
 
 export type AdapterDownloads = {
   results?: (runId: string) => Promise<z.infer<typeof EvaluationResultsSchema>>;
@@ -48,17 +49,27 @@ export const createAdapterDownloads = (
     sha256: string,
     workspaceId?: string,
   ) => {
+    // A grad bundle's key comes from grad's resolve; it must stay in the
+    // version's workspace. Its SHA-256 is checked against S3's checksum below.
+    const gradKey =
+      artifacts && uri.startsWith(`s3://${artifacts.bucket}/`)
+        ? uri.slice(`s3://${artifacts.bucket}/`.length)
+        : undefined;
     if (
       artifacts &&
+      gradKey &&
       workspaceId &&
-      uri ===
-        `s3://${artifacts.bucket}/artifacts/${workspaceId}/${sha256}.grad.tar.gz` &&
       /^[0-9a-f-]{36}$/.test(workspaceId) &&
-      /^[0-9a-f]{64}$/.test(sha256)
+      /^[0-9a-f]{64}$/.test(sha256) &&
+      /^[a-zA-Z0-9_./-]+$/.test(gradKey) &&
+      gradKey
+        .split("/")
+        .every((part) => part && part !== "." && part !== "..") &&
+      isWorkspaceObjectKey(gradKey, workspaceId)
     )
       return {
         storage: artifacts,
-        key: uri.slice(`s3://${artifacts.bucket}/`.length),
+        key: gradKey,
         filename: `${sha256}.grad.tar.gz`,
         contentType: "application/gzip",
       };

@@ -45,7 +45,7 @@ I am in the office several days a week, and usually once or twice a week I'll wo
 - Ambition. Yes, and. People being open minded to very large, scary-at-first ideas. Everything you've ever been impressed by in other businesses was just the product of a bunch of people. There is no reason we can't do it too.
 - People who get things done without me having to chase. I love it if we mention something should get done and there's a PR for it the next day.
 - People who solve frustrations they have with other people (or with projects / tasks) directly. I won't mediate your relationship with someone else - I'll ask you to speak to them directly.
-- Iteration over analysis. Analysis is valuable but it should be *very* quick and intense.
+- Iteration over analysis. Analysis is valuable but it should be _very_ quick and intense.
 - Speed. It's much easier to get things right if you take more shots at goal. Let's just get something up and iterate on it.
 - Directness impresses me. If you don't like something please just say so. It makes for much healthier relationships.
 - Being different / independent thought. It's more effective to be polarizing than boring.

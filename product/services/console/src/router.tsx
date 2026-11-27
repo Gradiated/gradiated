@@ -176,6 +176,102 @@ const sharedReportRoute = createRoute({
   ),
 });
 
+const trainingIndexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/training",
+  beforeLoad: () => {
+    throw redirect({ to: "/training/runs" });
+  },
+});
+
+const trainingRunsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/training/runs",
+  component: lazyRouteComponent(
+    () => import("@/pages/training/runs-page"),
+    "RunsPage",
+  ),
+});
+
+const trainingNewRunRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/training/runs/new",
+  validateSearch: (search: Record<string, unknown>) => ({
+    ...(typeof search.dataset === "string" && search.dataset
+      ? { dataset: search.dataset }
+      : {}),
+  }),
+  component: lazyRouteComponent(
+    () => import("@/pages/training/new-run-page"),
+    "NewRunPage",
+  ),
+});
+
+const trainingRunRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/training/runs/$runId",
+  component: lazyRouteComponent(
+    () => import("@/pages/training/run-page"),
+    "RunPage",
+  ),
+});
+
+const trainingDatasetsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/training/datasets",
+  component: lazyRouteComponent(
+    () => import("@/pages/training/datasets-page"),
+    "DatasetsPage",
+  ),
+});
+
+const DATASET_TABS = ["records", "versions", "sources", "imports"] as const;
+
+const trainingDatasetRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/training/datasets/$datasetName",
+  validateSearch: (search: Record<string, unknown>) => {
+    const tab = DATASET_TABS.find((value) => value === search.tab);
+    const version = Number(search.version);
+
+    return {
+      ...(tab ? { tab } : {}),
+      ...(Number.isInteger(version) && version > 0 ? { version } : {}),
+    };
+  },
+  component: lazyRouteComponent(
+    () => import("@/pages/training/dataset-page"),
+    "DatasetPage",
+  ),
+});
+
+const trainingEvalsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/training/evals",
+  component: lazyRouteComponent(
+    () => import("@/pages/training/evals-page"),
+    "EvalsPage",
+  ),
+});
+
+const trainingEvalRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/training/evals/$evalId",
+  component: lazyRouteComponent(
+    () => import("@/pages/training/eval-page"),
+    "EvalPage",
+  ),
+});
+
+const trainingUsageRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/training/usage",
+  component: lazyRouteComponent(
+    () => import("@/pages/training/training-usage-page"),
+    "TrainingUsagePage",
+  ),
+});
+
 const billingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/billing",
@@ -291,6 +387,15 @@ const routeTree = rootRoute.addChildren([
   taskRoute,
   versionRoute,
   sharedReportRoute,
+  trainingIndexRoute,
+  trainingRunsRoute,
+  trainingNewRunRoute,
+  trainingRunRoute,
+  trainingDatasetsRoute,
+  trainingDatasetRoute,
+  trainingEvalsRoute,
+  trainingEvalRoute,
+  trainingUsageRoute,
   billingRoute,
   usageRoute,
   logsRoute,

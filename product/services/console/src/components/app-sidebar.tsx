@@ -2,10 +2,14 @@ import NiceModal from "@ebay/nice-modal-react";
 import { Link, useMatchRoute, type LinkProps } from "@tanstack/react-router";
 import {
   Building2,
+  ChartColumn,
   ChartNoAxesCombined,
   Check,
   ChevronsUpDown,
+  CircleDollarSign,
+  Database,
   FlaskConical,
+  FlaskRound,
   KeyRound,
   LogOut,
   Logs,
@@ -54,6 +58,7 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useFeatureFlag } from "@/lib/feature-flags";
 import { canManageOrganization } from "@/lib/roles";
 import { useScopeCreation } from "@/hooks/use-product-context";
 import type { SignOutResult } from "@/hooks/use-session";
@@ -66,6 +71,13 @@ interface NavGroup {
     icon: LucideIcon;
   }[];
 }
+
+const TRAINING_ITEMS: NavGroup["items"] = [
+  { to: "/training/runs", label: "Training runs", icon: FlaskRound },
+  { to: "/training/datasets", label: "Datasets", icon: Database },
+  { to: "/training/evals", label: "Evals", icon: ChartColumn },
+  { to: "/training/usage", label: "Training usage", icon: CircleDollarSign },
+];
 
 const NAV_GROUPS: NavGroup[] = [
   {
@@ -104,6 +116,14 @@ export const AppSidebar = ({
 }) => {
   const { isMobile } = useSidebar();
   const matchRoute = useMatchRoute();
+  const gradTraining = useFeatureFlag("grad-training") === true;
+  const groups = gradTraining
+    ? NAV_GROUPS.map((group) =>
+        group.label === "Research"
+          ? { ...group, items: [...group.items, ...TRAINING_ITEMS] }
+          : group,
+      )
+    : NAV_GROUPS;
   const [signOutFailed, setSignOutFailed] = useState(false);
   const { organizationCreated, workspaceCreated } = useScopeCreation();
   const selectedWorkspace = workspaces.find(
@@ -191,7 +211,7 @@ export const AppSidebar = ({
       </SidebarHeader>
 
       <SidebarContent>
-        {NAV_GROUPS.map((group) => (
+        {groups.map((group) => (
           <NavSection key={group.label} group={group} />
         ))}
       </SidebarContent>

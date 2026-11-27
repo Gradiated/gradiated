@@ -72,6 +72,8 @@ grad ui --no-open                 # print the URL instead
 - **Usage**: the billing ledger with totals.
 - **Health**: server readiness, the training and import worker pools and the queue.
 
+It is dark by default; the sun/moon button in the sidebar switches to a light theme, remembered per browser.
+
 The UI calls only the public `/v1` API with the viewer's key, so it shows exactly what that key can read through the SDKs. With `AUTH_MODE=none` there is no login; otherwise paste an API key. The key stays in that browser tab's `sessionStorage` (never a cookie or `localStorage`) and is forgotten when the tab closes; `grad ui` hands it over once in the URL fragment, which browsers never send to the server. Pages are served with a strict Content-Security-Policy and can't be framed.
 
 The UI is on by default. Set `UI_ENABLED=false` (Helm: `ui.enabled: false`) to serve only the API. It needs no extra port or exposure: it shares the API's address, so keep the server on loopback or behind your ingress as before.

@@ -132,7 +132,9 @@
 }
 
 .gr-doc-code-lang {
-  padding: 0.3em 0.1em;
+  padding: 0.3em 0.5em;
+  border-radius: var(--radius);
+  background: var(--color-code-surface);
   color: var(--color-code-muted);
   font-family: var(--font-caps);
   font-size: var(--text-caps);

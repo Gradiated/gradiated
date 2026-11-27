@@ -38,7 +38,7 @@ const STATIONS: Station[] = [
   {
     id: "dataset",
     name: "Dataset",
-    gives: "@3, immutable",
+    gives: "version @3",
     what: "Every push, import or sync adds an immutable version, and a run pins one, so you can always say what a model learned from. Preview which tokens will train before you pay for anything.",
     cli: "grad render support-prod --model qwen/qwen3-8b",
     sdk: {
@@ -52,7 +52,7 @@ const STATIONS: Station[] = [
   {
     id: "plan",
     name: "Plan",
-    gives: "$0 estimate",
+    gives: "$0 plan",
     what: "A dry run resolves every default, checks your records, splits train and eval by session, and prices the run in tokens. Nothing starts and nothing is billed.",
     cli: "grad train --dataset support-prod --name support-router --recipe router --dry-run",
     sdk: {
@@ -96,7 +96,7 @@ const STATIONS: Station[] = [
   {
     id: "artifact",
     name: "Artifact",
-    gives: ".grad bundle",
+    gives: "adapter",
     what: "The best checkpoint by held-out eval, as a versioned .grad bundle: a PEFT LoRA adapter, merged weights, or a task bundle for routers and decision models. Its manifest records the base model, template and training settings.",
     cli: "grad artifacts download support-router@latest --output ./support-router",
     sdk: {
@@ -126,7 +126,7 @@ const STATIONS: Station[] = [
   {
     id: "serve",
     name: "Serve",
-    gives: "next version",
+    gives: "version @4",
     what: "Serve the adapter on your own vLLM or SGLang and log outcomes in your observability tool. A source sync turns them into the next dataset version, and the loop starts again. Hosted serving on Gradiated Cloud is coming soon.",
     cli: "vllm serve Qwen/Qwen3-8B --enable-lora --lora-modules support-sft=./support-sft",
     sdk: {

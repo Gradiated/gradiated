@@ -41,7 +41,7 @@ Highest precedence first:
 
 ### Following a run
 
-`grad train --wait`, `grad runs watch`, `grad runs wait` and `grad runs resume --wait` open a full-screen view when stdin and stdout are a terminal (over SSH and in tmux too). It shows the run and its config, the phase and attempt, step and cost progress against `--max-cost-usd`, tokens/s and an ETA, a train/eval loss chart with the best eval marked, the learning rate, checkpoints, and an event log with interruptions, reconnects, warnings and each eval step's recipe metrics (router offload and cost saving, decision accuracy and ECE, embedding recall@k). It reconnects on its own after a dropped connection and resumes the stream where it left off.
+`grad train --wait`, `grad runs watch`, `grad runs wait` and `grad runs resume --wait` open a full-screen view when stdin and stdout are a terminal (over SSH and in tmux too). It shows the run and its config; the phase (waiting for a GPU, starting, training, resuming from a checkpoint) with how long it has lasted, and the attempt; step and cost progress against `--max-cost-usd`, tokens/s and an ETA; a train/eval loss chart with the best eval marked and the learning rate; checkpoints; and an event log with interruptions and resumes, reconnects, warnings and each eval step's recipe metrics (router offload and cost saving, decision accuracy and ECE, embedding recall@k). It reconnects on its own after a dropped connection and resumes the stream where it left off.
 
 | Key            | Action                                                                     |
 | -------------- | -------------------------------------------------------------------------- |

@@ -182,7 +182,6 @@ const SECTIONS: readonly Section[] = [
         href: "/models/glm-5-3-flash/",
         icon: "/assets/models/zhipu-color.svg",
       },
-      { name: "Kev 9B", color: "#a28fe9", href: "/models/kev-9b/" },
     ],
   },
   {

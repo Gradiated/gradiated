@@ -55,12 +55,14 @@ export const createTrainingService = (
   artifacts: {
     grad?: GradArtifacts;
     bundles?: Pick<ObjectStorage, "stream" | "uri">;
+    uploadsClosed?: boolean;
   } = {},
 ) => {
   const records = createTrainingStore(database);
   const publisher = createArtifactPublisher({
     database,
-    ...artifacts,
+    ...(artifacts.grad ? { grad: artifacts.grad } : {}),
+    ...(artifacts.bundles ? { bundles: artifacts.bundles } : {}),
     ...(qualifyAdapter ? { qualifyAdapter } : {}),
     ...(lockQualification ? { lockQualification } : {}),
   });
@@ -110,7 +112,12 @@ export const createTrainingService = (
     return engine;
   };
 
-  const { structure, ...uploads } = createModelUploads(database, uploadStorage);
+  const { structure, ...uploads } = createModelUploads(
+    database,
+    uploadStorage,
+    undefined,
+    { closed: artifacts.uploadsClosed ?? false },
+  );
   const { sharedVersion, ...shares } = createReportShares(
     database,
     uploadStorage,

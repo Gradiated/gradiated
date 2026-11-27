@@ -27,6 +27,11 @@ const ApiOnlyEnvironmentSchema = z.object({
   GRAD_ARTIFACTS_BUCKET: z.string().min(1).optional(),
   // grad-server's internal listener, such as http://grad-internal.training.svc:8789.
   GRAD_SERVER_URL: z.url().optional(),
+  // New model uploads answer 410 and point at `grad artifacts upload`.
+  MODEL_UPLOADS_CLOSED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
   // The private listener grad-server calls; it stays off unless a token is set.
   TRAINING_INTERNAL_TOKEN: z.string().trim().min(32).optional(),
   TRAINING_INTERNAL_TOKEN_PREVIOUS: z.string().trim().min(32).optional(),

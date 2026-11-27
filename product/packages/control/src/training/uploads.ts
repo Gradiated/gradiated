@@ -32,6 +32,18 @@ import { validateCartridgeFile } from "./cartridge-upload.js";
 import { createTrainingStore } from "./store.js";
 import { createModelUploadStore } from "./upload-store.js";
 
+// New uploads go through grad; an upload already started can still complete.
+export class ModelUploadsClosedError extends Error {
+  readonly code = "use_grad_artifacts_upload";
+
+  constructor() {
+    super(
+      "Model uploads moved to grad: run `grad artifacts upload <dir> --base <model> --name <name>`, then publish the artifact as a version.",
+    );
+    this.name = "ModelUploadsClosedError";
+  }
+}
+
 export const createModelUploads = (
   database: ControlDatabase,
   storage?: Pick<
@@ -42,6 +54,7 @@ export const createModelUploads = (
     repository: string,
     revision: string,
   ) => Promise<BaseModelConfiguration> = readBaseModelConfiguration,
+  { closed = false }: { closed?: boolean } = {},
 ) => {
   let validating = false;
   const uploads = createModelUploadStore(database);
@@ -106,6 +119,8 @@ export const createModelUploads = (
       value: CreateModelUploadInput,
     ) {
       await requireWorkspaceEditor(database, { userId, workspaceId });
+      if (closed) throw new ModelUploadsClosedError();
+
       const objects = requireStorage();
       const input = CreateModelUploadSchema.parse(value);
       const model = await records.getModel(input.base_model_id);

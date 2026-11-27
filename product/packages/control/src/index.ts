@@ -187,6 +187,7 @@ export {
   type GradArtifact,
   type GradArtifacts,
 } from "./training/grad.js";
+export { ModelUploadsClosedError } from "./training/uploads.js";
 export {
   PublishError,
   type ArtifactPublisher,

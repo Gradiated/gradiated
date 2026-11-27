@@ -876,7 +876,7 @@ export interface paths {
     put?: never;
     /**
      * Create model upload
-     * @description Creates a workspace-scoped upload for PEFT LoRA config and safetensors files. Grants expire after one hour.
+     * @description Creates a workspace-scoped upload for PEFT LoRA config and safetensors files. Grants expire after one hour. Once uploads move to grad this answers 410 `use_grad_artifacts_upload`; uploads already started still complete.
      */
     post: operations["createModelUpload"];
     delete?: never;
@@ -7316,6 +7316,15 @@ export interface operations {
       };
       /** @description Upload conflict or invalid adapter. */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description New uploads go through `grad artifacts upload`. */
+      410: {
         headers: {
           [name: string]: unknown;
         };

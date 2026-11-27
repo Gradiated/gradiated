@@ -12127,7 +12127,7 @@
       "post": {
         "operationId": "createModelUpload",
         "summary": "Create model upload",
-        "description": "Creates a workspace-scoped upload for PEFT LoRA config and safetensors files. Grants expire after one hour.",
+        "description": "Creates a workspace-scoped upload for PEFT LoRA config and safetensors files. Grants expire after one hour. Once uploads move to grad this answers 410 `use_grad_artifacts_upload`; uploads already started still complete.",
         "tags": [
           "Training"
         ],
@@ -12196,6 +12196,16 @@
           },
           "409": {
             "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "New uploads go through `grad artifacts upload`.",
             "content": {
               "application/problem+json": {
                 "schema": {

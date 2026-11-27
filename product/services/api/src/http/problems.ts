@@ -1,6 +1,7 @@
 import type { Problem } from "@gradiated/contracts";
 import {
   ControlServiceError,
+  ModelUploadsClosedError,
   PublishError,
   TrainingAdmissionError,
   type PublishErrorCode,
@@ -13,7 +14,7 @@ import { BillingPaymentsError } from "../billing/payments.js";
 import type { ApiEnvironment, SessionUser } from "../types.js";
 
 type ProblemStatus =
-  400 | 401 | 402 | 403 | 404 | 409 | 413 | 422 | 429 | 500 | 502 | 503;
+  400 | 401 | 402 | 403 | 404 | 409 | 410 | 413 | 422 | 429 | 500 | 502 | 503;
 
 export type ProblemBody = Omit<Problem, "request_id" | "status"> & {
   status: ProblemStatus;
@@ -241,6 +242,14 @@ export const toApiProblem = (error: unknown): ApiProblem | undefined => {
       type: problemType(error.code),
       title: "Training cannot start",
       status: error.code === "already_training" ? 409 : 422,
+      code: error.code,
+      detail: error.message,
+    });
+  if (error instanceof ModelUploadsClosedError)
+    return new ApiProblem({
+      type: problemType("use-grad-artifacts-upload"),
+      title: "Model uploads moved to grad",
+      status: 410,
       code: error.code,
       detail: error.message,
     });

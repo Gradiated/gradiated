@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { ModelUploadsClosedError } from "@gradiated/control";
 import { authenticated, createTestApp, user, workspaceId } from "./support.js";
 
 const path = `/api/v1/workspaces/${workspaceId}/model-uploads`;
@@ -101,5 +102,26 @@ describe("model upload routes", () => {
       (await app.request(`${path}/${id}/version`, { method: "PUT" })).status,
     ).toBe(401);
     expect(complete).not.toHaveBeenCalled();
+  });
+  it("answers 410 once uploads move to grad", async () => {
+    const create = vi.fn(async () => {
+      throw new ModelUploadsClosedError();
+    });
+    const response = await post(
+      createTestApp({
+        auth: authenticated,
+        services: {
+          training: {
+            uploads: { configuration: vi.fn(), create, complete: vi.fn() },
+          },
+        },
+      }),
+      input,
+    );
+
+    expect(response.status).toBe(410);
+    expect(await response.json()).toMatchObject({
+      code: "use_grad_artifacts_upload",
+    });
   });
 });

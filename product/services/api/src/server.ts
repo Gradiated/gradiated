@@ -257,6 +257,7 @@ const training = createTrainingService(
   {
     ...(grad ? { grad } : {}),
     ...(gradBundles ? { bundles: gradBundles } : {}),
+    uploadsClosed: environment.MODEL_UPLOADS_CLOSED,
   },
 );
 const pinReleases = grad

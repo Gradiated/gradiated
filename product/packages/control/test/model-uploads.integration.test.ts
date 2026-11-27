@@ -600,4 +600,24 @@ describe("model uploads", () => {
       ),
     ).toBe(true);
   });
+
+  it("refuses new uploads once they move to grad and completes started ones", async () => {
+    const { member, body, stage, storage, loadBaseConfiguration } =
+      await setup();
+    const upload = await stage();
+    const closed = createModelUploads(
+      db.database,
+      storage,
+      loadBaseConfiguration,
+      { closed: true },
+    );
+
+    await expect(
+      closed.create(member.userId, member.workspaceId, body),
+    ).rejects.toMatchObject({ code: "use_grad_artifacts_upload" });
+    expect(
+      (await closed.complete(member.userId, member.workspaceId, upload.id))
+        .version.status,
+    ).toBe("unavailable");
+  });
 });

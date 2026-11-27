@@ -71,7 +71,7 @@ console.log(run.artifact.id);
 
 Call `client.runs.plan(dataset=tasks, recipe=recipe)` before `create` to see the resolved settings and estimated cost for $0.
 
-For open-ended outputs, mix code checks (`validators.SQL()`, `validators.TypeScriptAST()`, `validators.JSONSchema(...)`) with a `Judge` (a frontier model or your own [reward model](/docs/training/recipes/reward-models/) `Artifact`) in the same [`Rubric`](/docs/training/rubrics/).
+For open-ended outputs, mix code checks (`validators.Regex(...)`, or your own Python `Scorer` that parses SQL or compiles TypeScript) with a `Judge` (a frontier model or your own [reward model](/docs/training/recipes/reward-models/) `Artifact`) in the same [`Rubric`](/docs/training/rubrics/).
 
 ## Train a multi-turn tool agent with `env=`
 

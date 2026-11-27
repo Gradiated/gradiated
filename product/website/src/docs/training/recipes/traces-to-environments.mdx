@@ -56,7 +56,7 @@ from grad.recipes import GRPORecipe
 client = Grad()
 hard_traces = client.datasets.get("sql-assistant-prod").filter(scores={"resolved": "<0.8"})
 
-sql_valid = validators.SQL()
+sql_valid = validators.Regex(r"^\s*(SELECT|WITH)\b", flags="i")
 
 def valid_sql_syntax(traj) -> float:
     return 1.0 if sql_valid(traj.text) else 0.0

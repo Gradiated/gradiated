@@ -23,7 +23,7 @@ Before training a reward model, try a prompted [`Judge`](/docs/training/rubrics/
 from grad import Judge, Rubric, Scorer, validators
 
 rubric = Rubric([
-    Scorer("valid_sql", weight=0.3, fn=validators.SQL()),
+    Scorer("starts_like_sql", weight=0.3, fn=validators.Regex(r"^\s*(SELECT|WITH)\b", flags="i")),
     Judge(
         name="accurate_query",
         model="{{SONNET_MODEL}}",

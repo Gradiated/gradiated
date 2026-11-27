@@ -74,6 +74,7 @@ export const apiKeyRecord: ApiKeyRecord = {
   expiresAt: null,
   revokedAt: null,
   hidden: false,
+  scopes: null,
   createdBy: user.id,
   createdAt: now,
   updatedAt: now,

@@ -251,6 +251,8 @@ export const workspaces = pgTable(
   ],
 );
 
+// The auth_principals_v1 view (migration 0038) reads this table, so changing
+// a column it selects needs a new view version.
 export const apiKeys = pgTable(
   "api_keys",
   {
@@ -264,6 +266,8 @@ export const apiKeys = pgTable(
     expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }),
     revokedAt: timestamp("revoked_at", { withTimezone: true, mode: "date" }),
     hidden: boolean("hidden").default(false).notNull(),
+    // Null or empty grants the creator's role in full; a list narrows it.
+    scopes: text("scopes").array(),
     createdBy: uuid("created_by").references(() => users.id, {
       onDelete: "restrict",
     }),

@@ -294,6 +294,7 @@ export const createWorkspaceApiKeyService = (
         expiresAt: input.expiresAt,
         revokedAt: null,
         hidden: false,
+        scopes: null,
         createdBy: userId,
         createdAt: now,
         updatedAt: now,

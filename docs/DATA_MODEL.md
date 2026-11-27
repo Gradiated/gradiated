@@ -246,11 +246,34 @@ Used by direct customers and OpenRouter.
 | `expires_at`      | timestamptz | yes  | Optional expiry                                                           |
 | `revoked_at`      | timestamptz | yes  | Irreversible manual revocation                                            |
 | `hidden`          | boolean     | no   | Default false; true for playground credentials, which are not listed      |
+| `scopes`          | text[]      | yes  | Null or empty grants the creator's role in full; a list narrows it        |
 | `created_by`      | uuid        | yes  | FK `users.id`; null for system-created channels                           |
 | `created_at`      | timestamptz | no   | Creation time                                                             |
 | `updated_at`      | timestamptz | no   | Last mutation time                                                        |
 
 The raw format is `grad_<32 random bytes encoded as base64url>`. Authentication computes SHA-256 over that complete canonical string and looks up the unique digest. High-entropy keys do not need a pepper or pepper rotation. Do not store the raw key, a display prefix, last four characters or `last_used_at`; the key name and creation time identify it in the product, and last use is derived from usage. A key is valid only when `revoked_at IS NULL` and `expires_at` is either null or in the future. Rotation creates a new key and sets `revoked_at` on the old one. Hidden keys are unique per member, workspace and name (`api_keys_hidden_owner_name_unique` on `(workspace_id, created_by, name) WHERE hidden`). The console playground upserts one named Playground, and each MCP OAuth client one named `MCP <client ID>`, so clients never rotate each other's key; each request rotates the key's digest and resets a one-hour expiry. It bills and logs like any other workspace key.
+
+`scopes` narrows a key below its creator's role for the training platform; the console does not set it yet, so every key is null.
+
+### 9a. `auth_principals_v1` (view)
+
+The training platform (grad) authenticates `grad_` keys by reading this view with the login role `grad_auth_reader`, which has `SELECT` on the view and nothing else. The view is `security_barrier`, owned by the product migrations, and only gains columns; a breaking change ships `auth_principals_v2` next to it.
+
+| Column         | Type        | Rules                                                               |
+| -------------- | ----------- | ------------------------------------------------------------------- |
+| `key_hash`     | bytea       | `api_keys.digest`; the lookup key                                   |
+| `api_key_id`   | uuid        |                                                                     |
+| `workspace_id` | uuid        |                                                                     |
+| `org_id`       | uuid        |                                                                     |
+| `org_slug`     | text        | The model namespace prefix                                          |
+| `user_id`      | uuid        | The key's creator                                                   |
+| `actor`        | text        | `key:<api_key_id>`                                                  |
+| `role`         | text        | `admin` or `member`: the creator's role; verified staff are `admin` |
+| `status`       | text        | `active` or `suspended`; grad accepts only `active`                 |
+| `scopes`       | text[]      | `api_keys.scopes`                                                   |
+| `expires_at`   | timestamptz | Null for no expiry                                                  |
+
+Revoked, expired and hidden keys, and keys of non-customer organizations, have no row. `status` is `active` only while the organization is active, the workspace is not archived and the creator is an active member or verified staff, the same rules as the API's access checks. A removed member's keys therefore keep serving inference but stop working for training.
 
 ## Model catalog
 

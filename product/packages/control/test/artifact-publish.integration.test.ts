@@ -5,6 +5,7 @@ import {
   tasks,
   taskVersionPinReleases,
   taskVersions,
+  organizations,
   workspaces,
 } from "../src/db/schema/index.js";
 import { deleteArchivedTasks } from "../src/training/artifact-cleanup.js";
@@ -21,6 +22,8 @@ import type { GradArtifact, GradArtifacts } from "../src/training/grad.js";
 import type { AdapterQualifier } from "../src/training/qualification.js";
 import type { BaseModelConfiguration } from "../src/training/base-model-configuration.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
+import { createCatalogService } from "../src/catalog/service.js";
+import { modelInput } from "./support/fixtures.js";
 import { seedTrainingTask } from "./support/training.js";
 import { adapterFiles } from "./support/adapter-upload.js";
 import { cartridgeFile } from "./support/cartridge.js";
@@ -571,6 +574,67 @@ describe("publishing grad artifacts", () => {
         ),
       ).toEqual({ deleted: 1 });
       expect(pins.size).toBe(0);
+    });
+
+    it("keeps eval-only versions of different bases in the workspace's one eval model", async () => {
+      const { member, publisher, add } = await setup();
+      const evals = createEvalVersions(db.database, publisher);
+      await createCatalogService(db.database).upsertModel(
+        modelInput({ id: "Qwen/Qwen3-1.7B" }),
+      );
+      add(loraFiles());
+      const revision = "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e";
+      const { config, weights } = adapterFiles("Qwen/Qwen3-1.7B", 1);
+      add(
+        {
+          "adapter_config.json": Buffer.from(
+            JSON.stringify({ ...JSON.parse(config.toString()), revision }),
+          ),
+          "adapter_model.safetensors": weights,
+        },
+        { name: "other-base", base_model: "qwen/qwen3-1.7b" },
+        {
+          manifest: {
+            base_model: "qwen/qwen3-1.7b",
+            base_model_repo: "Qwen/Qwen3-1.7B",
+            base_model_revision: revision,
+          },
+        },
+      );
+
+      const first = await evals.publish(
+        member.workspaceId,
+        "fast-diff-merge@2026-11-26-1",
+      );
+      const second = await evals.publish(
+        member.workspaceId,
+        "other-base@2026-11-26-2",
+      );
+
+      expect(second.task.id).toBe(first.task.id);
+      expect([first.version.baseModelId, second.version.baseModelId]).toEqual([
+        "Qwen/Qwen3-0.6B",
+        "Qwen/Qwen3-1.7B",
+      ]);
+    });
+
+    it("refuses workspaces of organizations that are not customers", async () => {
+      const { member, publisher, add, grad } = await setup();
+      const evals = createEvalVersions(db.database, publisher);
+      add(loraFiles());
+      const [workspace] = await db.database
+        .select({ organizationId: workspaces.organizationId })
+        .from(workspaces)
+        .where(eq(workspaces.id, member.workspaceId));
+      await db.database
+        .update(organizations)
+        .set({ kind: "distribution_channel" })
+        .where(eq(organizations.id, workspace!.organizationId));
+
+      await expect(
+        evals.publish(member.workspaceId, "fast-diff-merge@2026-11-26-1"),
+      ).rejects.toMatchObject({ code: "not_found" });
+      expect(grad.pin).not.toHaveBeenCalled();
     });
   });
 });

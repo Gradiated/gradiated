@@ -35,6 +35,11 @@ pub enum GatewayError {
     },
     ModelNotFound,
     ModelUnavailable,
+    /// An eval request found its pool at zero and no replica arrived in time.
+    /// The model is the pool's, for its scale-from-zero signal; it is never sent.
+    CapacityUnavailable {
+        model: String,
+    },
     ServingStateUnavailable,
     RuntimeUnavailable,
     FinalizationUnavailable,
@@ -94,7 +99,8 @@ impl GatewayError {
             Self::ModelNotFound | Self::ModelUnavailable => StatusCode::NOT_FOUND,
             Self::ServingStateUnavailable
             | Self::RuntimeUnavailable
-            | Self::FinalizationUnavailable => StatusCode::SERVICE_UNAVAILABLE,
+            | Self::FinalizationUnavailable
+            | Self::CapacityUnavailable { .. } => StatusCode::SERVICE_UNAVAILABLE,
         }
     }
 
@@ -118,6 +124,7 @@ impl GatewayError {
             Self::CapacityExceeded { .. } => "capacity_exceeded",
             Self::ModelNotFound => "model_not_found",
             Self::ModelUnavailable => "model_unavailable",
+            Self::CapacityUnavailable { .. } => "capacity_unavailable",
             Self::ServingStateUnavailable => "serving_state_unavailable",
             Self::RuntimeUnavailable => "runtime_unavailable",
             Self::FinalizationUnavailable => "finalization_unavailable",
@@ -137,7 +144,8 @@ impl GatewayError {
             | Self::ProxyOverloaded
             | Self::ServingStateUnavailable
             | Self::RuntimeUnavailable
-            | Self::FinalizationUnavailable => "api_error",
+            | Self::FinalizationUnavailable
+            | Self::CapacityUnavailable { .. } => "api_error",
             Self::InvalidRequest { .. }
             | Self::UnsupportedParameter { .. }
             | Self::ContextLengthExceeded { .. }
@@ -176,6 +184,9 @@ impl GatewayError {
             Self::CapacityExceeded { .. } => "The model is temporarily at capacity.",
             Self::ModelNotFound => "The requested model was not found.",
             Self::ModelUnavailable => "The requested model is unavailable.",
+            Self::CapacityUnavailable { .. } => {
+                "No capacity for this model started in time. Retry later."
+            }
             Self::ServingStateUnavailable => "Required serving state is unavailable.",
             Self::RuntimeUnavailable => "The model runtime is unavailable.",
             Self::FinalizationUnavailable => "Generation finalization is unavailable.",
@@ -203,7 +214,8 @@ impl GatewayError {
             | Self::CapacityExceeded { .. }
             | Self::ServingStateUnavailable
             | Self::RuntimeUnavailable
-            | Self::FinalizationUnavailable => None,
+            | Self::FinalizationUnavailable
+            | Self::CapacityUnavailable { .. } => None,
         }
     }
 
@@ -211,6 +223,7 @@ impl GatewayError {
         match self {
             Self::ConcurrencyExceeded => Some(ADMISSION_RETRY_AFTER_SECONDS),
             Self::EvalLaneLimited => Some(SETTLEMENT_RETRY_AFTER_SECONDS),
+            Self::CapacityUnavailable { .. } => Some(MAX_RETRY_AFTER_SECONDS),
             Self::CapacityExceeded {
                 retry_after_seconds,
             } => Some(retry_after_seconds.unwrap_or(ADMISSION_RETRY_AFTER_SECONDS)),

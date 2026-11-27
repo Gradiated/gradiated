@@ -140,7 +140,7 @@ impl HostedRequest {
             .transpose()?
             .flatten();
         if local.is_none() && base.is_none() && external.is_none() {
-            return Err(no_capacity(&model, adapter.is_some()));
+            return Err(no_capacity(&model, adapter.is_some(), identity.lane));
         }
 
         let system_one = local
@@ -191,7 +191,7 @@ impl HostedRequest {
                     .all(|name| openrouter_supports_parameter(external.id(), name))
         });
         if local.is_none() && base.is_none() && external.is_none() {
-            return Err(no_capacity(&model, adapter.is_some()));
+            return Err(no_capacity(&model, adapter.is_some(), identity.lane));
         }
 
         let effective_output_tokens = effective_output_tokens(&request, output)?;
@@ -237,8 +237,12 @@ impl HostedRequest {
 
 /// Keeps the errors that predate external capacity; only a mapped model may have
 /// no deployments by design.
-fn no_capacity(model: &GatewayModel, adapter: bool) -> GatewayError {
-    if adapter {
+fn no_capacity(model: &GatewayModel, adapter: bool, lane: crate::auth::Lane) -> GatewayError {
+    if lane == crate::auth::Lane::Eval {
+        GatewayError::CapacityUnavailable {
+            model: model.id.clone(),
+        }
+    } else if adapter {
         GatewayError::ModelUnavailable
     } else if model.openrouter_model_id.is_some() && model.deployments.is_empty() {
         GatewayError::RuntimeUnavailable
@@ -272,6 +276,7 @@ pub struct RequestCoordinator {
     verification_workspace_id: Option<Uuid>,
     fallback_routes: Option<FallbackRoutes>,
     eval_tokens: crate::auth::EvalServiceTokens,
+    eval_cold_start_wait: std::time::Duration,
 }
 
 impl RequestCoordinator {
@@ -281,7 +286,18 @@ impl RequestCoordinator {
             verification_workspace_id: None,
             fallback_routes: (!cfg!(test)).then(FallbackRoutes::default),
             eval_tokens: crate::auth::EvalServiceTokens::default(),
+            eval_cold_start_wait: std::time::Duration::ZERO,
         }
+    }
+
+    /// How long an eval request waits for a pool at zero to start a replica.
+    pub fn with_eval_cold_start_wait(mut self, wait: std::time::Duration) -> Self {
+        self.eval_cold_start_wait = wait;
+        self
+    }
+
+    pub(crate) fn eval_cold_start_wait(&self) -> std::time::Duration {
+        self.eval_cold_start_wait
     }
 
     pub fn with_eval_service_tokens(mut self, tokens: crate::auth::EvalServiceTokens) -> Self {
@@ -672,7 +688,7 @@ impl RequestCoordinator {
                     && !deployment.release.sends_token_ids()
             });
             if model.deployments.is_empty() && base.is_none() {
-                return Err(GatewayError::ModelUnavailable);
+                return Err(no_capacity(&model, true, identity.lane));
             }
         }
 

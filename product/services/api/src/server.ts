@@ -30,6 +30,7 @@ import {
   createAdapterDownloads,
   createEvalVersions,
   createGradArtifacts,
+  ServingBasesSchema,
   createAdapterHostingService,
   createAdapterQualifier,
   createDeploymentStore,
@@ -265,6 +266,13 @@ const training = createTrainingService(
     ...(grad ? { grad } : {}),
     ...(gradBundles ? { bundles: gradBundles } : {}),
     uploadsClosed: environment.MODEL_UPLOADS_CLOSED,
+    ...(environment.GRAD_SERVING_BASES
+      ? {
+          servingBases: ServingBasesSchema.parse(
+            JSON.parse(environment.GRAD_SERVING_BASES),
+          ),
+        }
+      : {}),
   },
 );
 const pinReleases = grad

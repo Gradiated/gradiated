@@ -205,6 +205,8 @@ export {
 } from "./training/grad.js";
 export { ModelUploadsClosedError } from "./training/uploads.js";
 export {
+  ServingBasesSchema,
+  type ServingBases,
   PublishError,
   type ArtifactPublisher,
   type PublishErrorCode,

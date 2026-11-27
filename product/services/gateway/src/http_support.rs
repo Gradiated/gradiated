@@ -68,6 +68,32 @@ pub(super) fn router_for_with_verification(
     ))
 }
 
+pub(super) const EVAL_TOKEN: &str = "eval-service-token-0123456789abcdef";
+
+/// grad's eval workers, whose requests wait up to `wait` for a pool at zero.
+pub(super) fn router_for_eval(
+    serving_state: Arc<TestServingState>,
+    wait: std::time::Duration,
+) -> Router {
+    let test_config = GatewayConfig::for_tests();
+    let completions = CompletionService::new(
+        serving_state.clone(),
+        Arc::new(UnusedRuntime),
+        ModelTokenizer::new().unwrap(),
+        Arc::new(test_config.clone()),
+    );
+    let coordinator = RequestCoordinator::new(serving_state)
+        .with_eval_service_tokens(crate::auth::EvalServiceTokens::new([EVAL_TOKEN]))
+        .with_eval_cold_start_wait(wait);
+
+    router(GatewayState::new(
+        Arc::new(FixedReadiness(true)),
+        completions,
+        coordinator,
+        test_config.compliance(),
+    ))
+}
+
 pub(super) fn json_request(
     path: &str,
     headers: &[(&str, &str)],

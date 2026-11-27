@@ -213,7 +213,7 @@ grad eval --models qwen/qwen3-8b,sql-agent@latest --dataset gsm8k-200 --baseline
 
 ## Evaluate during training
 
-Every recipe evaluates on its held-out split as it trains, and `run.artifact` is the checkpoint with the best eval score. `eval_every` sets how often (`"auto"` evaluates at every checkpoint: every 10% of steps, and at least every 20 steps; or pass a number of optimizer steps):
+Every recipe evaluates on its held-out split as it trains, and `run.artifact` is the checkpoint with the best eval score. `eval_every` sets how often (`"auto"` evaluates every 25% of the run, at most every 20 steps; or pass a number of optimizer steps). Every eval step is also a checkpoint:
 
 ```python
 from grad import Grad

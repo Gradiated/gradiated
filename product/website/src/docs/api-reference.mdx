@@ -212,7 +212,7 @@ The SDKs retry 408, 429, 500, 502, 503 and 504 (honouring `Retry-After`) and rai
 
 | Error                       | Python                                  | TypeScript                              | Go                                            | Rust                                  |
 | --------------------------- | --------------------------------------- | --------------------------------------- | --------------------------------------------- | ------------------------------------- |
-| Base class                  | `GradAPIError` (`GradError`)            | `APIError` (`GradError`)                | `*grad.APIError`                              | `grad_sdk::Error::Api`                |
+| Base class                  | `GradAPIError` (`GradError`)            | `APIError` (`GradError`)                | `*grad.APIError`                              | `grad::Error::Api`                    |
 | 400                         | `BadRequestError`                       | `BadRequestError`                       | `*grad.BadRequestError`                       | `Error::Validation`                   |
 | 401                         | `AuthenticationError`                   | `AuthenticationError`                   | `*grad.AuthenticationError`                   | `Error::Authentication`               |
 | 403                         | `PermissionDeniedError`                 | `PermissionDeniedError`                 | `*grad.PermissionDeniedError`                 | `Error::PermissionDenied`             |

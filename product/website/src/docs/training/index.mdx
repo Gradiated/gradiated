@@ -131,51 +131,47 @@ Every workflow in `grad` follows the same loop, whether you are training a route
 
 ## Install and connect
 
-`grad` is open source under the MIT license. Its packages are published with the first release: `grad-sdk` on PyPI and crates.io, `@gradiated/grad` on npm, `github.com/Gradiated/grad/sdks/go` on the Go module proxy, and the `grad` CLI as `grad-cli`. Until then, install from a checkout:
-
-```bash
-git clone https://github.com/Gradiated/grad
-```
+`grad` is open source under the MIT license, at [github.com/Gradiated/grad](https://github.com/Gradiated/grad). Install the SDK for your language and the `grad` CLI:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```bash
-pip install ./grad/sdks/python
+pip install --pre grad-sdk
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="TypeScript">
 
 ```bash
-(cd grad/sdks/typescript && pnpm install && pnpm build)
-npm install ./grad/sdks/typescript
+npm install @gradiated/grad
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="Go">
 
 ```bash
-go mod edit -replace github.com/Gradiated/grad/sdks/go=./grad/sdks/go
-go get github.com/Gradiated/grad/sdks/go
+go get github.com/Gradiated/grad/sdks/go@v0.2.0-alpha.2
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="Rust">
 
 ```bash
-cargo add grad-sdk --path ./grad/sdks/rust
+cargo add grad-sdk@0.2.0-alpha.2
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="CLI">
 
 ```bash
-cargo install --locked --path ./grad/cli
+cargo install --locked grad-cli@0.2.0-alpha.2
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
+
+Until 0.2.0 is out the packages are prereleases, so pip needs `--pre` and Go and Cargo need the version. The Rust crate is published as `grad-sdk` and imported as `grad` (`use grad::Client;`). To try unreleased changes, install from the repository instead, for example `pip install "grad-sdk @ git+https://github.com/Gradiated/grad#subdirectory=sdks/python"` or `cargo install --locked --git https://github.com/Gradiated/grad grad-cli`.
 
 Then start a local stack (it needs Docker with the Compose plugin) and point the CLI and SDKs at it:
 
@@ -225,7 +221,7 @@ client := grad.NewClient(
   <DocsCodeTab label="Rust">
 
 ```rust
-let client = grad_sdk::Client::new()
+let client = grad::Client::new()
     .with_base_url(std::env::var("GRADIATED_BASE_URL")?)
     .with_api_key(std::env::var("GRADIATED_API_KEY")?);
 ```

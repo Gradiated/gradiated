@@ -139,7 +139,7 @@ Try the rules on a sample record. This runs the same masking rules as the server
 
 ## Checkpoints, resuming, and spend caps
 
-Managed recipe runs checkpoint automatically every 10% of steps (at least every 20 steps) or every 5 minutes, whichever comes first, including optimizer state, so losing a GPU costs a few minutes of training at most. Checkpoints are cheap: training pauses only to copy the adapter and optimizer state in memory, and the upload runs in the background. They evaluate on the held-out split at the step checkpoints (change it with `eval_every=`), and `run.artifact` is the best checkpoint by eval (`select="best"`: the lowest eval loss, or the highest score for recipes that report one; pass `select="last"` to keep the final one).
+Managed recipe runs checkpoint automatically every 10% of steps (at least every 20 steps) or every 5 minutes, whichever comes first, including optimizer state, so losing a GPU costs a few minutes of training at most. Checkpoints are cheap: training pauses only to copy the adapter and optimizer state in memory, and the upload runs in the background. They evaluate on the held-out split every 25% of the run, at most every 20 steps, because an eval costs far more than a checkpoint (change it with `eval_every=`), and `run.artifact` is the best checkpoint by eval (`select="best"`: the lowest eval loss, or the highest score for recipes that report one; pass `select="last"` to keep the final one).
 
 - **What's kept:** the best checkpoint (the one that becomes `run.artifact` with `select="best"`) and the final checkpoint never expire, and both download as PEFT weights with no conversion step. While a run trains it keeps its last 3 checkpoints plus its best one, and those intermediate checkpoints are kept for 30 days unless you promote one with `ckpt.promote(name=...)`. Change the default with `checkpoint_ttl_days=` on the recipe.
 - **What each checkpoint records:** base model and revision, adapter config, chat template revision, `thinking` and `train_on`, the resolved `lr`, the resolved `loss` with its rule version, and the step. Evaluations and deploys read these, so you never pass them again.
@@ -197,6 +197,98 @@ In a terminal, `grad train --wait` and `grad runs watch RUN` open a full-screen 
 
 <DocsRunReplay />
 
+### Phases and events
+
+Every run reports what it is doing as a **phase**: `queued`, `waiting_for_compute` (no worker has picked it up yet), `starting` (a worker claimed it; the event names its GPU model and memory), `loading_model`, then `training`, `evaluating` and `checkpointing` as they alternate, `uploading` and `completing`. `run.phase` and `run.phase_since` hold the current one. While a run waits for compute, `run.workers_online` counts the workers that could take it, and on Gradiated Cloud `run.autoscaling` is true while new workers start.
+
+`run.wait()` shows this for you: a live progress line in a terminal (phase, step, loss, cost and ETA), a small display that updates itself in Jupyter, and nothing in scripts, CI or logs. Pass `progress=False` to turn it off, or `GRAD_NO_PROGRESS=1`. `grad train --wait` prints the same lines (or the full-screen view in a terminal), for example `Waiting for a GPU (0 workers online) — 2m 10s`.
+
+For your own display or alerting, read the typed events. Each has a stable `type` (`phase`, `metric`, `checkpoint`, `attempt`, `warning`, `log`, and `completed` last), and the stream reconnects on its own after a dropped connection without repeating events:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import AttemptEvent, CheckpointEvent, Grad, PhaseEvent
+
+client = Grad()
+run = client.runs.list(limit=1).to_list()[0]
+
+for event in run.events(follow=True):
+    if isinstance(event, PhaseEvent):
+        print(event.phase, event.step)
+    elif isinstance(event, AttemptEvent):
+        print(event.message)
+    elif isinstance(event, CheckpointEvent):
+        print("checkpoint at step", event.step, event.eval_score)
+
+# Or let wait() call you for each event while it waits
+run.wait(on_event=lambda e: print(e.type, e.seq), progress=False, raise_on_failure=False)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+for await (const event of grad.runs.events(run.id, { follow: true })) {
+  if (event.type === "phase") console.log(event.phase, event.step);
+  if (event.type === "attempt") console.log(event.message);
+}
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+for ev, err := range client.Runs.Events(ctx, run.ID, grad.EventsOptions{Follow: true}) {
+	if err != nil {
+		return err
+	}
+	if ev.Type == grad.EventAttempt {
+		fmt.Println(*ev.Message)
+	}
+}
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Rust">
+
+```rust
+let mut events = client.runs().events(&run.id, true);
+while let Some(ev) = events.next().await {
+    if let RunEvent::Attempt(a) = ev? {
+        println!("{}", a.message);
+    }
+}
+// events.into_stream() gives a futures Stream for StreamExt combinators.
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad runs events support-sft --follow
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+The same events are served at `GET /v1/runs/{id}/events`, as JSON pages or as server-sent events (send `Accept: text/event-stream`; `Last-Event-ID` resumes). Ignore event types you don't know, so newer servers don't break your code.
+
+### Interruptions and automatic resume
+
+A run's worker can go away mid-run: the GPU is reclaimed, the machine crashes, or the network drops. The run then goes back to the queue and resumes from its latest checkpoint on a new worker, with no action from you, and you see it as an `attempt` event and in `run.last_interruption`:
+
+```
+⚠ attempt 1 interrupted at step 120: the GPU was reclaimed; resuming from step 120 on a new worker
+```
+
+- **When the GPU is reclaimed**, the worker gets a few seconds of notice. If the next step and a checkpoint fit in that time, it saves a checkpoint at the current step first, so the new worker resumes exactly there; otherwise it resumes from the previous checkpoint. These interruptions don't count toward the run's attempt limit, so a run survives many of them in a row.
+- **When a worker is lost** (it stops responding) or hits an error, the run resumes from its latest checkpoint and the attempt counts toward `max_attempts`; once that many attempts end without a result, the run fails with the last error. Running out of GPU memory is retried the same way.
+- **Billing stays exact:** you pay for the tokens each attempt processed. Steps before the checkpoint a run resumes from aren't billed again; steps replayed after it are, and a checkpoint at the current step means none are replayed.
+
+`run.attempt` counts every start, so it can be higher than `run.max_attempts` after reclaimed GPUs.
+
 ### Experiment tracking (W&B and MLflow)
 
 Attach a logger to stream the run's metrics (loss, learning rate, eval metrics, tokens and cost) to Weights & Biases or MLflow. Store the tracker key once as a workspace secret; the trainer reads it when the run starts, and the key never appears on the run:
@@ -223,7 +315,7 @@ run = client.runs.create(
 
 In a run file for `grad train -f`, the same trackers go under `loggers:` (for example `- {kind: wandb, project: support-sft, secret: wandb-key}`, or `kind: mlflow` with `tracking_uri`). TypeScript uses `loggers.wandb({ project, secret })` and Go `grad.WandB(project, secret, entity)`.
 
-A misconfigured or unreachable tracker never blocks a run: the dry run warns about a secret it can't find, and a tracker that errors during training is dropped and reported once as a run warning. The secret must allow the tracker's host (`grad secrets set wandb-key --allowed-host api.wandb.ai`; W&B's public host is allowed by default). Self-hosted workers reach the tracker from their own network, so open egress to it.
+A misconfigured or unreachable tracker never blocks a run: the dry run warns about a secret it can't find, and a tracker that errors during training is dropped and reported once as a run warning. The secret must allow the tracker's host (`grad secrets set wandb-key --allowed-host api.wandb.ai`; W&B's public host is allowed by default). Self-hosted workers reach the tracker from their own network and, like source syncs, only public `https` hosts; for an MLflow server on a private address, set `GRAD_SOURCES_EGRESS_ALLOW` to its CIDR on the train workers (Helm: `workers.train.env`).
 
 ## Troubleshooting common failure modes
 

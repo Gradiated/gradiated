@@ -6,7 +6,11 @@ import {
   taskVersionPinReleases,
   taskVersions,
 } from "../src/db/schema/index.js";
-import { createArtifactPublisher } from "../src/training/publish.js";
+import {
+  createArtifactPublisher,
+  servingBase,
+  type ServingBases,
+} from "../src/training/publish.js";
 import { createTrainingStore } from "../src/training/store.js";
 import type { GradArtifact, GradArtifacts } from "../src/training/grad.js";
 import type { AdapterQualifier } from "../src/training/qualification.js";
@@ -39,7 +43,8 @@ describe("publishing grad artifacts", () => {
 
   const setup = async ({
     qualify = vi.fn<AdapterQualifier>(async () => undefined),
-  }: { qualify?: AdapterQualifier } = {}) => {
+    servingBases = {},
+  }: { qualify?: AdapterQualifier; servingBases?: ServingBases } = {}) => {
     const member = await seedTrainingTask(db.database, "Qwen/Qwen3-0.6B");
     const objects = new Map<string, Buffer>();
     const artifacts = new Map<string, GradArtifact>();
@@ -85,6 +90,7 @@ describe("publishing grad artifacts", () => {
       bundles,
       qualifyAdapter: qualify,
       loadBaseConfiguration,
+      servingBases,
     });
     const add = (
       files: Record<string, Buffer>,
@@ -171,6 +177,63 @@ describe("publishing grad artifacts", () => {
     );
 
     expect(version.adapter.artifact_uri).toBe(`s3://grad-test/${key}`);
+  });
+
+  it("maps grad's base model IDs to serving bases by catalog, or by configuration", async () => {
+    const manifest = (base_model: string, repo: string, revision: string) =>
+      ({
+        base_model,
+        base_model_repo: repo,
+        base_model_revision: revision,
+      }) as Parameters<typeof servingBase>[0];
+
+    expect(
+      servingBase(
+        manifest(
+          "qwen/qwen3-8b",
+          "Qwen/Qwen3-8B",
+          "b968826d9c46dd6066d109eabc6255188de91218",
+        ),
+      ),
+    ).toEqual({
+      modelId: "Qwen/Qwen3-8B",
+      repository: "Qwen/Qwen3-8B",
+      revision: "b968826d9c46dd6066d109eabc6255188de91218",
+    });
+
+    const pinned = "e".repeat(40);
+    const { member, publisher, add } = await setup({
+      servingBases: {
+        "qwen/qwen3-0.6b": {
+          model_id: "Qwen/Qwen3-0.6B",
+          repository: QWEN_REPO,
+          revision: pinned,
+        },
+      },
+    });
+    const files = {
+      "adapter_config.json": Buffer.from(
+        JSON.stringify({
+          ...JSON.parse(loraFiles()["adapter_config.json"].toString()),
+          revision: pinned,
+        }),
+      ),
+      "adapter_model.safetensors": loraFiles()["adapter_model.safetensors"],
+    };
+    const artifact = add(
+      files,
+      {},
+      { manifest: { base_model_revision: pinned } },
+    );
+
+    const { version } = await publisher.publish(
+      member.userId,
+      member.workspaceId,
+      { artifact: artifact.id },
+    );
+    expect(version.adapter).toMatchObject({
+      validated_base_model_revision: pinned,
+    });
   });
 
   it("publishes into a named model and keeps an unqualified version unavailable", async () => {

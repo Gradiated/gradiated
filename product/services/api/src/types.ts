@@ -45,6 +45,8 @@ export interface AuthService {
   handler(request: Request): Promise<Response>;
   authorizationServerMetadata(request: Request): Promise<Response>;
   resolveSession(headers: Headers): Promise<SessionUser | null>;
+  // Set once the Better Auth jwt() plugin is configured; grad calls need it.
+  signJwt?: import("./auth/service-tokens.js").SignJwt;
 }
 
 export interface ApiServices {

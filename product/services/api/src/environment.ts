@@ -27,8 +27,6 @@ const ApiOnlyEnvironmentSchema = z.object({
   GRAD_ARTIFACTS_BUCKET: z.string().min(1).optional(),
   // grad-server's internal listener, such as http://grad-internal.training.svc:8789.
   GRAD_SERVER_URL: z.url().optional(),
-  // Interim bearer for grad calls until service JWTs (sub = service:inference) replace it.
-  GRAD_SERVICE_TOKEN: OptionalSecret,
   CONTENTS_BUCKET: z.string().min(1).optional(),
   METRICS_PORT: PortSchema.default(9_464),
   MCP_RESOURCE_URL: z.url().default("https://mcp.gradiated.com/mcp"),

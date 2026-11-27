@@ -80,6 +80,7 @@ import {
 import { parseApiEnvironment } from "./environment.js";
 import { createProfilingIngestApp } from "./ingest/profiling.js";
 import { serviceLog } from "./logging.js";
+import { createServiceTokens } from "./auth/service-tokens.js";
 import { ApiMetrics, startApiMetricsServer } from "./metrics.js";
 import { createReadinessCheck } from "./readiness.js";
 
@@ -218,12 +219,11 @@ const artifactStorage = environment.TRAINING_ARTIFACTS_BUCKET
 const gradBundles = environment.GRAD_ARTIFACTS_BUCKET
   ? new ObjectStorage(environment.GRAD_ARTIFACTS_BUCKET)
   : undefined;
-const gradServiceToken = environment.GRAD_SERVICE_TOKEN;
 const grad =
-  environment.GRAD_SERVER_URL && gradServiceToken
+  environment.GRAD_SERVER_URL && auth.signJwt
     ? createGradArtifacts({
         baseUrl: environment.GRAD_SERVER_URL,
-        authorization: async () => gradServiceToken,
+        authorization: createServiceTokens(auth.signJwt),
       })
     : undefined;
 const adapterDownloads = createAdapterDownloads(artifactStorage, gradBundles);

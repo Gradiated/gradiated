@@ -1,0 +1,163 @@
+# CLI reference
+
+<DocsLead>
+  Every `grad` command, its main flags, and how the CLI finds its server and
+  key.
+</DocsLead>
+
+`grad` is one static binary. Install it from the [install section](/docs/training/#install-and-connect). Every command takes `--help` with examples; this page is the map.
+
+## Configuration
+
+Highest precedence first:
+
+1. `--api-key` and `--base-url` flags (flags are visible in `ps`, so prefer the others).
+2. `--profile NAME` or `GRADIATED_PROFILE`: a profile saved by `grad login` (or the `local` profile `grad local up` writes).
+3. `GRADIATED_API_KEY` and `GRADIATED_BASE_URL`.
+4. The `default` profile in `$XDG_CONFIG_HOME/gradiated/config.json` (`~/.config/gradiated/config.json`, mode `0600`).
+5. `https://api.gradiated.com`.
+
+| Command                     | What it does                                                                                                                         |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `grad login`                | Save an API key for this machine, checked against the server. `--api-key-stdin` reads it from a pipe; `--no-verify` skips the check. |
+| `grad logout`               | Remove the saved key of the current profile.                                                                                         |
+| `grad config show` / `path` | Print the resolved base URL, key source (masked) and profile, or the config file path.                                               |
+
+## Output and exit codes
+
+`--json` on any command prints one envelope on stdout, `{"ok": true, "data": ...}`, or `{"ok": false, "error": {"code", "message", "exit_code", "status", "request_id"}}` on stderr. Run `--dry-run --json` in agent loops to check a run before it costs anything.
+
+| Code  | Meaning                                                                                        |
+| ----- | ---------------------------------------------------------------------------------------------- |
+| `0`   | Success.                                                                                       |
+| `1`   | Error: network, server, timeout, checksum or local I/O.                                        |
+| `2`   | Usage error: bad flags or arguments, an invalid local file, bad config.                        |
+| `3`   | Authentication or permission error (401/403).                                                  |
+| `4`   | Not found (404).                                                                               |
+| `5`   | Conflict or validation error (409/422).                                                        |
+| `6`   | Capability unavailable on this server (`deploy_unavailable`, `inference_unavailable`).         |
+| `7`   | A run, eval or import finished unsuccessfully (failed, cancelled; runs also `stopped_budget`). |
+| `130` | Interrupted (Ctrl-C). A started run keeps going on the server.                                 |
+
+## Data
+
+| Command                                       | What it does and its main flags                                                                                                                                                   |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `grad models list`                            | The server's trainable catalog. `--recipe` keeps models that support a recipe.                                                                                                    |
+| `grad datasets list` / `get NAME`             | List datasets or show one.                                                                                                                                                        |
+| `grad datasets create NAME`                   | Create an empty dataset.                                                                                                                                                          |
+| `grad datasets push NAME FILE`                | Push a JSONL file of records in batches (`--batch-size`, default 1000); each batch appends a version.                                                                             |
+| `grad import FILE --dataset NAME`             | Upload a trace export (JSONL, JSON or Parquet) and import it. `--format` (`auto`, `jsonl`, `json`, `parquet` or a parser such as `otel`, `langfuse`), `--connector`, `--no-wait`. |
+| `grad datasets import hf REPO`                | Import a Hugging Face dataset: `--split`, `--config`, `--revision`, `--limit`, `--column FIELD=COLUMN` (repeatable), `--secret NAME` for gated datasets, `--name`.                |
+| `grad datasets import benchmark NAME`         | Import `gsm8k`, `mmlu`, `mmlu_pro` or `arc_challenge` at a pinned revision (`--limit`, `--name`).                                                                                 |
+| `grad datasets records NAME`                  | Print merged records (`--version`, `--limit`, `--cursor`).                                                                                                                        |
+| `grad datasets score NAME --rubric FILE`      | Score each record's own answer with a YAML/JSON rubric; billed like an eval, and the scores become the next version. `--version`, `--limit`, `--wait`.                            |
+| `grad datasets filter NAME`                   | Save a filtered view: `--score NAME>=VALUE` (repeatable), `--metadata KEY=VALUE`, `--created-after`, `--created-before`, `--ids`, `--version`, `--view`.                          |
+| `grad imports list` / `status ID` / `wait ID` | Inspect import jobs.                                                                                                                                                              |
+| `grad render NAME`                            | Preview the chat template and loss mask: `--model`, `--train-on last\|all_assistant`, `--thinking auto\|on\|off`, `--limit` (1–20).                                               |
+
+## Sources and secrets
+
+| Command                                    | What it does and its main flags                                                                                                                                                                                                          |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `grad secrets set NAME`                    | Create or replace a write-only workspace secret; the value is read from stdin.                                                                                                                                                           |
+| `grad secrets list` / `delete NAME`        | List secret names, or delete one (refused while a source uses it).                                                                                                                                                                       |
+| `grad sources add PROVIDER --dataset NAME` | Connect `langfuse`, `langsmith`, `braintrust`, `posthog`, `phoenix` or `gradiated` to a dataset: `--host`, `--secret NAME`, `--project` (required for Braintrust and PostHog), `--schedule CRON` (five-field UTC), `--filter KEY=VALUE`. |
+| `grad sources list`                        | Sources with their schedule, status (`active` or `paused`), last sync and last error (`--dataset`).                                                                                                                                      |
+| `grad sources sync ID`                     | Sync now (`--full` rebuilds the dataset as a new version, `--wait`). Returns the running sync if there is one, and resumes a paused source.                                                                                              |
+| `grad sources remove ID`                   | Disconnect a source. Its dataset and versions stay.                                                                                                                                                                                      |
+
+## Training
+
+| Command                        | What it does and its main flags                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `grad train`                   | Plan (`--dry-run`, $0) or start a run. `--dataset`, `--name`, `--recipe` (`sft`, `dpo`, `router`, `decision-model`, `cartridge`, `embedding`, `distill`, `reward-model`), `--model`, `--max-cost-usd`, `--wait`, or `-f run.yaml`.                                                                                                                                                                                           |
+| `grad train` recipe flags      | `--lr`, `--lr-scale`, `--epochs`, `--batch-size`, `--adapter-rank`, `--train-on`, `--thinking`, `--split by_session\|by_group\|random`, `--eval-fraction`; router `--models`, `--max-quality-drop`; DPO `--beta`; distill `--teacher`, `--rollout on-policy\|off-policy`, `--max-new-tokens`, `--context-file`; cartridge `--context-file`, `--num-tokens`, `--teacher`; reward `--score`. Anything else: `--set KEY=VALUE`. |
+| `grad runs list`               | Runs, newest first.                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `grad runs inspect RUN`        | Show a run. `--yaml` prints a config that `grad train -f` re-runs.                                                                                                                                                                                                                                                                                                                                                           |
+| `grad runs logs RUN`           | Step metrics; `--follow` streams them until the run ends, `--after-step N` skips earlier steps.                                                                                                                                                                                                                                                                                                                              |
+| `grad runs wait RUN`           | Wait for a run to finish (`--timeout`, default 24 hours).                                                                                                                                                                                                                                                                                                                                                                    |
+| `grad runs cancel RUN`         | Cancel a run. A running attempt is stopped and billed.                                                                                                                                                                                                                                                                                                                                                                       |
+| `grad runs resume RUN`         | Resume a stopped, failed or cancelled run from its latest checkpoint. `--max-cost-usd` is required for a `stopped_budget` run; `--wait`.                                                                                                                                                                                                                                                                                     |
+| `grad runs checkpoints RUN`    | List checkpoints with step, score, best and expiry.                                                                                                                                                                                                                                                                                                                                                                          |
+| `grad runs promote CHECKPOINT` | Copy a checkpoint into a new artifact (`--name`).                                                                                                                                                                                                                                                                                                                                                                            |
+
+`RUN` is a run id or a run name. `grad train`, `grad eval`, `grad datasets score` and `grad sources add` take `--idempotency-key KEY`, so a retried command returns what the first one created.
+
+## Evaluations
+
+| Command                                       | What it does and its main flags                                                                                                                                                                                                |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `grad eval --models A,B --dataset NAME`       | Evaluate models (catalog ids or `NAME@VERSION` artifacts) on a dataset. `--rubric FILE` (YAML/JSON), `--baseline`, `--samples`, `--temperature`, `--max-tokens`, `--limit`, `--pass-threshold`, `--dataset-version`, `--wait`. |
+| `grad eval plan ...` or `grad eval --dry-run` | Estimate tasks, model and judge calls, and cost.                                                                                                                                                                               |
+| `grad eval list` / `status ID` / `wait ID`    | Inspect evals.                                                                                                                                                                                                                 |
+| `grad eval results ID`                        | Per-task results (`--model`).                                                                                                                                                                                                  |
+| `grad eval failures ID`                       | Failing tasks for mining into a new dataset (`--model`, `--threshold`).                                                                                                                                                        |
+| `grad eval cancel ID`                         | Cancel a queued or running eval.                                                                                                                                                                                               |
+
+## Artifacts and deployments
+
+| Command                       | What it does and its main flags                                                                                                                                  |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `grad artifacts list`         | Artifacts, newest first (`--name`).                                                                                                                              |
+| `grad artifacts inspect REF`  | Show an artifact by id, `NAME@VERSION` or `NAME@latest`.                                                                                                         |
+| `grad artifacts download REF` | Download, verify (SHA-256) and extract into a PEFT directory: `-o DIR`, `--archive FILE` to keep the `.grad.tar.gz`, `--force` to replace an existing directory. |
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  `grad deploy` and `grad deployments` need hosted serving, which isn't live
+  yet. Today they exit `6`; serve the downloaded artifact on vLLM or SGLang
+  instead ([Serve it yourself](/docs/training/deploying/#serve-it-yourself)).
+</DocsCallout>
+
+| Command                          | What it does and its main flags                                                                                           |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `grad deploy REF`                | Deploy an artifact under a stable model name: `--name`, `--fallback` and `--explore-rate` (routers), `--idempotency-key`. |
+| `grad deployments list`          | List deployments.                                                                                                         |
+| `grad deployments status NAME`   | Show a deployment.                                                                                                        |
+| `grad deployments rollback NAME` | Roll back to the previous artifact.                                                                                       |
+
+## Workspace
+
+| Command                                  | What it does                                                                                                |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `grad keys create --name N --scopes A,B` | Create a scoped key; the secret is printed once. See [API key scopes](/docs/api-reference/#api-key-scopes). |
+| `grad keys list` / `revoke ID`           | List or revoke keys.                                                                                        |
+| `grad usage`                             | Billed usage: one row per billed increment of a run or eval attempt.                                        |
+
+List commands take `--limit` and `--cursor`.
+
+## Local stack
+
+`grad local` runs Postgres, `grad-server` and a trainer worker with Docker Compose on `127.0.0.1`. See [Self-hosting](/docs/training/self-hosting/#local-development-docker-compose).
+
+| Command                     | What it does and its main flags                                                                                                                           |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `grad local up`             | Start the stack and write the `local` profile. `--gpu` adds the CUDA worker, `--build` builds images from a checkout, `--port`, `--no-wait`, `--timeout`. |
+| `grad local status`         | Container status and API health.                                                                                                                          |
+| `grad local logs [SERVICE]` | Logs of `grad-server`, `grad-trainer` or `postgres` (`--follow`, `--tail`).                                                                               |
+| `grad local down`           | Stop the stack and keep its data (`-v`/`--volumes` deletes it).                                                                                           |
+| `grad local reset`          | Delete the local data and keys (`-y` skips the prompt).                                                                                                   |
+
+Every `grad local` command takes `-f`/`--file` (repeatable) for your own compose files and `--project-name`.
+
+## Environment variables
+
+| Variable                                    | Used for                                                                |
+| ------------------------------------------- | ----------------------------------------------------------------------- |
+| `GRADIATED_API_KEY`, `GRADIATED_BASE_URL`   | The key and server, below flags and profiles.                           |
+| `GRADIATED_PROFILE`                         | The profile to use (same as `--profile`).                               |
+| `XDG_CONFIG_HOME`                           | Where the config file lives (`$XDG_CONFIG_HOME/gradiated/config.json`). |
+| `GRAD_PORT`                                 | `grad local` API port (default `8787`).                                 |
+| `GRAD_COMPOSE_FILE`, `COMPOSE_PROJECT_NAME` | `grad local` compose files (`:`-separated) and project name.            |
+| `GRAD_DOCKER`                               | The Docker binary `grad local` runs (default `docker`).                 |
+
+<DocsNext>
+  <a href="/docs/api-reference/">
+    <small>HTTP</small>
+    <strong>API reference</strong>
+  </a>
+  <a href="/docs/reference/training-parameters/">
+    <small>Settings</small>
+    <strong>Training parameters</strong>
+  </a>
+</DocsNext>

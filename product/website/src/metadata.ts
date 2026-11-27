@@ -211,7 +211,7 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/docs/training/environments/": {
     title: "Environments",
     description:
-      "Run your agent against your own tools, databases, Harbor tasks, or Docker containers during reinforcement learning.",
+      "Coming soon: run your agent against your own tools, databases, Harbor tasks, or Docker containers during reinforcement learning.",
   },
   "/docs/training/evaluations/": {
     title: "Evaluations",
@@ -236,12 +236,12 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/docs/training/custom-loops/": {
     title: "Custom training loops",
     description:
-      "Write your own Python training loop on Gradiated Trainer and Artifact when a built-in recipe isn't flexible enough.",
+      "Coming soon: write your own Python training loop on Gradiated Trainer and Artifact when a built-in recipe isn't flexible enough.",
   },
   "/docs/training/advanced-objectives/": {
     title: "Advanced objectives",
     description:
-      "Custom PyTorch losses and specialized training patterns built on Trainer and CustomLoss.",
+      "Coming soon: custom PyTorch losses and specialized training patterns built on Trainer and CustomLoss.",
   },
   "/docs/training/tuning-troubleshooting/": {
     title: "Tuning & troubleshooting",
@@ -276,12 +276,12 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/docs/training/recipes/rl-agents/": {
     title: "RL for agents guide",
     description:
-      "Train a model with reinforcement learning by grading its answers with code or another model.",
+      "Coming soon: train a model with reinforcement learning by grading its answers with code or another model.",
   },
   "/docs/training/recipes/traces-to-environments/": {
     title: "Traces to environments guide",
     description:
-      "Turn existing production logs into an RL environment, starting simple and adding containers only when you need them.",
+      "Coming soon: turn existing production logs into an RL environment, starting simple and adding containers only when you need them.",
   },
   "/docs/training/recipes/distillation/": {
     title: "Model distillation guide",
@@ -347,6 +347,11 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     title: "Training parameters reference",
     description:
       'Every training setting, its default, and how the "auto" defaults are chosen. You rarely need to set any of them.',
+  },
+  "/docs/reference/cli/": {
+    title: "CLI reference",
+    description:
+      "Every grad command and its main flags, configuration precedence, the --json envelope and exit codes.",
   },
   "/privacy/": {
     title: "Privacy",

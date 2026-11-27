@@ -41,6 +41,7 @@ import DocsModelsPricing from "../docs/models-pricing.mdx";
 import DocsOpenAiSdk from "../docs/openai-sdk.mdx";
 import DocsOpenCode from "../docs/opencode.mdx";
 import DocsQuickstart from "../docs/quickstart.mdx";
+import DocsCliReference from "../docs/reference/cli.mdx";
 import DocsPrimitivesReference from "../docs/reference/primitives.mdx";
 import DocsTrainingParametersReference from "../docs/reference/training-parameters.mdx";
 import DocsServiceTiers from "../docs/service-tiers.mdx";
@@ -158,7 +159,7 @@ export const documents = {
     Component: DocsTrainingRubrics,
   },
   "training-environments": {
-    title: "Environments",
+    title: "Environments (soon)",
     path: "/docs/training/environments/",
     Component: DocsTrainingEnvironments,
   },
@@ -183,12 +184,12 @@ export const documents = {
     Component: DocsTrainingModels,
   },
   "training-custom-loops": {
-    title: "Custom loops",
+    title: "Custom loops (soon)",
     path: "/docs/training/custom-loops/",
     Component: DocsTrainingCustomLoops,
   },
   "training-advanced-objectives": {
-    title: "Advanced objectives",
+    title: "Advanced objectives (soon)",
     path: "/docs/training/advanced-objectives/",
     Component: DocsTrainingAdvancedObjectives,
   },
@@ -223,12 +224,12 @@ export const documents = {
     Component: DocsRecipeDpo,
   },
   "recipe-rl-agents": {
-    title: "RL for agents",
+    title: "RL for agents (soon)",
     path: "/docs/training/recipes/rl-agents/",
     Component: DocsRecipeRlAgents,
   },
   "recipe-traces-to-environments": {
-    title: "Traces to environments",
+    title: "Traces to environments (soon)",
     path: "/docs/training/recipes/traces-to-environments/",
     Component: DocsRecipeTracesToEnvironments,
   },
@@ -296,6 +297,11 @@ export const documents = {
     title: "Training parameters",
     path: "/docs/reference/training-parameters/",
     Component: DocsTrainingParametersReference,
+  },
+  "cli-reference": {
+    title: "CLI reference",
+    path: "/docs/reference/cli/",
+    Component: DocsCliReference,
   },
 } satisfies Record<string, DocsDocument>;
 
@@ -372,6 +378,7 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
       "api-reference",
       "primitives-reference",
       "training-parameters-reference",
+      "cli-reference",
     ],
   },
 ];

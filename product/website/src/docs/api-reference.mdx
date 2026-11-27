@@ -26,30 +26,39 @@ See the [SystemOne SDK guide](/docs/systemone-sdk/) for linden-1 examples and su
 
 ## Training API
 
-The training API (`grad-server`) is the same on Gradiated Cloud, `grad local up` and the Helm chart. Its contract is `spec/openapi.yaml`; the Python, TypeScript, Go and Rust SDKs and the CLI are generated from it. Self-hosted servers default to `http://localhost:8787`.
+The training API (`grad-server`) is the same everywhere it runs: `grad local up`, the Helm chart and, soon, Gradiated Cloud. Its contract is `spec/openapi.yaml`, and the Python, TypeScript, Go and Rust SDK transports are generated from it. A self-hosted server listens on `http://localhost:8787` by default and serves the live spec at `/openapi.json`.
 
-### Models and keys
+<DocsCallout label="Coming soon on Gradiated Cloud">`api.gradiated.com` doesn't serve the training API yet. Run it yourself with `grad local up` or the Helm chart; see [Self-hosting](/docs/training/self-hosting/).</DocsCallout>
 
-| Method   | Path            | Purpose                                                                |
-| -------- | --------------- | ---------------------------------------------------------------------- |
-| `GET`    | `/v1/models`    | List trainable base models, with prices and calibrated learning rates. |
-| `POST`   | `/v1/keys`      | Create a scoped workspace API key. The secret is returned once.        |
-| `GET`    | `/v1/keys`      | List workspace API keys.                                               |
-| `DELETE` | `/v1/keys/{id}` | Revoke a key.                                                          |
+Every `/v1/*` call needs `Authorization: Bearer <key>`. `GET /health/live` and `GET /health/ready` (database reachable) need no key.
+
+### Models, keys and usage
+
+| Method   | Path              | Scope       | Purpose                                                                                                  |
+| -------- | ----------------- | ----------- | -------------------------------------------------------------------------------------------------------- |
+| `GET`    | `/v1/base-models` | any key     | List trainable base models with their adapters, recipes, prices and calibrated learning rates.           |
+| `POST`   | `/v1/keys`        | `admin`     | Create a scoped workspace API key. The secret is returned once.                                          |
+| `GET`    | `/v1/keys`        | `admin`     | List workspace API keys.                                                                                 |
+| `DELETE` | `/v1/keys/{id}`   | `admin`     | Revoke a key.                                                                                            |
+| `GET`    | `/v1/usage`       | `runs:read` | Billed usage, newest first: one row per billed increment of a run or eval attempt (see [Usage](#usage)). |
 
 ### Datasets and imports
 
-| Method | Path                               | Purpose                                                                       |
-| ------ | ---------------------------------- | ----------------------------------------------------------------------------- |
-| `GET`  | `/v1/datasets`                     | List datasets, newest first.                                                  |
-| `POST` | `/v1/datasets`                     | Create an empty dataset.                                                      |
-| `GET`  | `/v1/datasets/{name}`              | Get a dataset.                                                                |
-| `POST` | `/v1/datasets/{name}/records`      | Append records as a new dataset version (creates the dataset if needed).      |
-| `GET`  | `/v1/datasets/{name}/records`      | Read the records of a dataset version.                                        |
-| `POST` | `/v1/datasets/{name}/render`       | Preview chat-template rendering and loss masks (estimated token counts).      |
-| `POST` | `/v1/uploads`                      | Get an upload URL for a trace file. `PUT` the bytes, then create an import.   |
-| `POST` | `/v1/datasets/{name}/imports`      | Import an uploaded file or a Hugging Face dataset into a dataset (async job). |
-| `GET`  | `/v1/imports` / `/v1/imports/{id}` | List import jobs or get one.                                                  |
+| Method | Path                               | Purpose                                                                                                                                             |
+| ------ | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/v1/datasets`                     | List datasets, newest first.                                                                                                                        |
+| `POST` | `/v1/datasets`                     | Create an empty dataset.                                                                                                                            |
+| `GET`  | `/v1/datasets/{name}`              | Get a dataset.                                                                                                                                      |
+| `POST` | `/v1/datasets/{name}/records`      | Append records as a new dataset version (creates the dataset if needed).                                                                            |
+| `GET`  | `/v1/datasets/{name}/records`      | Read the merged records of a dataset version (one per `id`, latest scores applied).                                                                 |
+| `POST` | `/v1/datasets/{name}/score`        | Score each record's own answer with a rubric `{rubric, version?, name?, limit?}`. An eval with `mode: "score"`; the scores become the next version. |
+| `POST` | `/v1/datasets/{name}/filter`       | Save a filtered view `{scores?, metadata?, created_after?, created_before?, ids?, version?, name?}` as a derived dataset.                           |
+| `POST` | `/v1/datasets/{name}/render`       | Preview chat-template rendering and loss masks (estimated token counts).                                                                            |
+| `POST` | `/v1/uploads`                      | Get an upload URL for a trace file. `PUT` the bytes, then create an import.                                                                         |
+| `POST` | `/v1/datasets/{name}/imports`      | Import an uploaded file, a Hugging Face dataset or a built-in benchmark into a dataset (async job).                                                 |
+| `GET`  | `/v1/imports` / `/v1/imports/{id}` | List import jobs or get one.                                                                                                                        |
+
+Dataset reads need `datasets:read`, writes `datasets:write`. Scoring also needs `runs:write`, because it's a billed eval.
 
 ### Secrets and sources
 
@@ -60,11 +69,11 @@ The training API (`grad-server`) is the same on Gradiated Cloud, `grad local up`
 | `GET`    | `/v1/secrets/{name}`               | Get one secret's metadata (what `secrets.get` returns: a reference, not the value).                      |
 | `DELETE` | `/v1/secrets/{name}`               | Delete a secret (409 `secret_in_use` while a source uses it).                                            |
 | `POST`   | `/v1/datasets/{name}/sources`      | Connect a provider `{provider: {kind, host, secret, project, filters}, schedule}` to a dataset.          |
-| `GET`    | `/v1/sources` / `/v1/sources/{id}` | List sources (`?dataset=`) or get one with its latest sync.                                              |
+| `GET`    | `/v1/sources` / `/v1/sources/{id}` | List sources (`?dataset=`) or get one with its status, last error and latest sync.                       |
 | `POST`   | `/v1/sources/{id}/sync`            | Sync now `{full}`; returns the import job, or the one already running. Each sync adds a dataset version. |
 | `DELETE` | `/v1/sources/{id}`                 | Remove a source. Its dataset and versions stay.                                                          |
 
-An unknown provider is 422 `source_provider_unsupported`; the `gradiated` source on a self-hosted server is 501 `source_unavailable`; a server without `GRAD_SECRETS_KEY` answers secret writes with 501 `secrets_unavailable`.
+A source feeds exactly one dataset; a dataset can have several sources, and deleting the dataset deletes them. A source starts at most one sync a minute: a manual sync within 60 seconds of the last one returns that sync with `Retry-After`. Schedules are five-field UTC cron. A failed sync sets `last_error` and backs the schedule off (twice its interval per consecutive failure, at most an hour); after 10 failures in a row the source's `status` becomes `paused`. A manual sync, or a new value for its secret, resumes it.
 
 ### Runs, checkpoints and artifacts
 
@@ -77,10 +86,12 @@ An unknown provider is 422 `source_provider_unsupported`; the `gradiated` source
 | `POST` | `/v1/runs/{id}/cancel`         | Cancel a run. A running attempt is stopped and billed.                                         |
 | `POST` | `/v1/runs/{id}/resume`         | Resume a stopped, failed or cancelled run from its latest checkpoint.                          |
 | `GET`  | `/v1/runs/{id}/checkpoints`    | List a run's unexpired checkpoints (best and final never expire).                              |
-| `POST` | `/v1/checkpoints/{id}/promote` | Copy a checkpoint into a new immutable artifact.                                               |
+| `POST` | `/v1/checkpoints/{id}/promote` | Copy a checkpoint into a new immutable artifact (`artifacts:write`).                           |
 | `GET`  | `/v1/artifacts`                | List artifacts, newest first (filter with `name`).                                             |
 | `GET`  | `/v1/artifacts/{id}`           | Get an artifact by id, `name@version` or `name@latest`.                                        |
 | `GET`  | `/v1/artifacts/{id}/download`  | Download the `.grad.tar.gz` bundle. Verify it against `X-Artifact-Sha256`.                     |
+
+Run status is `queued`, `running`, `completed`, `failed`, `cancelled` or `stopped_budget`.
 
 ### Evaluations
 
@@ -95,34 +106,71 @@ An unknown provider is 422 `source_provider_unsupported`; the `gradiated` source
 | `GET`  | `/v1/evals/{id}/failures`      | Failing tasks, for mining into a new dataset.                                             |
 | `POST` | `/v1/evals/{id}/cancel`        | Cancel a queued, running or `awaiting_scores` eval.                                       |
 
-Run status is `queued`, `running`, `completed`, `failed`, `cancelled` or `stopped_budget`. Eval status is `queued`, `running`, `awaiting_scores`, `completed`, `failed` or `cancelled`.
+Eval status is `queued`, `running`, `awaiting_scores`, `completed`, `failed` or `cancelled`. Runs and evals need `runs:read` to read and `runs:write` to create or change.
 
-### Deployments and routing (Gradiated Cloud)
+### Deployments (Gradiated Cloud)
 
-Deploy, route and embeddings are Gradiated Cloud serving features. Self-hosted servers answer them with 501 `deploy_unavailable`: download the artifact and serve it on vLLM or SGLang instead.
+<DocsCallout label="Coming soon on Gradiated Cloud">Hosted deployments and rollback aren't live yet. Today, download the artifact and serve it on vLLM or SGLang; see [Serve it yourself](/docs/training/deploying/#serve-it-yourself).</DocsCallout>
 
 | Method | Path                                         | Purpose                                                           |
 | ------ | -------------------------------------------- | ----------------------------------------------------------------- |
 | `POST` | `/v1/deployments`                            | Deploy an artifact under a stable model name (`your-org/<name>`). |
 | `GET`  | `/v1/deployments` / `/v1/deployments/{name}` | List deployments, or get one.                                     |
 | `POST` | `/v1/deployments/{name}/rollback`            | Roll back to the previous artifact.                               |
-| `POST` | `/v1/route`                                  | Ask a deployed router which model should answer.                  |
-| `POST` | `/v1/embeddings`                             | Embed text with a deployed embedding artifact.                    |
 
-grad has no feedback endpoint. Production outcomes live in your observability tool (or the Gradiated gateway) and reach a dataset through a [source](/docs/training/trajectories/#send-feedback-from-production).
+These paths belong to Gradiated Cloud. `grad-server` keeps no serving state and answers them with 501:
+
+```json
+{
+  "type": "https://gradiated.com/problems/deploy_unavailable",
+  "title": "Deployments are served by Gradiated Cloud",
+  "status": 501,
+  "code": "deploy_unavailable",
+  "detail": "Deployments are served by Gradiated Cloud (api.gradiated.com), not by grad-server. Self-hosted: download the artifact with `grad artifacts download <id> --output ./adapter` and serve it with vLLM or SGLang (`vllm serve <base> --enable-lora --lora-modules name=./adapter`).",
+  "request_id": "req_6f1c..."
+}
+```
+
+grad has no routing, embedding or feedback API. Call a deployed model through the inference endpoints above, and keep production outcomes in your observability tool (or the Gradiated gateway); a [source](/docs/training/trajectories/#send-feedback-from-production) syncs them into a dataset.
 
 `/v1/trainer-jobs/*` is the internal protocol between the server and its trainer workers. It needs a platform `trainer:worker` key and is not part of the SDKs.
 
+### Usage
+
+`GET /v1/usage` (`grad usage`, `client.usage.list()`) lists the workspace's billing ledger, newest first. A run or eval attempt is billed in increments while it runs: every million tokens or five minutes, at each checkpoint and when it ends. A worker killed outright is billed up to its last progress report.
+
+| Field                           | Meaning                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------ |
+| `kind`, `ref_id`, `attempt`     | `run` or `eval`, its id, and the attempt the tokens belong to.                 |
+| `tokens_from`, `tokens_through` | The attempt's token range this row covers; `tokens` is the difference.         |
+| `cost_usd`, `price_version`     | The charge, and the version of the catalog price it was computed with.         |
+| `idempotency_key`               | `run-usage:{id}:{attempt}:{tokens_through}` (`eval-usage:` for evals); unique. |
+| `created_at`                    | When the increment was billed.                                                 |
+
+### API key scopes
+
+`POST /v1/keys` takes `{name, scopes}`. A `:write` scope includes its `:read`, and `admin` includes every workspace scope.
+
+| Scope                               | Grants                                                                    |
+| ----------------------------------- | ------------------------------------------------------------------------- |
+| `admin`                             | Everything in the workspace, including key management.                    |
+| `datasets:read`, `datasets:write`   | Datasets, records, render, uploads and imports.                           |
+| `runs:read`, `runs:write`           | Runs, checkpoints, evals, dataset scoring and usage.                      |
+| `artifacts:read`, `artifacts:write` | Reading and downloading artifacts; promoting checkpoints.                 |
+| `secrets:read`, `secrets:write`     | Secret metadata; setting and deleting secrets. Values are never readable. |
+| `sources:read`, `sources:write`     | Sources and syncs.                                                        |
+| `deployments:write`                 | Gradiated Cloud deployments.                                              |
+
+`trainer:worker` is a platform scope for trainer workers. `admin` never implies it, and `/v1/keys` can't mint it; self-hosted servers configure worker keys with `TRAINER_API_KEY` or `TRAINER_KEYS_JSON` (see [Self-hosting](/docs/training/self-hosting/)).
+
 ### Idempotency
 
-Every `POST` accepts an `Idempotency-Key` header of up to 255 visible ASCII characters. The SDKs send a UUIDv4 on each call and reuse it on every retry, so POSTs are retried safely; pass your own key to make a retry of your whole script safe too (`idempotency_key=` in Python, `--idempotency-key` in the CLI).
+Every create accepts an `Idempotency-Key` header of up to 255 visible ASCII characters: datasets, record pushes, imports, sources, runs, evals and keys. The SDKs send a UUIDv4 on each call and reuse it on every retry, so POSTs are retried safely; pass your own key to make a rerun of your whole script safe too (`idempotency_key=` in Python, `--idempotency-key` in the CLI).
 
-- The key is stored in the same transaction as the request's writes. A repeat with the same key and body replays the stored response with `Idempotent-Replayed: true`.
-- The same key with a different body is rejected with 422 `idempotency_key_reused`.
-- A repeat while the first request is still running waits up to 5 seconds for it, then gets 409 `idempotency_in_progress` with `Retry-After`.
-- Responses are kept for 24 hours. 5xx and 429 responses are not stored.
-- `POST /v1/keys` is never replayed, because its response holds the secret: a repeat gets 409 `idempotency_replay_unavailable`.
-- Plan and render requests are read-only and store nothing.
+- The key is stored on the resource the request creates, in the same transaction. A retry with the same key and body returns that resource in its current state, with `Idempotent-Replayed: true`.
+- The same key with a different body is 422 `idempotency_key_reused`; a malformed key is 422 `idempotency_key_invalid`.
+- `POST /v1/keys` can't replay, because the secret is shown only once: a repeat gets 409 `idempotency_replay_unavailable`.
+- Every other POST is idempotent by nature (cancel, resume, scores, sync) or read-only (plan, render).
 
 ```http
 POST /v1/runs
@@ -144,34 +192,41 @@ List endpoints take `limit` and `cursor` and return `{"data": [...], "next_curso
 
 ### Errors
 
-Errors are `application/problem+json` with `type`, `title`, `status`, `code`, `detail` and `request_id`. The same `request_id` is in the `x-request-id` response header; quote it when reporting a problem.
+Errors are `application/problem+json` with `type`, `title`, `status`, `code`, `detail` and `request_id` (plus `errors[]` with field paths on validation failures). The same `request_id` is in the `x-request-id` response header; quote it when reporting a problem.
 
-```json
-{
-  "type": "https://gradiated.com/problems/deploy_unavailable",
-  "title": "Hosted serving is not available",
-  "status": 501,
-  "code": "deploy_unavailable",
-  "detail": "Hosted serving is disabled on this self-hosted server (DEPLOY_MODE=disabled). Download the artifact with `grad artifacts download <id> --output ./adapter` and serve it with vLLM or SGLang (...).",
-  "request_id": "req_6f1c..."
-}
-```
+| Status | Codes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 400    | `malformed_request`: the body isn't valid JSON.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 401    | `unauthorized`: missing or invalid API key.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 403    | `forbidden` (the key lacks the scope the message names), `billing_denied` (Cloud: the workspace can't start billed work).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 404    | `route_not_found`, and `<resource>_not_found` for `dataset`, `dataset_version`, `import`, `run`, `checkpoint`, `artifact`, `eval`, `key`, `secret` and `source`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 409    | Runs: `run_not_cancellable`, `run_not_resumable`, `run_state_changed`, `budget_exhausted` (resume a `stopped_budget` run with a higher `max_cost_usd`), `checkpoint_not_exportable`, `checkpoint_conflict`. Evals: `eval_not_cancellable`, `eval_not_completed`, `eval_not_awaiting_scores`. Data: `dataset_exists`, `records_batch_conflict`, `upload_incomplete`, `secret_in_use`. Keys: `idempotency_replay_unavailable`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 413    | `payload_too_large`: JSON bodies are capped; upload large files through `/v1/uploads`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 422    | Requests: `validation_error` (with `errors[]`), `invalid_cursor`, `idempotency_key_invalid`, `idempotency_key_reused`. Models: `unknown_model`, `recipe_not_supported_for_model`, `adapter_not_supported`, `adapter_conflict`, `continued_training_unsupported`, `artifact_not_servable`. Recipes: `recipe_deferred` (coming soon), `recipe_param_unsupported`, `recipe_param_conflict`, `loss_unsupported`, `render_conflict`, `render_unsupported_model`, `cartridge_context_required`, `distill_teacher_required`, `distill_teacher_unsupported`, `distill_teacher_is_student`, `distill_tokenizer_mismatch`, `distill_context_needs_on_policy`, `router_candidates_required`, `router_fallback_not_candidate`, `router_pricing_not_candidate`, `reward_rubric_unsupported`, `scorer_sandbox_unavailable`, `checkpoint_eval_code_scorer`, `duplicate_checkpoint_eval`. Data: `empty_dataset`, `no_usable_records`, `router_score_out_of_range`, `reward_score_out_of_range`, `invalid_filter`, `invalid_format`, `unknown_upload`, `upload_integrity_error`. Evals: `empty_eval`, `duplicate_scorer`, `unknown_scorer`. Sources: `source_provider_unsupported`, `source_secret_required`, `source_host_required`, `source_host_invalid`, `source_project_required`, `secret_not_found`, `invalid_schedule`. |
+| 500    | `internal_error`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 501    | `deploy_unavailable` (deployments: Gradiated Cloud), `inference_unavailable` (no inference endpoint configured for evals; also `/v1/route`, `/v1/embeddings` and `/v1/feedback`, which grad-server doesn't serve), `secrets_unavailable` (no `GRAD_SECRETS_KEY`), `source_unavailable` (the `gradiated` source on a self-hosted server).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 502    | `inference_error` (the inference or judge endpoint failed), `source_upstream_error`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| 503    | `database_unavailable` (with `Retry-After: 1`), `billing_unavailable`, `auth_unavailable`, `source_upstream_unavailable`. `GET /health/ready` answers `store_unavailable`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
-| Status | Example codes                                                                     |
-| ------ | --------------------------------------------------------------------------------- |
-| 400    | `malformed_request`                                                               |
-| 401    | `unauthorized`                                                                    |
-| 403    | `forbidden`                                                                       |
-| 404    | `run_not_found`, `dataset_not_found`, `artifact_not_found`, `route_not_found`     |
-| 409    | `idempotency_in_progress`, `idempotency_replay_unavailable`                       |
-| 413    | `payload_too_large` (upload large files through `/v1/uploads`)                    |
-| 422    | `validation_error`, `idempotency_key_reused`, `invalid_cursor`, `recipe_deferred` |
-| 500    | `internal_error`                                                                  |
-| 501    | `deploy_unavailable`, `inference_unavailable`                                     |
-| 503    | `database_unavailable` (with `Retry-After: 1`), `billing_unavailable`             |
+The SDKs retry 408, 429, 500, 502, 503 and 504 (honouring `Retry-After`) and raise a typed error that carries `status`, `code`, `message` and `request_id`:
 
-The SDKs raise a typed error per status (`AuthenticationError`, `PermissionDeniedError`, `NotFoundError`, `ConflictError`, `ValidationError`, `RateLimitError`, `DeployUnavailableError`, `InferenceUnavailableError`, `ServerError`) that carries `status`, `code` and `request_id`.
+| Error                       | Python                                  | TypeScript                              | Go                                            | Rust                                  |
+| --------------------------- | --------------------------------------- | --------------------------------------- | --------------------------------------------- | ------------------------------------- |
+| Base class                  | `GradAPIError` (`GradError`)            | `APIError` (`GradError`)                | `*grad.APIError`                              | `grad_sdk::Error::Api`                |
+| 400                         | `BadRequestError`                       | `BadRequestError`                       | `*grad.BadRequestError`                       | `Error::Validation`                   |
+| 401                         | `AuthenticationError`                   | `AuthenticationError`                   | `*grad.AuthenticationError`                   | `Error::Authentication`               |
+| 403                         | `PermissionDeniedError`                 | `PermissionDeniedError`                 | `*grad.PermissionDeniedError`                 | `Error::PermissionDenied`             |
+| 404                         | `NotFoundError`                         | `NotFoundError`                         | `*grad.NotFoundError`                         | `Error::NotFound`                     |
+| 409                         | `ConflictError`                         | `ConflictError`                         | `*grad.ConflictError`                         | `Error::Conflict`                     |
+| 413                         | `PayloadTooLargeError`                  | `APIError`                              | `*grad.APIError`                              | `Error::Validation`                   |
+| 422                         | `ValidationError`                       | `ValidationError`                       | `*grad.ValidationError`                       | `Error::Validation`                   |
+| 429                         | `RateLimitError`                        | `RateLimitError`                        | `*grad.RateLimitError`                        | `Error::RateLimit`                    |
+| 501 `deploy_unavailable`    | `DeployUnavailableError`                | `DeployUnavailableError`                | `*grad.DeployUnavailableError`                | `Error::DeployUnavailable`            |
+| 501 `inference_unavailable` | `InferenceUnavailableError`             | `InferenceUnavailableError`             | `*grad.InferenceUnavailableError`             | `Error::InferenceUnavailable`         |
+| Other 501                   | `FeatureUnavailableError`               | `ServerError`                           | `*grad.ServerError`                           | `Error::FeatureUnavailable`           |
+| Other 5xx                   | `ServerError`                           | `ServerError`                           | `*grad.ServerError`                           | `Error::Server`                       |
+| Network, timeout            | `APIConnectionError`, `APITimeoutError` | `APIConnectionError`, `APITimeoutError` | `*grad.ConnectionError`, `*grad.TimeoutError` | `Error::Connection`, `Error::Timeout` |
 
-See the [Primitives reference](/docs/reference/primitives/) for the record and object schemas.
+`wait()` raises `RunFailedError`, `EvalFailedError` or `ImportFailedError` with the final object when a job ends unsuccessfully, and `WaitTimeoutError` when it gives up (after 24 hours by default). See the [Primitives reference](/docs/reference/primitives/#errors) for the rest.
 
-[View the API reference](https://api.gradiated.com/docs).
+See the [Primitives reference](/docs/reference/primitives/) for the record and object schemas, and the [CLI reference](/docs/reference/cli/) for the `grad` commands.

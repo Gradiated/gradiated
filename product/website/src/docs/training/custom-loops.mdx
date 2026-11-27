@@ -17,7 +17,7 @@ Custom loops drive the remote `Trainer` and `Artifact` APIs from any machine (yo
 
 ## Mental model
 
-- **`Trainer`** owns mutable weights and optimizer state on the server. Open it in a `with client.trainers.create(model=..., adapter=...) as trainer:` block so the session closes cleanly on exit or error. Training is billed **per million tokens processed** (forward/backward and sampling) plus storage for saved weights and checkpoints, so you don't pay for idle GPU time.
+- **`Trainer`** owns mutable weights and optimizer state on the server. Open it in a `with client.trainers.create(model=..., adapter=...) as trainer:` block so the session closes cleanly on exit or error. Training is billed at a fixed price **per million tokens processed**.
 - **`trainer.snapshot()`** returns an immutable, ephemeral [**`Artifact`**](/docs/training/artifacts/) pointing at the current weights. Call `sample()`, `score_logprobs()`, `infer_batch()`, or `embed()` on it while training continues.
 - **`trainer.export(name=...)`** writes a versioned `.grad` [**`Artifact`**](/docs/training/artifacts/) ready to [deploy on Gradiated Cloud or download for vLLM / SGLang](/docs/training/deploying/).
 

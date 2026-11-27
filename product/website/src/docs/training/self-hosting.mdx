@@ -15,13 +15,26 @@ Start a local training stack in one command with the `grad` CLI ([install it](/d
 
 ```bash
 # CPU stack: datasets, imports, evals, and small local runs
-grad local up --build
+grad local up
 
 # GPU stack (requires the NVIDIA Container Toolkit): adds the CUDA trainer worker
-grad local up --build --gpu
+grad local up --gpu
+
+# Or build the images from a checkout instead of pulling them
+grad local up --build
 ```
 
-`grad local up` starts Postgres, the API on `http://127.0.0.1:8787` (loopback only; change the port with `--port` or `GRAD_PORT`) and a CPU trainer worker. `--build` builds the images from your checkout; the published `ghcr.io/gradiated/grad-server` and `grad-trainer` images come with the first release, and then `grad local up` pulls them. Artifacts, uploads and the Hugging Face cache live in Docker volumes, so they survive restarts.
+`grad local up` starts Postgres, the API on `http://127.0.0.1:8787` (loopback only; change the port with `--port` or `GRAD_PORT`) and a CPU trainer worker. Artifacts, uploads and the Hugging Face cache live in Docker volumes, so they survive restarts.
+
+It pulls `ghcr.io/gradiated/grad-server` and `ghcr.io/gradiated/grad-trainer` first, so a moving tag stays current. A released `grad` binary pulls the images tagged with its own version, and one built from a checkout pulls `main`; `--image-tag` picks another (`sha-abc1234`, `0.3.0`):
+
+| Image                                   | Platforms                | Tags                                                 |
+| --------------------------------------- | ------------------------ | ---------------------------------------------------- |
+| `ghcr.io/gradiated/grad-server`         | linux/amd64, linux/arm64 | `X.Y.Z`, `latest`, `main`, `sha-<7>`                 |
+| `ghcr.io/gradiated/grad-trainer` (CPU)  | linux/amd64, linux/arm64 | `X.Y.Z`, `latest`, `main`, `sha-<7>`                 |
+| `ghcr.io/gradiated/grad-trainer` (CUDA) | linux/amd64              | `X.Y.Z-gpu`, `latest-gpu`, `main-gpu`, `sha-<7>-gpu` |
+
+Every push to `main` publishes `main` and `sha-<7>`; each release publishes `X.Y.Z` and moves `latest`. Every image carries an SBOM and a provenance attestation. If GHCR refuses the pull (`image_pull_denied`), log in with `docker login ghcr.io` or use `--build`. `GRAD_SERVER_IMAGE`, `GRAD_TRAINER_IMAGE` and `GRAD_TRAINER_GPU_IMAGE` point at your own images and skip the pull.
 
 Authentication is on. The first run generates an admin key, a trainer key and the key that encrypts workspace secrets, and saves them in the `local` CLI profile, so point the CLI and SDKs at it with:
 
@@ -292,7 +305,7 @@ curl https://grad.internal.example/v1/artifacts \
   Everything in the self-hosted column works today.
 </DocsCallout>
 
-Self-hosting gives you the complete training and evaluation platform inside your VPC and keeps your existing production inference stack (vLLM, SGLang, Envoy, Argo Rollouts). Gradiated Cloud adds elastic per-token training GPUs and managed serving on top:
+Self-hosting gives you the complete training and evaluation platform inside your VPC and keeps your existing production inference stack (vLLM, SGLang, Envoy, Argo Rollouts). Gradiated Cloud adds managed training at a fixed price per million tokens, and hosted serving, on top:
 
 | Capability                       | Self-hosted (Docker / Helm)                                    | Gradiated Cloud                                             |
 | -------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------- |

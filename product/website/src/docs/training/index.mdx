@@ -198,7 +198,7 @@ cargo install --locked --path ./grad/cli
 Then start a local stack (it needs Docker with the Compose plugin) and point the CLI and SDKs at it:
 
 ```bash
-grad local up --build   # build the images from the checkout
+grad local up           # or --build to build the images from your checkout
 export GRADIATED_PROFILE=local
 grad models list
 ```
@@ -357,7 +357,7 @@ Start with a built-in `Recipe` and its defaults. Learning rate, batch size and s
 You can export the full resolved config of any run as YAML (`grad runs inspect <run_id> --yaml > recipe.yaml`) to check it into Git.
 
 <DocsCallout label="Metered per token" tone="tip">
-  Runs are metered per million tokens processed, never per GPU-hour, and
+  Every base model has a fixed price per million tokens processed, and
   `runs.plan()` prices a run for $0 before it starts (`grad usage` lists what
   each one cost). Start with the simplest option that proves value: a router or
   decision model trains quickly, then move up to fine-tuning once you have a

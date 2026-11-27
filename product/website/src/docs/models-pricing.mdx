@@ -14,11 +14,8 @@ Each model's `properties.type` identifies its inference interface: `chat` for te
 
 Each model's `properties.supported_uses` lists what it can be used for. Only models that include `serving` accept inference requests; the catalog also lists training bases that you can fine-tune but not call directly.
 
-## Training and weight storage
+## Training
 
-Post-training (managed [recipes](/docs/training/recipes/) and [custom loops](/docs/training/custom-loops/)) follows the same token-metered model as inference:
-
-- **Training & sampling tokens:** billed per million tokens processed across `forward_backward`, `sample`, and `score_logprobs`, never per GPU hour or idle time.
-- **Weight storage:** billed for saved `.grad` artifacts and `save_state` checkpoints stored in your workspace.
+Training with managed [recipes](/docs/training/recipes/) follows the same token-metered model as inference: each base model has a fixed price per million tokens processed, listed in `grad models list`. Training on Gradiated Cloud is coming soon; see [Supported models](/docs/training/models/#usage-and-billing).
 
 Run `grad train --dry-run` or `client.runs.plan()` before starting a managed run to preview `estimated_tokens` and `estimated_cost_usd` at `$0`.

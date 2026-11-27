@@ -30,6 +30,7 @@ pub struct GatewayConfig {
     pub eval_concurrency_cap: u64,
     pub eval_requests_per_minute: u64,
     pub eval_service_tokens: Vec<String>,
+    pub eval_cold_start_wait_seconds: u64,
     pub balance_per_concurrency_slot_nano_usd: u64,
     pub settlement_backlog_limit: u64,
 
@@ -147,6 +148,10 @@ impl fmt::Debug for GatewayConfig {
             )
             .field("eval_concurrency_cap", &self.eval_concurrency_cap)
             .field("eval_service_tokens", &self.eval_service_tokens.len())
+            .field(
+                "eval_cold_start_wait_seconds",
+                &self.eval_cold_start_wait_seconds,
+            )
             .field("eval_requests_per_minute", &self.eval_requests_per_minute)
             .field(
                 "balance_per_concurrency_slot_nano_usd",
@@ -200,6 +205,7 @@ impl TryFrom<Environment> for GatewayConfig {
             eval_concurrency_cap: environment.eval_concurrency_cap,
             eval_requests_per_minute: environment.eval_requests_per_minute,
             eval_service_tokens: environment.eval_service_tokens()?,
+            eval_cold_start_wait_seconds: environment.eval_cold_start_wait_seconds,
             balance_per_concurrency_slot_nano_usd: environment
                 .balance_per_concurrency_slot_nano_usd,
             settlement_backlog_limit: environment.settlement_backlog_limit,
@@ -267,6 +273,13 @@ struct Environment {
     /// Comma-separated: the current token and, while rotating, the previous one.
     #[serde(rename = "gateway_eval_service_tokens")]
     eval_service_tokens: Option<String>,
+    /// A pool at zero takes about five to eight minutes to serve its first replica.
+    #[serde(
+        rename = "gateway_eval_cold_start_wait_seconds",
+        default = "default_eval_cold_start_wait_seconds"
+    )]
+    #[validate(range(max = 1_800))]
+    eval_cold_start_wait_seconds: u64,
     #[serde(
         rename = "gateway_balance_per_concurrency_slot_nano_usd",
         default = "default_balance_per_concurrency_slot_nano_usd"
@@ -426,6 +439,10 @@ fn default_eval_requests_per_minute() -> u64 {
     600
 }
 
+fn default_eval_cold_start_wait_seconds() -> u64 {
+    600
+}
+
 fn default_balance_per_concurrency_slot_nano_usd() -> u64 {
     1_000_000_000
 }
@@ -516,8 +533,12 @@ mod tests {
         );
         assert_eq!(config.organization_concurrency_cap, 500);
         assert_eq!(
-            (config.eval_concurrency_cap, config.eval_requests_per_minute),
-            (20, 600)
+            (
+                config.eval_concurrency_cap,
+                config.eval_requests_per_minute,
+                config.eval_cold_start_wait_seconds
+            ),
+            (20, 600, 600)
         );
         assert_eq!(config.balance_per_concurrency_slot_nano_usd, 1_000_000_000);
         assert_eq!(config.settlement_backlog_limit, 100_000);

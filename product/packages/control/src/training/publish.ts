@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { mkdtemp, open, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -96,31 +97,58 @@ export const checkArtifactFormat = (artifact: GradArtifact) => {
     );
 };
 
-type TrainingProfile = NonNullable<CatalogEntry["training"]>;
+/** A serving base for grad's base model ID, such as qwen/qwen3-8b. */
+export const ServingBaseSchema = z.strictObject({
+  model_id: z.string().min(1),
+  repository: z.string().min(1),
+  revision: z.string().regex(/^[0-9a-f]{40}$/),
+});
+export const ServingBasesSchema = z.record(z.string(), ServingBaseSchema);
+export type ServingBases = z.infer<typeof ServingBasesSchema>;
 
-// grad names bases by their Hugging Face repo; serving names them by catalog ID.
-export const servingBase = (manifest: GradManifest) => {
-  const entry = (MODEL_CATALOG as readonly CatalogEntry[]).find(
-    (model) =>
-      model.training &&
-      (model.training.model ?? model.id) === manifest.base_model_repo,
-  );
-  if (!entry?.training)
+export type ServingBase = {
+  modelId: string;
+  repository: string;
+  revision: string;
+};
+
+// grad names bases by catalog ID and Hugging Face repo; serving names them by
+// its own catalog ID. Configured bases win, then the catalog's training profiles.
+export const servingBase = (
+  manifest: GradManifest,
+  configured: ServingBases = {},
+): ServingBase => {
+  const override = configured[manifest.base_model];
+  const entry = override
+    ? undefined
+    : (MODEL_CATALOG as readonly CatalogEntry[]).find(
+        (model) =>
+          model.training &&
+          (model.training.model ?? model.id) === manifest.base_model_repo,
+      );
+  const base: ServingBase | undefined = override
+    ? {
+        modelId: override.model_id,
+        repository: override.repository,
+        revision: override.revision,
+      }
+    : entry?.training && {
+        modelId: entry.id,
+        repository: entry.training.model ?? entry.id,
+        revision: entry.training.revision,
+      };
+  if (!base || (override && override.repository !== manifest.base_model_repo))
     throw new PublishError(
       "base_model_not_servable",
       `No Gradiated serving pool hosts adapters for ${manifest.base_model_repo ?? manifest.base_model}.`,
     );
-  if (manifest.base_model_revision !== entry.training.revision)
+  if (manifest.base_model_revision !== base.revision)
     throw new PublishError(
       "base_revision_mismatch",
-      `The artifact was trained on ${manifest.base_model_repo} revision ${manifest.base_model_revision ?? "(unknown)"}, but serving pins revision ${entry.training.revision}. Retrain on the pinned revision.`,
+      `The artifact was trained on ${manifest.base_model_repo} revision ${manifest.base_model_revision ?? "(unknown)"}, but serving pins revision ${base.revision}. Retrain on the pinned revision.`,
     );
 
-  return {
-    modelId: entry.id,
-    repository: entry.training.model ?? entry.id,
-    training: entry.training as TrainingProfile,
-  };
+  return base;
 };
 
 const invalid = (message: string) =>
@@ -133,6 +161,7 @@ export const createArtifactPublisher = ({
   qualifyAdapter,
   lockQualification,
   loadBaseConfiguration = readBaseModelConfiguration,
+  servingBases = {},
 }: {
   database: ControlDatabase;
   grad?: GradArtifacts;
@@ -143,6 +172,7 @@ export const createArtifactPublisher = ({
     repository: string,
     revision: string,
   ) => Promise<BaseModelConfiguration>;
+  servingBases?: ServingBases;
 }) => {
   const store = createPublishStore(database);
   const records = createTrainingStore(database);
@@ -163,7 +193,7 @@ export const createArtifactPublisher = ({
     storage: Pick<ObjectStorage, "stream" | "uri">,
   ): Promise<{
     adapter: TaskVersionAdapter;
-    base: ReturnType<typeof servingBase>;
+    base: ServingBase;
   }> => {
     if (artifact.size_bytes > MAX_ARTIFACT_BUNDLE_BYTES)
       throw invalid("The artifact is larger than serving accepts.");
@@ -215,18 +245,18 @@ export const createArtifactPublisher = ({
         throw invalid(
           "The bundle's manifest does not match the artifact, or its format version is not supported.",
         );
-      const base = servingBase(manifest);
+      const base = servingBase(manifest, servingBases);
       const baseConfiguration = await loadBaseConfiguration(
         base.repository,
-        base.training.revision,
+        base.revision,
       );
       const common = {
         artifact_uri: storage.uri(key),
         sha256: artifact.sha256,
         size_bytes: artifact.size_bytes,
         source,
-        base_model_revision: base.training.revision,
-        validated_base_model_revision: base.training.revision,
+        base_model_revision: base.revision,
+        validated_base_model_revision: base.revision,
       };
       if ([...keep].some((name) => !files.has(name)))
         throw invalid(

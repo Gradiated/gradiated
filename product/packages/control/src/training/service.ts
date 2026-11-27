@@ -28,7 +28,7 @@ import { createTrainingStore } from "./store.js";
 import type { TaskVersionRecord } from "./records.js";
 import { userActor } from "./production-changes.js";
 import type { GradArtifacts } from "./grad.js";
-import { createArtifactPublisher } from "./publish.js";
+import { createArtifactPublisher, type ServingBases } from "./publish.js";
 import { TrainingAdmissionError, type TrainingEngine } from "./types.js";
 
 export type {
@@ -55,6 +55,7 @@ export const createTrainingService = (
   artifacts: {
     grad?: GradArtifacts;
     bundles?: Pick<ObjectStorage, "stream" | "uri">;
+    servingBases?: ServingBases;
   } = {},
 ) => {
   const records = createTrainingStore(database);

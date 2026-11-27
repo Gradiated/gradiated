@@ -15,7 +15,7 @@ All you need to start is a [`Dataset`](/docs/training/trajectories/) of real pro
   - **Only logging one model so far?** Pass `models=[...]` to `RouterRecipe` (for example, a small and a large Qwen3 model) together with a `Judge` rubric. Gradiated replays your logged prompts against the candidate models in a labeling eval and scores each answer before training. Candidates must be catalog models or artifacts from your workspace that the inference endpoint serves.
 - **How quality is scored:**
   - **No scores yet?** Pass a [`Judge`](/docs/training/rubrics/) with a plain-English prompt (or a `Rubric` of judges and validators) and Gradiated grades each response for you.
-  - **Already have scores in your logs?** Pass the score name (`rubric="task_success"`) to reuse them directly. You need the name when a record carries more than one score. Python scorer functions in training recipes arrive in [Wave 2](/docs/training/recipes/#where-your-code-runs).
+  - **Already have scores in your logs?** Pass the score name (`rubric="task_success"`) to reuse them directly. You need the name when a record carries more than one score. Python scorer functions in training recipes are [coming soon](/docs/training/recipes/#where-your-code-runs).
 - **Request cost (optional):**
   - Pass `pricing={"qwen/qwen3-8b": 0.0004, ...}` (USD per request for each candidate), or include `metrics.cost_usd` on your logs. With a `Judge` rubric, the labeling eval records each call's cost at catalog prices.
   - Without prices, the router maximizes how much traffic it offloads and `cost_savings_pct` is `null`.

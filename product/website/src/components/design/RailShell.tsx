@@ -154,7 +154,7 @@ const SECTIONS: readonly Section[] = [
     label: "Product",
     href: "/inference/",
     panel: true,
-    title: "The research lab focused on inference.",
+    title: "The AI lab focused on inference and training.",
     cards: [
       {
         title: "Training",

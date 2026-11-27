@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent, ReactElement } from "react";
 import { Link } from "react-router-dom";
 
@@ -163,6 +163,7 @@ export const RunLifecycle = ({
   const [playing, setPlaying] = useState(false);
   const language = useSdkLanguage();
   const tabs = useRef<Array<HTMLButtonElement | null>>([]);
+  const panelId = useId();
   const station = STATIONS[active];
 
   useEffect(() => {
@@ -221,7 +222,7 @@ export const RunLifecycle = ({
         >
           {STATIONS.map((item, index) => (
             <button
-              aria-controls="gr-dx-life-panel"
+              aria-controls={panelId}
               aria-selected={index === active}
               className="gr-dx-life-station"
               data-past={index < active ? "true" : undefined}
@@ -249,7 +250,7 @@ export const RunLifecycle = ({
         </div>
       </div>
 
-      <div className="gr-dx-life-panel" id="gr-dx-life-panel" role="tabpanel">
+      <div className="gr-dx-life-panel" id={panelId} role="tabpanel">
         <div className="gr-dx-life-copy">
           <p className="gr-dx-life-step">
             {active + 1} / {STATIONS.length}

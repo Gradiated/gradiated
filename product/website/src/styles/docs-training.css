@@ -39,8 +39,38 @@
   margin-block-end: calc(1.6 * var(--u));
 }
 
+.gr-root .gr-prose > .gr-doc-actions-row {
+  margin-block-end: calc(1.4 * var(--u));
+}
+
 .gr-root .gr-prose > .gr-doc-actions-row + * {
   margin-block-start: 0;
+}
+
+/* -- reference tables: the name column never breaks, prose cells may break
+   long identifiers so the table fits the column instead of scrolling. ---- */
+
+.gr-doc-main table:not([data-model-table]) td {
+  min-width: 7rem;
+}
+
+.gr-doc-main
+  table:not([data-model-table])
+  td:first-child:has(> code:only-child) {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.gr-doc-main table:not([data-model-table]) td code {
+  overflow-wrap: anywhere;
+}
+
+.gr-doc-main table:not([data-model-table]) td:first-child code {
+  overflow-wrap: normal;
+}
+
+.gr-doc-main table:not([data-model-table]) tbody tr:hover td {
+  background: color-mix(in srgb, var(--color-text) 3%, transparent);
 }
 
 .gr-doc-actions-row .gr-doc-actions {
@@ -744,9 +774,14 @@
   letter-spacing: -0.02em;
 }
 
-/* Samples inside a widget sit flush with it. */
+/* Samples inside a widget sit flush with it, and their first line clears
+   the corner label, since these wrap instead of scrolling. */
 .gr-dx .gr-doc-code {
   margin: 0;
+}
+
+.gr-root .gr-dx .gr-doc-code pre {
+  padding-block-start: 2.4em;
 }
 
 .gr-root .gr-dx pre {
@@ -1102,17 +1137,35 @@
   margin-block-start: 0.4em;
 }
 
+/* On a phone the stations are just their marks; the panel names the one
+   that is selected. */
 @container (max-width: 34rem) {
   .gr-dx-life-stations {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    row-gap: 0.4em;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     min-width: 0;
   }
 
-  .gr-dx-life-stations::before,
-  .gr-dx-life-loop,
-  .gr-dx-life-gives {
-    display: none;
+  .gr-dx-life-stations::before {
+    top: 1.05rem;
+  }
+
+  .gr-dx-life-station {
+    justify-items: center;
+    padding-inline: 0;
+  }
+
+  .gr-dx-life-mark {
+    margin: 0;
+  }
+
+  .gr-dx-life-name,
+  .gr-dx-life-gives,
+  .gr-dx-life-loop {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
 }
 
@@ -1150,7 +1203,6 @@
 
 /* 100 columns of a 0.6em-advance monospace fill the width exactly. */
 .gr-root .gr-dx-replay-screen pre.gr-tty {
-  overflow: hidden;
   padding: 0;
   border: 0;
   background: none;
@@ -1158,6 +1210,7 @@
   color: var(--color-code-text);
   font-family: var(--font-code);
   font-size: clamp(5px, calc(100cqi / 60.5), 13px);
+  overflow-x: auto;
   font-variant-ligatures: none;
   line-height: 1.28;
   letter-spacing: 0;
@@ -1165,7 +1218,7 @@
 }
 
 .gr-root .gr-dx-replay-screen[data-narrow] pre.gr-tty {
-  font-size: clamp(7px, calc(100cqi / 36.5), 13px);
+  font-size: clamp(9px, calc(100cqi / 36.5), 13px);
 }
 
 .gr-tty-row {
@@ -1429,7 +1482,7 @@
 
 .gr-dx-cost-inputs {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
   gap: calc(0.7 * var(--u)) calc(0.7 * var(--u));
 }
 

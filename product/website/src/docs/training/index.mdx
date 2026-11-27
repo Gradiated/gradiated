@@ -149,47 +149,41 @@ Every workflow in `grad` uses the same four stages, whether you are training a r
 
 ## Install and connect
 
-`grad` is open source under the MIT license. Its packages are published with the first release: `grad-sdk` on PyPI and crates.io, `@gradiated/grad` on npm, `github.com/Gradiated/grad/sdks/go` on the Go module proxy, and the `grad` CLI as `grad-cli`. Until then, install from a checkout:
-
-```bash
-git clone https://github.com/Gradiated/grad
-```
+`grad` is open source under the MIT license, at [github.com/Gradiated/grad](https://github.com/Gradiated/grad). The TypeScript SDK is on npm. The Python and Rust SDKs (`grad-sdk` on PyPI and crates.io) and the `grad` CLI (`grad-cli`) are published with the first release; until then, they install straight from the repository:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```bash
-pip install ./grad/sdks/python
+pip install "grad-sdk @ git+https://github.com/Gradiated/grad#subdirectory=sdks/python"
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="TypeScript">
 
 ```bash
-(cd grad/sdks/typescript && pnpm install && pnpm build)
-npm install ./grad/sdks/typescript
+npm install @gradiated/grad
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="Go">
 
 ```bash
-go mod edit -replace github.com/Gradiated/grad/sdks/go=./grad/sdks/go
-go get github.com/Gradiated/grad/sdks/go
+go get github.com/Gradiated/grad/sdks/go@main
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="Rust">
 
 ```bash
-cargo add grad-sdk --path ./grad/sdks/rust
+cargo add grad-sdk --git https://github.com/Gradiated/grad
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="CLI">
 
 ```bash
-cargo install --locked --path ./grad/cli
+cargo install --locked --git https://github.com/Gradiated/grad grad-cli
 ```
 
   </DocsCodeTab>

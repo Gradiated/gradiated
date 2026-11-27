@@ -110,3 +110,18 @@ export const verifications = pgTable(
   },
   (table) => [index("verifications_identifier_index").on(table.identifier)],
 );
+
+// Better Auth's JWT plugin signing keys; the private key is encrypted with the
+// Better Auth secret.
+export const jwks = pgTable("jwks", {
+  id: uuid("id").primaryKey(),
+  publicKey: text("public_key").notNull(),
+  privateKey: text("private_key").notNull(),
+  alg: text("alg"),
+  crv: text("crv"),
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+    mode: "date",
+  }).notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }),
+});

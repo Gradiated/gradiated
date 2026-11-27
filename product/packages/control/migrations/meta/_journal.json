@@ -274,6 +274,13 @@
       "when": 1795804958545,
       "tag": "0038_auth_principals_v1",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1795805317828,
+      "tag": "0039_jwt_signing_keys",
+      "breakpoints": true
     }
   ]
 }

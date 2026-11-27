@@ -118,6 +118,20 @@ Email/password is the launch path, so the OAuth fields are initially null.
 | `created_at` | timestamptz | no   | Creation time                          |
 | `updated_at` | timestamptz | no   | Last mutation time                     |
 
+### 4a. `jwks`
+
+Signing keys of Better Auth's JWT plugin, which signs the console's training tokens (`POST /api/v1/workspaces/{workspace_id}/training-tokens`: ES256, `aud = training`, ten minutes, claims `sub = user:<id>`, `org`, `ws`, `role`). The plugin creates the first key on first use and a new one every 90 days; `GET /api/auth/jwks` publishes the public keys, including retired ones for 30 days.
+
+| Field         | Type        | Null | Rules                                            |
+| ------------- | ----------- | ---- | ------------------------------------------------ |
+| `id`          | uuid        | no   | Primary key; the JWT `kid`                       |
+| `public_key`  | text        | no   | Public JWK                                       |
+| `private_key` | text        | no   | Private JWK, encrypted with `BETTER_AUTH_SECRET` |
+| `alg`         | text        | yes  | `ES256`                                          |
+| `crv`         | text        | yes  | Curve, when the algorithm names one              |
+| `created_at`  | timestamptz | no   | Creation time                                    |
+| `expires_at`  | timestamptz | yes  | When the key stops signing                       |
+
 ## Organizations and workspaces
 
 ### 5. `organizations`

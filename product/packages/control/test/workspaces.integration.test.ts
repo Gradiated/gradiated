@@ -340,6 +340,40 @@ describe("workspaces and API keys", () => {
     });
   });
 
+  describe("describeTrainingMember", () => {
+    it.each(["admin", "member"] as const)(
+      "describes an active %s",
+      async (role) => {
+        const { userId, organizationId, workspaceId } = await membership(role);
+
+        await expect(
+          service.describeTrainingMember(userId, workspaceId),
+        ).resolves.toEqual({ organizationId, workspaceId, role });
+      },
+    );
+
+    it("refuses an archived workspace", async () => {
+      const { userId, workspaceId } = await membership("admin");
+      await archive(workspaceId);
+
+      await expect(
+        service.describeTrainingMember(userId, workspaceId),
+      ).rejects.toMatchObject({
+        code: "forbidden",
+        message: expect.stringMatching(/^Training is unavailable/),
+      });
+    });
+
+    it("hides another organization's workspace", async () => {
+      const { workspaceId } = await membership("admin");
+      const outsider = await seedUser(testDatabase.database);
+
+      await expect(
+        service.describeTrainingMember(outsider, workspaceId),
+      ).rejects.toMatchObject({ code: "not_found" });
+    });
+  });
+
   describe("createPlaygroundCredential", () => {
     it("creates an hour-long key that members cannot see", async () => {
       const admin = await membership("admin");

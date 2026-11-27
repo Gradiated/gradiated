@@ -35,12 +35,16 @@ export const authenticated: AuthService = {
   handler: async () => new Response(null, { status: 404 }),
   authorizationServerMetadata: async () => Response.json({}),
   resolveSession: async () => user,
+  signTrainingToken: async () => {
+    throw new Error("No test signs training tokens through this service.");
+  },
 };
 
 export const anonymous: AuthService = {
   handler: authenticated.handler,
   authorizationServerMetadata: authenticated.authorizationServerMetadata,
   resolveSession: async () => null,
+  signTrainingToken: authenticated.signTrainingToken,
 };
 
 export class SessionStoreError extends Error {}
@@ -51,6 +55,7 @@ export const sessionStoreDown: AuthService = {
   resolveSession: async () => {
     throw new SessionStoreError("session store unreachable");
   },
+  signTrainingToken: authenticated.signTrainingToken,
 };
 
 export const workspaceRecord: WorkspaceRecord = {

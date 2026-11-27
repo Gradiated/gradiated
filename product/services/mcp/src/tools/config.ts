@@ -188,6 +188,7 @@ export const TOOL_CONFIG: Record<OperationId, ToolConfig> = {
   listApiKeys: { enabled: false, reason: CREDENTIALS },
   createApiKey: { enabled: false, reason: CREDENTIALS },
   createPlaygroundCredential: { enabled: false, reason: CREDENTIALS },
+  createTrainingToken: { enabled: false, reason: CREDENTIALS },
   revokeApiKey: { enabled: false, reason: CREDENTIALS },
   getBillingAccount: { enabled: false, reason: ORGANIZATION },
   updateBillingAccount: { enabled: false, reason: ORGANIZATION },

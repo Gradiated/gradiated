@@ -128,6 +128,17 @@ export const PlaygroundCredentialSchema = z
   })
   .openapi("PlaygroundCredential");
 
+export const TrainingTokenSchema = z
+  .object({
+    token: z
+      .string()
+      .describe(
+        "An ES256 JWT for the training API with audience training. It names the member (sub user:<id>), organization (org), workspace (ws) and role, and is verified against the keys at /api/auth/jwks.",
+      ),
+    expires_at: TimestampSchema,
+  })
+  .openapi("TrainingToken");
+
 export const WorkspacePathSchema = z.object({
   workspace_id: UuidSchema,
 });
@@ -143,5 +154,6 @@ export const WorkspaceListQuerySchema = z.object({
 export type ApiKey = z.infer<typeof ApiKeySchema>;
 export type CreatedApiKeyResponse = z.infer<typeof CreatedApiKeySchema>;
 export type PlaygroundCredential = z.infer<typeof PlaygroundCredentialSchema>;
+export type TrainingToken = z.infer<typeof TrainingTokenSchema>;
 export type CreateWorkspace = z.infer<typeof CreateWorkspaceSchema>;
 export type Workspace = z.infer<typeof WorkspaceSchema>;

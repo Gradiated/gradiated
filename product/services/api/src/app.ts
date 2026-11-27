@@ -37,6 +37,7 @@ import { registerWaitlistRoutes } from "./routes/waitlist.js";
 import { registerWizardRoutes } from "./routes/wizard.js";
 import { registerGenerationRoutes } from "./routes/generations.js";
 import { registerTrainingRoutes } from "./routes/training.js";
+import { registerTrainingTokenRoutes } from "./routes/training-tokens.js";
 import { registerWorkspaceRoutes } from "./routes/workspaces.js";
 import { registerPlaygroundMcpRoutes } from "./routes/playground-mcp.js";
 import { createOutboundFetch } from "./mcp/outbound.js";
@@ -253,6 +254,7 @@ export const createApp = ({
   registerPlaygroundMcpRoutes(app, services.workspaces, mcpProxy);
   registerGenerationRoutes(app, services.usage, services.traces);
   registerTrainingRoutes(app, services.training);
+  registerTrainingTokenRoutes(app, services.workspaces, auth);
   registerGatewayContract(app);
 
   // RFC 8414 places the metadata of the /api/auth issuer under this path on the origin.

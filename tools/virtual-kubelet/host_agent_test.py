@@ -1265,7 +1265,7 @@ class TrainerTest(unittest.TestCase):
         self.config['gpu_uuids'] = ['GPU-test-0', 'GPU-test-1']
         self.config['runtimes'] = {self.RUNTIME: {
             'kind': 'grad-trainer', 'image': 'gradiated/grad-trainer-bundle@sha256:' + self.RUNTIME,
-            'source_image': 'docker.io/gradiated/grad-trainer:0.2.0-alpha.3-gpu@sha256:' + 'e' * 64,
+            'source_image': 'docker.io/gradiated/grad-trainer:0.2.0-alpha.4-gpu@sha256:' + 'e' * 64,
             'bundles': {'test-base': self.BUNDLE}, 'model_id': 'grad-trainer', 'release': {},
             'gpus': 1, 'cpu': '16', 'memory': '128Gi', 'startup_timeout': 300}}
         bundle = self.root / 'bundles' / self.BUNDLE
@@ -1317,7 +1317,7 @@ class TrainerTest(unittest.TestCase):
         self.assertEqual({key: environment[key] for key in ('GRAD_SERVER_URL', 'GRAD_WORKER_TOKEN',
                                                              'GRAD_WORKER_KINDS', 'GRAD_WORKER_ID')},
                          {**self.ENVIRONMENT, 'GRAD_WORKER_KINDS': 'train',
-                          'GRAD_WORKER_ID': f"{self.config['instance_id']}/1"})
+                          'GRAD_WORKER_ID': self.config['instance_id']})
         self.assertEqual(environment['GRADIATED_RUNTIME_ROOT'], str(self.root / 'bundles' / self.BUNDLE))
         # The token is never written down.
         self.assertNotIn(self.TOKEN, (self.root / agent.TRAINER_STATE).read_text())

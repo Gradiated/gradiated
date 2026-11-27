@@ -248,35 +248,3 @@ export const placementFits = (
       ),
   );
 };
-
-// The taint Kubernetes adds to a cordoned node.
-const UNSCHEDULABLE_TAINT = "node.kubernetes.io/unschedulable";
-
-// Whether a pending pod would land on a host held out of the pool, such as a
-// leased one, once its cordon goes with the return.
-export const fitsOnceUncordoned = (
-  pod: {
-    gpus: number;
-    placement?: PodPlacement;
-    labels?: Record<string, string>;
-    namespace?: string;
-  },
-  gpuCount: number,
-  node: NodePlacement,
-  residents: PlacedPod[],
-) =>
-  pod.gpus <= gpuCount &&
-  placementFits(
-    pod.placement,
-    {
-      ...node,
-      taints: (node.taints ?? []).filter(
-        (taint) => taint.key !== UNSCHEDULABLE_TAINT,
-      ),
-    },
-    {
-      labels: pod.labels ?? {},
-      namespace: pod.namespace ?? POD_NAMESPACE,
-      residents,
-    },
-  );

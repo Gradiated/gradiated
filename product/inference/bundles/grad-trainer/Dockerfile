@@ -6,8 +6,9 @@
 #
 # Not yet listed in tools/models/release.mjs, so nothing builds or publishes
 # it. Pin it in runtimes.json as kind "grad-trainer", with source_image set to
-# the FROM line below, once a grad-trainer release reads GRAD_WORKER_TOKEN.
-FROM docker.io/gradiated/grad-trainer:0.2.0-alpha.3-gpu@sha256:b2e1c800e21b0c02572718f016dd301cd4741f531b18d5cca39904c2492b5289 AS source
+# the FROM line below. 0.2.0-alpha.4 is the first release whose worker reads
+# GRAD_WORKER_TOKEN (lease tokens); alpha.3 reads only TRAINER_API_KEY.
+FROM docker.io/gradiated/grad-trainer:0.2.0-alpha.4-gpu@sha256:69851412594f79e5f37bfd4fc1a1bb72f470285fe212f4492a69abb90005a0cd AS source
 
 FROM ubuntu:24.04@sha256:224a1869083a311ef3f13648a154ba79832fbef6364d31493642ca03082da254 AS package
 RUN apt-get update && apt-get install -y --no-install-recommends pigz \

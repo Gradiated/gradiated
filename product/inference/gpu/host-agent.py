@@ -813,7 +813,9 @@ class Agent:
             "HOME": str(work), "XDG_CACHE_HOME": str(scratch / "cache"),
             "HF_HOME": str(scratch / "cache" / "huggingface"), "GRAD_WORKDIR": str(work),
             "NVIDIA_VISIBLE_DEVICES": gpu, "CUDA_VISIBLE_DEVICES": gpu,
-            "GRAD_WORKER_ID": f"{self.config['instance_id']}/{index}", "GRAD_WORKER_KINDS": "train",
+            # grad binds the lease token to this host: a claim's worker_id must
+            # be the host ID, to which the worker appends its own random suffix.
+            "GRAD_WORKER_ID": self.config['instance_id'], "GRAD_WORKER_KINDS": "train",
             "GRADIATED_RUNTIME_ROOT": str(bundle), "PYTHONDONTWRITEBYTECODE": "1",
             **environment,
         }

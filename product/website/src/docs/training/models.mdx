@@ -67,7 +67,7 @@ Base models get replaced as better open models ship. When we retire one, you get
 
 ## Judge and comparison models
 
-[`Judge`](/docs/training/rubrics/) items and [evaluations](/docs/training/evaluations/) call models through the OpenAI-compatible endpoint the server is configured with (`GRAD_INFERENCE_BASE_URL` and `GRAD_JUDGE_BASE_URL` on a [self-hosted](/docs/training/self-hosting/#server-configuration) server). Every judge call is priced and billed, so a judge must be one of:
+[`Judge`](/docs/training/rubrics/) items and [evaluations](/docs/training/evaluations/) call models through the OpenAI-compatible endpoint the server is configured with (`GRAD_INFERENCE_BASE_URL` and `GRAD_JUDGE_BASE_URL` on a [self-hosted](/docs/training/self-hosting/#eval-workers) server's eval workers). Every judge call is priced and billed, so a judge must be one of:
 
 - a catalog model, at its catalog price;
 - a judge model the server lists with a price (self-hosted: `GRAD_JUDGE_MODELS_JSON`, such as a frontier model behind your gateway);

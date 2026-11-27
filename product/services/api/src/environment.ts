@@ -25,6 +25,7 @@ const ApiOnlyEnvironmentSchema = z.object({
   TRAINING_ARTIFACTS_BUCKET: z.string().min(1).optional(),
   // grad's bucket; the API reads only its `artifacts/` prefix.
   GRAD_ARTIFACTS_BUCKET: z.string().min(1).optional(),
+  // grad-server's internal listener, such as http://grad-internal.training.svc:8789.
   GRAD_SERVER_URL: z.url().optional(),
   // Interim bearer for grad calls until service JWTs (sub = service:inference) replace it.
   GRAD_SERVICE_TOKEN: OptionalSecret,

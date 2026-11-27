@@ -2720,7 +2720,7 @@ export interface components {
     GradArtifactSource: {
       /** @enum {string} */
       kind: "grad";
-      /** @description A grad artifact ID, such as art_3f9c0a1b2c3d4e5f60718293. */
+      /** @description A grad artifact ID: `name@version`, such as fast-diff-merge@2026-11-26-1. */
       artifact_id: string;
       /** @enum {string} */
       artifact_source: "run" | "upload" | "import";
@@ -3281,7 +3281,7 @@ export interface components {
       };
     };
     PublishTaskVersion: {
-      /** @description The grad artifact to publish: its ID, or `name@version` within this workspace. */
+      /** @description The grad artifact to publish in this workspace: `name@version`, or `name@latest` for its newest version. */
       artifact: string;
       /** @description Version name. Defaults to the artifact's version. */
       name?: string;

@@ -56,7 +56,6 @@ describe("publishing grad artifacts", () => {
       }),
       pin: vi.fn(async (_workspaceId: string, id: string, holder: string) => {
         pins.add(`${id}/${holder}`);
-        return artifacts.get(id)!;
       }),
       unpin: vi.fn(async (_workspaceId: string, id: string, holder: string) => {
         pins.delete(`${id}/${holder}`);
@@ -93,18 +92,17 @@ describe("publishing grad artifacts", () => {
       bundleOptions: Parameters<typeof gradBundle>[1] = {},
     ) => {
       const bundle = gradBundle(files, bundleOptions);
+      const name = overrides.name ?? "fast-diff-merge";
+      const version = overrides.version ?? `2026-11-26-${artifacts.size + 1}`;
       const artifact: GradArtifact = {
-        id: `art_${artifacts.size.toString().padStart(24, "0")}`,
+        id: `${name}@${version}`,
         workspace_id: member.workspaceId,
-        name: "fast-diff-merge",
-        version: `2026-11-26-${artifacts.size + 1}`,
-        kind: "release",
+        name,
+        version,
         source: "run",
         format: bundleOptions.format ?? "peft_lora",
         recipe_kind: "sft",
         base_model: "qwen/qwen3-0.6b",
-        base_model_repo: QWEN_REPO,
-        base_model_revision: QWEN_REVISION,
         sha256: bundle.sha256,
         size_bytes: bundle.sizeBytes,
         ...overrides,
@@ -217,19 +215,8 @@ describe("publishing grad artifacts", () => {
       "format_not_servable",
       "Supported formats",
     ],
-    [{ kind: "checkpoint" as const }, "artifact_not_servable", "Checkpoints"],
-    [
-      { base_model_revision: "f".repeat(40) },
-      "base_revision_mismatch",
-      "pins revision",
-    ],
-    [
-      { base_model_repo: "BAAI/bge-small-en-v1.5" },
-      "base_model_not_servable",
-      "No Gradiated",
-    ],
     [{ sha256: "0".repeat(64) }, "invalid_artifact", "SHA-256"],
-  ])(
+  ] as const)(
     "refuses %o with %s and pins nothing",
     async (overrides, code, message) => {
       const { member, publisher, pins, add } = await setup();
@@ -247,20 +234,48 @@ describe("publishing grad artifacts", () => {
     },
   );
 
+  it.each([
+    [{ format_version: 3 }, "invalid_artifact", "format version"],
+    [
+      { base_model_revision: "f".repeat(40) },
+      "base_revision_mismatch",
+      "pins revision",
+    ],
+    [
+      { base_model_repo: "BAAI/bge-small-en-v1.5" },
+      "base_model_not_servable",
+      "No Gradiated",
+    ],
+  ])(
+    "refuses a bundle whose manifest has %o with %s",
+    async (manifest, code, message) => {
+      const { member, publisher, pins, add } = await setup();
+      const artifact = add(loraFiles(), {}, { manifest });
+
+      await expect(
+        publisher.publish(member.userId, member.workspaceId, {
+          artifact: artifact.id,
+        }),
+      ).rejects.toMatchObject({
+        code,
+        message: expect.stringContaining(message),
+      });
+      expect(pins.size).toBe(0);
+    },
+  );
+
   it("refuses a model of another base and a taken version name, releasing the pin", async () => {
     const { member, publisher, pins, add } = await setup();
     add(loraFiles());
-    add(loraFiles(), {
-      version: "2026-11-26-1",
-      id: "art_000000000000000000000009",
-    });
+    add(loraFiles(), { name: "other-merge", version: "2026-11-26-1" });
     await publisher.publish(member.userId, member.workspaceId, {
-      artifact: "art_000000000000000000000000",
+      artifact: "fast-diff-merge@2026-11-26-1",
     });
 
     await expect(
       publisher.publish(member.userId, member.workspaceId, {
-        artifact: "art_000000000000000000000009",
+        artifact: "other-merge@2026-11-26-1",
+        task: "fast-diff-merge",
       }),
     ).rejects.toMatchObject({ code: "version_name_taken" });
     expect(pins.size).toBe(1);
@@ -271,7 +286,7 @@ describe("publishing grad artifacts", () => {
       .where(eq(tasks.id, member.task.id));
     await expect(
       publisher.publish(member.userId, member.workspaceId, {
-        artifact: "art_000000000000000000000009",
+        artifact: "other-merge@2026-11-26-1",
         task: member.task.name,
       }),
     ).rejects.toMatchObject({ code: "model_base_mismatch" });
@@ -337,10 +352,10 @@ describe("publishing grad artifacts", () => {
     add(loraFiles());
     add(loraFiles());
     const first = await publisher.publish(member.userId, member.workspaceId, {
-      artifact: "art_000000000000000000000000",
+      artifact: "fast-diff-merge@2026-11-26-1",
     });
     const second = await publisher.publish(member.userId, member.workspaceId, {
-      artifact: "art_000000000000000000000001",
+      artifact: "fast-diff-merge@2026-11-26-2",
     });
     const store = createTrainingStore(db.database);
     const actor = `user:${member.userId}`;

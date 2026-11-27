@@ -141,7 +141,7 @@ def cartridge_model_config():
 
 GRAD_SOURCE = {
     "kind": "grad",
-    "artifact_id": "art_0123456789abcdef01234567",
+    "artifact_id": "fast-diff-merge@2026-11-26-1",
     "artifact_source": "run",
     "bundle": "grad.artifact/1",
 }

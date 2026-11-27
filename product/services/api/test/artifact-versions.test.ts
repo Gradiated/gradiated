@@ -74,7 +74,8 @@ describe("publishing artifacts as versions", () => {
       qualification: { outcome: "passed" },
     }));
     expect(
-      (await post(appWith({ publish }), { artifact: "art_abc" })).status,
+      (await post(appWith({ publish }), { artifact: "fast-diff-merge@latest" }))
+        .status,
     ).toBe(200);
   });
 
@@ -97,7 +98,9 @@ describe("publishing artifacts as versions", () => {
     const publish = vi.fn(async () => {
       throw new PublishError(code, "Supported formats: peft_lora, cartridge.");
     });
-    const response = await post(appWith({ publish }), { artifact: "art_abc" });
+    const response = await post(appWith({ publish }), {
+      artifact: "fast-diff-merge@latest",
+    });
 
     expect(response.status).toBe(status);
     expect(await response.json()).toMatchObject({

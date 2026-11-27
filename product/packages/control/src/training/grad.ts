@@ -6,37 +6,52 @@ import {
 } from "@gradiated/contracts";
 import { ControlServiceError } from "../errors.js";
 
-export const GradArtifactSchema = z
+const ApiArtifactSchema = z
   .object({
     id: GradArtifactIdSchema,
-    workspace_id: UuidSchema,
+    workspace_id: z.string().min(1),
     name: z.string().min(1).max(64),
     version: z.string().min(1).max(128),
-    kind: z.enum(["release", "checkpoint"]),
-    source: z.enum(ARTIFACT_SOURCES),
     format: z.string().min(1),
     recipe_kind: z.string().min(1),
     base_model: z.string().min(1),
-    base_model_repo: z.string().min(1).nullable(),
-    base_model_revision: z.string().nullable(),
     sha256: z.string().regex(/^[0-9a-f]{64}$/),
     size_bytes: z.number().int().positive(),
+    manifest: z.record(z.string(), z.unknown()),
+    provenance: z.object({ source: z.enum(ARTIFACT_SOURCES) }).passthrough(),
   })
   .passthrough();
-export type GradArtifact = z.infer<typeof GradArtifactSchema>;
+
+// The API manifest is a hint; the bundle's own manifest.json is authoritative.
+export const GradArtifactSchema = ApiArtifactSchema.transform((artifact) => ({
+  id: artifact.id,
+  workspace_id: artifact.workspace_id,
+  name: artifact.name,
+  version: artifact.version,
+  format: artifact.format,
+  recipe_kind: artifact.recipe_kind,
+  base_model: artifact.base_model,
+  sha256: artifact.sha256,
+  size_bytes: artifact.size_bytes,
+  source: artifact.provenance.source,
+}));
+export type GradArtifact = z.output<typeof GradArtifactSchema>;
 
 const ProblemSchema = z.object({ code: z.string().optional() }).passthrough();
+const ResolvedSchema = z.object({ artifact: z.unknown() }).passthrough();
+
+const notServable = () =>
+  new GradArtifactError(
+    "artifact_not_servable",
+    "This artifact cannot be published.",
+  );
 
 export const versionPinHolder = (versionId: string) =>
   `inference:version:${UuidSchema.parse(versionId)}`;
 
 export type GradArtifacts = {
   resolve(workspaceId: string, reference: string): Promise<GradArtifact | null>;
-  pin(
-    workspaceId: string,
-    artifactId: string,
-    holder: string,
-  ): Promise<GradArtifact>;
+  pin(workspaceId: string, artifactId: string, holder: string): Promise<void>;
   unpin(workspaceId: string, artifactId: string, holder: string): Promise<void>;
 };
 
@@ -58,8 +73,8 @@ const unavailable = (cause?: unknown) =>
   );
 
 /**
- * grad-server's artifact calls. `authorization` returns the bearer token for a
- * call scoped to one workspace: a service JWT (`sub = service:inference`).
+ * grad-server's internal artifact routes. `authorization` returns the bearer for
+ * a call scoped to one workspace: a service JWT (`sub = service:inference`).
  */
 export const createGradArtifacts = ({
   baseUrl,
@@ -110,6 +125,11 @@ export const createGradArtifacts = ({
     return { status: response.status, json };
   };
 
+  const workspacePath = (workspaceId: string) =>
+    `/internal/v1/workspaces/${encodeURIComponent(UuidSchema.parse(workspaceId))}`;
+  const pinPath = (workspaceId: string, artifactId: string, holder: string) =>
+    `${workspacePath(workspaceId)}/artifacts/${encodeURIComponent(GradArtifactIdSchema.parse(artifactId))}/pins/${encodeURIComponent(holder)}`;
+
   const artifact = (json: unknown) => {
     const parsed = GradArtifactSchema.safeParse(json);
     if (!parsed.success) throw unavailable(parsed.error);
@@ -120,16 +140,16 @@ export const createGradArtifacts = ({
   return {
     async resolve(workspaceId, reference) {
       const { status, json } = await call(
-        "POST",
-        "/internal/v1/artifacts/resolve",
+        "GET",
+        `${workspacePath(workspaceId)}/artifacts/${encodeURIComponent(reference)}`,
         workspaceId,
-        ["artifacts:read"],
-        { workspace_id: workspaceId, ref: reference },
+        ["artifacts:pin"],
       );
       if (status === 404) return null;
+      if (status === 409) throw notServable();
       if (status !== 200) throw unavailable(new Error(`resolve ${status}`));
 
-      const resolved = artifact(json);
+      const resolved = artifact(ResolvedSchema.safeParse(json).data?.artifact);
       if (resolved.workspace_id !== workspaceId) return null;
 
       return resolved;
@@ -138,9 +158,10 @@ export const createGradArtifacts = ({
     async pin(workspaceId, artifactId, holder) {
       const { status, json } = await call(
         "PUT",
-        `/v1/artifacts/${encodeURIComponent(GradArtifactIdSchema.parse(artifactId))}/pins/${encodeURIComponent(holder)}`,
+        pinPath(workspaceId, artifactId, holder),
         workspaceId,
         ["artifacts:pin"],
+        { reason: "A Gradiated model version serves this artifact." },
       );
       if (status === 404)
         throw new GradArtifactError(
@@ -151,20 +172,15 @@ export const createGradArtifacts = ({
         status === 409 &&
         ProblemSchema.safeParse(json).data?.code === "artifact_not_servable"
       )
-        throw new GradArtifactError(
-          "artifact_not_servable",
-          "Checkpoints and test-only bundles cannot be published. Promote the checkpoint to an artifact first.",
-        );
+        throw notServable();
       if (status !== 200 && status !== 201)
         throw unavailable(new Error(`pin ${status}`));
-
-      return artifact(json);
     },
 
     async unpin(workspaceId, artifactId, holder) {
       const { status } = await call(
         "DELETE",
-        `/v1/artifacts/${encodeURIComponent(GradArtifactIdSchema.parse(artifactId))}/pins/${encodeURIComponent(holder)}`,
+        pinPath(workspaceId, artifactId, holder),
         workspaceId,
         ["artifacts:pin"],
       );

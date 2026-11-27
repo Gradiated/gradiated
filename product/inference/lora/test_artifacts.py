@@ -1161,17 +1161,31 @@ class GradBundleTests(unittest.TestCase):
         files = adapter_files()
         cases = [
             grad_bundle(files, manifest={"files": {"adapter_config.json": "0" * 64}}),
-            grad_bundle(files, manifest={"format_version": 2}),
+            grad_bundle(files, manifest={"format_version": 3}),
             grad_bundle(files, adapter_format="cartridge"),
-            grad_bundle(files, manifest={"kind": "checkpoint"}),
+            grad_bundle(files, manifest={"kind": "run"}),
             grad_bundle(files, extra={"eval_report.json": b"{}"}),
             grad_bundle(files, extra={"trainer_state/optimizer.pt": b"x"}),
+            grad_bundle(files, extra={"notes.txt": b"x"}),
             grad_bundle({"adapter_config.json": files["adapter_config.json"]}),
         ]
         for payload in cases:
             with self.assertRaises(ValueError):
                 self.materialize(payload)
         self.assertEqual(list(self.root.iterdir()), [])
+
+    def test_a_promoted_checkpoint_loads_without_its_resume_state(self):
+        files = adapter_files()
+        state = {"trainer_state/optimizer.pt": b"state"}
+        payload = grad_bundle(
+            {**files, **state},
+            manifest={"kind": "checkpoint", "format_version": 2},
+        )
+
+        directory, _disk, _tensors = self.materialize(payload)
+
+        self.assertFalse((directory / "trainer_state").exists())
+        self.assertTrue((directory / "adapter_model.safetensors").is_file())
 
     def test_a_legacy_archive_needs_no_manifest_and_a_grad_bundle_does(self):
         output = self.root / "out"

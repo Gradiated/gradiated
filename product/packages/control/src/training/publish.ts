@@ -33,7 +33,11 @@ import {
   type GradArtifact,
   type GradArtifacts,
 } from "./grad.js";
-import { isBundleError, readGradBundle } from "./grad-bundle.js";
+import {
+  isBundleError,
+  readGradBundle,
+  type GradManifest,
+} from "./grad-bundle.js";
 import { createPublishStore } from "./publish-store.js";
 import type { AdapterQualifier, QualificationLock } from "./qualification.js";
 import type { TaskRecord, TaskVersionRecord } from "./records.js";
@@ -77,14 +81,11 @@ export const artifactBundleKey = (workspaceId: string, sha256: string) =>
   `artifacts/${workspaceId}/${sha256}.grad.tar.gz`;
 
 const deployable = new Set<string>(DEPLOYABLE_ARTIFACT_FORMATS);
+// Version 2 only adds provenance to the manifest (ARTIFACT_FORMATS, "Opening a bundle").
+const SUPPORTED_FORMAT_VERSIONS = new Set([1, 2]);
 const planned = new Set<string>(PLANNED_ARTIFACT_FORMATS);
 
 export const checkArtifactFormat = (artifact: GradArtifact) => {
-  if (artifact.kind !== "release")
-    throw new PublishError(
-      "artifact_not_servable",
-      "Checkpoints cannot be published. Promote the checkpoint to an artifact first.",
-    );
   if (planned.has(artifact.format))
     throw new PublishError(
       "format_not_servable_yet",
@@ -100,21 +101,21 @@ export const checkArtifactFormat = (artifact: GradArtifact) => {
 type TrainingProfile = NonNullable<CatalogEntry["training"]>;
 
 // grad names bases by their Hugging Face repo; serving names them by catalog ID.
-export const servingBase = (artifact: GradArtifact) => {
+export const servingBase = (manifest: GradManifest) => {
   const entry = (MODEL_CATALOG as readonly CatalogEntry[]).find(
     (model) =>
       model.training &&
-      (model.training.model ?? model.id) === artifact.base_model_repo,
+      (model.training.model ?? model.id) === manifest.base_model_repo,
   );
   if (!entry?.training)
     throw new PublishError(
       "base_model_not_servable",
-      `No Gradiated serving pool hosts adapters for ${artifact.base_model_repo ?? artifact.base_model}.`,
+      `No Gradiated serving pool hosts adapters for ${manifest.base_model_repo ?? manifest.base_model}.`,
     );
-  if (artifact.base_model_revision !== entry.training.revision)
+  if (manifest.base_model_revision !== entry.training.revision)
     throw new PublishError(
       "base_revision_mismatch",
-      `The artifact was trained on ${artifact.base_model_repo} revision ${artifact.base_model_revision ?? "(unknown)"}, but serving pins revision ${entry.training.revision}. Retrain on the pinned revision.`,
+      `The artifact was trained on ${manifest.base_model_repo} revision ${manifest.base_model_revision ?? "(unknown)"}, but serving pins revision ${entry.training.revision}. Retrain on the pinned revision.`,
     );
 
   return {
@@ -161,30 +162,20 @@ export const createArtifactPublisher = ({
   // Reads the bundle in place and builds the version's adapter from its files.
   const verifiedAdapter = async (
     artifact: GradArtifact,
-    base: ReturnType<typeof servingBase>,
     storage: Pick<ObjectStorage, "stream" | "uri">,
-  ): Promise<TaskVersionAdapter> => {
+  ): Promise<{
+    adapter: TaskVersionAdapter;
+    base: ReturnType<typeof servingBase>;
+  }> => {
     if (artifact.size_bytes > MAX_ARTIFACT_BUNDLE_BYTES)
       throw invalid("The artifact is larger than serving accepts.");
 
-    const baseConfiguration = await loadBaseConfiguration(
-      base.repository,
-      base.training.revision,
-    );
     const key = artifactBundleKey(artifact.workspace_id, artifact.sha256);
     const source: GradArtifactSource = {
       kind: "grad",
       artifact_id: artifact.id,
       artifact_source: artifact.source,
       bundle: GRAD_ARTIFACT_BUNDLE,
-    };
-    const common = {
-      artifact_uri: storage.uri(key),
-      sha256: artifact.sha256,
-      size_bytes: artifact.size_bytes,
-      source,
-      base_model_revision: base.training.revision,
-      validated_base_model_revision: base.training.revision,
     };
     const directory = await mkdtemp(join(tmpdir(), "gradiated-artifact-"));
     try {
@@ -219,16 +210,26 @@ export const createArtifactPublisher = ({
 
       const { manifest, files } = bundle;
       if (
-        manifest.kind !== "final" ||
         manifest.format !== artifact.format ||
-        manifest.format_version !== 1 ||
-        !manifest.deployable ||
-        manifest.base_model_repo !== artifact.base_model_repo ||
-        manifest.base_model_revision !== artifact.base_model_revision
+        !SUPPORTED_FORMAT_VERSIONS.has(manifest.format_version) ||
+        !manifest.deployable
       )
         throw invalid(
           "The bundle's manifest does not match the artifact, or its format version is not supported.",
         );
+      const base = servingBase(manifest);
+      const baseConfiguration = await loadBaseConfiguration(
+        base.repository,
+        base.training.revision,
+      );
+      const common = {
+        artifact_uri: storage.uri(key),
+        sha256: artifact.sha256,
+        size_bytes: artifact.size_bytes,
+        source,
+        base_model_revision: base.training.revision,
+        validated_base_model_revision: base.training.revision,
+      };
       if ([...keep].some((name) => !files.has(name)))
         throw invalid(
           `A ${artifact.format} bundle must contain ${[...keep].join(" and ")}.`,
@@ -256,13 +257,16 @@ export const createArtifactPublisher = ({
               : {}),
           });
           return {
-            format: "cartridge",
-            ...common,
-            num_tokens: shape.numTokens,
-            hidden_size: shape.hiddenSize,
-            placement: "system_prompt_start",
-            separator: shape.separator,
-            has_slot_token_ids: shape.hasSlotTokenIds,
+            base,
+            adapter: {
+              format: "cartridge",
+              ...common,
+              num_tokens: shape.numTokens,
+              hidden_size: shape.hiddenSize,
+              placement: "system_prompt_start",
+              separator: shape.separator,
+              has_slot_token_ids: shape.hasSlotTokenIds,
+            },
           };
         } catch (error) {
           throw invalid(
@@ -289,10 +293,13 @@ export const createArtifactPublisher = ({
           base.repository,
           baseConfiguration,
         );
-        if (validated.revision !== artifact.base_model_revision)
+        if (validated.revision !== manifest.base_model_revision)
           throw new Error("adapter_config.json names another base revision.");
 
-        return { format: "peft_lora", ...common, rank: validated.r };
+        return {
+          base,
+          adapter: { format: "peft_lora", ...common, rank: validated.r },
+        };
       } catch (error) {
         throw invalid(
           `Invalid LoRA adapter (maximum rank ${MAX_UPLOADED_ADAPTER_RANK}): ${error instanceof Error ? error.message : "unreadable files"}`,
@@ -347,12 +354,17 @@ export const createArtifactPublisher = ({
     input: { artifact: string; task?: string; name?: string },
   ): Promise<PublishResult> => {
     const { grad, bundles } = requireGrad();
-    const artifact = await grad.resolve(workspaceId, input.artifact);
+    const artifact = await grad
+      .resolve(workspaceId, input.artifact)
+      .catch((error: unknown) => {
+        if (error instanceof GradArtifactError)
+          throw new PublishError("artifact_not_servable", error.message);
+        throw error;
+      });
     if (!artifact)
       throw new ControlServiceError("not_found", "The artifact was not found.");
 
     checkArtifactFormat(artifact);
-    const base = servingBase(artifact);
     const taskName = ModelNameSegmentSchema.safeParse(
       input.task ?? artifact.name,
     );
@@ -366,12 +378,6 @@ export const createArtifactPublisher = ({
 
     const existingTask = await records.getTask(workspaceId, taskName.data);
     if (existingTask) {
-      if (existingTask.baseModelId !== base.modelId)
-        throw new PublishError(
-          "model_base_mismatch",
-          `The model ${existingTask.name} serves ${existingTask.baseModelId ?? "another base"}; this artifact adapts ${base.modelId}.`,
-        );
-
       const existing = await store.findArtifactVersion(
         existingTask.id,
         artifact.id,
@@ -388,28 +394,26 @@ export const createArtifactPublisher = ({
       if (problem) throw new ControlServiceError("conflict", problem);
     }
 
-    const adapter = await verifiedAdapter(artifact, base, bundles);
+    const { adapter, base } = await verifiedAdapter(artifact, bundles);
+    if (existingTask && existingTask.baseModelId !== base.modelId)
+      throw new PublishError(
+        "model_base_mismatch",
+        `The model ${existingTask.name} serves ${existingTask.baseModelId ?? "another base"}; this artifact adapts ${base.modelId}.`,
+      );
+
     const versionId = uuidv7();
     const holder = versionPinHolder(versionId);
     const unpin = () =>
       grad.unpin(workspaceId, artifact.id, holder).catch(() => undefined);
 
-    let pinned: GradArtifact;
     try {
-      pinned = await grad.pin(workspaceId, artifact.id, holder);
+      await grad.pin(workspaceId, artifact.id, holder);
     } catch (error) {
       if (error instanceof GradArtifactError)
         throw error.code === "artifact_not_found"
           ? new ControlServiceError("not_found", error.message)
           : new PublishError("artifact_not_servable", error.message);
       throw error;
-    }
-    if (pinned.sha256 !== artifact.sha256) {
-      await unpin();
-      throw new ControlServiceError(
-        "conflict",
-        "The artifact changed while it was being published. Try again.",
-      );
     }
 
     let inserted: Awaited<ReturnType<typeof store.insertVersion>>;

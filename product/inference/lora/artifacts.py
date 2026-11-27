@@ -176,21 +176,28 @@ def is_grad_bundle(adapter):
     )
 
 
-def verify_grad_manifest(directory, payload, adapter_format, deadline=None):
+# Version 2 only adds provenance to the manifest (grad's ARTIFACT_FORMATS).
+GRAD_FORMAT_VERSIONS = (1, 2)
+# A promoted checkpoint keeps its resume state, which loaders ignore.
+GRAD_IGNORED_PREFIX = "trainer_state/"
+
+
+def verify_grad_manifest(directory, payload, skipped, adapter_format, deadline=None):
     """Checks an extracted grad.artifact/1 bundle, then removes its envelope files."""
     manifest = strict_json((directory / "manifest.json").read_bytes())
     files = manifest.get("files")
     if (
         manifest.get("schema") != GRAD_BUNDLE
-        or manifest.get("kind") != "final"
+        or manifest.get("kind") not in ("final", "checkpoint")
         or manifest.get("format") != adapter_format
-        or manifest.get("format_version") != 1
+        or manifest.get("format_version") not in GRAD_FORMAT_VERSIONS
         or not isinstance(files, dict)
-        or set(files) != set(payload)
+        or set(files) != set(payload) | set(skipped)
     ):
         raise ValueError("Invalid artifact bundle manifest")
     for name, digest in files.items():
-        if file_hash(directory / name, deadline) != digest:
+        actual = skipped[name] if name in skipped else file_hash(directory / name, deadline)
+        if actual != digest:
             raise ValueError("Artifact bundle file integrity mismatch")
     report = directory / "eval_report.json"
     if report.exists() != ("eval_report_sha256" in manifest) or (
@@ -214,17 +221,32 @@ def extract(
 ):
     allowed = set(payload) | (set(GRAD_RESERVED) if grad else {"README.md"})
     seen = set()
+    skipped = {}
     total = 0
     with tarfile.open(archive, "r:gz") as bundle:
         for ordinal, member in enumerate(bundle):
             remaining(deadline)
-            if ordinal >= 16:
+            if ordinal >= (1024 if grad else 16):
                 raise ValueError("Archive has too many members")
             name = member.name.removeprefix("./")
             if not grad:
                 if member.isdir() and name in (".", "adapter", "adapter/"):
                     continue
                 name = name.removeprefix("adapter/")
+            if (
+                grad
+                and name.startswith(GRAD_IGNORED_PREFIX)
+                and member.isfile()
+                and name not in skipped
+                and ".." not in name.split("/")
+            ):
+                digest = hashlib.sha256()
+                with bundle.extractfile(member) as source:
+                    while chunk := source.read(1024 * 1024):
+                        remaining(deadline)
+                        digest.update(chunk)
+                skipped[name] = digest.hexdigest()
+                continue
             if name not in allowed or name in seen or not member.isfile():
                 raise ValueError("Invalid archive member")
             if member.mode & 0o111:
@@ -250,7 +272,7 @@ def extract(
     if not set(payload) <= seen or (grad and "manifest.json" not in seen):
         raise ValueError("Missing adapter files")
     if grad:
-        verify_grad_manifest(destination, payload, adapter_format, deadline)
+        verify_grad_manifest(destination, payload, skipped, adapter_format, deadline)
     return total
 
 

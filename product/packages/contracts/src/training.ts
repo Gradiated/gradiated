@@ -86,8 +86,10 @@ export const PLANNED_ARTIFACT_FORMATS = [
 export const ARTIFACT_SOURCES = ["run", "upload", "import"] as const;
 export const GradArtifactIdSchema = z
   .string()
-  .regex(/^[a-z][a-z0-9]{0,15}_[A-Za-z0-9]{1,64}$/)
-  .describe("A grad artifact ID, such as art_3f9c0a1b2c3d4e5f60718293.");
+  .regex(/^[a-z0-9][a-z0-9._-]{0,63}@[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/)
+  .describe(
+    "A grad artifact ID: `name@version`, such as fast-diff-merge@2026-11-26-1.",
+  );
 export const GradArtifactSourceSchema = z
   .object({
     kind: z.literal("grad"),
@@ -436,16 +438,9 @@ export const VersionNameSchema = z
   .max(128)
   .regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/);
 
-export const ArtifactReferenceSchema = z
-  .union([
-    GradArtifactIdSchema,
-    z
-      .string()
-      .regex(/^[a-z0-9][a-z0-9._-]{0,63}@[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/),
-  ])
-  .describe(
-    "The grad artifact to publish: its ID, or `name@version` within this workspace.",
-  );
+export const ArtifactReferenceSchema = GradArtifactIdSchema.describe(
+  "The grad artifact to publish in this workspace: `name@version`, or `name@latest` for its newest version.",
+);
 
 export const PublishTaskVersionSchema = z
   .strictObject({

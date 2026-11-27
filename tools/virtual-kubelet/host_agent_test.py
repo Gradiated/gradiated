@@ -9,6 +9,7 @@ import subprocess
 import signal
 import select
 import tempfile
+import time
 import unittest
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
@@ -1249,6 +1250,164 @@ class ModelCacheTest(unittest.TestCase):
         self.prepare({'kind': 'training', 'recipe': {}})
 
         self.assertTrue(old.exists())
+
+
+@unittest.skipUnless(hasattr(agent.Agent, 'train_start'), 'the frozen recovery agent predates grad trainers')
+class TrainerTest(unittest.TestCase):
+    RUNTIME = 'c' * 64
+    BUNDLE = 'd' * 64
+    TOKEN = 'gradwt_' + 'x' * 43
+    request = HostAgentTest.request
+    ENVIRONMENT = {'GRAD_SERVER_URL': 'http://grad-worker.tail186117.ts.net:8788', 'GRAD_WORKER_TOKEN': TOKEN}
+
+    def setUp(self):
+        HostAgentTest.setUp(self)
+        self.config['gpu_uuids'] = ['GPU-test-0', 'GPU-test-1']
+        self.config['runtimes'] = {self.RUNTIME: {
+            'kind': 'grad-trainer', 'image': 'gradiated/grad-trainer-bundle@sha256:' + self.RUNTIME,
+            'source_image': 'docker.io/gradiated/grad-trainer:0.2.0-alpha.3-gpu@sha256:' + 'e' * 64,
+            'bundles': {'test-base': self.BUNDLE}, 'model_id': 'grad-trainer', 'release': {},
+            'gpus': 1, 'cpu': '16', 'memory': '128Gi', 'startup_timeout': 300}}
+        bundle = self.root / 'bundles' / self.BUNDLE
+        bundle.mkdir(parents=True)
+        (bundle / '.bundle-sha256').write_text(self.BUNDLE)
+        self.cgroup = self.root / 'cgroup'
+        (self.cgroup / 'gradiated-pods').mkdir(parents=True)
+        self.spawned = []
+        self.popen = subprocess.Popen
+        account = SimpleNamespace(pw_uid=os.getuid(), pw_gid=os.getgid())
+        for patcher in (patch.object(agent, 'CGROUP', self.cgroup),
+                        patch.object(agent.pwd, 'getpwnam', return_value=account),
+                        patch.object(agent, 'gpus_busy', return_value=False),
+                        patch.object(agent.subprocess, 'Popen', side_effect=self.trainer)):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def tearDown(self):
+        for process in self.spawned:
+            if process.poll() is None:
+                os.killpg(process.pid, signal.SIGKILL)
+            process.wait()
+        HostAgentTest.tearDown(self)
+
+    # A real process stands in for each trainer, so signals and liveness are real.
+    def trainer(self, command, env, **kwargs):
+        self.assertEqual(command[-2], 'trainer')
+        (agent.trainer_cgroup(command[-1]) / 'cgroup.procs').write_text('')
+        # The second trainer ignores SIGTERM, as one stuck in a CUDA call would.
+        script = "trap '' TERM; exec sleep 60" if command[-1] == '1' else 'exec sleep 60'
+        process = self.popen(['sh', '-c', script], stdout=kwargs['stdout'], start_new_session=True)
+        process.environment = env
+        self.spawned.append(process)
+        return process
+
+    def start(self, **overrides):
+        return self.host.request({'operation': 'train_start', 'lease_id': 'gpu-1.1700000000000',
+                                  'runtime': self.RUNTIME, 'environment': dict(self.ENVIRONMENT), **overrides})
+
+    def test_trainers_take_only_the_management_key_and_start_one_per_gpu(self):
+        # No controller epoch or term: the operator drives trainers.
+        status = self.start()
+
+        self.assertEqual(status, {'lease_id': 'gpu-1.1700000000000', 'staged': True, 'workers': [
+            {'gpu': 'GPU-test-0', 'state': 'running'}, {'gpu': 'GPU-test-1', 'state': 'running'}]})
+        self.assertEqual([process.environment['CUDA_VISIBLE_DEVICES'] for process in self.spawned],
+                         ['GPU-test-0', 'GPU-test-1'])
+        environment = self.spawned[1].environment
+        self.assertEqual({key: environment[key] for key in ('GRAD_SERVER_URL', 'GRAD_WORKER_TOKEN',
+                                                             'GRAD_WORKER_KINDS', 'GRAD_WORKER_ID')},
+                         {**self.ENVIRONMENT, 'GRAD_WORKER_KINDS': 'train',
+                          'GRAD_WORKER_ID': f"{self.config['instance_id']}/1"})
+        self.assertEqual(environment['GRADIATED_RUNTIME_ROOT'], str(self.root / 'bundles' / self.BUNDLE))
+        # The token is never written down.
+        self.assertNotIn(self.TOKEN, (self.root / agent.TRAINER_STATE).read_text())
+        self.assertEqual(self.start()['workers'][0]['state'], 'running')
+        self.assertEqual(len(self.spawned), 2)
+
+    def test_only_the_two_variables_and_a_pinned_grad_trainer_release_are_accepted(self):
+        for environment in ({}, {'GRAD_SERVER_URL': self.ENVIRONMENT['GRAD_SERVER_URL']},
+                            {**self.ENVIRONMENT, 'LD_PRELOAD': '/tmp/x.so'},
+                            {**self.ENVIRONMENT, 'GRAD_WORKER_TOKEN': 'grad_workspace_key'},
+                            {**self.ENVIRONMENT, 'GRAD_SERVER_URL': 'file:///etc/passwd'}):
+            with self.subTest(environment=sorted(environment)), self.assertRaises(ValueError):
+                self.start(environment=environment)
+        profile = self.config['runtimes'][self.RUNTIME]
+        for change in ({'kind': 'training'}, {'source_image': 'docker.io/gradiated/grad-trainer:0.2.0-gpu'},
+                       {'source_image': 'docker.io/other/grad-trainer:0.2.0-gpu@sha256:' + 'e' * 64},
+                       {'environment': {'GRAD_WORKER_KINDS': 'train,import'}}):
+            with self.subTest(change=change), patch.dict(profile, change), self.assertRaises(ValueError):
+                self.start()
+        self.assertEqual(self.spawned, [])
+
+    def test_trainers_never_run_beside_a_pod_and_pods_never_beside_trainers(self):
+        directory = self.root / 'pods' / self.uid
+        directory.mkdir()
+        agent.atomic_json(directory / 'state.json', {'pod': self.pod, 'draining': True})
+        with self.assertRaises(ValueError):
+            self.start()
+        (directory / 'state.json').unlink()
+        busy = self.cgroup / 'gradiated-pods' / self.uid
+        busy.mkdir()
+        (busy / 'cgroup.procs').write_text('1234\n')
+        with self.assertRaises(ValueError):
+            self.start()
+        (busy / 'cgroup.procs').write_text('')
+        with patch.object(agent, 'gpus_busy', return_value=True), self.assertRaises(ValueError):
+            self.start()
+        self.assertEqual(self.spawned, [])
+
+        self.start()
+        with self.assertRaises(ValueError):
+            self.request({'operation': 'create', 'uid': self.uid, 'pod': self.pod, 'epoch': 1})
+        self.assertEqual(self.host.states(), [])
+        # A pod naming the grad-trainer release is refused outright.
+        pod = json.loads(json.dumps(self.pod))
+        pod['spec']['containers'][0]['image'] = self.config['runtimes'][self.RUNTIME]['image']
+        with self.assertRaises(ValueError):
+            agent.runtime_profile(self.config, pod)
+
+    def test_unstaged_bundle_is_reported_and_retried(self):
+        (self.root / 'bundles' / self.BUNDLE / '.bundle-sha256').write_text('stale')
+        self.assertFalse(self.host.request({'operation': 'train_status', 'runtime': self.RUNTIME})['staged'])
+        with self.assertRaises(agent.RuntimeStaging):
+            self.start()
+        self.assertFalse((self.root / agent.TRAINER_STATE).exists())
+
+    def test_stop_signals_trainers_kills_them_at_the_deadline_and_wipes_their_files(self):
+        self.start()
+        (self.root / 'trainers' / '0' / 'checkpoint').write_text('partial')
+        stubborn = self.spawned[1]
+        deadline = time.monotonic() + 5
+        while 'sleep' not in Path(f'/proc/{stubborn.pid}/cmdline').read_text() and time.monotonic() < deadline:
+            time.sleep(.05)
+        stopped = time.monotonic()
+        # cgroupfs removes a group's control files with it; a plain directory does not.
+        with patch.object(agent, 'owned_signal', wraps=agent.owned_signal) as signalled, \
+                patch.object(type(self.cgroup), 'rmdir', shutil.rmtree):
+            self.assertEqual(self.host.request({'operation': 'train_stop', 'grace_seconds': 1}), {'stopping': True})
+            self.assertEqual(self.host.request({'operation': 'train_stop', 'grace_seconds': 1}), {'stopping': True})
+            deadline = time.monotonic() + 10
+            while (self.root / agent.TRAINER_STATE).exists() and time.monotonic() < deadline:
+                time.sleep(.1)
+        sent = [call.args[1] for call in signalled.call_args_list]
+        self.assertEqual(sent.count(signal.SIGTERM), 2)
+        self.assertIn(signal.SIGKILL, sent)
+        self.assertEqual(stubborn.wait(timeout=5), -signal.SIGKILL)
+        self.assertEqual(self.spawned[0].wait(timeout=5), -signal.SIGTERM)
+        self.assertGreaterEqual(time.monotonic() - stopped, 1)
+        self.assertFalse((self.root / 'trainers').exists())
+        self.assertFalse((self.root / agent.TRAINER_STATE).exists())
+        self.assertEqual(self.host.request({'operation': 'train_status'}),
+                         {'lease_id': None, 'staged': False, 'workers': []})
+        self.assertEqual(self.host.request({'operation': 'train_stop', 'grace_seconds': 1}), {'stopping': False})
+        for grace in (0, 601, '90', None):
+            with self.subTest(grace=grace), self.assertRaises(ValueError):
+                self.host.request({'operation': 'train_stop', 'grace_seconds': grace})
+
+    def test_a_running_lease_keeps_the_host_from_another(self):
+        self.start()
+        with self.assertRaises(ValueError):
+            self.start(lease_id='gpu-1.1800000000000')
 
 if __name__ == '__main__':
     unittest.main()

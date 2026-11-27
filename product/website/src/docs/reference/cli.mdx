@@ -39,6 +39,19 @@ Highest precedence first:
 | `7`   | A run, eval or import finished unsuccessfully (failed, cancelled; runs also `stopped_budget`). |
 | `130` | Interrupted (Ctrl-C). A started run keeps going on the server.                                 |
 
+### Following a run
+
+`grad train --wait`, `grad runs watch`, `grad runs wait` and `grad runs resume --wait` open a full-screen view when stdin and stdout are a terminal (over SSH and in tmux too). It shows the run and its config, the phase and attempt, step and cost progress against `--max-cost-usd`, tokens/s and an ETA, a train/eval loss chart with the best eval marked, the learning rate, checkpoints, and an event log with interruptions, reconnects, warnings and each eval step's recipe metrics (router offload and cost saving, decision accuracy and ECE, embedding recall@k). It reconnects on its own after a dropped connection and resumes the stream where it left off.
+
+| Key            | Action                                                                     |
+| -------------- | -------------------------------------------------------------------------- |
+| `q` / `Ctrl-C` | Detach (exit `130`). The run keeps going; reattach with `grad runs watch`. |
+| `c`            | Cancel the run, after a `y` to confirm.                                    |
+| `l`            | Show or hide the full event log.                                           |
+| `?`            | Help.                                                                      |
+
+When the run ends the view closes and prints the usual summary: time, tokens and cost, the eval report, the artifact and the download and deploy commands. With `--json`, `--plain` or `GRAD_NO_TUI=1`, or when output is piped (CI logs), these commands print plain lines instead.
+
 ## Data
 
 | Command                                       | What it does and its main flags                                                                                                                                                   |
@@ -76,6 +89,7 @@ Highest precedence first:
 | `grad runs list`               | Runs, newest first.                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `grad runs inspect RUN`        | Show a run. `--yaml` prints a config that `grad train -f` re-runs.                                                                                                                                                                                                                                                                                                                                                           |
 | `grad runs logs RUN`           | Step metrics; `--follow` streams them until the run ends, `--after-step N` skips earlier steps.                                                                                                                                                                                                                                                                                                                              |
+| `grad runs watch RUN`          | Follow a run live: the full-screen view on a terminal, the plain readout otherwise (`--timeout`). Reattach to a run you detached from.                                                                                                                                                                                                                                                                                       |
 | `grad runs wait RUN`           | Wait for a run to finish (`--timeout`, default 24 hours).                                                                                                                                                                                                                                                                                                                                                                    |
 | `grad runs cancel RUN`         | Cancel a run. A running attempt is stopped and billed.                                                                                                                                                                                                                                                                                                                                                                       |
 | `grad runs resume RUN`         | Resume a stopped, failed or cancelled run from its latest checkpoint. `--max-cost-usd` is required for a `stopped_budget` run; `--wait`.                                                                                                                                                                                                                                                                                     |
@@ -146,6 +160,8 @@ Every `grad local` command takes `-f`/`--file` (repeatable) for your own compose
 | ------------------------------------------- | ----------------------------------------------------------------------- |
 | `GRADIATED_API_KEY`, `GRADIATED_BASE_URL`   | The key and server, below flags and profiles.                           |
 | `GRADIATED_PROFILE`                         | The profile to use (same as `--profile`).                               |
+| `GRAD_NO_TUI`                               | Set to `1` for the plain readout instead of the full-screen view.       |
+| `NO_COLOR`                                  | Turn off colour in the full-screen view.                                |
 | `XDG_CONFIG_HOME`                           | Where the config file lives (`$XDG_CONFIG_HOME/gradiated/config.json`). |
 | `GRAD_PORT`                                 | `grad local` API port (default `8787`).                                 |
 | `GRAD_COMPOSE_FILE`, `COMPOSE_PROJECT_NAME` | `grad local` compose files (`:`-separated) and project name.            |

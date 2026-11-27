@@ -33,6 +33,8 @@ Self-hosted servers don't have the gateway, so the `gradiated` source is Cloud-o
 3. Store the tool's API key with `grad secrets set NAME` and add a source with `grad sources add`.
 4. Each sync adds a new dataset version with the latest scores. Runs pin a version, so retraining on newer feedback never changes an old run.
 
+Deleting a dataset deletes its sources. A source syncs at most once a minute. If syncs keep failing (a revoked key, say), the source backs off and, after 10 failures in a row, pauses; `grad sources list` shows its status and last error, and `grad sources sync ID` or a new value for its secret resumes it. See [When a sync fails](/docs/training/trajectories/#when-a-sync-fails).
+
 A one-off file import is a snapshot and never gets later feedback; see [Import from files](/docs/training/trajectories/#import-from-files).
 
 <DocsNext>

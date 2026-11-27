@@ -1,0 +1,149 @@
+[
+  {
+    "name": "agent-tools",
+    "title": "Which tools should an agent call?",
+    "expected": {"search_flights": "true", "rebook": "true", "send_sms": "true", "get_weather": "false", "cancel_booking": "false"},
+    "state": {
+      "conversation": [{"role": "user", "content": "BA 2491 to Edinburgh just got cancelled. Get me on the next flight tonight if there is one, and text Sam that I'll be late for dinner."}],
+      "functions": [
+        {"name": "search_flights", "description": "Search flights by origin, destination and date."},
+        {"name": "rebook", "description": "Move an existing booking to another flight."},
+        {"name": "send_sms", "description": "Send a text message to a contact."},
+        {"name": "get_weather", "description": "Weather forecast for a city."},
+        {"name": "cancel_booking", "description": "Cancel a booking and request a refund."}
+      ]
+    },
+    "questions": {
+      "search_flights": {"type": "noul", "instructions": "Should the agent call search_flights to handle this request?"},
+      "rebook": {"type": "noul", "instructions": "Should the agent call rebook to handle this request?"},
+      "send_sms": {"type": "noul", "instructions": "Should the agent call send_sms to handle this request?"},
+      "get_weather": {"type": "noul", "instructions": "Should the agent call get_weather to handle this request?"},
+      "cancel_booking": {"type": "noul", "instructions": "Should the agent call cancel_booking to handle this request?"}
+    }
+  },
+  {
+    "name": "business-days",
+    "title": "Is the invoice overdue? (business days and bank holidays)",
+    "expected": {"overdue": "false", "due": "2026-12-11"},
+    "state": {
+      "invoice": {"issued": "Friday 2026-11-27", "terms": "Payment due 10 business days after the issue date. Business days are Monday to Friday, excluding England bank holidays."},
+      "bank_holidays_2026": ["2026-12-25", "2026-12-28"],
+      "today": "Friday 2026-12-11",
+      "paid": false
+    },
+    "questions": {
+      "overdue": {"type": "noul", "instructions": "Is the invoice overdue at the end of today?", "criteria": {"true": "It is overdue.", "false": "It is not overdue yet."}},
+      "due": {"type": "choice", "instructions": "What is the due date?", "criteria": {"2026-12-09": null, "2026-12-10": null, "2026-12-11": null, "2026-12-14": null}}
+    }
+  },
+  {
+    "name": "phishing",
+    "title": "Phishing, and why",
+    "expected": {"phishing": "true"},
+    "state": {
+      "email": {
+        "from": "IT Service Desk <it-support@gradlated.com>",
+        "to": "alex@gradiated.com",
+        "subject": "Action required: your password expires in 2 hours",
+        "body": "Hi,\n\nYour Microsoft 365 password expires today at 17:00. To keep access to email and Teams, confirm your current password using the secure link below:\n\nhttps://gradiated-sso.help/renew\n\nThanks,\nIT Service Desk"
+      }
+    },
+    "questions": {
+      "phishing": {"type": "noul", "instructions": "Is this email a phishing attempt?"},
+      "tell": {"type": "choice", "instructions": "Which single detail is the strongest evidence?", "criteria": {
+        "domain": "The sender domain is a lookalike of the company's domain.",
+        "urgency": "The two-hour deadline.",
+        "link": "The link goes to a domain the company does not own.",
+        "greeting": "The generic greeting.",
+        "none": "Nothing: the email looks legitimate."}}
+    }
+  },
+  {
+    "name": "code-review",
+    "title": "Operator precedence in an access check",
+    "expected": {"admin_locked": "true", "admin_locked_before": "false", "intent": "bug"},
+    "state": {
+      "diff": "def can_edit(user, doc):\n-    return (user.is_admin or user.id == doc.owner_id) and not doc.locked\n+    return user.is_admin or user.id == doc.owner_id and not doc.locked",
+      "pr_description": "Refactor: drop redundant parentheses in can_edit. No behaviour change."
+    },
+    "questions": {
+      "admin_locked": {"type": "noul", "instructions": "After this change, can an admin edit a locked document?"},
+      "admin_locked_before": {"type": "noul", "instructions": "Before this change, could an admin edit a locked document?", "criteria": {"true": "Yes", "false": "No"}},
+      "intent": {"type": "choice", "instructions": "Is the PR description accurate?", "criteria": {"accurate": "Yes, behaviour is unchanged.", "bug": "No, the change alters who can edit locked documents."}}
+    }
+  },
+  {
+    "name": "slack-reaction",
+    "title": "Pick the Slack reaction",
+    "state": {"channel": "#eng", "message": "Great, the 9am standup is now also a 9:30 sync. Love that for us."},
+    "questions": {
+      "sarcastic": {"type": "noul", "instructions": "Is the message sarcastic?"},
+      "reaction": {"type": "choice", "instructions": "Which emoji reaction would a teammate most likely add?", "criteria": {
+        "joy": "😂", "skull": "💀", "thumbsup": "👍", "tada": "🎉", "heart": "❤️", "eyes": "👀", "pensive": "😔", "100": "💯"}}
+    }
+  },
+  {
+    "name": "caption",
+    "title": "Which caption is funniest?",
+    "state": {"cartoon": "A job interview. Behind the desk sits a cat in a cardigan holding a résumé. Across from her, a golden retriever in a too-small suit is wagging so hard his chair has slid sideways."},
+    "questions": {
+      "funniest": {"type": "choice", "instructions": "Which caption is funniest for this cartoon?", "criteria": {
+        "a": "\"It says here you're a good boy. Can anyone confirm that?\"",
+        "b": "\"We were hoping for someone with more experience.\"",
+        "c": "\"And where do you see yourself in five minutes?\"",
+        "d": "\"Please stop bringing me the stapler.\""}}
+    }
+  },
+  {
+    "name": "monty-hall",
+    "title": "Monty Hall, and a coin nobody can see",
+    "expected": {"switch": "switch"},
+    "state": {
+      "game": "You pick door 1 of three. One door hides a car, the other two hide goats. The host, who knows where the car is and always opens a goat door you did not pick, opens door 3 to show a goat and offers you door 2.",
+      "coin": "A fair coin was flipped this morning. The result was written down and sealed in an envelope nobody has opened."
+    },
+    "questions": {
+      "switch": {"type": "choice", "instructions": "To maximise the chance of winning the car, should you switch to door 2?", "criteria": {"switch": "Switch to door 2.", "stay": "Stay with door 1.", "same": "It makes no difference."}},
+      "heads": {"type": "noul", "instructions": "Does the envelope say heads?"}
+    }
+  },
+  {
+    "name": "banking-de",
+    "title": "Routing a German support message",
+    "state": {"message": "Ich habe meine Karte im Zug liegen lassen und gerade hat jemand 300 Euro am Automaten abgehoben. Bitte sofort sperren!"},
+    "questions": {
+      "intent": {"type": "choice", "instructions": "Route the customer message to one intent.", "criteria": {
+        "lost_or_stolen_card": "Card lost or stolen.",
+        "cash_withdrawal_not_recognised": "A cash withdrawal the customer did not make.",
+        "card_payment_not_recognised": "A card payment the customer did not make.",
+        "card_not_working": "The card does not work.",
+        "change_pin": "Change the PIN."}},
+      "urgent": {"type": "noul", "instructions": "Does this need a human agent within five minutes?"}
+    }
+  },
+  {
+    "name": "bug-severity",
+    "title": "Grade a bug report",
+    "state": {"report": "Checkout: the 'Pay now' button does nothing on Safari 18 (macOS and iOS). Console shows 'TypeError: crypto.randomUUID is not a function'. Analytics: about 12% of checkout sessions since yesterday's deploy. No workaround except switching browser."},
+    "questions": {
+      "severity": {"type": "score", "instructions": "Grade the severity of this bug.", "criteria": [
+        "Cosmetic: no user impact.",
+        "Minor: an inconvenience with a workaround.",
+        "Major: a core flow is broken for some users.",
+        "Critical: revenue or data loss for many users right now."]}
+    }
+  },
+  {
+    "name": "hn-comment",
+    "title": "Would this comment get flagged?",
+    "state": {
+      "guidelines": "Be kind. Don't be snarky. Comments should get more thoughtful and substantive, not less, as a topic gets more divisive. Please don't post shallow dismissals.",
+      "story": "Show HN: I rewrote our build system in Zig",
+      "comment": "Ah yes, the yearly 'I rewrote X in Y' post. Can't wait for the follow-up in six months where you rewrite it back."
+    },
+    "questions": {
+      "within_guidelines": {"type": "noul", "instructions": "Is the comment within the guidelines?"},
+      "kind": {"type": "choice", "instructions": "What kind of comment is it?", "criteria": {"substantive": "A substantive critique.", "snark": "A shallow, snarky dismissal.", "question": "A genuine question.", "praise": "Praise."}}
+    }
+  }
+]

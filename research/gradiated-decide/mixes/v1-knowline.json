@@ -1,0 +1,82 @@
+{
+ "seed": 20261110,
+ "dev_fraction": 0.01,
+ "max_length": 8192,
+ "shuffle": 0.5,
+ "sources": [
+  {
+   "glob": "/home/ubuntu/gdecide/data/clean/procedural-typed-decisions.jsonl.gz",
+   "max_rows": 120000
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/clean/sn92-generalist-train-v1.jsonl.gz"
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/clean/sn92-specialists.jsonl.gz"
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/clean/tasksource-jev-typed-decisions.jsonl.gz",
+   "max_rows": 220000,
+   "exclude": [
+    "x-stance"
+   ]
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/splits/3-API-Bank.jsonl.gz",
+   "max_rows": 20000
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/splits/4-BANKING77.jsonl.gz",
+   "max_rows": 20000
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/splits/5-CLINC150+OOS.jsonl.gz",
+   "max_rows": 20000
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/splits/10-SGD.jsonl.gz",
+   "max_rows": 10000
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/splits/26-ARC-Easy.jsonl.gz",
+   "max_rows": 20000
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/splits/27-ARC-Challenge.jsonl.gz",
+   "max_rows": 20000
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/splits/28-WinoGrande.jsonl.gz",
+   "max_rows": 25000
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/splits/29-HellaSwag.jsonl.gz",
+   "max_rows": 25000
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/splits/30-GSM8K.jsonl.gz",
+   "max_rows": 20000
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/splits/31-ChessBench.jsonl.gz",
+   "max_rows": 30000
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/splits/37-Amazon-ESCI.jsonl.gz",
+   "max_rows": 30000
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/splits/61-HoVer.jsonl.gz",
+   "max_rows": 20000
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/splits/62-When2Call.jsonl.gz",
+   "max_rows": 20000
+  },
+  {
+   "glob": "/home/ubuntu/gdecide/data/splits/64-NewYorker.jsonl.gz",
+   "max_rows": 20000
+  }
+ ],
+ "note": "v1 for KnowLine: as v1, minus the 75 tasksource-jev-typed-decisions rows from multilingual/x-stance (CC-BY-NC-4.0 on ZurichNLP's card, recorded as MIT upstream)."
+}

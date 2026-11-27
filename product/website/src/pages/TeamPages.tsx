@@ -92,7 +92,7 @@ export const TeamPage = (): ReactElement => {
             </p>
             <div className="gr-page-hero-actions">
               <a className="gr-button gr-button--main" href="/careers/">
-                Join our team
+                Join us
                 <Arrow />
               </a>
             </div>

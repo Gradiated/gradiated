@@ -79,8 +79,8 @@ const RailBackContext = createContext<(back: RailBack | null) => void>(
   () => {},
 );
 
-/* Fades the docs nav at its foot while there is more below (its scrollbar is hidden). */
-const fadeWhileMore = (nav: HTMLElement | null) => {
+/* Fades a scrolling column at its foot while there is more below (its scrollbar is hidden). */
+export const fadeWhileMore = (nav: HTMLElement | null) => {
   if (!nav) return;
   const update = () => {
     const more = nav.scrollTop + nav.clientHeight < nav.scrollHeight - 1;
@@ -574,8 +574,16 @@ export const RailShell = ({
             </a>
           </nav>
           <RailThemeToggle onChoose={chooseTheme} theme={theme} />
-          <a className="gr-rail-cta" href={BOOKING_URL}>
-            Book a Call <Arrow />
+          {/* Beside the content on tighter desktops, the label folds to the
+              calendar icon so the rail can narrow (railshell.css). */}
+          <a
+            aria-label="Book a call"
+            className="gr-rail-cta"
+            href={BOOKING_URL}
+            title="Book a call"
+          >
+            <PixelIcon className="gr-rail-cta-icon" name="calendar" />
+            <span className="gr-rail-cta-label">Book a Call</span> <Arrow />
           </a>
         </aside>
 

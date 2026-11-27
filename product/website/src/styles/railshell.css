@@ -379,13 +379,16 @@
   align-self: start;
   align-items: center;
   gap: 0.6em;
-  padding: calc(0.4 * var(--u)) var(--u);
+  box-sizing: border-box;
+  min-height: 2.5rem;
+  padding: 0 1.5rem;
   white-space: nowrap;
   border-radius: var(--radius);
   background: #fafafa;
   color: #09090b;
   font-family: var(--font-caps);
-  font-size: var(--text-caps);
+  font-size: 0.75rem;
+  line-height: 1;
   font-weight: var(--weight-caps);
   letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
@@ -407,6 +410,40 @@
 
 .gr-rail-cta:hover .gr-arrow-shaft {
   clip-path: inset(0);
+}
+
+.gr-rail-cta .gr-rail-cta-icon {
+  display: none;
+}
+
+/* Tighter desktops (961-1199px): the rail narrows and Book a Call folds
+   to a square calendar button, giving the page back ~80px. */
+@media (min-width: 60.0625rem) and (max-width: 74.9375rem) {
+  .gr-rail-root:not([data-doc]) {
+    --rail-w: 184px;
+  }
+
+  .gr-rail-root:not([data-doc]) .gr-rail-rail {
+    padding-inline: 44px;
+  }
+
+  .gr-rail-root:not([data-doc]) .gr-rail-cta {
+    width: 40px;
+    height: 40px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .gr-rail-root:not([data-doc]) .gr-rail-cta-label,
+  .gr-rail-root:not([data-doc]) .gr-rail-cta .gr-arrow {
+    display: none;
+  }
+
+  .gr-rail-root:not([data-doc]) .gr-rail-cta .gr-rail-cta-icon {
+    display: block;
+    width: 20px;
+    height: 20px;
+  }
 }
 
 /* -- the reveal body -------------------------------------------------------- */

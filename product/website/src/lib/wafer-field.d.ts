@@ -36,6 +36,8 @@ export type WaferFieldOptions = {
   chipSize?: number;
   /** 0 = square. The design system has no rounded corners. */
   cornerRadius?: number;
+  /** Square chips: draw each on whole device pixels, all one size. */
+  snapToPixels?: boolean;
   /** Bows each chip's path; 0 is perfectly mechanical. */
   curveAmount?: number;
   durationJitter?: number;

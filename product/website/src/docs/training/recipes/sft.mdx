@@ -142,7 +142,7 @@ Scoring a whole dataset with a [`Judge`](/docs/training/rubrics/) and server-sid
 
 - **Use SFT (`SFTRecipe`)** when you have verified examples of the exact outputs you want (or high-scoring production answers).
 - **Follow with [DPO (`DPORecipe`)](/docs/training/recipes/dpo/)** when the model already follows your format but keeps making specific mistakes you can contrast as `(chosen, rejected)` pairs.
-- **[Distillation (`DistillRecipe`)](/docs/training/recipes/distillation/)** arrives in Wave 2, for when you have prompts and a larger teacher model but no gold answers yet.
+- **[Distillation (`DistillRecipe`)](/docs/training/recipes/distillation/)** is coming soon, for when you have prompts and a larger teacher model but no gold answers yet.
 
 ### Parameters you might change
 
@@ -265,7 +265,7 @@ vllm serve Qwen/Qwen3-8B \
 
 ## Want more control?
 
-Separate learning rates per layer (`optim.ParamGroup`) arrive in Wave 2 with [Custom loops](/docs/training/custom-loops/).
+Separate learning rates per layer (`optim.ParamGroup`) are coming soon with [Custom loops](/docs/training/custom-loops/).
 
 <DocsNext>
   <a href="/docs/training/recipes/dpo/">

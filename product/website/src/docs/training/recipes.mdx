@@ -20,7 +20,7 @@ A **recipe** is a Python class that wires up a common training workflow (`Router
 | `CartridgeRecipe`     | [Context Cartridges](/docs/training/recipes/cartridges/)    | Static corpus (`Context`) + QA prompts (`num_tokens`)                                                     |
 | `EmbeddingRecipe`     | [Embeddings](/docs/training/recipes/embeddings/)            | `Triplet` examples (`query`, `positive` doc, optional `negatives`)                                        |
 
-[RL for agents](/docs/training/recipes/rl-agents/) (`GRPORecipe`), [distillation](/docs/training/recipes/distillation/) (`DistillRecipe`) and [reward models](/docs/training/recipes/reward-models/) (`RewardModelRecipe`) arrive in Wave 2.
+[RL for agents](/docs/training/recipes/rl-agents/) (`GRPORecipe`), [distillation](/docs/training/recipes/distillation/) (`DistillRecipe`) and [reward models](/docs/training/recipes/reward-models/) (`RewardModelRecipe`) are coming soon.
 
 Any dataset works as input: a list of plain chat records or a `.jsonl` file (`client.datasets.push(name, records_or_path)`), a Hugging Face dataset (`client.datasets.from_hf(...)`), or traces imported from your observability tool. See [Trajectories](/docs/training/trajectories/).
 
@@ -180,7 +180,7 @@ Managed runs execute on Gradiated's servers, so closing your laptop never stops 
 
 - **Built-in checks run on Gradiated's servers:** `Judge` and the built-in `validators` (`JSON`, `NonEmpty`, `ExactMatch`, `Regex`).
 - **Your Python functions run in your own process.** In an [evaluation](/docs/training/evaluations/), a `Scorer(fn=...)` runs where you call `ev.wait()`: the SDK pulls the model outputs, calls your function and posts the scores. `requirements=[...]` is checked against your installed packages before the eval starts.
-- **Training recipes take built-in checks only.** `RouterRecipe(rubric=...)` accepts a `Judge`, validators, or the name of a score already on your records. Python functions inside training recipes arrive in Wave 2.
+- **Training recipes take built-in checks only.** `RouterRecipe(rubric=...)` accepts a `Judge`, validators, or the name of a score already on your records. Python functions inside training recipes are coming soon.
 
 Details are in the [reference](/docs/reference/training-parameters/#where-code-runs).
 
@@ -406,7 +406,7 @@ grad train --dataset support-preferences --name support-responder --recipe dpo -
   </DocsCodeTab>
 </DocsCodeTabs>
 
-SFT and DPO runs can continue an SFT or DPO LoRA artifact (not a merged export, `merge_on_export=True`). The adapter's rank and alpha carry over. Router, decision model, cartridge and embedding runs start from a base model. RL on top of an SFT artifact (`GRPORecipe`) arrives in Wave 2; see [RL for agents](/docs/training/recipes/rl-agents/).
+SFT and DPO runs can continue an SFT or DPO LoRA artifact (not a merged export, `merge_on_export=True`). The adapter's rank and alpha carry over. Router, decision model, cartridge and embedding runs start from a base model. RL on top of an SFT artifact (`GRPORecipe`) is coming soon; see [RL for agents](/docs/training/recipes/rl-agents/).
 
 ## Live metrics and evaluation
 
@@ -454,7 +454,7 @@ Router artifacts include a held-out cost-vs-quality Pareto curve and 95% bootstr
 
 ## When to write a custom loop
 
-Stick with a `Recipe` as long as a standard train/eval flow works. [Custom loops](/docs/training/custom-loops/) (the `Trainer` API) and custom losses (`losses.CustomLoss`, for example SimPO) arrive in Wave 2. They are for building a new algorithm:
+Stick with a `Recipe` as long as a standard train/eval flow works. [Custom loops](/docs/training/custom-loops/) (the `Trainer` API) and custom losses (`losses.CustomLoss`, for example SimPO) are coming soon. They are for building a new algorithm:
 
 - Multiple trainers updating together in one loop (like a separate actor and critic).
 - Custom rollout setups like replay buffers, tree search, or multi-agent self-play.

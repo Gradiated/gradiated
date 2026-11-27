@@ -35,7 +35,7 @@ Pick the class that matches how you grade an answer:
 | -------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`Scorer`**         | `Scorer(name, fn=..., weight=1.0)`       | A built-in validator (`fn=validators.JSON()`), which runs on the server, or your own Python function `fn(traj) -> float`, which runs in your process. Return a score in `[0, 1]` (a bool counts as `1.0`/`0.0`).                                                                                                  |
 | **`Judge`**          | `Judge(model, prompt=..., name="judge")` | Grade with a model id (such as `"{{SONNET_MODEL}}"`) or a trained `Artifact`. The judge sees the conversation, the answer and any reference answer, and replies with a score in `[0, 1]`. `model` is required, with no default that could change under you, and each eval result records the judge model it used. |
-| **`StatefulScorer`** | `(traj: Trajectory, handle: H) -> float` | Checks live state inside an [`Environment`](/docs/training/environments/), which arrives in Wave 2.                                                                                                                                                                                                               |
+| **`StatefulScorer`** | `(traj: Trajectory, handle: H) -> float` | Checks live state inside an [`Environment`](/docs/training/environments/), which is coming soon.                                                                                                                                                                                                               |
 
 The built-in validators run on the server and score the trimmed output `1.0` or `0.0`:
 
@@ -83,18 +83,18 @@ answer_check = Scorer("answer", fn=math_answer, requirements=["sympy==1.14.0"])
 
 Before any model is called, `evals.create` checks that the declared `requirements` are installed and runs each function once on a sample record, so a broken scorer fails before you spend anything.
 
-Python scorers in training recipes (`RouterRecipe(rubric=Scorer(...))`) run in a managed sandbox, which arrives in Wave 2; today the recipe rejects them. Compute the score yourself, store it in each record's `scores`, and pass its name instead. See [Where your code runs](/docs/training/recipes/#where-your-code-runs).
+Python scorers in training recipes (`RouterRecipe(rubric=Scorer(...))`) run in a managed sandbox, which is coming soon; today the recipe rejects them. Compute the score yourself, store it in each record's `scores`, and pass its name instead. See [Where your code runs](/docs/training/recipes/#where-your-code-runs).
 
 <DocsCallout label="When to train a reward model instead" tone="tip">
   A frontier or open model `Judge` with a clear rubric is the right default for
   most teams. Training a dedicated verifier with
   [`RewardModelRecipe`](/docs/training/recipes/reward-models/), to pass as
-  `Judge(name="resolved", model=verifier_artifact)`, arrives in Wave 2.
+  `Judge(name="resolved", model=verifier_artifact)`, is coming soon.
 </DocsCallout>
 
 ## Grading live state inside an `Environment`
 
-`StatefulScorer(name, fn=f(traj, handle))` checks what an agent actually changed, such as a row inserted in Postgres or a test suite passing in a container. It runs inside an [`Environment`](/docs/training/environments/) rubric, which arrives in Wave 2; eval and training rubrics can't carry one.
+`StatefulScorer(name, fn=f(traj, handle))` checks what an agent actually changed, such as a row inserted in Postgres or a test suite passing in a container. It runs inside an [`Environment`](/docs/training/environments/) rubric, which is coming soon; eval and training rubrics can't carry one.
 
 <DocsNext>
   <a href="/docs/training/evaluations/">

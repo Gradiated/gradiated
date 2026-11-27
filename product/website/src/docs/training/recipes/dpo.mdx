@@ -165,7 +165,7 @@ grad train --dataset diff-merge-preferences --name fast-diff-merge --recipe dpo 
 
 - **Start with [SFT](/docs/training/recipes/sft/)** when the model doesn't follow your format, schema, or style yet and you have examples of good answers.
 - **Follow with DPO (`DPORecipe`)** when the model mostly works but keeps repeating specific mistakes you can show as `(chosen, rejected)` pairs.
-- **Move to [RL (`GRPORecipe`)](/docs/training/recipes/rl-agents/)**, which arrives in Wave 2, when you can grade answers automatically with tests, validators, or a judge and want the model to discover better solutions on its own.
+- **Move to [RL (`GRPORecipe`)](/docs/training/recipes/rl-agents/)**, which is coming soon, when you can grade answers automatically with tests, validators, or a judge and want the model to discover better solutions on its own.
 
 ### Parameters you might change
 
@@ -187,7 +187,7 @@ client.deploy("fast-diff-merge@latest")
 
 ## Want more control?
 
-Custom PyTorch losses (`losses.CustomLoss`, like SimPO, ORPO, or KTO) arrive in Wave 2 with [Custom loops](/docs/training/custom-loops/) and [Advanced objectives](/docs/training/advanced-objectives/).
+Custom PyTorch losses (`losses.CustomLoss`, like SimPO, ORPO, or KTO) are coming soon with [Custom loops](/docs/training/custom-loops/) and [Advanced objectives](/docs/training/advanced-objectives/).
 
 <DocsNext>
   <a href="/docs/training/recipes/rl-agents/">

@@ -82,18 +82,19 @@ The training API (`grad-server`) is the same on Gradiated Cloud, `grad local up`
 
 Run status is `queued`, `running`, `completed`, `failed`, `cancelled` or `stopped_budget`. Eval status is `queued`, `running`, `awaiting_scores`, `completed`, `failed` or `cancelled`.
 
-### Deployments, routing and feedback
+### Deployments and routing (Gradiated Cloud)
 
-Self-hosted servers answer deploy, rollback, route and embeddings with 501 `deploy_unavailable`: download the artifact and serve it on vLLM or SGLang instead.
+Deploy, route and embeddings are Gradiated Cloud serving features. Self-hosted servers answer them with 501 `deploy_unavailable`: download the artifact and serve it on vLLM or SGLang instead.
 
 | Method | Path                                         | Purpose                                                           |
 | ------ | -------------------------------------------- | ----------------------------------------------------------------- |
 | `POST` | `/v1/deployments`                            | Deploy an artifact under a stable model name (`your-org/<name>`). |
-| `GET`  | `/v1/deployments` / `/v1/deployments/{name}` | List deployments, or get one with its feedback summary.           |
+| `GET`  | `/v1/deployments` / `/v1/deployments/{name}` | List deployments, or get one.                                     |
 | `POST` | `/v1/deployments/{name}/rollback`            | Roll back to the previous artifact.                               |
 | `POST` | `/v1/route`                                  | Ask a deployed router which model should answer.                  |
 | `POST` | `/v1/embeddings`                             | Embed text with a deployed embedding artifact.                    |
-| `POST` | `/v1/feedback`                               | Record deduplicated outcome scores and gold corrections.          |
+
+grad has no feedback endpoint. Production outcomes live in your observability tool (or the Gradiated gateway) and reach a dataset through a [source](/docs/training/trajectories/#send-feedback-from-production).
 
 `/v1/trainer-jobs/*` is the internal protocol between the server and its trainer workers. It needs a platform `trainer:worker` key and is not part of the SDKs.
 
@@ -152,7 +153,7 @@ Errors are `application/problem+json` with `type`, `title`, `status`, `code`, `d
 | 422    | `validation_error`, `idempotency_key_reused`, `invalid_cursor`, `recipe_deferred` |
 | 500    | `internal_error`                                                                  |
 | 501    | `deploy_unavailable`, `inference_unavailable`                                     |
-| 503    | `store_unavailable`, `billing_unavailable`                                        |
+| 503    | `database_unavailable` (with `Retry-After: 1`), `billing_unavailable`             |
 
 The SDKs raise a typed error per status (`AuthenticationError`, `PermissionDeniedError`, `NotFoundError`, `ConflictError`, `ValidationError`, `RateLimitError`, `DeployUnavailableError`, `InferenceUnavailableError`, `ServerError`) that carries `status`, `code` and `request_id`.
 

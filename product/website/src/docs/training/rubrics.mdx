@@ -67,7 +67,7 @@ print(ev.summary_table())
 
 ## Where Python scorers run
 
-Built-in validators and every `Judge` run on Gradiated's servers. Your own Python functions run in your Python process (`runtime="local"`, the default). The eval waits in `awaiting_scores` while `ev.wait()` pulls the model outputs, calls your function and posts the scores, so keep the process running until the eval completes. `traj.text` is the answer; `traj.metadata` and `traj.expected_output` come from the record:
+Built-in validators and every `Judge` run on Gradiated's servers. Your own Python functions run in your Python process (`runtime="local"`, the default). The eval waits in `awaiting_scores` while `ev.wait()` pulls the model outputs, calls your function and posts the scores, so keep the process running until the eval completes. If no SDK posts scores for 24 hours, the eval fails with an error naming the missing scorers. `traj.text` is the answer; `traj.metadata` and `traj.expected_output` come from the record:
 
 ```python
 from grad import Scorer

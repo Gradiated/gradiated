@@ -158,6 +158,8 @@ if run.status == "stopped_budget":
 
 From the CLI, use `grad runs resume RUN --max-cost-usd 40 --wait`.
 
+A resumed or requeued run is billed only for the tokens it processes: the steps up to its checkpoint aren't billed again, and steps replayed after the last checkpoint are. `wait()` gives up after 24 hours by default (the run keeps going); pass `timeout=` to change that.
+
 ## Watching a run
 
 Stream step metrics (loss, eval metrics, tokens, and cost) while a run trains:

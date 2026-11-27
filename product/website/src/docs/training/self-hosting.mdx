@@ -143,17 +143,18 @@ The mirror holds one directory per model (`<mirror>/<model id>/` or `<mirror>/<H
 
 The chart and `grad local up` set these for you. Set them yourself when you run `grad-server` another way:
 
-| Variable                                    | Default                | Notes                                                                                                                     |
-| ------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`                              | required               | Postgres connection string. The server runs its migrations at boot.                                                       |
-| `AUTH_MODE`                                 | `api_key`              | `api_key` requires `ADMIN_API_KEY_HASH`. `none` turns authentication off and is for local development only.               |
-| `ADMIN_API_KEY_HASH`                        | none                   | SHA-256 hex of the bootstrap admin key.                                                                                   |
-| `TRAINER_API_KEY` or `TRAINER_API_KEY_HASH` | none                   | The key trainer workers authenticate with.                                                                                |
-| `S3_BUCKET`, `S3_REGION`, `S3_ENDPOINT`     | none                   | Object storage for uploads, checkpoints, and artifacts. Without `S3_BUCKET` the server uses `STORAGE_DIR` (`.grad-data`). |
-| `DEPLOY_MODE`                               | `disabled`             | `disabled` or `cloud`. Self-hosted servers use `disabled`: `deploy` and `/v1/route` return `501 deploy_unavailable`.      |
-| `INFERENCE_BASE_URL`, `INFERENCE_API_KEY`   | none                   | OpenAI-compatible endpoint for evals. Without it, `POST /v1/evals` returns `501 inference_unavailable`.                   |
-| `JUDGE_BASE_URL`, `JUDGE_API_KEY`           | the inference endpoint | Endpoint for `Judge` rubric items (the chart's `judge.baseUrl` sets the `GRAD_JUDGE_BASE_URL` alias).                     |
-| `GRAD_EXTRA_MODELS_JSON`                    | none                   | JSON array that adds or overrides models in the trainable catalog.                                                        |
+| Variable                                    | Default                | Notes                                                                                                                                                                 |
+| ------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                              | required               | Postgres connection string. The server runs its migrations at boot.                                                                                                   |
+| `AUTH_MODE`                                 | `api_key`              | `api_key` requires `ADMIN_API_KEY_HASH`. `none` turns authentication off and is for local development only.                                                           |
+| `ADMIN_API_KEY_HASH`                        | none                   | SHA-256 hex of the bootstrap admin key.                                                                                                                               |
+| `TRAINER_API_KEY` or `TRAINER_API_KEY_HASH` | none                   | The key trainer workers authenticate with.                                                                                                                            |
+| `S3_BUCKET`, `S3_REGION`, `S3_ENDPOINT`     | none                   | Object storage for uploads, checkpoints, and artifacts. Without `S3_BUCKET` the server uses `STORAGE_DIR` (`.grad-data`).                                             |
+| `DEPLOY_MODE`                               | `disabled`             | `disabled` or `cloud`. Self-hosted servers use `disabled`: `deploy` and `/v1/route` return `501 deploy_unavailable`.                                                  |
+| `MAX_ATTEMPTS`                              | `10`                   | Attempts per job, counting every attempt that ends without a result (including ones a preempted or stopped worker abandoned). Then the run fails with the last error. |
+| `INFERENCE_BASE_URL`, `INFERENCE_API_KEY`   | none                   | OpenAI-compatible endpoint for evals. Without it, `POST /v1/evals` returns `501 inference_unavailable`.                                                               |
+| `JUDGE_BASE_URL`, `JUDGE_API_KEY`           | the inference endpoint | Endpoint for `Judge` rubric items (the chart's `judge.baseUrl` sets the `GRAD_JUDGE_BASE_URL` alias).                                                                 |
+| `GRAD_EXTRA_MODELS_JSON`                    | none                   | JSON array that adds or overrides models in the trainable catalog.                                                                                                    |
 
 ### Authentication & API keys
 

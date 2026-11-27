@@ -267,7 +267,7 @@ curl https://api.gradiated.com/v1/systemone \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-When a prediction turns out wrong in production, send back the right answer with `client.feedback.record(inference_id=..., expected_output={"category": "billing"})` and Gradiated stores the correction with that request.
+When a prediction turns out wrong in production, record the right answer as a correction in your tracing tool (on Gradiated Cloud, the gateway keeps it with the request). The next [source sync](/docs/training/trajectories/#send-feedback-from-production) adds it to the dataset as `expected_output`.
 
 ## Want more control?
 

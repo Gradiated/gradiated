@@ -184,10 +184,6 @@ tools = []  # the tool definitions you send with the request, if any
 # Call directly if you dispatch to your own LLM providers:
 decision = client.route("support-router", messages=messages, tools=tools)
 print(decision.model)  # e.g. "qwen/qwen3-8b"; call it with your own provider client
-
-# Later, once you know whether the ticket was resolved:
-ticket_resolved = True
-decision.record_feedback(score=1.0 if ticket_resolved else 0.0)
 ```
 
   </DocsCodeTab>
@@ -207,10 +203,6 @@ const tools: unknown[] = [];
 
 const decision = await grad.route("support-router", { messages, tools });
 console.log(decision.model); // call it with your own provider client
-
-// Later, once you know whether the ticket was resolved:
-const ticketResolved = true;
-await decision.recordFeedback({ score: ticketResolved ? 1.0 : 0.0 });
 ```
 
   </DocsCodeTab>
@@ -223,9 +215,6 @@ messages := []grad.Message{{Role: "user", Content: "Where is invoice #9941?"}}
 
 decision, _ := client.Route(ctx, "support-router", grad.RouteInput{Messages: messages})
 fmt.Println(decision.Model) // call it with your own provider client
-
-// Later, once you know whether the ticket was resolved:
-_ = decision.RecordFeedback(ctx, grad.Feedback{Score: 1.0})
 ```
 
   </DocsCodeTab>
@@ -244,9 +233,9 @@ curl https://api.gradiated.com/v1/chat/completions \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Gradiated stores each feedback event with its routed request. `client.deployments.get("support-router")` shows the feedback count and average score, so you can compare live quality with the eval report.
+To retrain on live outcomes, record whether each routed request worked (ticket resolved, thumbs up) in your observability tool and [sync it](/docs/training/trajectories/#send-feedback-from-production) into the router's dataset.
 
-If you already call models through Gradiated with the [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/), you can skip `client.route(...)` and pass `"model": "your-org/support-router"` directly to your chat completion call. See [Deploying](/docs/training/deploying/) for updates, rollbacks, and self-hosting options.
+If you already call models through Gradiated with the [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/), you can skip `client.route(...)` and pass `"model": "your-org/support-router"` directly to your chat completion call. Deploying and routing are Gradiated Cloud features; see [Deploying](/docs/training/deploying/) for updates, rollbacks and serving the artifact yourself.
 
 ## Want more control?
 

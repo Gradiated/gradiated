@@ -164,9 +164,8 @@ Call it through the standard [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](
 ```python
 import os
 from openai import OpenAI
-from grad import Grad
 
-sft.deploy()
+sft.deploy()  # the finished run from above
 
 messages = [
     {"role": "system", "content": "Apply the edit snippet to the original file. Return only the merged file."},
@@ -192,15 +191,6 @@ code = res.choices[0].message.content
 if not check_ts(code):
     res = oai.chat.completions.create(model="qwen/qwen3-32b", messages=messages)
     code = res.choices[0].message.content
-
-# Later, once you know the outcome, log it (and any human fix) for your next run
-tests_passed = check_ts(code)  # or your CI result
-human_fix = None               # or the corrected file a developer committed
-Grad().feedback.record(
-    inference_id=res.id,
-    score=1.0 if tests_passed else 0.0,
-    expected_output={"content": human_fix} if human_fix else None,
-)
 ```
 
   </DocsCodeTab>
@@ -208,9 +198,8 @@ Grad().feedback.record(
 
 ```ts
 import OpenAI from "openai";
-import { Grad } from "@gradiated/grad";
 
-await sft.deploy();
+await sft.deploy(); // the finished run from above
 
 const messages = [
   {
@@ -249,14 +238,6 @@ if (!checkTs(code)) {
   });
   code = res.choices[0].message.content ?? "";
 }
-
-const testsPassed = checkTs(code); // or your CI result
-const humanFix: string | null = null; // or the corrected file a developer committed
-await new Grad().feedback.record({
-  inferenceId: res.id,
-  score: testsPassed ? 1.0 : 0.0,
-  expectedOutput: humanFix ? { content: humanFix } : undefined,
-});
 ```
 
   </DocsCodeTab>
@@ -274,10 +255,12 @@ vllm serve Qwen/Qwen3-8B \
 </DocsCodeTabs>
 
 <DocsCallout label="Turn production misses into your next dataset" tone="tip">
-  When a developer fixes a bad answer or your syntax check catches invalid JSON
-  or code, calling `feedback.record(..., expected_output=...)` saves both the
-  failed attempt and the fix on the same trajectory, giving you ready-to-use
-  data for your next SFT or [DPO](/docs/training/recipes/dpo/) run.
+  When a developer fixes a bad answer or your syntax check catches invalid code,
+  send the fix to your observability tool as a correction (a LangSmith
+  `correction`, a Braintrust `expected`). The next [source
+  sync](/docs/training/trajectories/#send-feedback-from-production) brings in
+  the failed attempt and its fix together, ready for your next SFT or
+  [DPO](/docs/training/recipes/dpo/) run.
 </DocsCallout>
 
 ## Want more control?

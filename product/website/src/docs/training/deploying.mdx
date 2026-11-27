@@ -111,119 +111,21 @@ Previous  art_3f9c0a1b2c3d4e5f60718293
 Status    active
 Fallback  -
 Explore   0
-
-  Feedback
-    Events        : 18,204
-    Average score : 94.1%
 ```
 
 </DocsTerminal>
 
 Deploying a new version qualifies the adapter on a serving replica first, then atomically switches `your-org/fast-diff-merge` to the new version. If anything looks wrong, `grad deployments rollback fast-diff-merge` (or `client.deployments.rollback("fast-diff-merge")`) points the name back at the previous artifact. To go back further, deploy any earlier version (`grad deploy fast-diff-merge@2026-11-26-1`).
 
-### Log feedback for the next training run
+### Feed production back into training
 
-Requests sent to your deployed Gradiated Cloud model are captured into its [`Dataset`](/docs/training/trajectories/) automatically and return an `x-gradiated-inference-id` response header. Send outcomes and human fixes back whenever you know how an answer performed:
+The Gradiated gateway records every request to your deployed model, along with its feedback, so you don't need a separate observability tool. Connect them to a dataset with the built-in `gradiated` [source](/docs/training/trajectories/#sync-from-observability-providers): each sync adds a new dataset version with the latest traces and scores, ready for your next run.
 
-<DocsCodeTabs>
-  <DocsCodeTab label="Python">
-
-```python
-import os
-from openai import OpenAI
-from grad import Grad
-
-client = Grad()
-oai = OpenAI(base_url="https://api.gradiated.com/v1", api_key=os.environ["GRADIATED_API_KEY"])
-
-raw = oai.chat.completions.with_raw_response.create(
-    model="your-org/fast-diff-merge",
-    messages=[{"role": "user", "content": "Merge these two diffs into one patch: ..."}],
-)
-inference_id = raw.headers["x-gradiated-inference-id"]
-patch = raw.parse().choices[0].message.content
-
-# Later, once you know the outcome (for example, after CI runs on the patch):
-tests_passed = True
-human_fix = None  # or the corrected patch a reviewer wrote
-
-client.feedback.record(
-    inference_id=inference_id,
-    idempotency_key=f"{inference_id}-ci",
-    score=1.0 if tests_passed else 0.0,
-    expected_output={"content": human_fix} if human_fix else None,
-)
-```
-
-  </DocsCodeTab>
-  <DocsCodeTab label="TypeScript">
-
-```ts
-import OpenAI from "openai";
-import { Grad } from "@gradiated/grad";
-
-const grad = new Grad();
-const oai = new OpenAI({
-  baseURL: "https://api.gradiated.com/v1",
-  apiKey: process.env.GRADIATED_API_KEY,
-});
-
-const { data, response } = await oai.chat.completions
-  .create({
-    model: "your-org/fast-diff-merge",
-    messages: [
-      { role: "user", content: "Merge these two diffs into one patch: ..." },
-    ],
-  })
-  .withResponse();
-const inferenceId = response.headers.get("x-gradiated-inference-id")!;
-console.log(data.choices[0].message.content);
-
-// Later, once you know the outcome:
-const testsPassed = true;
-await grad.feedback.record({
-  inferenceId,
-  idempotencyKey: `${inferenceId}-ci`,
-  score: testsPassed ? 1.0 : 0.0,
-});
-```
-
-  </DocsCodeTab>
-  <DocsCodeTab label="Go">
-
-```go
-// inferenceID comes from the x-gradiated-inference-id response header
-_ = client.Feedback.Record(ctx, grad.Feedback{
-	InferenceID:    inferenceID,
-	IdempotencyKey: inferenceID + "-ci",
-	Score:          1.0,
-})
-```
-
-  </DocsCodeTab>
-  <DocsCodeTab label="cURL">
-
-```bash
-curl https://api.gradiated.com/v1/feedback \
-  -H "Authorization: Bearer $GRADIATED_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "events": [{
-      "inference_id": "inf_01J9Y",
-      "idempotency_key": "inf_01J9Y-ci",
-      "score": 1.0
-    }]
-  }'
-```
-
-  </DocsCodeTab>
-</DocsCodeTabs>
-
-Duplicate submissions with the same `idempotency_key` are ignored safely. Feedback updates deployment quality metrics and attaches to the saved `Trajectory` for your next training run.
+If you already log to Langfuse, LangSmith, Braintrust, Helicone, Phoenix or PostHog, keep sending feedback there and sync it the same way. See [Send feedback from production](/docs/training/trajectories/#send-feedback-from-production).
 
 ## Option 2: Run on your own vLLM or SGLang
 
-If you already run your own inference infrastructure (or self-host training in your VPC), download the trained artifact directly. [Self-hosted](/docs/training/self-hosting/) servers have no hosted serving: `deploy` returns `501 deploy_unavailable` (the Python SDK raises `DeployUnavailableError` and `grad deploy` exits with code 6). LoRA runs export standard HuggingFace PEFT weights (`adapter_config.json` and `adapter_model.safetensors`), and `merge_on_export=True` exports standalone merged Safetensors weights.
+If you already run your own inference infrastructure (or self-host training in your VPC), download the trained artifact directly. Deploying is a Gradiated Cloud feature; a [self-hosted](/docs/training/self-hosting/) server answers `deploy` with `501 deploy_unavailable`. LoRA runs export standard HuggingFace PEFT weights (`adapter_config.json` and `adapter_model.safetensors`), and `merge_on_export=True` exports standalone merged Safetensors weights.
 
 <DocsCodeTabs>
   <DocsCodeTab label="vLLM">
@@ -250,7 +152,7 @@ python -m sglang.launch_server \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Handle traffic splitting and rollbacks with whatever you already use in your stack (feature flags, Envoy/Nginx weights, or Argo Rollouts). You can still push production logs and feedback back to Gradiated (via `dataset.push(...)`, OTel, or Langfuse sync) to train your next version.
+Handle traffic splitting and rollbacks with whatever you already use in your stack (feature flags, Envoy/Nginx weights, or Argo Rollouts). Log requests and feedback to your observability tool and [sync them](/docs/training/trajectories/#sync-from-observability-providers) into a dataset to train your next version.
 
 <DocsNext>
   <a href="/docs/training/artifacts/">

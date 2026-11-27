@@ -237,12 +237,28 @@ The SDKs follow semantic versioning, so upgrading within a major version shouldn
 
 Base model retirement follows its own notice policy; see [Model retirement](/docs/training/models/#model-retirement).
 
-## Use your deployed model and log outcomes
+## Use your deployed model
 
-`run.deploy()` (and `grad deploy`) hosts your artifact on Gradiated Cloud under `your-org/<name>`, so you can call it with the OpenAI, Anthropic, or SystemOne SDK (or `client.route(...)` for routers). If you prefer to self-host serving, download the LoRA weights with `grad artifacts download` and load them into vLLM or SGLang.
+`run.deploy()` (and `grad deploy`) hosts your artifact on Gradiated Cloud under `your-org/<name>`, so you can call it with the OpenAI, Anthropic, or SystemOne SDK (or `client.route(...)` for routers). If you prefer to serve it yourself, download the LoRA weights with `grad artifacts download` and load them into vLLM or SGLang.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Chat model (OpenAI SDK)">
+
+```python
+import os
+from openai import OpenAI
+
+oai = OpenAI(base_url="https://api.gradiated.com/v1", api_key=os.environ["GRADIATED_API_KEY"])
+
+reply = oai.chat.completions.create(
+    model="your-org/sql-helper",
+    messages=[{"role": "user", "content": "Count active users from yesterday."}],
+)
+print(reply.choices[0].message.content)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Model router (Python)">
 
 ```python
 import os
@@ -251,46 +267,10 @@ from grad import Grad
 
 client = Grad()
 oai = OpenAI(base_url="https://api.gradiated.com/v1", api_key=os.environ["GRADIATED_API_KEY"])
-
-raw = oai.chat.completions.with_raw_response.create(
-    model="your-org/sql-helper",
-    messages=[{"role": "user", "content": "Count active users from yesterday."}],
-)
-inference_id = raw.headers["x-gradiated-inference-id"]
-sql = raw.parse().choices[0].message.content
-
-# Log the real outcome: it updates deployment quality metrics and becomes data for your next run
-query_succeeded = sql.strip().upper().startswith("SELECT")  # replace with your own check, e.g. the query ran
-client.feedback.record(
-    inference_id=inference_id,
-    idempotency_key=f"query-{inference_id}",
-    score=1.0 if query_succeeded else 0.0,
-)
-```
-
-  </DocsCodeTab>
-  <DocsCodeTab label="Model router (Python)">
-
-```python
-import os, time
-from openai import OpenAI
-from grad import Grad
-
-client = Grad()
-oai = OpenAI(base_url="https://api.gradiated.com/v1", api_key=os.environ["GRADIATED_API_KEY"])
 messages = [{"role": "user", "content": "Where is invoice #9941?"}]
 
 decision = client.route("support-router", messages=messages)
-
-start = time.monotonic()
 reply = oai.chat.completions.create(model=decision.model, messages=messages)
-latency_ms = (time.monotonic() - start) * 1000
-
-user_resolved = True  # replace with your real outcome signal (thumbs up, ticket closed, ...)
-decision.record_feedback(
-    score=1.0 if user_resolved else 0.0,
-    metrics={"latency_ms": latency_ms, "output_tokens": reply.usage.completion_tokens},
-)
 ```
 
   </DocsCodeTab>
@@ -310,21 +290,9 @@ const messages = [
 ];
 
 const decision = await grad.route("support-router", { messages });
-
-const start = performance.now();
 const reply = await oai.chat.completions.create({
   model: decision.model,
   messages,
-});
-const latencyMs = performance.now() - start;
-
-const userResolved = true; // replace with your real outcome signal
-await decision.recordFeedback({
-  score: userResolved ? 1.0 : 0.0,
-  metrics: {
-    latency_ms: latencyMs,
-    output_tokens: reply.usage?.completion_tokens ?? 0,
-  },
 });
 ```
 
@@ -340,23 +308,14 @@ decision, err := client.Route(ctx, "support-router", grad.RouteInput{Messages: m
 if err != nil {
 	log.Fatal(err)
 }
-
-// Call decision.Model with your existing OpenAI-compatible client, then log the outcome.
-userResolved := true // replace with your real outcome signal
-score := 0.0
-if userResolved {
-	score = 1.0
-}
-if err := decision.RecordFeedback(ctx, grad.Feedback{Score: score}); err != nil {
-	log.Fatal(err)
-}
+// Call decision.Model with your existing OpenAI-compatible client.
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="CLI">
 
 ```bash
-# Check active deployment quality and cost savings on Gradiated Cloud
+# Check the active deployment on Gradiated Cloud
 grad deployments status support-router
 
 # Roll back to an earlier version in one command
@@ -378,6 +337,8 @@ curl https://api.gradiated.com/v1/chat/completions \
 
   </DocsCodeTab>
 </DocsCodeTabs>
+
+To improve the next version, send outcomes (thumbs up, tests passed, a human fix) to wherever you trace requests: the Gradiated gateway records them for deployed models, or use your observability tool. A [source](/docs/training/trajectories/#send-feedback-from-production) syncs the traces and their latest scores into a new dataset version.
 
 ## Two ways to train
 
@@ -416,7 +377,7 @@ Read https://gradiated.com/docs/training/recipes/router.md and integrate a Gradi
 2. Push or import historical traces into a Gradiated dataset using GRADIATED_API_KEY from env.
 3. Run `grad train --dataset <name> --name <router> --recipe router --dry-run --json` first and fix any data warnings.
 4. Train the router, verify `eval_report.pareto_summary.quality_drop_ci95` stays inside 2%, and deploy with `grad deploy <router>@latest`.
-5. Wire `client.route("<router>", ...)` (or pass `model="your-org/<router>"` to the OpenAI/Anthropic SDK) and `client.feedback.record(...)` with idempotency keys.
+5. Wire `client.route("<router>", ...)` (or pass `model="your-org/<router>"` to the OpenAI/Anthropic SDK), and send outcomes to our observability tool so a `grad sources` sync picks them up.
 ```
 
   </DocsCodeTab>
@@ -427,7 +388,7 @@ Read https://gradiated.com/docs/training/recipes/sft.md (and https://gradiated.c
 1. Export verified passing examples as plain chat records (`{"messages": [...]}`, last assistant turn is the target) and push them with `client.datasets.push(name, records_or_jsonl_path)`.
 2. Configure `SFTRecipe(model="qwen/qwen3-8b")` with its defaults. For a DPO stage, wait for the SFT run (`sft = client.runs.create(...).wait()`) and train `DPORecipe(model=sft.artifact)` on preference pairs. Don't hand-set `lr`; the default `lr="auto"` is calibrated per model.
 3. Run `grad render <dataset> --model qwen/qwen3-8b --limit 3` to check the chat template and loss mask, then `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json` and fix every warning.
-4. Start the run with `max_cost_usd=` set, deploy with `run.deploy()` (or download the LoRA for vLLM/SGLang), and wire `feedback.record()` so human fixes are captured as `expected_output`.
+4. Start the run with `max_cost_usd=` set, deploy with `run.deploy()` (or download the LoRA for vLLM/SGLang), and send human fixes to our observability tool as corrections so the next sync picks them up.
 ```
 
   </DocsCodeTab>

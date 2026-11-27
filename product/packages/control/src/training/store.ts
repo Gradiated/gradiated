@@ -752,9 +752,10 @@ export const createTrainingStore = (database: ControlDatabase) => {
               .select({
                 versionId: taskVersions.id,
                 workspaceId: taskVersions.workspaceId,
-                artifactId: sql<string>`${taskVersions.adapter}->'source'->>'artifact_id'`.as(
-                  "artifact_id",
-                ),
+                artifactId:
+                  sql<string>`${taskVersions.adapter}->'source'->>'artifact_id'`.as(
+                    "artifact_id",
+                  ),
                 createdAt: sql<Date>`now()`.as("created_at"),
               })
               .from(taskVersions)

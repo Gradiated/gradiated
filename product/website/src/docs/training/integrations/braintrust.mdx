@@ -1,0 +1,169 @@
+# Braintrust
+
+<DocsLead>
+  Sync Braintrust logs, scores and expected answers into a dataset.
+</DocsLead>
+
+## What syncs
+
+Each root span in a project's logs becomes one record. Its `input` and `output` become `messages`, `scores` carry over by name, and `expected` (from `logFeedback` or edited in the UI) becomes `expected_output`.
+
+| Braintrust                        | grad record                            |
+| --------------------------------- | -------------------------------------- |
+| Span ID                           | `id` (the merge key for late feedback) |
+| `input` / `output`                | `messages`                             |
+| `scores`                          | `scores`                               |
+| `expected`                        | `expected_output`                      |
+| `metadata` (model, version, user) | `metadata`                             |
+| `tags`                            | `metadata.tags`                        |
+
+## Tag spans with the model and version
+
+```ts
+import { initLogger } from "braintrust";
+
+const logger = initLogger({ projectName: "support-bot" });
+
+const spanId = await logger.traced(async (span) => {
+  const reply = "..."; // call the model
+  span.log({
+    input: question,
+    output: reply,
+    metadata: { model: "your-org/support-sft", version: "v42" },
+    tags: ["prod"],
+  });
+  return span.id; // send this to your client so feedback can reference it
+});
+```
+
+## Send feedback from production
+
+`logFeedback` attaches scores, an expected answer and a comment to the span:
+
+```ts
+logger.logFeedback({
+  id: spanId,
+  scores: { resolved: 0 },
+  expected: "Open Billing > Invoices and click Download.",
+  comment: "Pointed to the wrong menu",
+});
+```
+
+In Python it is `logger.log_feedback(id=span_id, scores={...}, expected=..., comment=...)`. Each write to `expected` replaces the previous one. Feedback logged later is picked up by the next sync (see [How syncing works](#how-syncing-works)).
+
+## Connect it to grad
+
+Store the key once as a workspace secret (it reads the value from stdin and never returns it), then add a source to a dataset. The schedule is a cron expression; leave it out to sync only when you ask.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad secrets set braintrust-prod
+
+grad sources add braintrust \
+  --dataset support-prod \
+  --host https://api.braintrust.dev \
+  --secret braintrust-prod \
+  --schedule "*/30 * * * *"
+
+grad sources list
+grad sources sync src_01J9X
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, sources
+
+client = Grad()
+dataset = client.datasets.get("support-prod")
+
+source = dataset.add_source(
+    provider=sources.Braintrust(
+        host="https://api.braintrust.dev",
+        secret=client.secrets.get("braintrust-prod"),
+    ),
+    schedule="*/30 * * * *",
+)
+source.sync()
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, sources } from "@gradiated/grad";
+
+const grad = new Grad();
+const dataset = await grad.datasets.get("support-prod");
+
+const source = await dataset.addSource({
+  provider: sources.braintrust({
+    host: "https://api.braintrust.dev",
+    secret: await grad.secrets.get("braintrust-prod"),
+  }),
+  schedule: "*/30 * * * *",
+});
+await source.sync();
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+dataset, _ := client.Datasets.Get(ctx, "support-prod")
+secret, _ := client.Secrets.Get(ctx, "braintrust-prod")
+
+source, _ := dataset.AddSource(ctx, grad.SourceParams{
+	Provider: grad.BraintrustSource{Host: "https://api.braintrust.dev", Secret: secret},
+	Schedule: "*/30 * * * *",
+})
+_ = source.Sync(ctx)
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## How syncing works
+
+Each sync is incremental: it pulls traces added since the last sync, plus scores and corrections added to traces it already has, so feedback that arrives days later still counts. Records are matched by the provider's trace ID and the latest score wins.
+
+Every sync creates a new dataset version. Old versions never change, so a run keeps the exact data it pinned. If you edit old scores or change the mapping, `grad sources sync src_01J9X --full` (or `source.sync(full=True)`) rebuilds the dataset from the provider as a new version.
+
+A one-off `grad import` of an exported file is a snapshot: it never gets later feedback. Use a source for the feedback loop.
+
+## Choose what to train on
+
+Records keep the provider's scores in `scores` and its model and version tags in `metadata`, so you can pick a slice before training. Read the synced version, keep what you want, and push it as its own dataset:
+
+```python
+from grad import Grad
+
+client = Grad()
+good = [
+    r for r in client.datasets.records("support-prod")
+    if (r.get("scores") or {}).get("resolved", 0) >= 1.0
+    and (r.get("metadata") or {}).get("version") == "v42"
+]
+client.datasets.push("support-prod-v42-good", good)
+```
+
+A [router](/docs/training/recipes/router/) can use the raw dataset as is: it learns from every score, good and bad.
+
+## Keys and hosts
+
+- **Key:** a Braintrust API key from your organization settings, for a user or service account that can read the project's logs.
+- **Hosts:** `https://api.braintrust.dev`, or your self-hosted data plane URL.
+
+<DocsNext>
+  <a href="/docs/training/integrations/">
+    <small>Integrations</small>
+    <strong>All sources</strong>
+  </a>
+  <a href="/docs/training/recipes/">
+    <small>Next</small>
+    <strong>Recipes</strong>
+  </a>
+</DocsNext>

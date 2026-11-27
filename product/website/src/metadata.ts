@@ -201,12 +201,12 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/docs/training/recipes/": {
     title: "Training recipes",
     description:
-      "Pick a recipe, check the cost with a dry run, and train routers, decision models, fine-tunes, RL agents, and more.",
+      "Pick a recipe, check the cost with a dry run, and train routers, decision models, fine-tunes, cartridges and embedding models.",
   },
   "/docs/training/rubrics/": {
     title: "Rubrics",
     description:
-      "Score model outputs and datasets with Python checks, validators, or an LLM judge.",
+      "Score model outputs with Python checks, validators, or an LLM judge.",
   },
   "/docs/training/environments/": {
     title: "Environments",
@@ -216,17 +216,17 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/docs/training/evaluations/": {
     title: "Evaluations",
     description:
-      "Benchmark base models, frontier models, and trained artifacts side by side using the same Rubric or Environment before you ship.",
+      "Compare base models and trained artifacts side by side on the same dataset and Rubric before you ship.",
   },
   "/docs/training/artifacts/": {
     title: "Artifacts",
     description:
-      "Inspect, test, merge, download, and deploy versioned .grad model artifacts saved by training runs.",
+      "Inspect, download, and deploy versioned .grad model artifacts saved by training runs.",
   },
   "/docs/training/deploying/": {
     title: "Deploying",
     description:
-      "Host trained artifacts on Gradiated Cloud with canary rollouts, or download standard weights to run on your own vLLM or SGLang servers.",
+      "Host trained artifacts on Gradiated Cloud, or download standard weights to run on your own vLLM or SGLang servers.",
   },
   "/docs/training/models/": {
     title: "Supported training models",
@@ -246,7 +246,7 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/docs/training/tuning-troubleshooting/": {
     title: "Tuning & troubleshooting",
     description:
-      "Practical defaults for learning rates, LoRA rank, W&B and MLflow logging, crash recovery, and fixing common SFT, DPO, and RL failure modes.",
+      "Practical defaults for learning rates, LoRA rank, spend caps, crash recovery, and fixing common SFT and DPO failure modes.",
   },
   "/docs/training/self-hosting/": {
     title: "Self-hosting grad",
@@ -302,6 +302,36 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     title: "Embeddings guide",
     description:
       "Fine-tune an embedding model on your own docs and codebase for better search.",
+  },
+  "/docs/training/integrations/": {
+    title: "Trace integrations",
+    description:
+      "Sync traces, scores and corrections from Langfuse, LangSmith, Braintrust, PostHog, Arize Phoenix or the Gradiated gateway into versioned datasets.",
+  },
+  "/docs/training/integrations/langfuse/": {
+    title: "Langfuse integration",
+    description:
+      "Sync Langfuse traces and scores into a Gradiated dataset, and send production feedback with Langfuse scores.",
+  },
+  "/docs/training/integrations/langsmith/": {
+    title: "LangSmith integration",
+    description:
+      "Sync LangSmith runs, feedback and corrections into a Gradiated dataset.",
+  },
+  "/docs/training/integrations/braintrust/": {
+    title: "Braintrust integration",
+    description:
+      "Sync Braintrust logs, scores and expected answers into a Gradiated dataset.",
+  },
+  "/docs/training/integrations/posthog/": {
+    title: "PostHog integration",
+    description:
+      "Sync PostHog LLM analytics traces and user feedback into a Gradiated dataset.",
+  },
+  "/docs/training/integrations/phoenix/": {
+    title: "Arize Phoenix integration",
+    description:
+      "Sync Arize Phoenix (OpenInference) traces and span annotations into a Gradiated dataset.",
   },
   "/docs/api-reference/": {
     title: "API reference",

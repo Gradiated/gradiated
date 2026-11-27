@@ -344,19 +344,163 @@ grad sources sync src_01J9X
   </DocsCodeTab>
 </DocsCodeTabs>
 
+### How syncing works
+
+- **Incremental.** Each sync fetches traces added since the last one, plus scores and corrections added to traces it already has, so late feedback still lands. Records are matched by the provider's trace ID and the latest score wins.
+- **Versioned.** Every sync creates a new dataset version. Old versions never change, so a run keeps training on the version it pinned.
+- **Rebuildable.** `grad sources sync ID --full` (or `source.sync(full=True)`) rebuilds the dataset from the provider as a new version, for when scores were edited long ago or you changed the mapping.
+- **Files are snapshots.** Records from `grad import` or `dataset.import_file(...)` never get later feedback. Use a source for the feedback loop.
+
+On Gradiated Cloud, the gateway already records every request and its feedback, so you don't need an observability tool. Connect them with the built-in `gradiated` source: `grad sources add gradiated --dataset support-prod --schedule "0 * * * *"`.
+
 ### Supported providers
 
-| Provider                      | `--format` / `provider`   | File imports         | Incremental sync      |
-| ----------------------------- | ------------------------- | -------------------- | --------------------- |
-| OpenAI chat fine-tuning       | `openai_chat`             | JSONL, JSON, Parquet | `dataset.push()`      |
-| Hugging Face Hub              | `client.datasets.from_hf` | Any Hub dataset      | Re-import by revision |
-| Gradiated Native              | `gradiated`               | JSONL, JSON, Parquet | Automatic / S3 cursor |
-| Native schema                 | `grad_trajectories`       | JSONL, JSON, Parquet | `dataset.push()`      |
-| OpenTelemetry / OpenInference | `otel`                    | JSONL, JSON, Parquet | OTLP collector        |
-| PostHog                       | `posthog`                 | JSONL, JSON, Parquet | HogQL API             |
-| Langfuse                      | `langfuse`                | JSONL, JSON, Parquet | Traces + Scores API   |
-| Braintrust                    | `braintrust`              | JSONL, JSON, Parquet | BTQL cursor           |
-| LangSmith                     | `langsmith`               | JSONL, JSON, Parquet | Runs + Feedback API   |
+| Provider                      | File import `--format` | Sync with `grad sources add` | Guide                                                           |
+| ----------------------------- | ---------------------- | ---------------------------- | --------------------------------------------------------------- |
+| Gradiated Cloud gateway       | `gradiated`            | `gradiated`                  | [Integrations](/docs/training/integrations/)                    |
+| Langfuse                      | `langfuse`             | `langfuse`                   | [Langfuse](/docs/training/integrations/langfuse/)               |
+| LangSmith                     | `langsmith`            | `langsmith`                  | [LangSmith](/docs/training/integrations/langsmith/)             |
+| Braintrust                    | `braintrust`           | `braintrust`                 | [Braintrust](/docs/training/integrations/braintrust/)           |
+| PostHog                       | `posthog`              | `posthog`                    | [PostHog](/docs/training/integrations/posthog/)                 |
+| Arize Phoenix (OpenInference) | `otel`                 | `phoenix`                    | [Arize Phoenix](/docs/training/integrations/phoenix/)           |
+| OpenAI chat fine-tuning       | `openai_chat`          | none (`dataset.push()`)      |                                                                 |
+| Native schema                 | `grad_trajectories`    | none (`dataset.push()`)      |                                                                 |
+| Hugging Face Hub              | none                   | `client.datasets.from_hf`    | [Import a Hugging Face dataset](#import-a-hugging-face-dataset) |
+
+File imports accept JSONL, JSON and Parquet. Any OpenTelemetry GenAI export imports with `--format otel`.
+
+## Send feedback from production
+
+grad has no feedback API of its own. Send scores and corrections to the tool that already holds your traces, using its own SDK, and a source brings them into the next dataset version. Tag each trace with the model and version that produced it, so you can train on, or filter out, a specific rollout.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Langfuse">
+
+```python
+from langfuse import Langfuse, propagate_attributes
+
+langfuse = Langfuse(release="support-bot@2026-11-27")  # or set LANGFUSE_RELEASE
+
+with langfuse.start_as_current_observation(as_type="span", name="answer", version="v42"):
+    with propagate_attributes(session_id="sess_42", user_id="user_7", metadata={"model": "your-org/support-sft"}):
+        trace_id = langfuse.get_current_trace_id()
+        ...  # call the model
+
+# Later, when the user rates the answer:
+langfuse.create_score(trace_id=trace_id, name="resolved", value=1.0, comment="Fixed my invoice")
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="LangSmith">
+
+```python
+from langsmith import Client, traceable
+from langsmith.run_helpers import get_current_run_tree
+
+@traceable(name="answer", metadata={"model": "your-org/support-sft", "version": "v42"}, tags=["prod"])
+def answer(question: str) -> tuple[str, str]:
+    reply = ...  # call the model
+    return reply, str(get_current_run_tree().id)
+
+reply, run_id = answer("Where is invoice #9941?")
+
+# Later: a score, or a correction with the right answer
+Client().create_feedback(run_id, key="resolved", score=0, correction={"outputs": {"answer": "It is in Billing > Invoices."}})
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Braintrust">
+
+```ts
+import { initLogger } from "braintrust";
+
+const logger = initLogger({ projectName: "support-bot" });
+
+const spanId = await logger.traced(async (span) => {
+  const reply = "..."; // call the model
+  span.log({
+    output: reply,
+    metadata: { model: "your-org/support-sft", version: "v42" },
+  });
+  return span.id;
+});
+
+// Later: a score, and the expected answer as a correction
+logger.logFeedback({
+  id: spanId,
+  scores: { resolved: 0 },
+  expected: "It is in Billing > Invoices.",
+  comment: "Wrong menu",
+});
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Helicone">
+
+```ts
+// Send your own request ID (and properties) with the model call through Helicone...
+const requestId = crypto.randomUUID();
+const headers = {
+  "Helicone-Request-Id": requestId,
+  "Helicone-Property-Model-Version": "v42",
+};
+
+// ...then rate it later. Helicone feedback is a boolean rating.
+await fetch(`https://api.helicone.ai/v1/request/${requestId}/feedback`, {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${process.env.HELICONE_API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ rating: true }),
+});
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Phoenix">
+
+```python
+from phoenix.otel import using_attributes
+from opentelemetry.trace import format_span_id, get_current_span
+from phoenix.client import Client
+
+with using_attributes(session_id="sess_42", user_id="user_7", metadata={"model": "your-org/support-sft", "version": "v42"}):
+    ...  # call the model (inside an instrumented span)
+    span_id = format_span_id(get_current_span().get_span_context().span_id)
+
+# Later: annotate the span with the user's rating
+Client().spans.add_span_annotation(
+    span_id=span_id, annotation_name="resolved", annotator_kind="HUMAN", label="thumbs-up", score=1
+)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="PostHog">
+
+```python
+from posthog import Posthog
+
+posthog = Posthog("<ph_project_api_key>", host="https://us.i.posthog.com")
+
+# The generation, tagged with its trace ID, model and version
+posthog.capture(
+    distinct_id="user_7",
+    event="$ai_generation",
+    properties={"$ai_trace_id": trace_id, "$ai_model": "your-org/support-sft", "model_version": "v42"},
+)
+
+# Later: a thumbs survey response tied to the same trace (1 = up, 2 = down)
+posthog.capture(
+    distinct_id="user_7",
+    event="survey sent",
+    properties={"$survey_id": survey_id, f"$survey_response_{question_id}": 1, "$ai_trace_id": trace_id},
+)
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Each [integration guide](/docs/training/integrations/) shows how the provider's fields map onto records and how to filter what you train on.
 
 ## What to include in your data
 

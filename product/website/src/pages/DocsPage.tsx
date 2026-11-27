@@ -68,6 +68,12 @@ import DocsRecipeRouter from "../docs/training/recipes/router.mdx";
 import DocsRecipeSft from "../docs/training/recipes/sft.mdx";
 import DocsRecipeTracesToEnvironments from "../docs/training/recipes/traces-to-environments.mdx";
 import DocsTrainingTrajectories from "../docs/training/trajectories.mdx";
+import DocsIntegrationsOverview from "../docs/training/integrations/index.mdx";
+import DocsIntegrationLangfuse from "../docs/training/integrations/langfuse.mdx";
+import DocsIntegrationLangSmith from "../docs/training/integrations/langsmith.mdx";
+import DocsIntegrationBraintrust from "../docs/training/integrations/braintrust.mdx";
+import DocsIntegrationPostHog from "../docs/training/integrations/posthog.mdx";
+import DocsIntegrationPhoenix from "../docs/training/integrations/phoenix.mdx";
 
 type DocsDocument = {
   title: string;
@@ -246,6 +252,36 @@ export const documents = {
     path: "/docs/training/recipes/embeddings/",
     Component: DocsRecipeEmbeddings,
   },
+  "integrations-overview": {
+    title: "Integrations",
+    path: "/docs/training/integrations/",
+    Component: DocsIntegrationsOverview,
+  },
+  "integration-langfuse": {
+    title: "Langfuse",
+    path: "/docs/training/integrations/langfuse/",
+    Component: DocsIntegrationLangfuse,
+  },
+  "integration-langsmith": {
+    title: "LangSmith",
+    path: "/docs/training/integrations/langsmith/",
+    Component: DocsIntegrationLangSmith,
+  },
+  "integration-braintrust": {
+    title: "Braintrust",
+    path: "/docs/training/integrations/braintrust/",
+    Component: DocsIntegrationBraintrust,
+  },
+  "integration-posthog": {
+    title: "PostHog",
+    path: "/docs/training/integrations/posthog/",
+    Component: DocsIntegrationPostHog,
+  },
+  "integration-phoenix": {
+    title: "Arize Phoenix",
+    path: "/docs/training/integrations/phoenix/",
+    Component: DocsIntegrationPhoenix,
+  },
   "api-reference": {
     title: "API reference",
     path: "/docs/api-reference/",
@@ -307,6 +343,17 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
       "recipe-cartridges",
       "recipe-reward-models",
       "recipe-embeddings",
+    ],
+  },
+  {
+    heading: "Trace integrations",
+    items: [
+      "integrations-overview",
+      "integration-langfuse",
+      "integration-langsmith",
+      "integration-braintrust",
+      "integration-posthog",
+      "integration-phoenix",
     ],
   },
   {

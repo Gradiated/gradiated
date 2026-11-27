@@ -1,0 +1,173 @@
+# Arize Phoenix
+
+<DocsLead>
+  Sync Phoenix (OpenInference) traces and their span annotations into a dataset.
+</DocsLead>
+
+## What syncs
+
+Phoenix stores OpenTelemetry spans with OpenInference attributes. Each trace's root LLM span becomes one record, and its span annotations (human feedback, or evaluations you logged) become `scores`.
+
+| Phoenix / OpenInference                      | grad record                               |
+| -------------------------------------------- | ----------------------------------------- |
+| Span ID                                      | `id` (the merge key for late annotations) |
+| `llm.input_messages` / `llm.output_messages` | `messages`                                |
+| Span annotations (`name` → `score`)          | `scores`                                  |
+| `session.id`                                 | `session_id`                              |
+| `user.id`                                    | `metadata.user_id`                        |
+| `llm.model_name`                             | `metadata.model`                          |
+| `metadata` (such as `version`), `tag.tags`   | `metadata`, `metadata.tags`               |
+
+To import an exported OTel file once instead, use `grad import FILE --format otel`.
+
+## Tag spans with the model and version
+
+```python
+from phoenix.otel import using_attributes
+
+with using_attributes(
+    session_id="sess_42",
+    user_id="user_7",
+    metadata={"model": "your-org/support-sft", "version": "v42"},
+    tags=["prod"],
+):
+    ...  # call the model through an instrumented client
+```
+
+## Send feedback from production
+
+Annotate the span with the user's rating. Get the span ID from OpenTelemetry while the span is active:
+
+```python
+from opentelemetry.trace import format_span_id, get_current_span
+from phoenix.client import Client
+
+span_id = format_span_id(get_current_span().get_span_context().span_id)
+
+Client().spans.add_span_annotation(
+    span_id=span_id,
+    annotation_name="resolved",
+    annotator_kind="HUMAN",
+    label="thumbs-up",
+    score=1,
+)
+```
+
+From another service, `POST /v1/span_annotations` does the same over HTTP. Annotations added later are picked up by the next sync (see [How syncing works](#how-syncing-works)).
+
+## Connect it to grad
+
+Store the key once as a workspace secret (it reads the value from stdin and never returns it), then add a source to a dataset. The schedule is a cron expression; leave it out to sync only when you ask.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad secrets set phoenix-prod
+
+grad sources add phoenix \
+  --dataset support-prod \
+  --host https://app.phoenix.arize.com/s/your-space \
+  --secret phoenix-prod \
+  --schedule "*/30 * * * *"
+
+grad sources list
+grad sources sync src_01J9X
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, sources
+
+client = Grad()
+dataset = client.datasets.get("support-prod")
+
+source = dataset.add_source(
+    provider=sources.Phoenix(
+        host="https://app.phoenix.arize.com/s/your-space",
+        secret=client.secrets.get("phoenix-prod"),
+    ),
+    schedule="*/30 * * * *",
+)
+source.sync()
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, sources } from "@gradiated/grad";
+
+const grad = new Grad();
+const dataset = await grad.datasets.get("support-prod");
+
+const source = await dataset.addSource({
+  provider: sources.phoenix({
+    host: "https://app.phoenix.arize.com/s/your-space",
+    secret: await grad.secrets.get("phoenix-prod"),
+  }),
+  schedule: "*/30 * * * *",
+});
+await source.sync();
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+dataset, _ := client.Datasets.Get(ctx, "support-prod")
+secret, _ := client.Secrets.Get(ctx, "phoenix-prod")
+
+source, _ := dataset.AddSource(ctx, grad.SourceParams{
+	Provider: grad.PhoenixSource{Host: "https://app.phoenix.arize.com/s/your-space", Secret: secret},
+	Schedule: "*/30 * * * *",
+})
+_ = source.Sync(ctx)
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## How syncing works
+
+Each sync is incremental: it pulls traces added since the last sync, plus scores and corrections added to traces it already has, so feedback that arrives days later still counts. Records are matched by the provider's trace ID and the latest score wins.
+
+Every sync creates a new dataset version. Old versions never change, so a run keeps the exact data it pinned. If you edit old scores or change the mapping, `grad sources sync src_01J9X --full` (or `source.sync(full=True)`) rebuilds the dataset from the provider as a new version.
+
+A one-off `grad import` of an exported file is a snapshot: it never gets later feedback. Use a source for the feedback loop.
+
+## Choose what to train on
+
+Records keep the provider's scores in `scores` and its model and version tags in `metadata`, so you can pick a slice before training. Read the synced version, keep what you want, and push it as its own dataset:
+
+```python
+from grad import Grad
+
+client = Grad()
+good = [
+    r for r in client.datasets.records("support-prod")
+    if (r.get("scores") or {}).get("resolved", 0) >= 1.0
+    and (r.get("metadata") or {}).get("version") == "v42"
+]
+client.datasets.push("support-prod-v42-good", good)
+```
+
+A [router](/docs/training/recipes/router/) can use the raw dataset as is: it learns from every score, good and bad.
+
+## Keys and hosts
+
+- **Key:** a Phoenix API key, required when the Phoenix server has authentication on (Phoenix Cloud always does).
+- **Hosts:** your Phoenix Cloud space URL (`https://app.phoenix.arize.com/s/your-space`), or your self-hosted Phoenix URL (`http://phoenix.internal:6006`).
+
+<DocsNext>
+  <a href="/docs/training/integrations/">
+    <small>Integrations</small>
+    <strong>All sources</strong>
+  </a>
+  <a href="/docs/training/recipes/">
+    <small>Next</small>
+    <strong>Recipes</strong>
+  </a>
+</DocsNext>

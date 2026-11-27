@@ -1,0 +1,176 @@
+# PostHog
+
+<DocsLead>
+  Sync PostHog LLM analytics generations and the user feedback tied to them into
+  a dataset.
+</DocsLead>
+
+## What syncs
+
+PostHog stores LLM calls as `$ai_generation` events grouped by `$ai_trace_id`. Each trace becomes one record, and any feedback event that carries the same `$ai_trace_id` (a thumbs survey response) becomes a score on it.
+
+| PostHog                                     | grad record                            |
+| ------------------------------------------- | -------------------------------------- |
+| `$ai_trace_id`                              | `id` (the merge key for late feedback) |
+| `$ai_input` / `$ai_output_choices`          | `messages`                             |
+| `survey sent` with the same `$ai_trace_id`  | `scores` (thumbs up = 1, down = 0)     |
+| `$ai_session_id`                            | `session_id`                           |
+| `$ai_model`                                 | `metadata.model`                       |
+| Your own event properties (`model_version`) | `metadata`                             |
+| `distinct_id`                               | `metadata.user_id`                     |
+
+## Tag generations with the model and version
+
+The PostHog SDK wrappers capture `$ai_generation` for you. When you capture it yourself, add your own properties next to the `$ai_*` ones:
+
+```python
+from posthog import Posthog
+
+posthog = Posthog("<ph_project_api_key>", host="https://us.i.posthog.com")
+
+posthog.capture(
+    distinct_id="user_7",
+    event="$ai_generation",
+    properties={
+        "$ai_trace_id": trace_id,
+        "$ai_model": "your-org/support-sft",
+        "$ai_provider": "gradiated",
+        "model_version": "v42",
+    },
+)
+```
+
+## Send feedback from production
+
+PostHog collects LLM feedback as survey responses tied to the trace by `$ai_trace_id`. Create a thumbs survey from the trace's **Feedback** tab, then send the response (`1` is thumbs up, `2` is thumbs down):
+
+```python
+posthog.capture(
+    distinct_id="user_7",
+    event="survey sent",
+    properties={
+        "$survey_id": survey_id,
+        f"$survey_response_{question_id}": 1,
+        "$ai_trace_id": trace_id,
+    },
+)
+```
+
+In React, the `useThumbSurvey` hook from `@posthog/react` sends the same event. Responses that arrive later are picked up by the next sync (see [How syncing works](#how-syncing-works)).
+
+## Connect it to grad
+
+Store the key once as a workspace secret (it reads the value from stdin and never returns it), then add a source to a dataset. The schedule is a cron expression; leave it out to sync only when you ask.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad secrets set posthog-prod
+
+grad sources add posthog \
+  --dataset support-prod \
+  --host https://us.posthog.com \
+  --secret posthog-prod \
+  --schedule "*/30 * * * *"
+
+grad sources list
+grad sources sync src_01J9X
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, sources
+
+client = Grad()
+dataset = client.datasets.get("support-prod")
+
+source = dataset.add_source(
+    provider=sources.PostHog(
+        host="https://us.posthog.com",
+        secret=client.secrets.get("posthog-prod"),
+    ),
+    schedule="*/30 * * * *",
+)
+source.sync()
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, sources } from "@gradiated/grad";
+
+const grad = new Grad();
+const dataset = await grad.datasets.get("support-prod");
+
+const source = await dataset.addSource({
+  provider: sources.posthog({
+    host: "https://us.posthog.com",
+    secret: await grad.secrets.get("posthog-prod"),
+  }),
+  schedule: "*/30 * * * *",
+});
+await source.sync();
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+dataset, _ := client.Datasets.Get(ctx, "support-prod")
+secret, _ := client.Secrets.Get(ctx, "posthog-prod")
+
+source, _ := dataset.AddSource(ctx, grad.SourceParams{
+	Provider: grad.PostHogSource{Host: "https://us.posthog.com", Secret: secret},
+	Schedule: "*/30 * * * *",
+})
+_ = source.Sync(ctx)
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## How syncing works
+
+Each sync is incremental: it pulls traces added since the last sync, plus scores and corrections added to traces it already has, so feedback that arrives days later still counts. Records are matched by the provider's trace ID and the latest score wins.
+
+Every sync creates a new dataset version. Old versions never change, so a run keeps the exact data it pinned. If you edit old scores or change the mapping, `grad sources sync src_01J9X --full` (or `source.sync(full=True)`) rebuilds the dataset from the provider as a new version.
+
+A one-off `grad import` of an exported file is a snapshot: it never gets later feedback. Use a source for the feedback loop.
+
+## Choose what to train on
+
+Records keep the provider's scores in `scores` and its model and version tags in `metadata`, so you can pick a slice before training. Read the synced version, keep what you want, and push it as its own dataset:
+
+```python
+from grad import Grad
+
+client = Grad()
+good = [
+    r for r in client.datasets.records("support-prod")
+    if (r.get("scores") or {}).get("thumbs", 0) >= 1.0
+    and (r.get("metadata") or {}).get("version") == "v42"
+]
+client.datasets.push("support-prod-v42-good", good)
+```
+
+A [router](/docs/training/recipes/router/) can use the raw dataset as is: it learns from every score, good and bad.
+
+## Keys and hosts
+
+- **Key:** a personal API key with the **Query Read** permission for the project (grad reads events with the query API). The project API key you capture with can't read data.
+- **Hosts:** the app host, `https://us.posthog.com` or `https://eu.posthog.com`, not the `i.posthog.com` ingestion host; or your self-hosted PostHog URL.
+
+<DocsNext>
+  <a href="/docs/training/integrations/">
+    <small>Integrations</small>
+    <strong>All sources</strong>
+  </a>
+  <a href="/docs/training/recipes/">
+    <small>Next</small>
+    <strong>Recipes</strong>
+  </a>
+</DocsNext>

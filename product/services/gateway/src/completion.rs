@@ -537,12 +537,12 @@ impl Unroutable {
         if self.reason == FallbackReason::AtCapacity {
             metrics.routing_capacity_rejected(&metric_model(request), request.is_verification);
         }
+        // The pool has a replica that cannot take requests right now: an eval
+        // waits for it, but never asks the autoscaler for another.
         if self.reason == FallbackReason::Unavailable
             && request.identity.lane == crate::auth::Lane::Eval
         {
-            return GatewayError::CapacityUnavailable {
-                model: base_model(request).to_owned(),
-            };
+            return GatewayError::CapacityUnavailable { wake: None };
         }
 
         if let Some(diagnostics) = self.diagnostics {

@@ -127,12 +127,12 @@ grad's eval workers hold one service token (`GATEWAY_EVAL_SERVICE_TOKENS`: the
 current value and, while rotating, the previous one; compared as SHA-256
 digests in constant time). Each request names the workspace it bills to:
 
-| Header                  | Value                                         |
-| ----------------------- | --------------------------------------------- |
-| `Authorization`         | `Bearer <eval service token>`                 |
-| `X-Gradiated-Source`    | `eval`; the token is refused without it       |
-| `X-Gradiated-Workspace` | workspace UUID; `400` when missing or unknown |
-| `X-Gradiated-Eval-Id`   | optional `ev_…`, copied onto the generation   |
+| Header                  | Value                                       |
+| ----------------------- | ------------------------------------------- |
+| `Authorization`         | `Bearer <eval service token>`               |
+| `X-Gradiated-Source`    | `eval`; the token is refused without it     |
+| `X-Gradiated-Workspace` | customer workspace UUID; `400` otherwise    |
+| `X-Gradiated-Eval-Id`   | optional `ev_…`, copied onto the generation |
 
 The token is not an `api_keys` row: it is configured only on the gateway, is
 accepted only with `X-Gradiated-Source: eval`, never authenticates the product
@@ -156,14 +156,20 @@ sends `X-Gradiated-Source: eval` stays on the standard lane. Eval requests:
   and the `eval_id`;
 - carry the metric label `model="eval:<model>"`, so pool autoscaling, which
   reads gateway metrics by model, never counts them;
-- wait for a pool at zero instead of failing: while no replica can take the
-  request, the gateway records one capacity rejection for the pool's model
+- wait for a pool at zero instead of failing. When the model has no ready
+  replica, the gateway records one capacity rejection for the pool's model
   every 10 seconds, which asks the autoscaler for one replica (a pool steps to
-  ready + 1, and ready is 0), and retries. Each retry starts the generation
-  deadline afresh. After `GATEWAY_EVAL_COLD_START_WAIT_SECONDS` (600) it answers
-  `503 capacity_unavailable` with `Retry-After: 30`, which grad retries later.
-  Once one replica runs, eval traffic no longer signals demand, so it never
-  scales a pool past one.
+  ready + 1, and ready is 0), and retries; each retry starts the generation
+  deadline afresh. A model with a ready replica is never signalled: an eval
+  that finds it unroutable waits without one, and an adapter no ready replica
+  can load fails at once with `model_unavailable`. After
+  `GATEWAY_EVAL_COLD_START_WAIT_SECONDS` (90, under grad's 120-second request
+  timeout) it answers `503 capacity_unavailable` with `Retry-After: 30`; grad's
+  six attempts add up to about ten minutes for a cold start. At most 64 eval
+  requests wait per gateway process, fewer when their bodies exceed 1 MiB (64
+  MiB in all); the rest answer `capacity_unavailable` at once. Once one replica
+  runs, eval traffic no longer signals demand, so it never scales a pool past
+  one.
 
 ## Native SystemOne
 
@@ -327,7 +333,7 @@ The local endpoints are:
 | `GATEWAY_EVAL_CONCURRENCY_CAP`                  | no       | `20`                            |
 | `GATEWAY_EVAL_REQUESTS_PER_MINUTE`              | no       | `600`                           |
 | `GATEWAY_EVAL_SERVICE_TOKENS`                   | no       | eval lane off                   |
-| `GATEWAY_EVAL_COLD_START_WAIT_SECONDS`          | no       | `600`                           |
+| `GATEWAY_EVAL_COLD_START_WAIT_SECONDS`          | no       | `90`                            |
 | `SGLANG_API_KEY`                                | no       | no upstream authentication      |
 | `GATEWAY_FALLBACK_ROUTES`                       | no       | embedded `fallback_routes.json` |
 | `OPENROUTER_API_KEY`                            | no       | loopback test peer only         |

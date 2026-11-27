@@ -273,7 +273,8 @@ struct Environment {
     /// Comma-separated: the current token and, while rotating, the previous one.
     #[serde(rename = "gateway_eval_service_tokens")]
     eval_service_tokens: Option<String>,
-    /// A pool at zero takes about five to eight minutes to serve its first replica.
+    /// How long one eval request waits for a pool at zero (five to eight minutes
+    /// to its first replica); grad retries past it.
     #[serde(
         rename = "gateway_eval_cold_start_wait_seconds",
         default = "default_eval_cold_start_wait_seconds"
@@ -439,8 +440,10 @@ fn default_eval_requests_per_minute() -> u64 {
     600
 }
 
+// Below grad's 120 s request timeout, leaving time for the first generation;
+// grad's six attempts make about ten minutes of waiting for a cold pool.
 fn default_eval_cold_start_wait_seconds() -> u64 {
-    600
+    90
 }
 
 fn default_balance_per_concurrency_slot_nano_usd() -> u64 {
@@ -538,7 +541,7 @@ mod tests {
                 config.eval_requests_per_minute,
                 config.eval_cold_start_wait_seconds
             ),
-            (20, 600, 600)
+            (20, 600, 90)
         );
         assert_eq!(config.balance_per_concurrency_slot_nano_usd, 1_000_000_000);
         assert_eq!(config.settlement_backlog_limit, 100_000);

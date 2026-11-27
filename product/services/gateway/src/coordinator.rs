@@ -235,12 +235,21 @@ impl HostedRequest {
     }
 }
 
+fn has_ready_replica(model: &GatewayModel) -> bool {
+    model
+        .deployments
+        .iter()
+        .any(|deployment| deployment.status == crate::DeploymentStatus::Available)
+}
+
 /// Keeps the errors that predate external capacity; only a mapped model may have
 /// no deployments by design.
 fn no_capacity(model: &GatewayModel, adapter: bool, lane: crate::auth::Lane) -> GatewayError {
-    if lane == crate::auth::Lane::Eval {
+    // An eval wakes a pool only from zero: with a ready replica, it would ask
+    // the autoscaler for a second one.
+    if lane == crate::auth::Lane::Eval && !has_ready_replica(model) {
         GatewayError::CapacityUnavailable {
-            model: model.id.clone(),
+            wake: Some(model.id.clone()),
         }
     } else if adapter {
         GatewayError::ModelUnavailable
@@ -277,7 +286,14 @@ pub struct RequestCoordinator {
     fallback_routes: Option<FallbackRoutes>,
     eval_tokens: crate::auth::EvalServiceTokens,
     eval_cold_start_wait: std::time::Duration,
+    eval_waiters: Arc<tokio::sync::Semaphore>,
 }
+
+/// Request bodies, in KiB, that eval requests waiting for a cold pool may hold
+/// in one gateway process; each counts at least `EVAL_WAITER_MIN_KIB`, so at
+/// most 64 wait at once. The rest answer `capacity_unavailable` at once.
+const EVAL_WAIT_BUDGET_KIB: u32 = 64 * 1024;
+const EVAL_WAITER_MIN_KIB: u32 = 1024;
 
 impl RequestCoordinator {
     pub fn new(serving_state: Arc<dyn ServingState>) -> Self {
@@ -287,7 +303,20 @@ impl RequestCoordinator {
             fallback_routes: (!cfg!(test)).then(FallbackRoutes::default),
             eval_tokens: crate::auth::EvalServiceTokens::default(),
             eval_cold_start_wait: std::time::Duration::ZERO,
+            eval_waiters: Arc::new(tokio::sync::Semaphore::new(EVAL_WAIT_BUDGET_KIB as usize)),
         }
+    }
+
+    /// A place for an eval request of `body_bytes` to wait for a cold pool, if
+    /// the process has room for it.
+    pub(crate) fn eval_waiter(
+        &self,
+        body_bytes: usize,
+    ) -> Option<tokio::sync::OwnedSemaphorePermit> {
+        let kib = u32::try_from(body_bytes.div_ceil(1024))
+            .unwrap_or(u32::MAX)
+            .max(EVAL_WAITER_MIN_KIB);
+        self.eval_waiters.clone().try_acquire_many_owned(kib).ok()
     }
 
     /// How long an eval request waits for a pool at zero to start a replica.
@@ -674,6 +703,7 @@ impl RequestCoordinator {
             base
         });
         if let Some(adapter) = &adapter {
+            let ready = has_ready_replica(&model);
             model.deployments.retain(|deployment| {
                 deployment.release.lora_enabled == Some(true)
                     && (!adapter.is_cartridge()
@@ -688,7 +718,12 @@ impl RequestCoordinator {
                     && !deployment.release.sends_token_ids()
             });
             if model.deployments.is_empty() && base.is_none() {
-                return Err(no_capacity(&model, true, identity.lane));
+                // Ready replicas that cannot load this adapter are no cold start.
+                return Err(if ready {
+                    GatewayError::ModelUnavailable
+                } else {
+                    no_capacity(&model, true, identity.lane)
+                });
             }
         }
 
@@ -840,6 +875,10 @@ impl RequestCoordinator {
             .await
             .map_err(state_unavailable("account_read"))?
             .ok_or_else(|| inconsistent_state("account_missing"))?;
+        // Only customers' workspaces bill eval traffic.
+        if account.organization_kind != crate::domain::OrganizationKind::Customer {
+            return Err(GatewayError::invalid_request(Some("x-gradiated-workspace")));
+        }
         let identity = AuthenticatedIdentity {
             api_key_id: Uuid::nil(),
             organization_id: workspace.organization_id,

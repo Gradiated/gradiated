@@ -49,6 +49,7 @@ export const MAX_ARTIFACT_BUNDLE_BYTES = 4 * 1024 * 1024 * 1024;
 
 export type PublishErrorCode =
   | "artifact_not_servable"
+  | "artifact_checksum_mismatch"
   | "format_not_servable"
   | "format_not_servable_yet"
   | "base_model_not_servable"
@@ -90,9 +91,6 @@ export const EVAL_TASK_PREFIX = "grad-eval-";
 export const EVAL_VERSION_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 export const evalTaskName = (workspaceId: string) =>
   `${EVAL_TASK_PREFIX}${workspaceId}`;
-
-export const artifactBundleKey = (workspaceId: string, sha256: string) =>
-  `artifacts/${workspaceId}/${sha256}.grad.tar.gz`;
 
 const deployable = new Set<string>(DEPLOYABLE_ARTIFACT_FORMATS);
 // Version 2 only adds provenance to the manifest (ARTIFACT_FORMATS, "Opening a bundle").
@@ -184,7 +182,7 @@ export const createArtifactPublisher = ({
     if (artifact.size_bytes > MAX_ARTIFACT_BUNDLE_BYTES)
       throw invalid("The artifact is larger than serving accepts.");
 
-    const key = artifactBundleKey(artifact.workspace_id, artifact.sha256);
+    const { key } = artifact;
     const source: GradArtifactSource = {
       kind: "grad",
       artifact_id: artifact.id,
@@ -376,7 +374,12 @@ export const createArtifactPublisher = ({
       .resolve(workspaceId, input.artifact)
       .catch((error: unknown) => {
         if (error instanceof GradArtifactError)
-          throw new PublishError("artifact_not_servable", error.message);
+          throw new PublishError(
+            error.code === "artifact_checksum_mismatch"
+              ? "artifact_checksum_mismatch"
+              : "artifact_not_servable",
+            error.message,
+          );
         throw error;
       });
     if (!artifact)

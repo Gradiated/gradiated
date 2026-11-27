@@ -22,23 +22,60 @@ const ApiArtifactSchema = z
   })
   .passthrough();
 
+const Sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
+
+// Where the bundle is stored. Releases before grad 0.2.0-alpha.4 keep their
+// job-prefix key (`ws/<ws>/jobs/…`); newer ones live at `artifacts/<ws>/<sha256>`.
+const StoredObjectSchema = z
+  .object({
+    key: z
+      .string()
+      .min(1)
+      .max(1024)
+      .regex(/^[A-Za-z0-9._/-]+$/)
+      .refine((key) =>
+        key.split("/").every((part) => part && part !== "." && part !== ".."),
+      ),
+    sha256: Sha256Schema,
+    checksum_sha256: z.string().min(1),
+    checksum_type: z.literal("FULL_OBJECT"),
+    size_bytes: z.number().int().positive(),
+  })
+  .passthrough();
+
+/** An artifact key is the workspace's own: under `artifacts/<ws>/` or `ws/<ws>/`. */
+export const isWorkspaceObjectKey = (key: string, workspaceId: string) =>
+  key.startsWith(`artifacts/${workspaceId}/`) ||
+  key.startsWith(`ws/${workspaceId}/`);
+
 // The API manifest is a hint; the bundle's own manifest.json is authoritative.
-export const GradArtifactSchema = ApiArtifactSchema.transform((artifact) => ({
-  id: artifact.id,
-  workspace_id: artifact.workspace_id,
-  name: artifact.name,
-  version: artifact.version,
-  format: artifact.format,
-  recipe_kind: artifact.recipe_kind,
-  base_model: artifact.base_model,
-  sha256: artifact.sha256,
-  size_bytes: artifact.size_bytes,
-  source: artifact.provenance.source,
-}));
+export const GradArtifactSchema = z
+  .object({ artifact: ApiArtifactSchema, object: StoredObjectSchema })
+  .passthrough()
+  .refine(
+    ({ artifact, object }) =>
+      object.sha256 === artifact.sha256 &&
+      object.checksum_sha256 ===
+        Buffer.from(object.sha256, "hex").toString("base64") &&
+      isWorkspaceObjectKey(object.key, artifact.workspace_id),
+    "The stored object does not match the artifact.",
+  )
+  .transform(({ artifact, object }) => ({
+    id: artifact.id,
+    workspace_id: artifact.workspace_id,
+    name: artifact.name,
+    version: artifact.version,
+    format: artifact.format,
+    recipe_kind: artifact.recipe_kind,
+    base_model: artifact.base_model,
+    key: object.key,
+    sha256: object.sha256,
+    size_bytes: object.size_bytes,
+    source: artifact.provenance.source,
+  }));
 export type GradArtifact = z.output<typeof GradArtifactSchema>;
 
 const ProblemSchema = z.object({ code: z.string().optional() }).passthrough();
-const ResolvedSchema = z.object({ artifact: z.unknown() }).passthrough();
 
 const notServable = () =>
   new GradArtifactError(
@@ -60,7 +97,10 @@ export type GradArtifacts = {
 
 export class GradArtifactError extends Error {
   constructor(
-    readonly code: "artifact_not_servable" | "artifact_not_found",
+    readonly code:
+      | "artifact_not_servable"
+      | "artifact_not_found"
+      | "artifact_checksum_mismatch",
     message: string,
   ) {
     super(message);
@@ -149,10 +189,19 @@ export const createGradArtifacts = ({
         ["artifacts:pin"],
       );
       if (status === 404) return null;
+      if (
+        status === 409 &&
+        ProblemSchema.safeParse(json).data?.code ===
+          "artifact_checksum_mismatch"
+      )
+        throw new GradArtifactError(
+          "artifact_checksum_mismatch",
+          "The stored bundle has no full-object SHA-256 checksum matching the artifact. Ask the training team to repair it.",
+        );
       if (status === 409) throw notServable();
       if (status !== 200) throw unavailable(new Error(`resolve ${status}`));
 
-      const resolved = artifact(ResolvedSchema.safeParse(json).data?.artifact);
+      const resolved = artifact(json);
       if (resolved.workspace_id !== workspaceId) return null;
 
       return resolved;

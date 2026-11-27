@@ -38,6 +38,7 @@ const ICONS: Record<string, { grid: number; source: string; weight?: Weight }> =
     image: { grid: UI, source: "image" },
     lightbulb: { grid: UI, source: "lightbulb" },
     link: { grid: UI, source: "link" },
+    calendar: { grid: UI, source: "calendar-blank" },
     linkedin: { grid: UI, source: "linkedin-logo", weight: "regular" },
     list: { grid: UI, source: "list" },
     "list-bullets": { grid: UI, source: "list-bullets" },

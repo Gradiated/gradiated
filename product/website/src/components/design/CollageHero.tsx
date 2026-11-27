@@ -14,6 +14,15 @@ export type CollageLayer = {
   file: string;
   /** Where it is laid down from: an offset of its own size, and a tilt. */
   from: { r: number; x: number; y: number };
+  /** Where it is pinned when the hero is not the canvas's shape (tablets
+      and phones): an edge of the hero, and whether it grows with the hero's
+      height (share: how much of it) or its width. */
+  fill: {
+    by: "height" | "width";
+    share?: number;
+    x: "left" | "right";
+    y: "bottom" | "top";
+  };
   left: number;
   top: number;
   width: number;
@@ -129,28 +138,36 @@ export const CollageHero = ({
             laid.ref.current = node;
           }}
         >
-          {layers.map(({ drift, file, from, left, top, width }, index) => (
-            <img
-              alt=""
-              className="gr-collage-layer"
-              decoding="async"
-              fetchPriority={index === layers.length - 1 ? "high" : "auto"}
-              key={file}
-              src={`${path}/${file}`}
-              style={
-                {
-                  "--from-r": `${from.r}deg`,
-                  "--from-x": `${from.x}%`,
-                  "--from-y": `${from.y}%`,
-                  "--layer": index,
-                  "--rate": drift,
-                  left: `${(left / canvas.width) * 100}%`,
-                  top: `${(top / canvas.height) * 100}%`,
-                  width: `${(width / canvas.width) * 100}%`,
-                } as CSSProperties
-              }
-            />
-          ))}
+          {layers.map(
+            ({ drift, file, fill, from, left, top, width }, index) => (
+              <img
+                alt=""
+                className="gr-collage-layer"
+                data-by={fill.by}
+                data-x={fill.x}
+                data-y={fill.y}
+                decoding="async"
+                fetchPriority={index === layers.length - 1 ? "high" : "auto"}
+                key={file}
+                src={`${path}/${file}`}
+                style={
+                  {
+                    "--from-r": `${from.r}deg`,
+                    "--from-x": `${from.x}%`,
+                    "--from-y": `${from.y}%`,
+                    "--layer": index,
+                    "--rate": drift,
+                    "--ch": canvas.height,
+                    "--cw": canvas.width,
+                    "--l": left,
+                    "--share": fill.share ?? 1,
+                    "--t": top,
+                    "--w": width,
+                  } as CSSProperties
+                }
+              />
+            ),
+          )}
         </div>
       </div>
     </Module>

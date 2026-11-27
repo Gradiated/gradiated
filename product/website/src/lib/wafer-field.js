@@ -190,6 +190,9 @@ export class WaferField {
     this.chipSize = options.chipSize ?? 10;
     this.gap = options.gap ?? 3;
     this.cornerRadius = options.cornerRadius ?? 2;
+    // Square chips only: round each chip onto whole device pixels, all the
+    // same size, so a fractional chip pitch never draws a soft edge.
+    this.snapToPixels = options.snapToPixels ?? false;
     this.chipColor = options.chipColor ?? "#e9e9e2";
     this.bgColor = options.bgColor ?? "transparent";
     this.curveAmount = options.curveAmount ?? 0.3;
@@ -958,7 +961,20 @@ export class WaferField {
         case "square":
         default: {
           const r = Math.min(this.cornerRadius, size / 2);
-          roundRect(ctx, dx, dy, size, size, r);
+          if (this.snapToPixels) {
+            const pr = this.pixelRatio;
+            const s = Math.max(1, Math.round(size * pr)) / pr;
+            roundRect(
+              ctx,
+              Math.round(dx * pr) / pr,
+              Math.round(dy * pr) / pr,
+              s,
+              s,
+              r,
+            );
+          } else {
+            roundRect(ctx, dx, dy, size, size, r);
+          }
           break;
         }
       }

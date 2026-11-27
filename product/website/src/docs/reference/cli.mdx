@@ -144,15 +144,15 @@ List commands take `--limit` and `--cursor`.
 
 `grad local` runs Postgres, `grad-server` and a trainer worker with Docker Compose on `127.0.0.1`. See [Self-hosting](/docs/training/self-hosting/#local-development-docker-compose).
 
-| Command                     | What it does and its main flags                                                                                                                           |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `grad local up`             | Start the stack and write the `local` profile. `--gpu` adds the CUDA worker, `--build` builds images from a checkout, `--port`, `--no-wait`, `--timeout`. |
-| `grad local status`         | Container status and API health.                                                                                                                          |
-| `grad local logs [SERVICE]` | Logs of `grad-server`, `grad-trainer` or `postgres` (`--follow`, `--tail`).                                                                               |
-| `grad local down`           | Stop the stack and keep its data (`-v`/`--volumes` deletes it).                                                                                           |
-| `grad local reset`          | Delete the local data and keys (`-y` skips the prompt).                                                                                                   |
+| Command                     | What it does and its main flags                                                                                                                                                                                                                    |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `grad local up`             | Pull the images, start the stack and write the `local` profile. `--gpu` adds the CUDA worker, `--image-tag TAG` pulls another build (`sha-abc1234`, `0.3.0`), `--build` builds images from a checkout instead, `--port`, `--no-wait`, `--timeout`. |
+| `grad local status`         | Container status and API health.                                                                                                                                                                                                                   |
+| `grad local logs [SERVICE]` | Logs of `grad-server`, `grad-trainer` or `postgres` (`--follow`, `--tail`).                                                                                                                                                                        |
+| `grad local down`           | Stop the stack and keep its data (`-v`/`--volumes` deletes it).                                                                                                                                                                                    |
+| `grad local reset`          | Delete the local data and keys (`-y` skips the prompt).                                                                                                                                                                                            |
 
-Every `grad local` command takes `-f`/`--file` (repeatable) for your own compose files and `--project-name`.
+Every `grad local` command takes `-f`/`--file` (repeatable) for your own compose files and `--project-name`. If GHCR refuses the pull, `grad local up` fails with `image_pull_denied` (log in with `docker login ghcr.io`, or use `--build`); `image_not_found` means no image has that tag. `GRAD_SERVER_IMAGE`, `GRAD_TRAINER_IMAGE` and `GRAD_TRAINER_GPU_IMAGE` use your own images and skip the pull.
 
 ## Environment variables
 

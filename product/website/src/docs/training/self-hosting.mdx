@@ -85,6 +85,8 @@ helm upgrade --install grad ./grad/server/helm/grad \
   -f values.yaml
 ```
 
+The chart pins the image tags of its own version. Until the first release publishes them, set `api.image.tag`, `workers.import.image.tag` and `workers.train.image.tag` to `main` (`main-gpu` for the GPU workers) or a `sha-<7>` build.
+
 ### Minimal `values.yaml`
 
 ```yaml

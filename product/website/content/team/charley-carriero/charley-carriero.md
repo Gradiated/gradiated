@@ -28,7 +28,13 @@ is not shown, so delete nothing: fill in what you want. -->
 paragraphs read better than one long one. Until you write this, your summary
 above is shown as your bio. -->
 
-Software engineer and journalist, covering our work, the AI model, inference and chip industries in technical depth.
+I started my career as a Data Scientist at a scale-up with no customers where it was my job to report on how many customers we didn't have, and how much they weren't using the product. This made me existential, and fueled a desire to use my time well.
+
+I've since worked very happily as a Software Engineer at many start-ups, and often as a mentor and teacher. I do love to build things, but I especially enjoy making it easier for others to build things.
+
+AI has rocked the software boat, and while I was tempted to be precious about that, I do believe it will be a tremendous net positive. Thinking about the core problems like how to build cheap, energy efficient AI systems brought me to Gradiated.
+
+Outside of work, you'll find me hopping around visiting family and friends and sewing.
 
 ## Working on
 
@@ -38,12 +44,7 @@ on each, and what the open question is. Keep this one current.
 - **An area of research.** What you are trying to find out.
 -->
 
-I'd like to make it easier to follow what's going on in AI right now.
-
-It's quite clear this technology is here to stay, but there are still really large problems to solve.
-Understanding how to build cheap and energy efficient AI systems is one of them. We're giving it a go, and I'll be writing about it.
-
-This week I'm learning about decision models.
+Covering our work, the AI model, inference and chip industries in technical depth.
 
 ## Things I've done
 

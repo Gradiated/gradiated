@@ -17,6 +17,8 @@ export const unservedDependencies = (): AppDependencies => ({
     handler: unserved("auth.handler"),
     authorizationServerMetadata: unserved("auth.authorizationServerMetadata"),
     resolveSession: unserved("auth.resolveSession"),
+    signTrainingToken: unserved("auth.signTrainingToken"),
+    signServiceToken: unserved("auth.signServiceToken"),
   },
   checkDependencies: unserved("checkDependencies"),
   consoleUrl: "https://console.gradiated.com",
@@ -163,6 +165,7 @@ export const unservedDependencies = (): AppDependencies => ({
       ),
       selectOAuthWorkspace: unserved("workspaces.selectOAuthWorkspace"),
       requirePlaygroundAccess: unserved("workspaces.requirePlaygroundAccess"),
+      describeTrainingMember: unserved("workspaces.describeTrainingMember"),
     },
   },
 });

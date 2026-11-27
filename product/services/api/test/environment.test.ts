@@ -63,6 +63,26 @@ describe("API environment", () => {
     ).toThrow("cannot be enabled in production");
   });
 
+  it("serves the training listener on 3005 only with a token", () => {
+    const environment = parseApiEnvironment(baseEnvironment);
+    expect(environment.TRAINING_INTERNAL_PORT).toBe(3_005);
+    expect(environment.TRAINING_INTERNAL_TOKEN).toBeUndefined();
+    expect(() =>
+      parseApiEnvironment({
+        ...baseEnvironment,
+        TRAINING_INTERNAL_TOKEN: "short",
+      }),
+    ).toThrow();
+    expect(() =>
+      parseApiEnvironment({
+        ...baseEnvironment,
+        TRAINING_INTERNAL_TOKEN_PREVIOUS: "x".repeat(32),
+      }),
+    ).toThrow(
+      "TRAINING_INTERNAL_TOKEN_PREVIOUS needs TRAINING_INTERNAL_TOKEN.",
+    );
+  });
+
   it("rejects a profiling token shorter than 32 characters", () => {
     expect(() =>
       parseApiEnvironment({

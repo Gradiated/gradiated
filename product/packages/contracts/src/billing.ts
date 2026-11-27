@@ -216,6 +216,7 @@ export const BalanceTransactionSchema = z
       "openrouter_payment",
       "operator",
       "stripe_invoice",
+      "usage_event",
     ]),
     stripe_id: z
       .string()

@@ -11,6 +11,12 @@ import {
   staffImpersonation,
   IMPERSONATION_DURATION_MS,
 } from "./impersonation.js";
+import {
+  DISABLED_JWT_PATHS,
+  signServiceToken,
+  signTrainingToken,
+  trainingJwt,
+} from "./training-tokens.js";
 
 import {
   mcpOAuthProvider,
@@ -101,6 +107,7 @@ export const createAuthService = (
     appName: "Gradiated",
     basePath: "/api/auth",
     baseURL: configuration.baseUrl,
+    disabledPaths: DISABLED_JWT_PATHS,
     secret: configuration.secret,
     trustedOrigins: configuration.trustedOrigins,
     database: drizzleAdapter(database, {
@@ -174,6 +181,7 @@ export const createAuthService = (
       openAPI({ disableDefaultReference: true }),
       nativeLoopbackRegistration,
       mcpOAuthProvider(configuration.oauth),
+      trainingJwt(configuration.baseUrl),
     ],
   });
   const authorizationServerMetadata = oauthProviderAuthServerMetadata(
@@ -187,6 +195,10 @@ export const createAuthService = (
     githubAccessToken: async (headers) =>
       configuration.github ? readGithubAccessToken(auth.api, headers) : null,
     handler: (request) => auth.handler(request),
+    signTrainingToken: (subject) =>
+      signTrainingToken((input) => auth.api.signJWT(input), subject),
+    signServiceToken: (subject) =>
+      signServiceToken((input) => auth.api.signJWT(input), subject),
     authorizationServerMetadata,
     resolveSession: async (headers) => {
       const result = await auth.api

@@ -155,6 +155,7 @@ Plan for fast-diff-merge (sft on qwen/qwen3-8b, dataset diff-merge-prod v3)
   lr        : 5.0e-4 (auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling)
   tokens    : ~38.0M (31.0% trained)
   est. cost : $15.20 at $0.40/1M tokens
+  breakdown : train $15.20 · teacher $0.00 · evals $0.00 (held-out evals during training aren't billed)
   adapter   : kind=lora, rank=32, alpha=32, merge_on_export=false
   warnings:
     - 2360 of 14200 records cannot be used by 'sft' and will be skipped (record has no assistant turn to train on).
@@ -162,6 +163,10 @@ Plan for fast-diff-merge (sft on qwen/qwen3-8b, dataset diff-merge-prod v3)
 ```
 
 </DocsTerminal>
+
+The estimate is what the run bills: every token that goes through the model on a training step, once per epoch (both sides of a preference pair for DPO and reward models), at the base model's price, plus a distillation teacher's tokens at its price. Evaluating the held-out split during training is free. Evals the run starts are billed as evals: the labeling eval of a router or off-policy distillation run, and `evals=` on every checkpoint. `cost_breakdown` on the plan (`train_usd`, `teacher_usd`, `eval_usd`) splits `estimated_cost_usd` that way. Token counts are estimated from text length with each base model's tokenizer density, so they're close but not exact.
+
+Run names don't have to be unique: each run's artifact gets a new version under the name. If a run with the same name is still queued or running, the plan and `runs.create()` warn (`run support-sft is already running (run_…); this starts a second one.`), and the created run carries it in `run.warnings`. Python also issues it as a `UserWarning` and TypeScript logs it with `console.warn`.
 
 ### Defaults
 

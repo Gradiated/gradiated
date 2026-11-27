@@ -80,12 +80,12 @@ The default is `adapters.LoRA(rank=32)`. Rank has little effect on cost, so you 
 
 ## Batch size and number of steps
 
-Every recipe defaults to `batch_size=128` for `epochs=1`. Defaults for every recipe are in the [reference](/docs/reference/training-parameters/#optimization).
+Every recipe defaults to `batch_size=128` for `epochs=1`. On a small dataset the default drops to a quarter of the training examples (at least 8), so 40 records still take a few optimizer steps per epoch instead of one; `EmbeddingRecipe` keeps 128 because its in-batch negatives need the batch. The `"auto"` learning rate follows the batch size. Defaults for every recipe are in the [reference](/docs/reference/training-parameters/#optimization).
 
-The plan warns when a run will take fewer than 100 optimizer steps, because short runs end before the learning rate schedule does its job. Fix it with a smaller batch, more epochs, or more data:
+Each epoch is a whole number of batches (the last one may be short), so the plan's step count is exactly what the run reports. The plan warns when a run will take fewer than 100 optimizer steps, because short runs end before the learning rate schedule does its job. Fix it with a smaller batch, more epochs, or more data:
 
 ```text
-  ! 84 steps is below the 100 we recommend; use batch_size=107 or more epochs/data.
+  ! 40 training examples at batch 128 is 1 step per epoch, below the 100 steps we recommend; consider more data, more epochs or a smaller batch_size.
 ```
 
 More than 2–3 epochs over the same SFT data usually overfits. Prefer more data, or a smaller batch for more steps.
@@ -193,7 +193,7 @@ for point in run.metrics(follow=True):
   </DocsCodeTab>
 </DocsCodeTabs>
 
-In a terminal, `grad train --wait` and `grad runs watch RUN` open a full-screen view of the same stream (`--plain` keeps the line output):
+In a terminal, `grad train --wait` and `grad runs watch RUN` open a full-screen view of the same stream (`--plain` keeps the line output). Attaching to a run that's already going replays it from its first event, so the loss chart covers every step from 0 to the last, and the phase clock counts from when the phase began:
 
 <DocsRunReplay />
 

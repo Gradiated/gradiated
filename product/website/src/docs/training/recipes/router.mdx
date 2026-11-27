@@ -195,31 +195,20 @@ To retrain on live outcomes, record whether each routed request worked (ticket r
   and route requests in your own service as shown above.
 </DocsCallout>
 
-On Gradiated Cloud, you'll deploy the router with a `fallback` model and call it by name through the [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/): the gateway routes each request to the chosen model.
+On Gradiated Cloud, you'll [publish it](/docs/training/deploying/#host-on-gradiated-cloud) as a model version from the console or the Models API (with a `fallback` model) and call it by name through the [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/): the gateway routes each request to the chosen model.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
 import os
-from grad import Grad
 from openai import OpenAI
-
-Grad().deploy("support-router@latest", fallback="{{OPUS_MODEL}}")
 
 oai = OpenAI(base_url="https://api.gradiated.com/v1", api_key=os.environ["GRADIATED_API_KEY"])
 reply = oai.chat.completions.create(
     model="your-org/support-router",
     messages=[{"role": "user", "content": "Where is invoice #9941?"}],
 )
-```
-
-  </DocsCodeTab>
-  <DocsCodeTab label="CLI">
-
-```bash
-grad deploy support-router@latest --fallback {{OPUS_MODEL}}
-grad deployments status support-router
 ```
 
   </DocsCodeTab>

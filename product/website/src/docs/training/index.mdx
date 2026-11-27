@@ -274,10 +274,10 @@ Routers, decision models, cartridges, reward models and embedding models export 
 To improve the next version, log outcomes (thumbs up, tests passed, a human fix) to the observability tool you already trace requests with. A [source](/docs/training/trajectories/#send-feedback-from-production) syncs the traces and their latest scores into a new dataset version.
 
 <DocsCallout label="Coming soon on Gradiated Cloud">
-  `run.deploy()` and `grad deploy` will host an artifact on Gradiated Cloud as
-  `your-org/<name>`, callable from the OpenAI, Anthropic or SystemOne SDK, with
-  one-command rollback and trace capture built in. Until then, serve it
-  yourself as above.
+  Publishing an artifact as a model version on Gradiated Cloud (from the
+  console or the Models API) will serve it as `your-org/<name>`, callable from
+  the OpenAI, Anthropic or SystemOne SDK, with rollback and trace capture
+  built in. Until then, serve it yourself as above.
 </DocsCallout>
 
 <DocsCodeTabs>
@@ -294,15 +294,6 @@ reply = oai.chat.completions.create(
     messages=[{"role": "user", "content": "Count active users from yesterday."}],
 )
 print(reply.choices[0].message.content)
-```
-
-  </DocsCodeTab>
-  <DocsCodeTab label="CLI">
-
-```bash
-grad deploy sql-helper@latest
-grad deployments status sql-helper
-grad deployments rollback sql-helper
 ```
 
   </DocsCodeTab>

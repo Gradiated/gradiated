@@ -97,14 +97,7 @@ grad artifacts download api-docs-cartridge@latest --output ./api-docs-cartridge
   serve it with the reference loader.
 </DocsCallout>
 
-On Gradiated Cloud, one line will [deploy](/docs/training/deploying/) it, and you'll call `"your-org/api-docs-cartridge"` through the OpenAI or Anthropic SDK with only the user question:
-
-```python
-from grad import Grad
-
-client = Grad()
-client.deploy("api-docs-cartridge@latest")
-```
+On Gradiated Cloud, you'll [publish it](/docs/training/deploying/#host-on-gradiated-cloud) as a model version from the console or the Models API, and call `"your-org/api-docs-cartridge"` through the OpenAI or Anthropic SDK with only the user question.
 
 ### Parameters you might change
 

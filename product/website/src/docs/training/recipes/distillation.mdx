@@ -111,13 +111,7 @@ vllm serve Qwen/Qwen3-4B --enable-lora --max-lora-rank 32 --lora-modules support
   [serve it yourself](/docs/training/deploying/#serve-it-yourself).
 </DocsCallout>
 
-On Gradiated Cloud, `run.deploy()` will host it as `"your-org/support-4b-distilled"` for the OpenAI or Anthropic SDK:
-
-```python
-from grad import Grad
-
-Grad().artifacts.get("support-4b-distilled@latest").deploy()  # or run.deploy() right after .wait()
-```
+On Gradiated Cloud, you'll [publish it](/docs/training/deploying/#host-on-gradiated-cloud) as a model version from the console or the Models API and call `"your-org/support-4b-distilled"` through the OpenAI or Anthropic SDK.
 
 ## Want more control?
 

@@ -262,13 +262,11 @@ See [Deploying](/docs/training/deploying/) for SGLang and merged exports (`adapt
   above.
 </DocsCallout>
 
-`sft.deploy()` (or `grad deploy fast-diff-merge@latest`) will host the adapter under `your-org/fast-diff-merge`, callable through the [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/) with your `GRADIATED_API_KEY`:
+You'll [publish it](/docs/training/deploying/#host-on-gradiated-cloud) as a model version from the console or the Models API under `your-org/fast-diff-merge`, callable through the [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/) with your `GRADIATED_API_KEY`:
 
 ```python
 import os
 from openai import OpenAI
-
-sft.deploy()  # the finished run from above
 
 oai = OpenAI(base_url="https://api.gradiated.com/v1", api_key=os.environ["GRADIATED_API_KEY"])
 res = oai.chat.completions.create(

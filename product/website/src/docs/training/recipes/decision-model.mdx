@@ -176,16 +176,7 @@ Confidence scores are calibrated during training (a temperature per question, fi
   bundle and run it with the reference loader.
 </DocsCallout>
 
-On Gradiated Cloud, one line will [deploy](/docs/training/deploying/) the trained [`Artifact`](/docs/training/artifacts/):
-
-```python
-from grad import Grad
-
-client = Grad()
-client.deploy("ticket-triage@latest")
-```
-
-You'll then call it through the [SystemOne SDK](/docs/systemone-sdk/) (`TypeSafeClient`) by passing `"your-org/ticket-triage"` as the `model`, and fall back when confidence is low:
+On Gradiated Cloud, you'll [publish it](/docs/training/deploying/#host-on-gradiated-cloud) as a model version from the console or the Models API the trained [`Artifact`](/docs/training/artifacts/), then call it through the [SystemOne SDK](/docs/systemone-sdk/) (`TypeSafeClient`) by passing `"your-org/ticket-triage"` as the `model`, and fall back when confidence is low:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">

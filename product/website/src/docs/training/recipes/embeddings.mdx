@@ -125,7 +125,7 @@ Without sentence-transformers, read `grad_embedding.json` for the pooling and se
   encoder and embed in your own service as shown above.
 </DocsCallout>
 
-On Gradiated Cloud, you'll [deploy](/docs/training/deploying/) the encoder with `client.deploy("docs-embedder@latest")` and embed through the OpenAI SDK's `embeddings.create(model="your-org/docs-embedder", ...)`.
+On Gradiated Cloud, you'll [publish it](/docs/training/deploying/#host-on-gradiated-cloud) as a model version from the console or the Models API and embed through the OpenAI SDK's `embeddings.create(model="your-org/docs-embedder", ...)`.
 
 ## Want more control?
 

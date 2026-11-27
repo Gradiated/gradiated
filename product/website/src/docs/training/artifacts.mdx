@@ -5,7 +5,9 @@
   weights and evaluation results.
 </DocsLead>
 
-An **`Artifact`** is a saved, versioned model produced by a training run (`fast-diff-merge@2026-11-26-1`). Artifacts are never overwritten: every new run writes a new version. Each one is a `.grad.tar.gz` bundle holding the weights, the config needed to serve them, a `manifest.json` (base model repo and revision, recipe, checksums of every file) and the held-out `eval_report.json`.
+An **`Artifact`** is a saved, versioned model (`fast-diff-merge@2026-11-26-1`). A training run produces one, and so does [uploading or importing](#upload-or-import-an-artifact) weights you trained elsewhere. Artifacts are never overwritten: every new run or upload writes a new version. Each one is a `.grad.tar.gz` bundle holding the weights, the config needed to serve them, a `manifest.json` (base model repo and revision, recipe, checksums of every file) and, for a trained artifact, the held-out `eval_report.json`.
+
+Every artifact records where it came from in `provenance`: `source` is `run` (with the `run_id`), `upload` (with the `uploader`, the API key that uploaded it) or `import` (with the `uri`, `hf://owner/name@<commit>`).
 
 ## What's inside
 
@@ -37,7 +39,7 @@ print(art.base_model, art.recipe_kind)
 print(art.eval_report)
 ```
 
-You can pass a trained `Artifact` in place of a model name:
+You can pass an `Artifact` (trained, uploaded or imported) in place of a model name:
 
 - **Continue training:** `DPORecipe(model=sft.artifact, ...)` or `SFTRecipe(model=sft.artifact, ...)` (from SFT and DPO LoRA artifacts).
 - **Evaluate it:** `client.evals.create(models=[art, "qwen/qwen3-8b"], dataset=..., rubric=...)`. The eval calls the artifact by its ID on your inference endpoint, so load it there first (for example as a vLLM LoRA module named after the artifact).
@@ -59,6 +61,71 @@ art = run.checkpoints()[-1].promote(name="fast-diff-merge")  # save a checkpoint
 ```
 
 The best and final checkpoints never expire; other checkpoints are kept for 30 days unless you promote them. Each checkpoint remembers the settings it was trained with (base model, chat template, learning rate), so evaluations and exports reuse them automatically. If a run stops early, continue it from its latest checkpoint with `client.runs.resume("run_01J9Z2")`. Checkpoint frequency, retention and selection settings are in the [reference](/docs/reference/training-parameters/#checkpoints-and-evaluation).
+
+## Upload or import an artifact
+
+Bring weights you trained elsewhere into grad as an artifact: upload a local directory, or import a Hugging Face repo. Name the [catalog base model](/docs/training/models/) they were trained on with `--base` (`base=`). grad checks the files against the [artifact format spec](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md) and the base model's `config.json`. For a PEFT LoRA, that means `adapter_config.json`, its `base_model_name_or_path` and pinned revision, target modules that exist in the base model, and every tensor's shape. The result is a normal artifact, `my-lora@2026-11-27-1`, that you can download, evaluate or continue training from (SFT and DPO, as with a trained LoRA):
+
+<DocsCodeTabs>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad artifacts upload ./my-lora --base qwen/qwen3-8b
+grad artifacts import hf://acme/support-lora@main --base qwen/qwen3-8b
+grad artifacts inspect my-lora@latest
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, SFTRecipe
+
+client = Grad()
+art = client.artifacts.upload("./my-lora", base="qwen/qwen3-8b").wait()
+print(art.id, art.provenance.source)
+
+recipe = SFTRecipe(model=art)  # continue training from the uploaded LoRA
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+const art = await grad.artifacts
+  .upload("./my-lora", { base: "qwen/qwen3-8b" })
+  .wait();
+const imported = await grad.artifacts
+  .fromHf("hf://acme/support-lora@main", { base: "qwen/qwen3-8b" })
+  .wait();
+console.log(art.id, imported.provenance.uri);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+job, _ := client.Artifacts.Upload(ctx, "./my-lora", grad.UploadParams{Base: "qwen/qwen3-8b"})
+art, _ := job.Wait(ctx)
+fmt.Println(art.ID, art.Provenance.Source)
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+- **What you can upload:** a directory (grad tars it), a single file such as `cartridge.safetensors`, or a `.tar.gz`. Pick the format with `--format` (`format=`); the default is `peft_lora`, and every format in the table above is accepted. Files the format doesn't use, such as a README, are left out of the bundle. Pickle weights (`adapter_model.bin`) are refused: save them with `safe_serialization=True`. Uploads are capped at 5 GB.
+- **Names:** `--name` (`name=`) sets the artifact name. It defaults to the directory or file name, or to the repo name for an import.
+- **Hugging Face imports:** a repo on the Hugging Face Hub, at a branch, tag or commit (`hf://owner/name@revision`, default `main`). The artifact pins the commit the revision pointed to. For a gated or private repo, store an HF token as a [workspace secret](/docs/training/trajectories/#sync-from-observability-providers) and pass `--secret NAME` (`secret=`).
+- **When a check fails**, the upload fails with a `422` `invalid_artifact` error that names the file and the problem, for example `adapter_config.json: base_model_name_or_path is 'Qwen/Qwen3-4B', expected 'Qwen/Qwen3-8B' (the base qwen/qwen3-8b)`. The CLI exits with code 5. Python raises `grad.ArtifactImportFailedError`; the other SDKs raise their equivalent.
+
+An uploaded artifact has no held-out `eval_report`, because grad didn't train it. Evaluate it with an [evaluation](/docs/training/evaluations/) instead.
+
+## Delete an artifact
+
+`grad artifacts delete NAME@VERSION` (`client.artifacts.delete(...)`, or `art.delete()`) deletes an artifact and its bundle. On Gradiated Cloud, publishing an artifact as a model version pins it, so grad never deletes a published artifact: deleting one fails with `409 artifact_pinned`, naming the model versions that use it. Unpublish them first.
 
 ## Download and serve
 
@@ -94,9 +161,9 @@ print(art.manifest["base_model_repo"], art.manifest["recipe_kind"])
 Add `--archive ./fast-diff-merge.grad.tar.gz` to keep the verified bundle as well. See [Deploying](/docs/training/deploying/) for SGLang, router and decision bundles, and rollouts on your own stack.
 
 <DocsCallout label="Coming soon on Gradiated Cloud">
-  Hosting an artifact on Gradiated Cloud with `artifact.deploy()` (or
-  `grad deploy`) and calling it as `your-org/<name>` from the OpenAI, Anthropic
-  or SystemOne SDK isn't live yet. Until then, serve the download yourself.
+  Publishing an artifact as a model version on Gradiated Cloud, and calling it
+  as `your-org/<name>` from the OpenAI, Anthropic or SystemOne SDK, isn't live
+  yet. Until then, serve the download yourself.
 </DocsCallout>
 
 <DocsNext>

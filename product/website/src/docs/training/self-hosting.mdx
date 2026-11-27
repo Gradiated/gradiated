@@ -417,13 +417,13 @@ curl https://grad.internal.example/v1/artifacts \
 
 Self-hosting gives you the complete training and evaluation platform inside your VPC and keeps your existing production inference stack (vLLM, SGLang, Envoy, Argo Rollouts). Gradiated Cloud adds managed training at a fixed price per million tokens, and hosted serving, on top:
 
-| Capability                       | Self-hosted (Docker / Helm)                                    | Gradiated Cloud                                             |
-| -------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------- |
-| Datasets, imports and trace sync | Included (your Postgres and S3)                                | Included (managed)                                          |
-| Recipes, rubrics and evals       | Included (runs on your GPUs, scales to zero)                   | Included (pay per million tokens)                           |
-| Artifacts                        | Written to your S3; serve on your vLLM or SGLang               | Downloadable anytime, or host with `run.deploy()`           |
-| Production serving               | Your vLLM or SGLang, behind your own gateway and feature flags | Built in (`run.deploy()` + OpenAI/Anthropic/SystemOne SDK)  |
-| Trace capture                    | Sync from Langfuse, LangSmith, Braintrust, PostHog or Phoenix  | Recorded by the gateway, synced with the `gradiated` source |
+| Capability                       | Self-hosted (Docker / Helm)                                                 | Gradiated Cloud                                                      |
+| -------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Datasets, imports and trace sync | Included (your Postgres and S3)                                             | Included (managed)                                                   |
+| Recipes, rubrics and evals       | Included (runs on your GPUs, scales to zero)                                | Included (pay per million tokens)                                    |
+| Artifacts                        | Written to your S3; upload or import your own; serve on your vLLM or SGLang | Downloadable anytime, or publish as a model version                  |
+| Production serving               | Your vLLM or SGLang, behind your own gateway and feature flags              | Built in (published model versions + OpenAI/Anthropic/SystemOne SDK) |
+| Trace capture                    | Sync from Langfuse, LangSmith, Braintrust, PostHog or Phoenix               | Recorded by the gateway, synced with the `gradiated` source          |
 
 <DocsNext>
   <a href="/docs/training/">

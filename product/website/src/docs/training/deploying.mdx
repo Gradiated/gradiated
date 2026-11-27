@@ -62,16 +62,16 @@ Handle traffic splitting and rollbacks with what you already use (feature flags,
 ## Host on Gradiated Cloud
 
 <DocsCallout label="Coming soon on Gradiated Cloud">
-  Hosted deployments, rollbacks and the gateway calls on this section aren't
-  live yet: `deploy` answers `501 deploy_unavailable` on every server today.
-  Until they are, [serve the artifact yourself](#serve-it-yourself).
+  Publishing artifacts as model versions and the gateway calls on this section
+  aren't live yet. Until they are, [serve the artifact
+  yourself](#serve-it-yourself).
 </DocsCallout>
 
-On Gradiated Cloud you won't manage GPUs or a serving stack. You deploy an artifact behind a stable model name, then update versions without redeploying your app.
+On Gradiated Cloud you won't manage GPUs or a serving stack. You publish an artifact (trained, [uploaded or imported](/docs/training/artifacts/#upload-or-import-an-artifact)) as a version of a model, `your-org/<name>`, from the Gradiated console or the Cloud Models API. grad itself has no deploy command: it owns the artifacts, and the inference side serves them straight from the artifact store.
 
-### Deploy behind a stable model name
+### Call a published model
 
-`run.deploy()` (or `grad deploy`) publishes your artifact under `your-org/<name>` on Gradiated's inference gateway. Your app calls the same [OpenAI SDK](/docs/openai-sdk/), [Anthropic SDK](/docs/anthropic-sdk/) or [SystemOne SDK](/docs/systemone-sdk/) it already uses; only the `model` string changes. The endpoint uses the chat template and `thinking` setting the artifact was trained with, and reasoning models return their reasoning in `reasoning_content`, separate from `content`:
+Your app calls the same [OpenAI SDK](/docs/openai-sdk/), [Anthropic SDK](/docs/anthropic-sdk/) or [SystemOne SDK](/docs/systemone-sdk/) it already uses; only the `model` string changes. The endpoint uses the chat template and `thinking` setting the artifact was trained with, and reasoning models return their reasoning in `reasoning_content`, separate from `content`:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -79,14 +79,7 @@ On Gradiated Cloud you won't manage GPUs or a serving stack. You deploy an artif
 ```python
 import os
 from openai import OpenAI
-from grad import Grad
 
-# 1. Deploy your trained artifact
-client = Grad()
-artifact = client.artifacts.get("fast-diff-merge@2026-11-26-1")
-artifact.deploy()
-
-# 2. Call it with the standard OpenAI SDK (only `model` changes)
 oai = OpenAI(
     base_url="https://api.gradiated.com/v1",
     api_key=os.environ["GRADIATED_API_KEY"],
@@ -103,14 +96,7 @@ print(res.choices[0].message.content)
 
 ```ts
 import OpenAI from "openai";
-import { Grad } from "@gradiated/grad";
 
-// 1. Deploy your trained artifact
-const grad = new Grad();
-const artifact = await grad.artifacts.get("fast-diff-merge@2026-11-26-1");
-await artifact.deploy();
-
-// 2. Call it with the standard OpenAI SDK (only `model` changes)
 const oai = new OpenAI({
   baseURL: "https://api.gradiated.com/v1",
   apiKey: process.env.GRADIATED_API_KEY,
@@ -125,53 +111,13 @@ console.log(res.choices[0].message.content);
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="Go">
-
-```go
-artifact, _ := client.Artifacts.Get(ctx, "fast-diff-merge@2026-11-26-1")
-_, _ = artifact.Deploy(ctx)
-// Then pass "your-org/fast-diff-merge" as `model` in your OpenAI or Anthropic client.
-```
-
-  </DocsCodeTab>
-  <DocsCodeTab label="CLI">
-
-```bash
-# First deploy (publishes your-org/fast-diff-merge)
-grad deploy fast-diff-merge@2026-11-26-1
-
-# Next retrain: deploy the new version, check status, or roll back in one command
-grad deploy fast-diff-merge@2026-12-03-1
-grad deployments status fast-diff-merge
-grad deployments rollback fast-diff-merge
-```
-
-  </DocsCodeTab>
 </DocsCodeTabs>
 
 [Decision models](/docs/training/recipes/decision-model/) will be called through `TypeSafeClient` (`/v1/systemone`), [embedding models](/docs/training/recipes/embeddings/) through `openai.embeddings.create(model="your-org/<name>", ...)`, and [routers](/docs/training/recipes/router/) as a model name in the OpenAI or Anthropic SDK.
 
-### Updates and rollback
+### Versions and rollback
 
-Because every artifact is a fixed version, rolling forward or back is a single pointer update with no app redeploy:
-
-<DocsTerminal
-  title="Deployment status"
-  command="grad deployments status fast-diff-merge"
->
-
-```text
-Model     your-org/fast-diff-merge
-Active    fast-diff-merge@2026-12-03-1
-Previous  fast-diff-merge@2026-11-26-1
-Status    active
-Fallback  -
-Explore   0
-```
-
-</DocsTerminal>
-
-Deploying a new version qualifies the adapter on a serving replica first, then switches `your-org/fast-diff-merge` to it atomically. If anything looks wrong, `grad deployments rollback fast-diff-merge` (or `client.deployments.rollback("fast-diff-merge")`) points the name back at the previous artifact. To go back further, deploy any earlier version (`grad deploy fast-diff-merge@2026-11-26-1`).
+Every artifact is a fixed version, so rolling forward or back is a pointer update on the model with no app redeploy: promote the new version, or roll back to the previous one, in the console or the Models API. A published version pins its artifact, so grad never deletes it (not by retention, cleanup or `grad artifacts delete`, which answers `409 artifact_pinned` and names the model versions using it).
 
 ### Feed production back into training
 

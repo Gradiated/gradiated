@@ -37,6 +37,8 @@ import {
   createMemberService,
   createOrganizationService,
   createProfilingWriter,
+  createTrainingBillingService,
+  createUsageEventWriter,
   createUsageService,
   createWaitlistService,
   createWorkspaceApiKeyService,
@@ -78,6 +80,7 @@ import {
 } from "./email/waitlist-welcome.js";
 import { parseApiEnvironment } from "./environment.js";
 import { createProfilingIngestApp } from "./ingest/profiling.js";
+import { createTrainingInternalApp } from "./training-internal.js";
 import { serviceLog } from "./logging.js";
 import { ApiMetrics, startApiMetricsServer } from "./metrics.js";
 import { createReadinessCheck } from "./readiness.js";
@@ -351,6 +354,25 @@ const profilingServer = environment.PROFILING_INGEST_TOKEN
     })
   : undefined;
 
+const trainingInternalServer = environment.TRAINING_INTERNAL_TOKEN
+  ? serve({
+      fetch: createTrainingInternalApp({
+        tokens: [
+          environment.TRAINING_INTERNAL_TOKEN,
+          ...(environment.TRAINING_INTERNAL_TOKEN_PREVIOUS
+            ? [environment.TRAINING_INTERNAL_TOKEN_PREVIOUS]
+            : []),
+        ],
+        billing: createTrainingBillingService(
+          database,
+          createUsageEventWriter(clickhouse),
+        ),
+      }).fetch,
+      hostname: environment.TRAINING_INTERNAL_HOST,
+      port: environment.TRAINING_INTERNAL_PORT,
+    })
+  : undefined;
+
 serviceLog("info", "api_started");
 if (profilingServer) serviceLog("info", "private_telemetry_started");
 
@@ -381,6 +403,9 @@ const shutdown = async (signal: NodeJS.Signals) => {
       : undefined,
     profilingServer
       ? release("profiling", () => closeServer(profilingServer))
+      : undefined,
+    trainingInternalServer
+      ? release("training-internal", () => closeServer(trainingInternalServer))
       : undefined,
   ]);
 

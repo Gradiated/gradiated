@@ -3,6 +3,13 @@ import { isDeepStrictEqual } from "node:util";
 import type { Cluster, ClusterPod } from "./cluster.js";
 import { ReimageNotSent, type Enrollment } from "./enroll.js";
 import {
+  GRAD_HOLDER,
+  GRAD_LIMITS,
+  gradLeaseId,
+  heldByGrad,
+  type Grad,
+} from "./grad.js";
+import {
   ENROLL_DURING_RUNPOD_HOLD_ANNOTATION,
   GPU_HOSTS,
   hostName,
@@ -32,7 +39,12 @@ import {
   type HostFacts,
   type Plan,
 } from "./plan.js";
-import { placementFits, POD_NAMESPACE, type PlacedPod } from "./placement.js";
+import {
+  fitsOnceUncordoned,
+  placementFits,
+  POD_NAMESPACE,
+  type PlacedPod,
+} from "./placement.js";
 
 // What a pass knows of a host: the planner's facts and its GPU use.
 type Facts = HostFacts & {
@@ -51,11 +63,12 @@ export const returnEvent = (rollout: Rollout) => {
     ? "expired"
     : "preempted";
 };
-// The taint Kubernetes adds to a cordoned node.
-const UNSCHEDULABLE_TAINT = "node.kubernetes.io/unschedulable";
 
 export const DEFAULT_LIMITS = {
   Cordon: 10 * MINUTE,
+  // A grad host's trainers have the drain grace to exit; this only catches
+  // a step that cannot move on.
+  TrainStop: 10 * MINUTE,
   // DeepSeek can take up to 90 minutes to load.
   Surge: 100 * MINUTE,
   Drain: 15 * MINUTE,
@@ -112,6 +125,8 @@ export type RolloutDependencies = {
   now?: () => Date;
   limits?: Partial<Limits>;
   retireOnReimage?: ReadonlySet<string>;
+  // grad's tenancy: run after every pass, and stops trainers on return.
+  grad?: Grad;
 };
 
 export class LeadershipLost extends Error {}
@@ -151,6 +166,14 @@ const ORDER: Record<Rollout["kind"], number> = {
 
 // A lease moves the host's replicas elsewhere first, as a re-image does.
 const moves = (kind: Rollout["kind"]) => kind === "reimage" || kind === "lease";
+
+// A host switching from serving to training is wiped on the way, as it is on
+// the way back: a lease to grad re-images the drained host before Hold hands
+// it over. Person leases keep the host as it was.
+const wipesOnLease = (rollout: Rollout) =>
+  rollout.kind === "lease" && rollout.lease?.holder === GRAD_HOLDER;
+const afterDrain = (rollout: Rollout) =>
+  rollout.kind === "lease" && !wipesOnLease(rollout) ? "Hold" : "Reimage";
 
 const since = (value: string | null | undefined) => {
   const time = Date.parse(value ?? "");
@@ -537,6 +560,33 @@ export const createRollouts = (deps: RolloutDependencies) => {
   const revokeKeys = async (host: GpuHost, rollout: Rollout) => {
     for (const id of rollout.keys ?? []) await revokeKey(host, id);
   };
+  // A token left unrevoked was only ever on the host, which the return
+  // wipes, and expires with the lease; so a failure is counted, not waited on.
+  const revokeGradTokens = async (host: GpuHost) => {
+    const leaseId = gradLeaseId(host);
+    if (!leaseId) return;
+    const tokens = deps.grad?.tokens;
+    try {
+      if (!tokens) throw new Error("grad's internal API is not configured");
+      const revoked = await act(() => tokens.revoke(leaseId));
+      deps.log({
+        event: "grad_tokens_revoked",
+        instance_id: host.spec.instanceId,
+        lease_id: leaseId,
+        revoked,
+      });
+    } catch (error) {
+      if (error instanceof LeadershipLost) throw error;
+      metrics.gradEvents.inc({ event: "token_revoke_failed" });
+      deps.log({
+        event: "grad_token_revocation_failed",
+        level: "warn",
+        instance_id: host.spec.instanceId,
+        lease_id: leaseId,
+        error: (error as Error).message,
+      });
+    }
+  };
   // A failed re-image leaves no bootstrap access behind if it can help it;
   // what is left is logged, and a retry removes it once the host enrolls.
   // Returns a note on any other instance profile, which is left alone.
@@ -583,7 +633,10 @@ export const createRollouts = (deps: RolloutDependencies) => {
       (pod) => !pod.terminating,
     );
     const serving = live.some((pod) => pod.model);
-    if (serving && rollout.kind === "reimage") return { next: "Surge" };
+    if (serving && (rollout.kind === "reimage" || rollout.kind === "lease"))
+      return { next: "Surge" };
+    if (live.length && rollout.kind === "lease")
+      return { block: "A pod that is not a model replica runs on the host" };
     // A leased host was handed over empty; any pod on it now landed while
     // its cordon was lifted, and is not wiped with it.
     if (serving && rollout.kind === "return")
@@ -751,6 +804,39 @@ export const createRollouts = (deps: RolloutDependencies) => {
     );
 
   const steps: Record<string, Step> = {
+    // A grad host's return starts here. Its trainers get SIGTERM, save a
+    // checkpoint and requeue their jobs; once they exit, or the drain grace
+    // is over, the lease's tokens are revoked and the return goes on as any
+    // other. A host that does not answer is wiped all the same.
+    TrainStop: async ({ host, observation }, rollout) => {
+      const grad = deps.grad;
+      const elapsed = now().getTime() - Date.parse(rollout.stepStartedAt);
+      if (
+        grad &&
+        observation.reachable &&
+        elapsed < grad.drainGraceSeconds * 1000 + GRAD_LIMITS.stopMargin
+      ) {
+        const status = await grad.trainers.status(host).catch(() => undefined);
+        if (status?.workers.some((worker) => worker.state !== "exited")) {
+          if (status.workers.some((worker) => worker.state === "running"))
+            await act(() =>
+              grad.trainers.stop(host, grad.drainGraceSeconds),
+            ).catch((error: unknown) => {
+              if (error instanceof LeadershipLost) throw error;
+              deps.log({
+                event: "grad_trainer_stop_failed",
+                level: "warn",
+                instance_id: host.spec.instanceId,
+                error: (error as Error).message,
+              });
+            });
+          return { stay: "Waiting for the trainers to checkpoint and exit" };
+        }
+      }
+      await revokeGradTokens(host);
+      return { next: "Cordon" };
+    },
+
     // A pod can be bound while the node is being cordoned, so the next step
     // is decided from the pods on the node once nothing more can land there.
     Cordon: async (facts, rollout) => {
@@ -820,7 +906,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
         }
       }
 
-      return { next: rollout.kind === "lease" ? "Hold" : "Reimage" };
+      return { next: afterDrain(rollout) };
     },
 
     // Replacements start elsewhere before anything on this host is removed,
@@ -924,7 +1010,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
       for (const { model } of surge)
         await act(() => cluster.pauseScaling(model, null));
       return {
-        next: rollout.kind === "lease" ? "Hold" : "Reimage",
+        next: afterDrain(rollout),
         set: { surge: undefined },
       };
     },
@@ -1155,8 +1241,10 @@ export const createRollouts = (deps: RolloutDependencies) => {
         if (baseline === "unready")
           return { stay: "Waiting for the serving pods to be Ready again" };
       }
+      // A wiped grad host is handed over once it runs the pins; it stays
+      // cordoned, so there is nothing to soak.
       return healthy(facts, rollout)
-        ? { next: "Soak" }
+        ? { next: rollout.kind === "lease" ? "Hold" : "Soak" }
         : {
             stay:
               rollout.kind === "bundle"
@@ -1286,8 +1374,13 @@ export const createRollouts = (deps: RolloutDependencies) => {
           ? await removeAccess(host)
           : "";
       // A blocked host goes back into service; a failed one stays cordoned,
-      // unless it failed to be leased, which never handed it to anyone.
-      if (result === "Blocked" || rollout.kind === "lease")
+      // unless it failed to be leased, which never handed it to anyone. A
+      // grad lease that failed after asking for the wipe may have left the
+      // host half re-imaged, so it is held as leased and the return, which
+      // fails safe, wipes it again.
+      const wiping =
+        wipesOnLease(rollout) && rollout.reimageRequestedAt !== undefined;
+      if (result === "Blocked" || (rollout.kind === "lease" && !wiping))
         await act(() => cluster.uncordon(id));
       deps.log({
         event: "gpu_rollout_" + result.toLowerCase(),
@@ -1305,6 +1398,14 @@ export const createRollouts = (deps: RolloutDependencies) => {
           blockedCount: (rollout.blockedCount ?? 0) + 1,
         }),
       });
+      if (wiping)
+        await writeStatus(host, {
+          lease: {
+            holder: rollout.lease!.holder,
+            purpose: rollout.lease!.purpose,
+            since: now().toISOString(),
+          },
+        });
       if (rollout.kind === "lease")
         metrics.leaseEvents.inc({ event: "failed" });
       if (rollout.kind === "return" && result === "Failed")
@@ -1431,7 +1532,10 @@ export const createRollouts = (deps: RolloutDependencies) => {
       rollout: {
         kind: plan.kind,
         target: target(pins, host),
-        step: FIRST_STEP[plan.kind],
+        step:
+          plan.kind === "return" && heldByGrad(host)
+            ? "TrainStop"
+            : FIRST_STEP[plan.kind],
         result: "Running",
         startedAt: time,
         stepStartedAt: time,
@@ -1572,24 +1676,8 @@ export const createRollouts = (deps: RolloutDependencies) => {
         time - Math.max(pending, settled) < limits.unschedulable
       )
         continue;
-      const host = leased.find(
-        ({ host, node }) =>
-          pod.gpus <= host.spec.inventory.gpuCount &&
-          placementFits(
-            pod.placement,
-            // The lease's cordon goes with the return.
-            {
-              ...node!,
-              taints: (node!.taints ?? []).filter(
-                (taint) => taint.key !== UNSCHEDULABLE_TAINT,
-              ),
-            },
-            {
-              labels: pod.labels ?? {},
-              namespace: pod.namespace ?? POD_NAMESPACE,
-              residents,
-            },
-          ),
+      const host = leased.find(({ host, node }) =>
+        fitsOnceUncordoned(pod, host.spec.inventory.gpuCount, node!, residents),
       );
       if (host) {
         plans.set(host.host.spec.instanceId, {
@@ -1732,7 +1820,25 @@ export const createRollouts = (deps: RolloutDependencies) => {
             ? `Starting ${plan.kind}: ${plan.reason}`
             : `Would ${plan.kind}: ${plan.reason}`;
 
+  // grad's tenancy runs after every pass that read the fleet, even one that
+  // advanced or waited on a rollout, so a reclaim never queues behind one.
   const pass = async () => {
+    let read: Facts[] | undefined;
+    try {
+      await rolloutPass((all) => (read = all));
+    } finally {
+      if (deps.grad && read)
+        await deps.grad.reconcile(read).catch((error: unknown) => {
+          if (error instanceof LeadershipLost) return;
+          deps.log({
+            event: "grad_pass_failed",
+            error: (error as Error).message,
+          });
+        });
+    }
+  };
+
+  const rolloutPass = async (onRead: (all: Facts[]) => void) => {
     const pins = await deps.pins();
     enrollment = await deps.enrollment().catch((error: unknown) => {
       deps.log({
@@ -1744,6 +1850,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
     const { hosts } = parseHosts(await deps.api.list(GPU_HOSTS));
     const all = await Promise.all(hosts.map(facts));
     currentFacts = all;
+    onRead(all);
     const time = now().getTime();
 
     // A blocked rollout keeps the fleet waiting for its host, so the order

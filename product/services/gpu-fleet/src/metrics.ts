@@ -128,6 +128,24 @@ export const createMetrics = () => {
       help: "Rollout passes that failed before finishing",
       registers: [registry],
     }),
+    gradDemand: new Gauge({
+      name: "gradiated_gpu_fleet_grad_demand_jobs",
+      help: "grad's open train jobs, by the GPU memory they need",
+      labelNames: ["gpu_memory_gb"],
+      registers: [registry],
+    }),
+    gradGpus: new Gauge({
+      name: "gradiated_gpu_fleet_grad_gpus",
+      help: "GPUs on hosts leased to grad: leasing, leased or returning",
+      labelNames: ["state"],
+      registers: [registry],
+    }),
+    gradEvents: new Counter({
+      name: "gradiated_gpu_fleet_grad_events_total",
+      help: "grad tenancy events: requested, reclaimed, released, trainers_started, trainer_start_failed, token_revoke_failed",
+      labelNames: ["event"],
+      registers: [registry],
+    }),
     // The names below are the ones gpu-controller exported before the
     // rollout moved here, so existing alerts and dashboards keep working.
     rolloutFailed: new Gauge({

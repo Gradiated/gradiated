@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { awsAccountOf } from "@gradiated/gpu-hosts";
 import {
@@ -14,6 +15,13 @@ import { createCluster } from "./cluster.js";
 import { productionEnrollment, productionRunPod } from "./credentials.js";
 import { credentialedSync } from "./database.js";
 import { createFleet } from "./fleet.js";
+import {
+  createGrad,
+  gradWorkerTokens,
+  hostTrainers,
+  parseGradConfig,
+  prometheusDemand,
+} from "./grad.js";
 import { inClusterKubernetes } from "./kubernetes.js";
 import { createLease } from "./lease.js";
 import { createMetrics } from "./metrics.js";
@@ -89,6 +97,8 @@ const config = z
     },
   )
   .parse(process.env);
+// grad's tenancy: GRAD_ENABLED and its settings (src/grad.ts), off by default.
+const gradConfig = parseGradConfig(process.env);
 
 const log = (event: Record<string, unknown>) =>
   process.stdout.write(
@@ -172,9 +182,32 @@ const fleet = createFleet({
   leading,
   log,
 });
+const cluster = createCluster(api, log);
+const { orchestratorKeyFile, internalUrl, prometheusUrl } = gradConfig;
+const grad = createGrad({
+  api,
+  cluster,
+  config: gradConfig,
+  demand: prometheusUrl
+    ? prometheusDemand(prometheusUrl)
+    : async () => {
+        throw new Error("GRAD_PROMETHEUS_URL is not set");
+      },
+  trainers: hostTrainers(config.HOST_KEYS_DIRECTORY),
+  ...(internalUrl &&
+    orchestratorKeyFile && {
+      tokens: gradWorkerTokens(internalUrl, () =>
+        readFile(orchestratorKeyFile, "utf8"),
+      ),
+    }),
+  mode: config.MODE,
+  leading,
+  log,
+  metrics,
+});
 const rollouts = createRollouts({
   api,
-  cluster: createCluster(api, log),
+  cluster,
   ping,
   pins,
   enrollment,
@@ -194,9 +227,14 @@ const rollouts = createRollouts({
   identity: config.POD_NAME,
   log,
   metrics,
+  grad,
 });
 metrics.mode.set({ mode: config.MODE }, 1);
-log({ event: "gpu_fleet_started", mode: config.MODE });
+log({
+  event: "gpu_fleet_started",
+  mode: config.MODE,
+  grad: gradConfig.enabled,
+});
 
 const rolloutPass = async () => {
   try {

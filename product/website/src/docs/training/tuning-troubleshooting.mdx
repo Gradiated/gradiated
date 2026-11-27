@@ -187,7 +187,31 @@ for point in run.metrics(follow=True):
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Streaming metrics and samples to Weights & Biases or MLflow is coming soon.
+### Experiment tracking (W&B and MLflow)
+
+Attach a logger to stream the run's metrics (loss, learning rate, eval metrics, tokens and cost) to Weights & Biases or MLflow. Store the tracker key once as a workspace secret; the trainer reads it when the run starts, and the key never appears on the run:
+
+```python
+from grad import Grad, loggers
+from grad.recipes import SFTRecipe
+
+client = Grad()
+client.secrets.set("wandb-key", "...")  # or: grad secrets set wandb-key
+
+run = client.runs.create(
+    dataset=client.datasets.get("support-sft"),
+    name="support-sft",
+    recipe=SFTRecipe(
+        model="qwen/qwen3-8b",
+        loggers=[
+            loggers.WandB("support-sft", secret="wandb-key"),
+            # or loggers.MLflow("https://mlflow.internal.example", experiment="support-sft")
+        ],
+    ),
+).wait()
+```
+
+A misconfigured or unreachable tracker never blocks a run: the dry run warns about a secret it can't find, and a tracker that errors during training is dropped and reported in the worker log. Self-hosted workers reach the tracker from their own network, so open egress to it.
 
 ## Troubleshooting common failure modes
 

@@ -225,7 +225,29 @@ run = client.runs.create(
 print(run.eval_report)
 ```
 
-To check general ability as well, run a standalone eval on `run.artifact` once the run finishes, as in the section above.
+Add `evals=` to also score each checkpoint on other datasets while the run trains, so you see a regression while the run is still going instead of after it finishes. Each entry is a dataset, a benchmark, or an `EvalSpec` with its own rubric:
+
+```python
+from grad import EvalSpec, Grad, validators
+from grad.recipes import SFTRecipe
+
+client = Grad()
+gsm8k = client.datasets.from_benchmark("gsm8k", limit=200)
+
+run = client.runs.create(
+    dataset=client.datasets.get("support-sft"),
+    name="support-sft",
+    recipe=SFTRecipe(
+        model="qwen/qwen3-8b",
+        evals=[gsm8k, EvalSpec("sql-eval-holdout", rubric=validators.Regex("^SELECT"), limit=100)],
+    ),
+).wait()
+
+for result in run.checkpoint_evals:
+    print(result["step"], result["name"], result["status"], result["score"])
+```
+
+Each checkpoint eval runs on the eval executor against the checkpoint (the inference endpoint serves it under its checkpoint id) and is billed like any eval; the dry run estimates the cost per checkpoint. The results are also in the run's `checkpoint_eval:<name>` job events and in `run.eval_report["checkpoint_evals"]` when the run finishes. Code scorers can't run during training, so run those in an eval on `run.artifact` afterwards.
 
 ## Turn eval failures into your next training dataset
 

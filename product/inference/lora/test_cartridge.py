@@ -5,7 +5,13 @@ import unittest
 from pathlib import Path
 
 import cartridge
-from fixtures import cartridge_file, cartridge_grant, cartridge_model_config
+from fixtures import (
+    GRAD_SOURCE,
+    cartridge_file,
+    cartridge_grant,
+    cartridge_model_config,
+    grad_bundle,
+)
 
 
 class CartridgeFileTests(unittest.TestCase):
@@ -168,6 +174,56 @@ class CartridgeFileTests(unittest.TestCase):
                 "num_tokens": 3,
             },
         )
+
+
+class GradCartridgeTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+
+    def materialize(self, bundle, spec):
+        fetches = []
+
+        def fetch(_spec, path, _hosts):
+            fetches.append(path)
+            path.write_bytes(bundle)
+
+        directory, _disk = cartridge.materialize(
+            spec, self.root, 1024 * 1024, set(), cartridge_model_config(), fetch
+        )
+        return directory, fetches
+
+    def grant(self, bundle):
+        spec = cartridge_grant(bundle)
+        spec["version"]["adapter"]["source"] = GRAD_SOURCE
+        return spec
+
+    def test_a_grad_cartridge_bundle_is_extracted_verified_and_reused(self):
+        payload = cartridge_file()
+        bundle = grad_bundle({cartridge.FILE: payload}, adapter_format="cartridge")
+        spec = self.grant(bundle)
+
+        directory, fetches = self.materialize(bundle, spec)
+
+        self.assertEqual((directory / cartridge.FILE).read_bytes(), payload)
+        self.assertEqual(
+            {path.name for path in directory.iterdir()},
+            {cartridge.FILE, ".verified.json"},
+        )
+        _directory, again = self.materialize(bundle, spec)
+        self.assertEqual((len(fetches), len(again)), (1, 0))
+
+    def test_a_grad_cartridge_bundle_must_match_its_manifest(self):
+        payload = cartridge_file()
+        bundle = grad_bundle(
+            {cartridge.FILE: payload},
+            adapter_format="cartridge",
+            manifest={"files": {cartridge.FILE: "0" * 64}},
+        )
+        with self.assertRaises(ValueError):
+            self.materialize(bundle, self.grant(bundle))
+        self.assertEqual(list(self.root.iterdir()), [])
 
 
 if __name__ == "__main__":

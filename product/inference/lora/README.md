@@ -236,6 +236,15 @@ inside the vocabulary. Resolution returns
 `{kind: "cartridge", path, sha256, num_tokens}`. SGLang reads the file into its
 cartridge table, so cartridges are never registered through `load_lora_adapter`.
 
+Versions published from grad artifacts (`adapter.source.kind: "grad"`) point at
+the artifact's `grad.artifact/1` bundle in the training bucket, read in place:
+`artifacts/<workspace>/<sha256>.grad.tar.gz`, where `sha256` and `size_bytes`
+describe the bundle. Both formats then download the bundle, extract only
+`manifest.json`, the optional `eval_report.json` and the format's files at the
+bundle root, and check each file against `manifest.files` before the format
+checks above run. The envelope files are deleted after that check. The bundle's
+S3 host must be in `LORA_DOWNLOAD_HOSTS`.
+
 ## Verification
 
 ```sh

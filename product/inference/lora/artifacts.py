@@ -161,8 +161,58 @@ def _download_part(url, destination, start, end, total, deadline):
                 connection.close()
 
 
-def extract(archive, destination, max_bytes, reserve=None, deadline=None):
-    allowed = {"adapter_config.json", "adapter_model.safetensors", "README.md"}
+ADAPTER_FILES = ("adapter_config.json", "adapter_model.safetensors")
+LARGE_FILES = {"adapter_model.safetensors", "cartridge.safetensors"}
+GRAD_BUNDLE = "grad.artifact/1"
+GRAD_RESERVED = ("manifest.json", "eval_report.json")
+
+
+def is_grad_bundle(adapter):
+    source = adapter.get("source")
+    return (
+        isinstance(source, dict)
+        and source.get("kind") == "grad"
+        and source.get("bundle") == GRAD_BUNDLE
+    )
+
+
+def verify_grad_manifest(directory, payload, adapter_format, deadline=None):
+    """Checks an extracted grad.artifact/1 bundle, then removes its envelope files."""
+    manifest = strict_json((directory / "manifest.json").read_bytes())
+    files = manifest.get("files")
+    if (
+        manifest.get("schema") != GRAD_BUNDLE
+        or manifest.get("kind") != "final"
+        or manifest.get("format") != adapter_format
+        or manifest.get("format_version") != 1
+        or not isinstance(files, dict)
+        or set(files) != set(payload)
+    ):
+        raise ValueError("Invalid artifact bundle manifest")
+    for name, digest in files.items():
+        if file_hash(directory / name, deadline) != digest:
+            raise ValueError("Artifact bundle file integrity mismatch")
+    report = directory / "eval_report.json"
+    if report.exists() != ("eval_report_sha256" in manifest) or (
+        report.exists() and file_hash(report, deadline) != manifest["eval_report_sha256"]
+    ):
+        raise ValueError("Invalid artifact bundle evaluation report")
+    for name in GRAD_RESERVED:
+        (directory / name).unlink(missing_ok=True)
+
+
+def extract(
+    archive,
+    destination,
+    max_bytes,
+    reserve=None,
+    deadline=None,
+    *,
+    payload=ADAPTER_FILES,
+    grad=False,
+    adapter_format="peft_lora",
+):
+    allowed = set(payload) | (set(GRAD_RESERVED) if grad else {"README.md"})
     seen = set()
     total = 0
     with tarfile.open(archive, "r:gz") as bundle:
@@ -171,9 +221,10 @@ def extract(archive, destination, max_bytes, reserve=None, deadline=None):
             if ordinal >= 16:
                 raise ValueError("Archive has too many members")
             name = member.name.removeprefix("./")
-            if member.isdir() and name in (".", "adapter", "adapter/"):
-                continue
-            name = name.removeprefix("adapter/")
+            if not grad:
+                if member.isdir() and name in (".", "adapter", "adapter/"):
+                    continue
+                name = name.removeprefix("adapter/")
             if name not in allowed or name in seen or not member.isfile():
                 raise ValueError("Invalid archive member")
             if member.mode & 0o111:
@@ -181,7 +232,7 @@ def extract(archive, destination, max_bytes, reserve=None, deadline=None):
             total += member.size
             if member.size <= 0 or total > max_bytes:
                 raise ValueError("Unpacked adapter exceeds budget")
-            if name != "adapter_model.safetensors" and member.size > 1024 * 1024:
+            if name not in LARGE_FILES and member.size > 1024 * 1024:
                 raise ValueError("Oversized adapter metadata")
             if reserve:
                 reserve(total)
@@ -196,8 +247,10 @@ def extract(archive, destination, max_bytes, reserve=None, deadline=None):
                         break
                     output.write(chunk)
                     remaining(deadline)
-    if not {"adapter_config.json", "adapter_model.safetensors"} <= seen:
+    if not set(payload) <= seen or (grad and "manifest.json" not in seen):
         raise ValueError("Missing adapter files")
+    if grad:
+        verify_grad_manifest(destination, payload, adapter_format, deadline)
     return total
 
 
@@ -465,6 +518,7 @@ def materialize(
             if reserve
             else None,
             deadline=deadline,
+            grad=is_grad_bundle(spec["version"]["adapter"]),
         )
         tensor_bytes = validate_tensors(
             staging,

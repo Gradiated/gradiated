@@ -59,7 +59,7 @@ Store the key once as a workspace secret (it reads the value from stdin and neve
   <DocsCodeTab label="CLI">
 
 ```bash
-grad secrets set braintrust-prod
+grad secrets set braintrust-prod   # paste a Braintrust API key
 
 grad sources add braintrust \
   --dataset support-prod \
@@ -131,26 +131,28 @@ _ = source.Sync(ctx)
 
 ## How syncing works
 
-Each sync is incremental: it pulls traces added since the last sync, plus scores and corrections added to traces it already has, so feedback that arrives days later still counts. Records are matched by the provider's trace ID and the latest score wins.
+Each sync is incremental: it pulls traces added since the last sync, plus scores and corrections added to traces it already has, so feedback that arrives days later still counts. Records are matched by the provider's trace ID and the latest score wins. Braintrust bumps a span's transaction id on every feedback write, so a sync picks up every later edit, however old the span.
 
 Every sync creates a new dataset version. Old versions never change, so a run keeps the exact data it pinned. If you edit old scores or change the mapping, `grad sources sync src_01J9X --full` (or `source.sync(full=True)`) rebuilds the dataset from the provider as a new version.
+
+`source.sync()` returns the import job (call `.wait()` to block), or the sync already in progress; on the CLI, add `--wait`. A source syncs at most once a minute, and one that keeps failing backs off and then pauses; see [When a sync fails](/docs/training/trajectories/#when-a-sync-fails).
 
 A one-off `grad import` of an exported file is a snapshot: it never gets later feedback. Use a source for the feedback loop.
 
 ## Choose what to train on
 
-Records keep the provider's scores in `scores` and its model and version tags in `metadata`, so you can pick a slice before training. Read the synced version, keep what you want, and push it as its own dataset:
+Records keep the provider's scores in `scores` and its model and version tags in `metadata`, so you can pick a slice before training. A filter runs on the server, costs nothing to re-run, and saves the slice as its own dataset:
 
 ```python
 from grad import Grad
 
 client = Grad()
-good = [
-    r for r in client.datasets.records("support-prod")
-    if (r.get("scores") or {}).get("resolved", 0) >= 1.0
-    and (r.get("metadata") or {}).get("version") == "v42"
-]
-client.datasets.push("support-prod-v42-good", good)
+good = client.datasets.get("support-prod").filter(
+    scores={"resolved": ">=1"},
+    metadata={"version": "v42"},
+    name="support-prod-v42-good",
+)
+print(good.count())
 ```
 
 A [router](/docs/training/recipes/router/) can use the raw dataset as is: it learns from every score, good and bad.
@@ -159,7 +161,11 @@ A [router](/docs/training/recipes/router/) can use the raw dataset as is: it lea
 
 - **Project (required):** the project id or name whose logs to sync, for example `support-bot`. Add one source per project.
 - **Key:** a Braintrust API key from your organization settings, for a user or service account that can read the project's logs.
-- **Hosts:** `https://api.braintrust.dev`, or your self-hosted data plane URL.
+- **Hosts:** `https://api.braintrust.dev` (the default), `https://api-eu.braintrust.dev` (EU), or your self-hosted data plane URL. Hosts must be public `https://` URLs; for a server on a private network, see [Private hosts](#private-hosts).
+
+### Private hosts
+
+Sync workers only call public `https://` hosts, so a provider key can't be pointed at an internal service by mistake. To sync from a provider on your own network, list its address range in `GRAD_SOURCES_EGRESS_ALLOW` (comma-separated CIDRs, such as `10.20.0.0/16`) on the import workers; plain `http://` is then allowed to those addresses too. On Helm, set it in `workers.import.env` and allow the range in `networkPolicy.workerEgress` (see [Self-hosting](/docs/training/self-hosting/)).
 
 <DocsNext>
   <a href="/docs/training/integrations/">

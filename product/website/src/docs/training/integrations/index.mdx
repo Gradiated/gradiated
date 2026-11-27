@@ -14,11 +14,16 @@ A **source** connects a [`Dataset`](/docs/training/trajectories/) to a tracing t
 | [Braintrust](/docs/training/integrations/braintrust/) | `braintrust`       | Scores and `expected` answers                 |
 | [PostHog](/docs/training/integrations/posthog/)       | `posthog`          | Survey responses tied by `$ai_trace_id`       |
 | [Arize Phoenix](/docs/training/integrations/phoenix/) | `phoenix`          | Span annotations                              |
-| Gradiated Cloud gateway                               | `gradiated`        | Requests and feedback recorded by the gateway |
+| Gradiated Cloud gateway (coming soon)                 | `gradiated`        | Requests and feedback recorded by the gateway |
 
 ## On Gradiated Cloud
 
-If your app calls models through the Gradiated gateway, it already records every request and its feedback, so you don't need an observability tool. Connect them with the built-in `gradiated` source; it needs no host or secret:
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  The built-in `gradiated` source isn't live yet. Until it is, sync from your
+  observability tool with one of the sources above.
+</DocsCallout>
+
+If your app calls models through the Gradiated gateway, the gateway records every request and its feedback, so you don't need an observability tool. Connect them with the built-in `gradiated` source; it needs no host or secret:
 
 ```bash
 grad sources add gradiated --dataset support-prod --schedule "0 * * * *"
@@ -30,7 +35,7 @@ Self-hosted servers don't have the gateway, so the `gradiated` source is Cloud-o
 
 1. Tag each trace with the model and version that produced it.
 2. Send feedback to the same tool when you learn the outcome: a thumbs up, a test result, a human fix.
-3. Store the tool's API key with `grad secrets set NAME` and add a source with `grad sources add`.
+3. Store the tool's API key with `grad secrets set NAME` (or `client.secrets.set(name, value)`) and add a source with `grad sources add`. A source feeds one dataset; a dataset can have several sources, one per provider or project.
 4. Each sync adds a new dataset version with the latest scores. Runs pin a version, so retraining on newer feedback never changes an old run.
 
 Deleting a dataset deletes its sources. A source syncs at most once a minute. If syncs keep failing (a revoked key, say), the source backs off and, after 10 failures in a row, pauses; `grad sources list` shows its status and last error, and `grad sources sync ID` or a new value for its secret resumes it. See [When a sync fails](/docs/training/trajectories/#when-a-sync-fails).

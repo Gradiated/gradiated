@@ -28,7 +28,7 @@ Any dataset works as input: a list of plain chat records or a `.jsonl` file (`cl
 
 ## Start with recipe defaults
 
-Every recipe comes with working defaults for the base model, split, learning rate, batch size, schedule, checkpoints and evals. Pass your dataset, an output name and the recipe. Run `--dry-run` (or `runs.plan()`) first to check your data and see the estimated cost, and set `max_cost_usd=` to cap spend. You pay per million tokens trained plus storage for saved weights, never for idle GPUs.
+Every recipe comes with working defaults for the base model, split, learning rate, batch size, schedule, checkpoints and evals. Pass your dataset, an output name and the recipe. Run `--dry-run` (or `runs.plan()`) first to check your data and see the estimated cost, and set `max_cost_usd=` to cap spend. You pay a fixed price per million tokens processed, set per base model.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -150,15 +150,14 @@ Before spending anything, run `--dry-run` (or `client.runs.plan()`) to check you
 ```text
 Plan for fast-diff-merge (sft on qwen/qwen3-8b, dataset diff-merge-prod v3)
   records   : 11,840 usable of 14,200
-  split     : 10,656 train / 1,184 eval (by_session, 10% held out)
-  steps     : 84 (batch 128, 1 epoch)
+  split     : 12,780 train / 1,420 eval (by_session, 10% held out)
+  steps     : 100 (batch 128, 1 epoch)
   lr        : 5.0e-4 (auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling)
   tokens    : ~38.0M (31.0% trained)
   est. cost : $15.20 at $0.40/1M tokens
   adapter   : kind=lora, rank=32, alpha=32, merge_on_export=false
   warnings:
     - 2360 of 14200 records cannot be used by 'sft' and will be skipped (record has no assistant turn to train on).
-    - 84 steps is below the 100 we recommend; use batch_size=106 or more epochs/data.
   Start it by re-running without --dry-run (add --wait to follow it).
 ```
 
@@ -178,9 +177,9 @@ grad runs inspect run_01J9X --yaml > recipe.yaml
 
 ## Where your code runs
 
-Managed runs execute on Gradiated's servers, so closing your laptop never stops them. Rubric checks run in one of two places:
+Runs execute on the server's trainer workers, not on your machine, so closing your laptop never stops them. Rubric checks run in one of two places:
 
-- **Built-in checks run on Gradiated's servers:** `Judge` and the built-in `validators` (`JSON`, `NonEmpty`, `ExactMatch`, `Regex`).
+- **Built-in checks run on the server:** `Judge` and the built-in `validators` (`JSON`, `NonEmpty`, `ExactMatch`, `Regex`).
 - **Your Python functions run in your own process.** In an [evaluation](/docs/training/evaluations/), a `Scorer(fn=...)` runs where you call `ev.wait()`: the SDK pulls the model outputs, calls your function and posts the scores. `requirements=[...]` is checked against your installed packages before the eval starts.
 - **Training recipes take built-in checks only.** `RouterRecipe(rubric=...)` accepts a `Judge`, validators, or the name of a score already on your records. Python functions inside training recipes are coming soon.
 - **Filtering data:** field filters such as `dataset.filter(scores={"resolved": ">=0.8"})` run on the server. `dataset.filter(fn)` with a Python function runs on your machine and saves the matching IDs as a server-side view.
@@ -326,7 +325,7 @@ grad train -f recipe.yaml --wait
 
 ## Train in stages (`SFT → DPO`)
 
-Every recipe takes a model (a base model string or a trained `Artifact`) and produces a new `Artifact`. To run DPO on top of SFT, wait for the SFT run, check its eval report, then pass `sft.artifact` as the DPO recipe's `model`:
+Every recipe produces a new `Artifact`. SFT and DPO can also start from one: to run DPO on top of SFT, wait for the SFT run, check its eval report, then pass `sft.artifact` as the DPO recipe's `model`:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -409,7 +408,7 @@ grad train --dataset support-preferences --name support-responder --recipe dpo -
   </DocsCodeTab>
 </DocsCodeTabs>
 
-SFT and DPO runs can continue an SFT or DPO LoRA artifact (not a merged export, `merge_on_export=True`). The adapter's rank and alpha carry over. Router, decision model, cartridge and embedding runs start from a base model. RL on top of an SFT artifact (`GRPORecipe`) is coming soon; see [RL for agents](/docs/training/recipes/rl-agents/).
+SFT and DPO runs can continue an SFT or DPO LoRA artifact (not a merged export, `merge_on_export=True`). The adapter's rank and alpha carry over. Router, decision model, cartridge, embedding, distillation and reward model runs start from a base model, and their artifacts can't be continued. RL on top of an SFT artifact (`GRPORecipe`) is coming soon; see [RL for agents](/docs/training/recipes/rl-agents/).
 
 ## Live metrics and evaluation
 

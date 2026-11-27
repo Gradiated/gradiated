@@ -25,6 +25,8 @@ Resolved values at the default batch size of 128, for each recipe's default mode
 | **Decision models**    | `gradiated/linden-1`     | `3e-4` |                                                                                                    |
 | **Context Cartridges** | `qwen/qwen3-8b`          | `1e-2` | Prefix KV tokens need a far higher LR than LoRA weights.                                           |
 | **Embeddings**         | `baai/bge-small-en-v1.5` | `2e-5` | Small encoders train fast end-to-end with a low LR.                                                |
+| **Distillation**       | `qwen/qwen3-4b`          | `2e-4` |                                                                                                    |
+| **Reward models**      | `qwen/qwen3-8b`          | `1e-4` | LoRA on the backbone plus a trained scoring head.                                                  |
 
 Rules of thumb behind `"auto"`:
 
@@ -100,7 +102,7 @@ These settings are checked against your data rather than silently patched: a rec
 
 ### One template everywhere
 
-Every run pins the template by ID and revision (for example `qwen3@3`), and the dry run prints it. The same pinned template, `thinking` and `preserve_thinking` values are stored on each checkpoint and used for evaluation and the deployed endpoint, so a model never trains with one prompt format and serves with another. Deployed reasoning models return their reasoning in `reasoning_content`, separate from `content`, matching the OpenAI-compatible convention.
+Every run pins the template by ID and revision (for example `qwen3@3`), and the dry run prints it. The pinned template, `thinking` and `preserve_thinking` values are stored on each checkpoint and used by the run's held-out evaluations, so the scores you see match the format the model trained on. [Standalone evals](/docs/training/evaluations/) send plain chat messages to your inference endpoint, which applies the model's own chat template: serve the artifact with the same `thinking` setting you trained with. Hosted deployments, coming soon on Gradiated Cloud, will apply the pinned settings and return reasoning in `reasoning_content`, separate from `content`.
 
 We test each template revision so that generation prompts match the base model's Hugging Face chat template token for token. When a template has to change (for example to fix a tool-call format), it gets a new revision. Existing runs and checkpoints keep the revision they were trained with, and the changelog lists the change.
 
@@ -129,13 +131,13 @@ print(preview)  # trained spans in [[...]], plus the trained-token share per rec
   </DocsCodeTab>
 </DocsCodeTabs>
 
-`runs.plan()` also warns about records longer than the model's training sequence limit (they would be truncated) and records with no assistant turn to train on (they would be skipped).
+`runs.plan()` also warns about records longer than the model's context window and records with no assistant turn to train on (they would be skipped). The trainer caps each training sequence at 8,192 tokens and truncates longer ones; the run's eval report says how many were cut.
 
 ## Checkpoints, resuming, and spend caps
 
-Managed recipe runs checkpoint automatically every 10% of steps, and at least every 20 steps, including optimizer state. They evaluate on the held-out split at the same points (change it with `eval_every=`), and `run.artifact` is the best checkpoint by eval (`select="best"`; pass `select="last"` to keep the final one).
+Managed recipe runs checkpoint automatically every 10% of steps, and at least every 20 steps, including optimizer state. They evaluate on the held-out split at the same points (change it with `eval_every=`), and `run.artifact` is the best checkpoint by eval (`select="best"`: the lowest eval loss, or the highest score for recipes that report one; pass `select="last"` to keep the final one).
 
-- **What's kept:** the checkpoint that becomes `run.artifact` and the final checkpoint never expire, and both are deployable and downloadable as PEFT weights with no conversion step. Intermediate checkpoints are kept for 30 days unless you promote one with `ckpt.promote(name=...)`. Change the default with `checkpoint_ttl_days=` on the recipe.
+- **What's kept:** the best checkpoint (the one that becomes `run.artifact` with `select="best"`) and the final checkpoint never expire, and both download as PEFT weights with no conversion step. Intermediate checkpoints are kept for 30 days unless you promote one with `ckpt.promote(name=...)`. Change the default with `checkpoint_ttl_days=` on the recipe.
 - **What each checkpoint records:** base model and revision, adapter config, chat template revision, `thinking` and `train_on`, the resolved `lr`, the resolved `loss` with its rule version, and the step. Evaluations and deploys read these, so you never pass them again.
 
 Set `max_cost_usd=` on every run you start. When the cap is reached, the run stops gracefully, saves a checkpoint, and ends with status `stopped_budget`, so a mistake costs at most the cap. Resume a stopped, failed, or cancelled run from its latest checkpoint; a budget-stopped run needs a higher cap:
@@ -211,6 +213,8 @@ run = client.runs.create(
 ).wait()
 ```
 
+In a run file for `grad train -f`, the same trackers go under `loggers:` (for example `- {kind: wandb, project: support-sft, secret: wandb-key}`, or `kind: mlflow` with `tracking_uri`). TypeScript uses `loggers.wandb({ project, secret })` and Go `grad.WandB(project, secret, entity)`.
+
 A misconfigured or unreachable tracker never blocks a run: the dry run warns about a secret it can't find, and a tracker that errors during training is dropped and reported in the worker log. Self-hosted workers reach the tracker from their own network, so open egress to it.
 
 ## Troubleshooting common failure modes
@@ -218,7 +222,7 @@ A misconfigured or unreachable tracker never blocks a run: the dry run warns abo
 | Symptom                                                     | Likely cause                                                                                                                                       | What to do                                                                                                                                                              |
 | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **DPO outputs get repetitive or degenerate**                | `lr` is too high, `beta` is too low, or `chosen` / `rejected` pairs come from a very different model than the starting weights.                    | Keep `lr="auto"` (or try `lr_scale=0.5` if you set your own), increase `losses.DPO(beta=0.1..0.2)`, and generate pairs from the same SFT checkpoint you start DPO from. |
-| **Answers cut off mid-sentence or mid-thought**             | SFT records were truncated at the training sequence limit, or the eval or serving `max_tokens` is too low.                                         | Check the plan's truncation warnings; shorten records, pick a model with a longer training sequence limit, or raise `max_tokens`.                                       |
+| **Answers cut off mid-sentence or mid-thought**             | SFT records were truncated at the 8,192-token training sequence cap, or the eval or serving `max_tokens` is too low.                               | Check the plan's and the eval report's truncation warnings; shorten records, or raise `max_tokens`.                                                                     |
 | **Model ignores or garbles the chat format after training** | Training data didn't match the base model's template (for example, thinking blocks on some turns but not others), or the wrong turns were trained. | Run `grad render <dataset> --model <base>` and check which spans are trained; set `thinking=` and `train_on=` explicitly.                                               |
 | **Eval score drops while train loss drops**                 | Overfitting on a small dataset or leakage between train and eval splits.                                                                           | Keep `epochs=1` (2 at most), keep `splits.BySession(eval_fraction=0.10)` and `select="best"`, or add more diverse examples.                                             |
 

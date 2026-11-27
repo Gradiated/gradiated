@@ -5,18 +5,15 @@
   algorithm.
 </DocsLead>
 
-<DocsCallout label="Coming soon">
-  The `Trainer` API is coming soon. In v0, train with a
+<DocsCallout label="Coming soon" tone="warn">
+  The `Trainer` API, custom losses and `artifacts.merge` are coming soon, and so
+  is everything else on this page. Today, train with a
   [recipe](/docs/training/recipes/).
 </DocsCallout>
 
 Most teams never need this page. A managed [recipe](/docs/training/recipes/) handles SFT, DPO, distillation, and RL, including multi-turn agent RL with `GRPORecipe(env=...)` against any [`Environment`](/docs/training/environments/). Recipes also pick the learning rate, checkpoint automatically, and keep running after you close your laptop. Use the `Trainer` when you want to change the algorithm itself: a new loss, a new advantage estimator, or a schedule a recipe doesn't offer.
 
-Custom loops drive the remote `Trainer` and `Artifact` APIs from any machine (your laptop, CI, or an orchestrator) with the same adapters, losses, and optimizers the recipes use. The standard `grad-sdk` package covers every built-in loss. To write your own loss in PyTorch (a [`CustomLoss`](#example-2-custom-objectives-with-customloss), where your code computes the loss locally while Gradiated's GPUs run the forward and backward passes), install the `torch` extra:
-
-```bash
-pip install "grad-sdk[torch]"
-```
+Custom loops drive the remote `Trainer` and `Artifact` APIs from any machine (your laptop, CI, or an orchestrator) with the same adapters, losses, and optimizers the recipes use. The standard `grad-sdk` package covers every built-in loss. To write your own loss in PyTorch (a [`CustomLoss`](#example-2-custom-objectives-with-customloss), where your code computes the loss locally while Gradiated's GPUs run the forward and backward passes), you'll install the SDK's `torch` extra (`grad-sdk[torch]`).
 
 ## Mental model
 

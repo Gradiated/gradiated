@@ -5,11 +5,27 @@
   weights and evaluation results.
 </DocsLead>
 
-An **`Artifact`** is a saved, versioned model produced by a training run (`fast-diff-merge@2026-11-26-1`). Artifacts are never overwritten: every new run writes a new version with its weights (`adapter_config.json` and `adapter_model.safetensors` for LoRA, or full Safetensors weights) alongside its held-out `eval_report.json`.
+An **`Artifact`** is a saved, versioned model produced by a training run (`fast-diff-merge@2026-11-26-1`). Artifacts are never overwritten: every new run writes a new version. Each one is a `.grad.tar.gz` bundle holding the weights, the config needed to serve them, a `manifest.json` (base model repo and revision, recipe, checksums of every file) and the held-out `eval_report.json`.
+
+## What's inside
+
+The bundle's `format` depends on the recipe:
+
+| `format`              | Recipes                                         | Files                                                                                            |
+| --------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `peft_lora`           | SFT, DPO, distillation                          | `adapter_config.json`, `adapter_model.safetensors`: a standard PEFT LoRA for the base model      |
+| `merged_safetensors`  | SFT or distillation with `merge_on_export=True` | A standalone Hugging Face model (`config.json`, Safetensors weights, tokenizer)                  |
+| `cartridge`           | Cartridge                                       | `cartridge.safetensors`: the trained KV prefix                                                   |
+| `encoder_safetensors` | Embedding                                       | The full fine-tuned encoder directory with `grad_embedding.json` and Sentence Transformers files |
+| `router_bundle`       | Router                                          | The backbone adapter, `router_head.safetensors` and `router_config.json` (candidates, prices)    |
+| `decision_bundle`     | Decision model                                  | The backbone adapter, `decision_head.safetensors` and `decision_config.json` (questions, heads)  |
+| `reward_bundle`       | Reward model                                    | The backbone adapter, `reward_head.safetensors` and `reward_config.json`                         |
+
+The [artifact format spec](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md) documents every file, tensor and config field, with a reference Python loader for each format, so your serving stack never needs the trainer's code.
 
 ## Inspect and test an artifact
 
-Load any saved artifact with `client.artifacts.get(...)` (or use `run.artifact` straight from a finished run) and check its held-out `eval_report` before deploying. To compare it with other models on your own examples, pass it to an [evaluation](/docs/training/evaluations/):
+Load any saved artifact with `client.artifacts.get(...)` (or use `run.artifact` straight from a finished run) and check its held-out `eval_report` before you ship it. To compare it with other models on your own examples, pass it to an [evaluation](/docs/training/evaluations/):
 
 ```python
 from grad import Grad
@@ -24,12 +40,11 @@ print(art.eval_report)
 You can pass a trained `Artifact` in place of a model name:
 
 - **Continue training:** `DPORecipe(model=sft.artifact, ...)` or `SFTRecipe(model=sft.artifact, ...)` (from SFT and DPO LoRA artifacts).
-- **Evaluate it:** `client.evals.create(models=[art, "qwen/qwen3-8b"], dataset=..., rubric=...)`.
-- **Use as a judge:** `Judge(name="sql_ok", model=art, prompt="Is this SQL correct?")`.
+- **Evaluate it:** `client.evals.create(models=[art, "qwen/qwen3-8b"], dataset=..., rubric=...)`. The eval calls the artifact by its ID on your inference endpoint, so load it there first (for example as a vLLM LoRA module named after the artifact).
 
 ## Which checkpoint becomes the artifact
 
-Managed runs save checkpoints automatically as they train and evaluate each one on the held-out split. `run.artifact` is the checkpoint with the best eval score. To pick a different one yourself, list the checkpoints and promote it:
+Managed runs save checkpoints automatically as they train and evaluate each one on the held-out split. `run.artifact` is the checkpoint with the best held-out score (the lowest loss, for recipes that select on a loss), or the last one with `select="last"`. To pick a different one yourself, list the checkpoints and promote it:
 
 ```python
 from grad import Grad
@@ -43,48 +58,46 @@ for ckpt in run.checkpoints():
 art = run.checkpoints()[-1].promote(name="fast-diff-merge")  # save a checkpoint as a versioned Artifact
 ```
 
-The best and final checkpoints never expire; other checkpoints are kept for 30 days unless you promote them. Each checkpoint remembers the settings it was trained with (base model, chat template, learning rate), so evaluations and deploys reuse them automatically. If a run stops early, continue it from its latest checkpoint with `client.runs.resume("run_01J9Z2")`. Checkpoint frequency, retention and selection settings are in the [reference](/docs/reference/training-parameters/#checkpoints-and-evaluation).
+The best and final checkpoints never expire; other checkpoints are kept for 30 days unless you promote them. Each checkpoint remembers the settings it was trained with (base model, chat template, learning rate), so evaluations and exports reuse them automatically. If a run stops early, continue it from its latest checkpoint with `client.runs.resume("run_01J9Z2")`. Checkpoint frequency, retention and selection settings are in the [reference](/docs/reference/training-parameters/#checkpoints-and-evaluation).
 
-## Deploy on Gradiated Cloud or download weights
+## Download and serve
 
-Every artifact can either be hosted directly on Gradiated Cloud (callable via the standard OpenAI / Anthropic / SystemOne SDKs) or downloaded as standard weights to run on your own vLLM or SGLang servers:
+Download an artifact to serve it on your own vLLM or SGLang servers. `grad artifacts download` checks the bundle's SHA-256 and every file against the manifest before it extracts anything:
 
 <DocsCodeTabs>
-  <DocsCodeTab label="Gradiated Cloud">
+  <DocsCodeTab label="CLI">
+
+```bash
+grad artifacts inspect fast-diff-merge@2026-11-26-1 --json
+grad artifacts download fast-diff-merge@2026-11-26-1 --output ./fast-diff-merge
+
+# Load the LoRA into vLLM on the same base model (the default rank is 32)
+vllm serve Qwen/Qwen3-8B --enable-lora --max-lora-rank 32 \
+  --lora-modules fast-diff-merge=./fast-diff-merge
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
 
 ```python
 from grad import Grad
 
 client = Grad()
-
-# Publish under your-org/fast-diff-merge.
-# From a finished run, `run.deploy()` does the same.
-client.artifacts.get("fast-diff-merge@2026-11-26-1").deploy()
-```
-
-  </DocsCodeTab>
-  <DocsCodeTab label="Self-host (vLLM / SGLang)">
-
-```bash
-# Download standard HuggingFace PEFT LoRA weights (or merged weights)
-grad artifacts download fast-diff-merge@2026-11-26-1 --output ./fast-diff-merge
-
-# Load straight into vLLM or SGLang:
-vllm serve Qwen/Qwen3-8B --enable-lora --lora-modules fast-diff-merge=./fast-diff-merge
-```
-
-  </DocsCodeTab>
-  <DocsCodeTab label="CLI">
-
-```bash
-grad artifacts inspect fast-diff-merge@2026-11-26-1 --json
-grad deploy fast-diff-merge@2026-11-26-1
+art = client.artifacts.get("fast-diff-merge@2026-11-26-1")
+art.download("./fast-diff-merge")  # verified, then extracted
+print(art.manifest["base_model_repo"], art.manifest["recipe_kind"])
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
 
-See [Deploying](/docs/training/deploying/) for updates, rollbacks, calling deployed models with the OpenAI / Anthropic / SystemOne SDKs, and self-hosting details.
+Add `--archive ./fast-diff-merge.grad.tar.gz` to keep the verified bundle as well. See [Deploying](/docs/training/deploying/) for SGLang, router and decision bundles, and rollouts on your own stack.
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Hosting an artifact on Gradiated Cloud with `artifact.deploy()` (or
+  `grad deploy`) and calling it as `your-org/<name>` from the OpenAI, Anthropic
+  or SystemOne SDK isn't live yet. Until then, serve the download yourself.
+</DocsCallout>
 
 <DocsNext>
   <a href="/docs/training/deploying/">

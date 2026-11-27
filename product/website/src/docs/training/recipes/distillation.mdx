@@ -9,7 +9,7 @@ If you just fine-tune a small model on saved outputs from a big model, it can go
 ## What data you need
 
 - **Only prompts:** you don't need labeled answers; 1,000–5,000 real prompts are enough. Plain chat records (`{"messages": [...]}` ending in a user turn), Hugging Face datasets via `client.datasets.from_hf(...)`, or imported [trajectories](/docs/training/trajectories/) all work. Any assistant turns at the end are ignored, because the student writes its own.
-- **A teacher model:** a larger catalog model that shares the student's tokenizer (such as `"qwen/qwen3-32b"` for a Qwen3 student). With `rollout=OffPolicy()`, the teacher can also be a fine-tuned `.grad` [`Artifact`](/docs/training/artifacts/) you trained earlier, or any model your inference endpoint serves.
+- **A teacher model:** a larger catalog model that shares the student's tokenizer (such as `"qwen/qwen3-14b"` for a Qwen3-4B student). With `rollout=OffPolicy()`, the teacher can be any catalog model, or a fine-tuned `.grad` [`Artifact`](/docs/training/artifacts/) you trained earlier, as long as your inference endpoint serves it.
 
 ## Train with `DistillRecipe`
 
@@ -26,7 +26,7 @@ dataset = client.datasets.get("support-prompts")  # pushed or imported earlier
 run = client.runs.create(
     dataset=dataset,
     name="support-4b-distilled",
-    recipe=DistillRecipe(model="qwen/qwen3-4b", teacher="qwen/qwen3-32b"),
+    recipe=DistillRecipe(model="qwen/qwen3-4b", teacher="qwen/qwen3-14b"),
 ).wait()
 
 print(run.artifact.id, run.eval_report)
@@ -47,7 +47,7 @@ const run = await grad.runs
     name: "support-4b-distilled",
     recipe: recipes.distill({
       model: "qwen/qwen3-4b",
-      teacher: "qwen/qwen3-32b",
+      teacher: "qwen/qwen3-14b",
     }),
   })
   .wait();
@@ -64,7 +64,7 @@ dataset: support-prompts
 name: support-4b-distilled
 recipe: distill
 model: qwen/qwen3-4b
-teacher: qwen/qwen3-32b
+teacher: qwen/qwen3-14b
 ```
 
 ```bash
@@ -76,12 +76,12 @@ grad train -f distill-4b.yaml --wait
 
 ### Parameters you might change
 
-- **`teacher`:** the stronger model you want to copy. On-policy it must be a catalog model the trainer can load next to the student (like `"qwen/qwen3-32b"`).
+- **`teacher`:** the stronger model you want to copy. On-policy it must be a catalog model, and the trainer loads it next to the student on one GPU: a 4B student with a 14B teacher fits on an 80 GB GPU, while a 32B teacher doesn't. Use `rollout=OffPolicy()` for a larger teacher.
 - **`rollout`:** `OnPolicy(max_new_tokens="auto")` by default: the student writes an answer to each prompt and the teacher grades those exact tokens. `"auto"` sizes the answers from the assistant turns already in your records (256 tokens when there are none). Pass `rollout=OffPolicy()` to have the teacher answer each prompt once instead; the student then trains on those answers.
 - **`loss`:** on-policy, the student matches the teacher's top 32 next-token probabilities at every answer token (`losses.TopKKLDistill(top_k=32)`), which captures almost all the signal. Off-policy it trains on the teacher's answers with `losses.CrossEntropy()`.
-- **`context`:** a [`Context`](/docs/reference/primitives/) the teacher reads before every prompt and the student doesn't, so the student learns to answer as if it had read it (on-policy only). With `context=`, the teacher can be the student's own base model.
+- **`context`:** a [`Context`](/docs/reference/primitives/) the teacher reads before every prompt and the student doesn't, so the student learns to answer as if it had read it (on-policy only). With `context=`, the teacher can be the student's own base model. Training sequences are capped at 8,192 tokens, so the context, the prompt and `max_new_tokens` must fit in that together; a longer one fails the run with the record ID.
 
-**Teacher and student must share a tokenizer** for on-policy distillation (the Qwen3 family does). For a teacher with a different tokenizer, including a frontier API model or an `Artifact`, pass `rollout=OffPolicy()`: before training, the server has the teacher answer each prompt through your inference endpoint in a labeling eval, billed as an eval, and the student learns those answers.
+**Teacher and student must share a tokenizer** for on-policy distillation (the Qwen3 family does). For a larger teacher, or an `Artifact` you trained, pass `rollout=OffPolicy()`: before training, the server has the teacher answer each prompt through your inference endpoint in a labeling eval, billed as an eval, and the student learns those answers. Off-policy answers are up to 1,024 tokens by default (`OffPolicy(max_new_tokens=...)`).
 
 ```python
 from grad.recipes import DistillRecipe, OffPolicy
@@ -93,13 +93,25 @@ Every other setting has a default; see the [training parameters reference](/docs
 
 ## When to use distillation vs. SFT vs. Cartridges
 
-- **`DistillRecipe`:** you have a strong, slow model (like a 32B model, or a frontier model with `OffPolicy()`) and want a small 4B–8B model to match it on your prompts, with no labeled answers required.
+- **`DistillRecipe`:** you have a strong, slow model (like a 14B model, or a 32B model or your own artifact with `OffPolicy()`) and want a small 4B–8B model to match it on your prompts, with no labeled answers required.
 - **[`SFTRecipe`](/docs/training/recipes/sft/):** you already have verified gold answers (or human-edited outputs) you want the model to copy directly.
-- **[`CartridgeRecipe`](/docs/training/recipes/cartridges/):** you don't want to change the model's general behavior; you just want to stop resending the same long docs or system prompt (up to ~500k tokens) on every request.
+- **[`CartridgeRecipe`](/docs/training/recipes/cartridges/):** you don't want to change the model's general behavior; you just want to stop resending the same long docs or system prompt on every request.
 
-## Deploy and serve
+## Serve it
 
-Distilled checkpoints export as standard `.grad` [`Artifact`](/docs/training/artifacts/)s: a LoRA adapter on the student's base model (`format: "peft_lora"`). `run.artifact` is the checkpoint with the lowest held-out KL to the teacher (the lowest held-out loss off-policy), and `run.eval_report` shows `eval_kl` next to `base_kl`, the untrained student's. Host on Gradiated Cloud with `run.deploy()` and call `"your-org/support-4b-distilled"` via the OpenAI or Anthropic SDK, or download the LoRA weights for vLLM / SGLang (see [Deploying](/docs/training/deploying/)):
+Distilled checkpoints export as standard `.grad` [`Artifact`](/docs/training/artifacts/)s: a LoRA adapter on the student's base model (`format: "peft_lora"`, or merged weights with `adapters.LoRA(merge_on_export=True)`). `run.artifact` is the checkpoint with the lowest held-out KL to the teacher (the lowest held-out loss off-policy), and `run.eval_report` shows `eval_kl` next to `base_kl`, the untrained student's. Download it and serve it on vLLM or SGLang:
+
+```bash
+grad artifacts download support-4b-distilled@latest --output ./support-4b-distilled
+vllm serve Qwen/Qwen3-4B --enable-lora --max-lora-rank 32 --lora-modules support-4b-distilled=./support-4b-distilled
+```
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Hosted deployments aren't live yet. Until they are, download the artifact and
+  [serve it yourself](/docs/training/deploying/#serve-it-yourself).
+</DocsCallout>
+
+On Gradiated Cloud, `run.deploy()` will host it as `"your-org/support-4b-distilled"` for the OpenAI or Anthropic SDK:
 
 ```python
 from grad import Grad
@@ -109,7 +121,7 @@ Grad().artifacts.get("support-4b-distilled@latest").deploy()  # or run.deploy() 
 
 ## Want more control?
 
-Need custom distillation losses (like Jensen-Shannon / GKD or Skew KL) or Self-Distillation Fine-Tuning (SDFT) to teach new skills without the model forgetting what it already knows? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
+Custom distillation losses (like Jensen-Shannon / GKD or Skew KL) and Self-Distillation Fine-Tuning (SDFT) are coming soon with [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
 
 <DocsNext>
   <a href="/docs/training/recipes/cartridges/">

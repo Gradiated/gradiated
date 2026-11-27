@@ -4,7 +4,7 @@
   Fine-tune an embedding model on your own docs and codebase for better search.
 </DocsLead>
 
-General-purpose embedding models often miss internal acronyms, product names, and custom schemas. Fine-tuning a small encoder with **`EmbeddingRecipe`** on your own query/document pairs usually boosts top-10 search hit rate by 10–25 points while staying under 10 ms per request.
+General-purpose embedding models often miss internal acronyms, product names, and custom schemas. Fine-tuning a small encoder with **`EmbeddingRecipe`** on your own query/document pairs teaches it those terms, and the model stays small enough to embed queries in milliseconds. The eval report shows the held-out top-10 hit rate (`recall_at_10`) before and after, so you can see the gain on your own data.
 
 ## What data you need
 
@@ -80,7 +80,7 @@ console.log(run.artifact.id, run.evalReport);
 
 ```bash
 grad train --dataset docs-retrieval-triplets --name docs-embedder --recipe embedding --wait
-grad deploy docs-embedder@latest
+grad artifacts download docs-embedder@latest --output ./docs-embedder
 ```
 
   </DocsCodeTab>
@@ -96,24 +96,13 @@ grad deploy docs-embedder@latest
 
 - **`loss=losses.InfoNCE(temp=...)`:** pulls matching `(query, positive)` pairs together and pushes `negatives` apart. `temp` is `0.05` by default; lower it (to `0.03`) to sharpen rankings when wrong docs are very similar to the right one.
 - **`pool`:** `pooling.Mean()` (the default) averages the token vectors; `pooling.CLS()` uses the first token's vector.
-- **`model`:** leave it out to use the recipe-managed encoder, `baai/bge-small-en-v1.5` (sub-10 ms inference). `grad models list --recipe embedding` shows any other encoders your server offers.
+- **`model`:** leave it out to use the recipe-managed encoder, `baai/bge-small-en-v1.5`. `grad models list --recipe embedding` shows any other encoders your server offers.
 
 The recipe trains every weight of the encoder (they're small enough that this beats LoRA), and `run.artifact` is the checkpoint with the best held-out top-10 hit rate. Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#embeddingrecipe).
 
-## Deploy or download
+## Download and embed
 
-[Deploy](/docs/training/deploying/) the trained [`Artifact`](/docs/training/artifacts/) on Gradiated Cloud and embed with `client.embeddings.create(...)` (or `openai.embeddings.create(model="your-org/docs-embedder", ...)`). Vectors are L2-normalized and use the trained pooling:
-
-```python
-from grad import Grad
-
-client = Grad()
-client.deploy("docs-embedder@latest")
-
-vectors = client.embeddings.create(model="docs-embedder", input=["rotate api keys"]).embeddings
-```
-
-To serve it yourself, download it. The artifact is a standard transformers model directory with sentence-transformers pooling files, so `SentenceTransformer("./docs-embedder")` loads it:
+The artifact is a standard transformers model directory with the sentence-transformers pooling and normalization files, so you can download it and load it with `SentenceTransformer`. Vectors are L2-normalized and use the trained pooling:
 
 ```python
 from grad import Grad
@@ -121,6 +110,22 @@ from grad import Grad
 client = Grad()
 client.artifacts.download("docs-embedder@latest", "./docs-embedder", format="files")
 ```
+
+```python
+from sentence_transformers import SentenceTransformer
+
+model = SentenceTransformer("./docs-embedder")
+vectors = model.encode(["rotate api keys"])
+```
+
+Without sentence-transformers, read `grad_embedding.json` for the pooling and sequence length and embed with `transformers` directly; the [artifact formats spec](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md#encoder_safetensors) has the reference loader.
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Hosted embedding endpoints aren't live yet. Until they are, download the
+  encoder and embed in your own service as shown above.
+</DocsCallout>
+
+On Gradiated Cloud, you'll [deploy](/docs/training/deploying/) the encoder with `client.deploy("docs-embedder@latest")` and embed through the OpenAI SDK's `embeddings.create(model="your-org/docs-embedder", ...)`.
 
 ## Want more control?
 

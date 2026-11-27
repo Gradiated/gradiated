@@ -107,7 +107,7 @@ const PRIMITIVES: PrimitiveNode[] = [
       "dataset.render()",
     ],
     detail:
-      "Filled automatically from Gradiated inference, pushed from your DB, or synced from OTel, Langfuse, and Braintrust.",
+      "Pushed from your database, imported from trace exports, or synced from Langfuse, LangSmith, Braintrust, PostHog and Phoenix.",
   },
   {
     id: "environment",
@@ -119,7 +119,7 @@ const PRIMITIVES: PrimitiveNode[] = [
       "Grade answers with a Judge, built-in validators, or your own Python checks.",
     ops: ["Rubric()", "Judge()", "Scorer()", "validators.Regex()"],
     detail:
-      "Judges and validators run on the server. Python scorers run in your own process during an eval. Environments for multi-turn agents arrive in Wave 2.",
+      "Judges and validators run on the server. Python scorers run in your own process during an eval. Environments for multi-turn agents are coming soon.",
   },
   {
     id: "trainer",
@@ -131,19 +131,19 @@ const PRIMITIVES: PrimitiveNode[] = [
       "Managed training engine (billed per million tokens) driven by a built-in Recipe.",
     ops: ["runs.plan()", "runs.create()", "run.wait()", "runs.resume()"],
     detail:
-      "Plans the run for $0, trains under a hard max_cost_usd cap, checkpoints as it goes, and resumes from the latest checkpoint. Your own training loop on the Trainer API arrives in Wave 2.",
+      "Plans the run for $0, trains under a hard max_cost_usd cap, checkpoints as it goes, and resumes from the latest checkpoint. Your own training loop on the Trainer API is coming soon.",
   },
   {
     id: "artifact",
     index: "04",
     name: "Artifact & Deploy",
-    role: "Cloud or self-host",
+    role: "Download & serve",
     href: "/docs/training/deploying/",
     summary:
-      "A versioned .grad artifact (PEFT LoRA or merged Safetensors) you can host on Gradiated Cloud or download for vLLM / SGLang.",
-    ops: ["run.deploy()", "grad artifacts download", "feedback.record()"],
+      "A versioned .grad artifact (PEFT LoRA, merged Safetensors or a task bundle) you download and serve on vLLM or SGLang.",
+    ops: ["run.download()", "grad artifacts download", "grad sources sync"],
     detail:
-      "Deploy on Gradiated Cloud in one command via the OpenAI, Anthropic, or SystemOne SDK, or serve the LoRA weights on your own GPUs.",
+      "Serve the weights on your own GPUs, log outcomes to your observability tool, and sync them back as the next dataset version. Hosted serving on Gradiated Cloud is coming soon.",
   },
 ];
 
@@ -194,9 +194,7 @@ export const DocsTrainingFlywheel = (): ReactElement => {
       </div>
 
       <div className="gr-doc-flywheel-loop" aria-hidden="true">
-        <span>
-          ↩ live traffic + feedback.record() feeds back into 01 Trajectory
-        </span>
+        <span>↩ production traces + scores sync back into 01 Trajectory</span>
       </div>
 
       <div className="gr-doc-inspector" role="tabpanel">
@@ -259,7 +257,7 @@ run = client.runs.create(
         max_quality_drop=0.02,
     ),
 ).wait()
-endpoint = run.deploy()`,
+run.download("./support-router")`,
   },
   {
     id: "decision-model",
@@ -275,7 +273,7 @@ run = client.runs.create(
     name="ticket-triage",
     recipe=DecisionModelRecipe(model="gradiated/linden-1"),
 ).wait()
-endpoint = run.deploy()`,
+run.download("./ticket-triage")`,
   },
   {
     id: "sft-dpo",
@@ -912,22 +910,6 @@ type DeployOption = {
 
 const DEPLOY_OPTIONS: DeployOption[] = [
   {
-    id: "cloud",
-    label: "Gradiated Cloud",
-    where: "Managed GPUs + gateway",
-    path: [
-      "Artifact (@v2)",
-      "run.deploy()",
-      "OpenAI / Anthropic / SystemOne SDK",
-      "Active @v2 (1-cmd rollback)",
-      "Auto capture + feedback",
-    ],
-    detail:
-      "Call your-org/<name> from your existing SDK with zero GPU management and 1-command rollback.",
-    useCase:
-      "Teams that want hosted serving, automatic trace capture, and safe rollouts out of the box.",
-  },
-  {
     id: "self_hosted",
     label: "Your vLLM / SGLang",
     where: "Your GPUs + gateway",
@@ -936,17 +918,33 @@ const DEPLOY_OPTIONS: DeployOption[] = [
       "grad artifacts download",
       "PEFT LoRA Safetensors",
       "vLLM / SGLang (--lora-modules)",
-      "Push traces & feedback back",
+      "Sync traces & scores back",
     ],
     detail:
-      "Standard HuggingFace LoRA or merged weights run on your own servers with your existing load balancer and feature flags.",
+      "Standard Hugging Face LoRA or merged weights run on your own servers behind your existing load balancer and feature flags.",
     useCase:
-      "Enterprises with strict data residency or an existing vLLM / SGLang inference fleet.",
+      "Every install today, and teams with strict data residency or an existing vLLM / SGLang fleet.",
+  },
+  {
+    id: "cloud",
+    label: "Gradiated Cloud (coming soon)",
+    where: "Managed GPUs + gateway",
+    path: [
+      "Artifact (@v2)",
+      "run.deploy()",
+      "OpenAI / Anthropic / SystemOne SDK",
+      "Active @v2 (1-cmd rollback)",
+      "Traces + feedback recorded",
+    ],
+    detail:
+      "Call your-org/<name> from your existing SDK with zero GPU management and 1-command rollback.",
+    useCase:
+      "Teams that want hosted serving, automatic trace capture, and safe rollouts out of the box.",
   },
 ];
 
 export const DocsDeployFlow = (): ReactElement => {
-  const [optionId, setOptionId] = useState<string>("cloud");
+  const [optionId, setOptionId] = useState<string>("self_hosted");
   const active =
     DEPLOY_OPTIONS.find((s) => s.id === optionId) ?? DEPLOY_OPTIONS[0];
 

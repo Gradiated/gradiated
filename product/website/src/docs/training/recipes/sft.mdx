@@ -114,7 +114,9 @@ const judge = new Judge({
   prompt:
     "Did the assistant apply the edit accurately without breaking surrounding code?",
 });
-const cleanDataset = await (await dataset.score(judge).wait()).filter({
+const cleanDataset = await (
+  await dataset.score(judge).wait()
+).filter({
   scores: { clean_merge: ">=0.8" },
 });
 
@@ -163,44 +165,44 @@ If your logs already include a deterministic score (like `tests_passed` from CI)
 
 Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#sftrecipe). To see the exact tokens that get trained, run `grad render <dataset> --model qwen/qwen3-8b` (see [chat templates](/docs/training/tuning-troubleshooting/#chat-templates-and-loss-masks)).
 
-## Deploy and call your model
+## Serve and call your model
 
-Host the trained [`Artifact`](/docs/training/artifacts/) on Gradiated Cloud with `sft.deploy()` (or download the LoRA weights to run on your own vLLM / SGLang server; see [Deploying](/docs/training/deploying/)).
+Download the trained [`Artifact`](/docs/training/artifacts/) and serve it on your own vLLM or SGLang server. The LoRA adapter loads onto the base model's Hugging Face weights (the default rank is 32, above vLLM's default `--max-lora-rank` of 16):
 
-Call it through the standard [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/). For structured JSON, SQL, or code edits, you can check the output in a few lines of app code and retry on a larger model if the check fails:
+```bash
+grad artifacts download fast-diff-merge@latest --output ./fast-diff-merge
+
+vllm serve Qwen/Qwen3-8B \
+  --enable-lora \
+  --max-lora-rank 32 \
+  --lora-modules fast-diff-merge=./fast-diff-merge
+```
+
+Call it with any OpenAI-compatible client. For structured JSON, SQL, or code edits, check the output in a few lines of app code and retry on a larger model if the check fails:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
-import os
 from openai import OpenAI
 
-sft.deploy()  # the finished run from above
+oai = OpenAI(base_url="http://localhost:8000/v1", api_key="unused")  # your vLLM server
 
 messages = [
     {"role": "system", "content": "Apply the edit snippet to the original file. Return only the merged file."},
     {"role": "user", "content": "<original>export const retry = 1</original>\n<edit>export const retry = 3</edit>"},
 ]
 
-oai = OpenAI(
-    base_url="https://api.gradiated.com/v1",
-    api_key=os.environ["GRADIATED_API_KEY"],
-)
-
 def check_ts(code: str) -> bool:
     # A cheap syntax check; use your real parser or CI here
     return all(code.count(a) == code.count(b) for a, b in ("{}", "()", "[]"))
 
-res = oai.chat.completions.create(
-    model="your-org/fast-diff-merge",
-    messages=messages,
-)
+res = oai.chat.completions.create(model="fast-diff-merge", messages=messages)
 code = res.choices[0].message.content
 
 # Fall back in your own code if the fine-tuned model produces invalid syntax
 if not check_ts(code):
-    res = oai.chat.completions.create(model="qwen/qwen3-32b", messages=messages)
+    res = oai.chat.completions.create(model="Qwen/Qwen3-8B", messages=messages)  # or a larger model you serve
     code = res.choices[0].message.content
 ```
 
@@ -210,7 +212,10 @@ if not check_ts(code):
 ```ts
 import OpenAI from "openai";
 
-await sft.deploy(); // the finished run from above
+const oai = new OpenAI({
+  baseURL: "http://localhost:8000/v1", // your vLLM server
+  apiKey: "unused",
+});
 
 const messages = [
   {
@@ -225,10 +230,6 @@ const messages = [
   },
 ];
 
-const oai = new OpenAI({
-  baseURL: "https://api.gradiated.com/v1",
-  apiKey: process.env.GRADIATED_API_KEY,
-});
 // A cheap syntax check; use your real parser or CI here
 const checkTs = (code: string): boolean =>
   ["{}", "()", "[]"].every(
@@ -236,34 +237,45 @@ const checkTs = (code: string): boolean =>
   );
 
 let res = await oai.chat.completions.create({
-  model: "your-org/fast-diff-merge",
+  model: "fast-diff-merge",
   messages,
 });
 let code = res.choices[0].message.content ?? "";
 
 // Fall back in your own code if the fine-tuned model produces invalid syntax
 if (!checkTs(code)) {
-  res = await oai.chat.completions.create({
-    model: "qwen/qwen3-32b",
-    messages,
-  });
+  res = await oai.chat.completions.create({ model: "Qwen/Qwen3-8B", messages });
   code = res.choices[0].message.content ?? "";
 }
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="CLI (self-host on vLLM)">
-
-```bash
-grad artifacts download fast-diff-merge@latest --output ./fast-diff-merge
-
-vllm serve Qwen/Qwen3-8B \
-  --enable-lora \
-  --lora-modules fast-diff-merge=./fast-diff-merge
-```
-
-  </DocsCodeTab>
 </DocsCodeTabs>
+
+See [Deploying](/docs/training/deploying/) for SGLang and merged exports (`adapters.LoRA(merge_on_export=True)`).
+
+### Host it on Gradiated Cloud
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Hosted deployments aren't live yet. Until they are, download the artifact and
+  [serve it yourself](/docs/training/deploying/#serve-it-yourself) as shown
+  above.
+</DocsCallout>
+
+`sft.deploy()` (or `grad deploy fast-diff-merge@latest`) will host the adapter under `your-org/fast-diff-merge`, callable through the [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/) with your `GRADIATED_API_KEY`:
+
+```python
+import os
+from openai import OpenAI
+
+sft.deploy()  # the finished run from above
+
+oai = OpenAI(base_url="https://api.gradiated.com/v1", api_key=os.environ["GRADIATED_API_KEY"])
+res = oai.chat.completions.create(
+    model="your-org/fast-diff-merge",
+    messages=[{"role": "user", "content": "<original>export const retry = 1</original>\n<edit>export const retry = 3</edit>"}],
+)
+```
 
 <DocsCallout label="Turn production misses into your next dataset" tone="tip">
   When a developer fixes a bad answer or your syntax check catches invalid code,

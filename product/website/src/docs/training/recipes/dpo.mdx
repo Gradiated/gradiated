@@ -172,11 +172,25 @@ grad train --dataset diff-merge-preferences --name fast-diff-merge --recipe dpo 
 - **`loss=losses.DPO(beta=...)`:** `beta` is `0.1` by default. Higher (`0.2`–`0.5`) stays closer to your starting model; lower (`0.05`) pushes harder away from rejected patterns.
 - **`lr_scale`:** DPO's learning rate is set automatically and is much lower than SFT's. If held-out preference accuracy climbs fast but your format breaks, pass `lr_scale=0.5`.
 
-When `model=` is an SFT artifact, DPO keeps training that same LoRA adapter (same rank and alpha), and the starting checkpoint is the reference model, so you never load one yourself. The artifact must be a PEFT LoRA adapter, not a merged export. Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#dporecipe).
+When `model=` is an SFT artifact, DPO keeps training that same LoRA adapter (same rank and alpha), and the starting checkpoint is the reference model, so you never load one yourself. The artifact must be a PEFT LoRA adapter, not a merged export. DPO itself always exports a PEFT LoRA adapter (`merge_on_export` applies to SFT and distillation). Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#dporecipe).
 
-## Deploy
+## Serve it
 
-Publish the updated [`Artifact`](/docs/training/artifacts/) on Gradiated Cloud in one line (or download the LoRA adapter for your own vLLM / SGLang servers; see [Deploying](/docs/training/deploying/)):
+Download the updated [`Artifact`](/docs/training/artifacts/) and load the LoRA adapter on your own vLLM or SGLang server:
+
+```bash
+grad artifacts download fast-diff-merge@latest --output ./fast-diff-merge
+vllm serve Qwen/Qwen3-8B --enable-lora --max-lora-rank 32 --lora-modules fast-diff-merge=./fast-diff-merge
+```
+
+See [Deploying](/docs/training/deploying/) for SGLang and merged weights.
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Hosted deployments aren't live yet. Until they are, download the artifact and
+  [serve it yourself](/docs/training/deploying/#serve-it-yourself).
+</DocsCallout>
+
+On Gradiated Cloud, one line will publish it:
 
 ```python
 from grad import Grad

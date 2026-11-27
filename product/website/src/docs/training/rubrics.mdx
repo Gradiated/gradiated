@@ -4,7 +4,7 @@
   Score model outputs with Python checks, built-in validators, or an LLM judge.
 </DocsLead>
 
-A **`Rubric`** combines one or more weighted checks (a `Judge`, a `Scorer` or a built-in validator) into an overall score, the weighted mean of its items, and keeps each check's score by name. You can use it in two places:
+A **`Rubric`** combines one or more weighted checks (a `Judge`, a `Scorer` or a built-in validator) into an overall score, the weighted mean of its items, and keeps each check's score by name. You can use it in three places:
 
 - **Evals:** pass it as `rubric=` to [`client.evals.create`](/docs/training/evaluations/) to score each model's answers on a dataset. A single `Judge`, `Scorer`, validator or plain function works too.
 - **Cleaning datasets:** score old logs once with [`dataset.score(rubric)`](/docs/training/trajectories/#score-and-filter-datasets), then filter on the scores.
@@ -32,20 +32,27 @@ rubric = Rubric([
 
 Pick the class that matches how you grade an answer:
 
-| Class                | Signature                                | When to use it                                                                                                                                                                                                                                                                                                    |
-| -------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`Scorer`**         | `Scorer(name, fn=..., weight=1.0)`       | A built-in validator (`fn=validators.JSON()`), which runs on the server, or your own Python function `fn(traj) -> float`, which runs in your process. Return a score in `[0, 1]` (a bool counts as `1.0`/`0.0`).                                                                                                  |
-| **`Judge`**          | `Judge(model, prompt=..., name="judge")` | Grade with a model id (such as `"{{SONNET_MODEL}}"`) or a trained `Artifact`. The judge sees the conversation, the answer and any reference answer, and replies with a score in `[0, 1]`. `model` is required, with no default that could change under you, and each eval result records the judge model it used. |
-| **`StatefulScorer`** | `(traj: Trajectory, handle: H) -> float` | Checks live state inside an [`Environment`](/docs/training/environments/), which is coming soon.                                                                                                                                                                                                               |
+| Class                | Signature                                | When to use it                                                                                                                                                                                                                     |
+| -------------------- | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`Scorer`**         | `Scorer(name, fn=..., weight=1.0)`       | A built-in validator (`fn=validators.JSON()`), which runs on the server, or your own Python function `fn(traj) -> float`, which runs in your process. Return a score in `[0, 1]` (a bool counts as `1.0`/`0.0`).                   |
+| **`Judge`**          | `Judge(model, prompt=..., name="judge")` | Grade with a model id, such as `"{{SONNET_MODEL}}"`. The judge sees the conversation, the answer and any reference answer, and replies with a score in `[0, 1]`. `model` is required, with no default that could change under you. |
+| **`StatefulScorer`** | `(traj: Trajectory, handle: H) -> float` | Checks live state inside an [`Environment`](/docs/training/environments/), which is coming soon.                                                                                                                                   |
 
 The built-in validators run on the server and score the trimmed output `1.0` or `0.0`:
 
 - **`validators.JSON()`:** the output parses as JSON.
 - **`validators.NonEmpty()`:** the output isn't empty.
-- **`validators.ExactMatch()`:** the output equals the record's `expected_output`.
+- **`validators.ExactMatch()`:** the output equals the record's `expected_output`, or its final assistant turn when it has no `expected_output`.
 - **`validators.Regex(pattern, flags="")`:** the pattern matches the output. Patterns use JavaScript syntax, up to 256 characters, with flags from `imsu`.
 
-Put one in a `Rubric` directly (`Rubric([validators.JSON()])`) or call it locally to test it: `validators.JSON()('{"ok": true}')` returns `1.0`. There are no other built-in validators; write checks such as SQL parsing, TypeScript compilation or JSON Schema as a Python `Scorer`.
+Put one in a `Rubric` directly (`Rubric([validators.JSON()])`) or call it locally to test it: `validators.JSON()('{"ok": true}')` returns `1.0`.
+
+Two more server-side validators check answers against `expected_output`, and [benchmark datasets](/docs/training/evaluations/#check-for-regressions-with-standard-benchmarks) use them by default:
+
+- **`final_number`:** the last number in the output equals the expected number.
+- **`choice`:** the chosen option letter matches the expected one.
+
+They have no Python class yet: name them in a CLI rubric file (`kind: validator`, `validator: final_number`), or pass the wire item to an eval, `rubric=[{"name": "answer", "kind": "validator", "validator": "final_number"}]`. Write any other check, such as SQL parsing, TypeScript compilation or JSON Schema, as a `Scorer`.
 
 ## Scoring a `Dataset` with a `Judge`
 
@@ -70,7 +77,7 @@ To grade a model's new answers on a dataset instead, run an [eval](/docs/trainin
 
 ## Where Python scorers run
 
-Built-in validators and every `Judge` run on Gradiated's servers. Your own Python functions run in your Python process (`runtime="local"`, the default). The eval waits in `awaiting_scores` while `ev.wait()` pulls the model outputs, calls your function and posts the scores, so keep the process running until the eval completes. If no SDK posts scores for 24 hours, the eval fails with an error naming the missing scorers. `traj.text` is the answer; `traj.metadata` and `traj.expected_output` come from the record:
+Built-in validators and every `Judge` run on Gradiated's servers. Your own functions run in your own process (the Python, TypeScript and Go SDKs all do this) (`runtime="local"`, the default). The eval waits in `awaiting_scores` while `ev.wait()` pulls the model outputs, calls your function and posts the scores, so keep the process running until the eval completes. If no SDK posts scores for 24 hours, the eval fails with an error naming the missing scorers. `traj.text` is the answer; `traj.metadata` and `traj.expected_output` come from the record:
 
 ```python
 from grad import Scorer
@@ -93,8 +100,9 @@ Python scorers in training recipes (`RouterRecipe(rubric=Scorer(...))`) run in a
   most teams. Training a dedicated verifier with
   [`RewardModelRecipe`](/docs/training/recipes/reward-models/) pays off when a
   judge misses preferences you can show as pairs, or when you need millisecond
-  scoring. Passing it to a `Judge` (`Judge(name="resolved", model=verifier_artifact)`)
-  is coming soon; today you score with the downloaded artifact.
+  scoring. Passing it to a `Judge` (`Judge(name="resolved",
+  model=verifier_artifact)`) is coming soon; today you score with the downloaded
+  artifact.
 </DocsCallout>
 
 ## Grading live state inside an `Environment`

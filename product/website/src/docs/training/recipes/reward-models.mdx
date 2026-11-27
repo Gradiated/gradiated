@@ -93,8 +93,8 @@ grad train --dataset sql-preferences --name sql-verifier --recipe reward-model -
 ### Parameters you might change
 
 - **`model`:** start with a fast 4B to 8B model (`"qwen/qwen3-8b"`). A reward model scores an output in a single forward pass, so an 8B model runs in milliseconds.
-- **`adapter`:** `adapters.LoRA(rank=32)` by default; `adapters.FrozenHead()` trains only the scoring head on a frozen model.
-- **`rubric`:** also train on single scored answers. Pass the name of a score in `[0, 1]` already on your records (`rubric="resolved"`), and records that end in an assistant turn with that score train the head pointwise, next to the pairs.
+- **`adapter`:** `adapters.LoRA(rank=32)` on the backbone by default, trained together with the scoring head. The artifact always keeps the adapter separate (`merge_on_export` doesn't apply).
+- **`rubric`:** also train on single scored answers. Pass the name of a score in `[0, 1]` already on your records (`rubric="resolved"`, or `--score resolved` in the CLI), and records that end in an assistant turn with that score train the head pointwise, next to the pairs.
 
 Pairs always stay together in the same train or eval split, and `run.artifact` is the checkpoint with the best held-out pair accuracy (`run.eval_report.preference_accuracy`; the report also has `reward_margin` and, with `rubric=`, `pointwise_brier`). Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#rewardmodelrecipe).
 
@@ -111,7 +111,7 @@ from peft import PeftModel
 from safetensors.torch import load_file
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-path = Path(run.artifact.download("./sql-verifier"))
+path = Path(run.artifact.download("./sql-verifier", format="files"))
 config = json.loads((path / "reward_config.json").read_text())
 pin = {"revision": config["base_model_revision"]}
 tokenizer = AutoTokenizer.from_pretrained(config["base_model_repo"], **pin)
@@ -133,22 +133,21 @@ def score(messages):
 Then gate a fast model in your app: check its draft before returning it, and fall back to a larger model only when the score is low:
 
 ```python
-import os
 from openai import OpenAI
 
-oai = OpenAI(base_url="https://api.gradiated.com/v1", api_key=os.environ["GRADIATED_API_KEY"])
+oai = OpenAI(base_url="http://localhost:8000/v1", api_key="unused")  # vLLM serving your fine-tuned sql-agent
 messages = [{"role": "user", "content": "How many orders shipped to Canada last month?"}]
 
-draft = oai.chat.completions.create(model="your-org/sql-agent", messages=messages).choices[0].message.content
+draft = oai.chat.completions.create(model="sql-agent", messages=messages).choices[0].message.content
 if score([*messages, {"role": "assistant", "content": draft}]) < 0.75:
-    draft = oai.chat.completions.create(model="qwen/qwen3-32b", messages=messages).choices[0].message.content
+    draft = oai.chat.completions.create(model="Qwen/Qwen3-32B", messages=messages).choices[0].message.content
 ```
 
-With pairs only, scores rank answers to the same prompt; they are not calibrated probabilities, so pick the threshold on held-out answers. Hosted reward-model serving on Gradiated Cloud and passing a reward model to a [`Judge`](/docs/training/rubrics/) are coming soon.
+With pairs only, scores rank answers to the same prompt; they are not calibrated probabilities, so pick the threshold on held-out answers. Hosted reward-model serving is coming soon on Gradiated Cloud, and passing a reward model to a [`Judge`](/docs/training/rubrics/) is coming soon too.
 
 ## Want more control?
 
-Need step-by-step Process Reward Models (PRMs) or custom PyTorch losses? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
+Step-by-step Process Reward Models (PRMs) and custom PyTorch losses are coming soon with [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
 
 <DocsNext>
   <a href="/docs/training/recipes/embeddings/">

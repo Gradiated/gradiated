@@ -84,9 +84,20 @@ grad train -f cartridge-docs.yaml --wait
   </DocsCodeTab>
 </DocsCodeTabs>
 
-## Deploy and serve
+## Serve it
 
-Cartridges export as standard [`Artifact`](/docs/training/artifacts/)s (`cartridge.safetensors` with the learned prefix, plus a `manifest.json` naming the base model). [Deploy](/docs/training/deploying/) onto Gradiated Cloud in one line and call `"your-org/api-docs-cartridge"` through the OpenAI or Anthropic SDK with only the user question, with no giant system prompt required:
+Cartridges export as standard [`Artifact`](/docs/training/artifacts/)s: `cartridge.safetensors` holds the learned prefix (`num_tokens` input embeddings), and `manifest.json` names the base model. At inference the embeddings replace reserved slot tokens at the start of the system prompt, so you send only the user question. Download it and serve it with `transformers` on the base model; the [artifact formats spec](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md#cartridge) describes the slot layout and has a reference loader:
+
+```bash
+grad artifacts download api-docs-cartridge@latest --output ./api-docs-cartridge
+```
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Hosted deployments aren't live yet. Until they are, download the cartridge and
+  serve it with the reference loader.
+</DocsCallout>
+
+On Gradiated Cloud, one line will [deploy](/docs/training/deploying/) it, and you'll call `"your-org/api-docs-cartridge"` through the OpenAI or Anthropic SDK with only the user question:
 
 ```python
 from grad import Grad
@@ -98,11 +109,11 @@ client.deploy("api-docs-cartridge@latest")
 ### Parameters you might change
 
 - **`num_tokens`:** `256` by default (16 to 4,096). Increase it (to `512` or `1024`) for very large contexts, and check `kl_reduction` in `eval_report`: the share of the gap between the no-context model and the full-context model that the Cartridge closes.
-- **`teacher`:** defaults to the same model as `model=` reading the full context. Pass a larger Qwen3 model if you also want to distill from a stronger teacher.
+- **`teacher`:** defaults to the same model as `model=` reading the full context. Pass a larger Qwen3 model (same tokenizer) if you also want to distill from a stronger teacher.
 - **`max_new_tokens`:** how long the teacher's answer to each prompt is during training (`256` by default).
-- **`loss`:** `losses.TopKKLDistill(top_k=20)` by default; raise `top_k` to match more of the teacher's distribution.
+- **`loss`:** the student matches the teacher's top 20 next-token probabilities by default. Pass `losses.TopKKLDistill(top_k=...)` with an explicit `top_k` to match more of the teacher's distribution.
 
-Cartridges need a much higher learning rate than LoRA adapters, and `lr="auto"` handles that for you. `run.artifact` is the checkpoint whose answers are closest to the full-context model on held-out prompts. Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#cartridgerecipe).
+Cartridges need a much higher learning rate than LoRA adapters, and `lr="auto"` handles that for you. Training cost grows with the context: the teacher reads the full context with every prompt, and those tokens are billed. `run.artifact` is the checkpoint whose answers are closest to the full-context model on held-out prompts. Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#cartridgerecipe).
 
 ## When to use Cartridges vs. distillation vs. RAG
 

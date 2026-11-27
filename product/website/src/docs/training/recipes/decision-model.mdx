@@ -7,7 +7,7 @@
 
 A **decision model** takes a `state` (text, JSON, or a chat transcript) and answers one or more named `questions` in a single request, returning choices, probabilities, and scores instead of free-form text.
 
-Use **`DecisionModelRecipe`** when you already use [`gradiated/linden-1`](/docs/systemone-sdk/) (or Jev) through the TypeSafe SDK and want a faster, more accurate model trained on your own traffic. Once deployed, your trained model drops straight into `TypeSafeClient` by changing only the `model` name.
+Use **`DecisionModelRecipe`** when you already use [`gradiated/linden-1`](/docs/systemone-sdk/) (or Jev) through the TypeSafe SDK and want a faster, more accurate model trained on your own traffic. Today you download the trained model and run it in your own service. With hosted deployments, coming soon on Gradiated Cloud, it drops straight into `TypeSafeClient` by changing only the `model` name.
 
 ## Question types
 
@@ -19,7 +19,7 @@ Every decision model supports the three [SystemOne](/docs/systemone-sdk/) questi
 
 ## What data you need
 
-- **Already calling `gradiated/linden-1`?** Requests sent with the `x-gradiated-task` header are captured in the right format automatically, so you can go straight to training.
+- **Already calling `gradiated/linden-1`?** Log each request's `state`, `questions` and the answer you accepted, and push them as records. Capturing linden-1 traffic from the gateway automatically is coming soon on Gradiated Cloud.
 - **Pushing your own data?** Push plain records with `state`, `questions` and the expected answers in `expected_output` to a [`Dataset`](/docs/training/trajectories/). `session_id` is optional; set it when several records describe the same ticket or conversation so they stay in one split. Plan for ~200 examples per option to start (1,000+ for harder decisions).
 - **Don't have labels yet?** Ask `gradiated/linden-1` the same questions through the [SystemOne SDK](/docs/systemone-sdk/), review a sample of its answers, and push them as `expected_output`.
 
@@ -65,7 +65,7 @@ dataset = client.datasets.push("ticket-triage", [
 
 ## Train the decision model
 
-`DecisionModelRecipe` picks the right loss for each question type and specializes the `gradiated/linden-1` backbone on your questions and state format, so the recipe needs no arguments:
+`DecisionModelRecipe` picks the right loss for each question type and specializes a backbone on your questions and state format. On your own server, train a Qwen3 backbone (`qwen/qwen3-0.6b` or `qwen/qwen3-1.7b`). The default, `gradiated/linden-1`, trains on Gradiated Cloud only (coming soon), because its weights aren't public:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -80,7 +80,7 @@ dataset = client.datasets.get("ticket-triage")
 run = client.runs.create(
     dataset=dataset,
     name="ticket-triage",
-    recipe=DecisionModelRecipe(),
+    recipe=DecisionModelRecipe(model="qwen/qwen3-0.6b"),
 ).wait()
 
 print(run.artifact.id)
@@ -97,7 +97,11 @@ const grad = new Grad();
 const dataset = await grad.datasets.get("ticket-triage");
 
 const run = await grad.runs
-  .create({ dataset, name: "ticket-triage", recipe: recipes.decisionModel() })
+  .create({
+    dataset,
+    name: "ticket-triage",
+    recipe: recipes.decisionModel({ model: "qwen/qwen3-0.6b" }),
+  })
   .wait();
 
 console.log(run.artifact.id, run.evalReport);
@@ -114,7 +118,7 @@ dataset, _ := client.Datasets.Get(ctx, "ticket-triage")
 run, _ := client.Runs.Create(ctx, grad.RunParams{
 	Dataset: dataset,
 	Name:    "ticket-triage",
-	Recipe:  grad.DecisionModelRecipe{},
+	Recipe:  grad.DecisionModelRecipe{Common: grad.Common{Model: "qwen/qwen3-0.6b"}},
 }).Wait(ctx)
 fmt.Println(run.Artifact.ID, run.EvalReport)
 ```
@@ -123,8 +127,8 @@ fmt.Println(run.Artifact.ID, run.EvalReport)
   <DocsCodeTab label="CLI">
 
 ```bash
-grad train --dataset ticket-triage --name ticket-triage --recipe decision-model --wait
-grad deploy ticket-triage@latest
+grad train --dataset ticket-triage --name ticket-triage --recipe decision-model --model qwen/qwen3-0.6b --wait
+grad artifacts download ticket-triage@latest --output ./ticket-triage
 ```
 
   </DocsCodeTab>
@@ -138,7 +142,7 @@ grad deploy ticket-triage@latest
 
 ### Parameters you might change
 
-- **`model`:** leave it out to specialize the recipe-managed `gradiated/linden-1` backbone. Pass `model="qwen/qwen3-0.6b"` to train a lightweight decision model from a general open model instead.
+- **`model`:** `qwen/qwen3-0.6b` or `qwen/qwen3-1.7b` on any server. Leaving it out selects `gradiated/linden-1`, which needs Gradiated Cloud (coming soon); `adapters.FrozenHead()`, which trains only the heads, is available on linden-1 only.
 - **`loss`:** picked from each question type (cross-entropy for `choice`, binary cross-entropy for `noul`, ordinal loss for `score`). It can't be overridden; passing `loss=` is an error.
 
 Every other setting, including the eval split (15% of sessions held out), has a default; see the [training parameters reference](/docs/reference/training-parameters/#decisionmodelrecipe). Add `--dry-run` to `grad train` to see them resolved, with a cost estimate.
@@ -151,9 +155,28 @@ Check `run.eval_report` before shipping. It has one entry per question under `he
 - **Look at which mistakes happen (`confusion_matrix`):** for ordered `score` questions (`0 / 1 / 2`), mixing up neighbors (`0` vs `1`) is normal. If the model frequently confuses `0` with `2`, add more examples of those edge cases.
 - **Check if confidence scores are honest (`ece`):** this measures how closely the model's confidence matches reality (when it says 80% confident, it should be right around 80% of the time). Aim for under `0.05` so confidence checks in your app code behave predictably.
 
-## Deploy and call from the TypeSafe SDK
+Each head also reports `accuracy` and its calibration `temperature`, plus `macro_f1` (`choice` and `score`), `mae` (`score`) and `brier` (`noul`).
 
-[Deploy](/docs/training/deploying/) the trained [`Artifact`](/docs/training/artifacts/) to Gradiated Cloud in one line:
+## Use the model
+
+The artifact is a `decision_bundle`: the backbone's LoRA adapter, one small head per question (`decision_head.safetensors`) and `decision_config.json` with the questions and calibration temperatures. Download it and answer questions in your own service with `transformers` and `peft`; the [artifact formats spec](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md#decision_bundle) has the full reference loader:
+
+```python
+from grad import Grad
+
+Grad().artifacts.download("ticket-triage@latest", "./ticket-triage", format="files")
+```
+
+Confidence scores are calibrated during training (a temperature per question, fitted on held-out data), so you can fall back in your own code whenever the model isn't sure enough, for example escalating a ticket or calling `gradiated/linden-1` when confidence is below `0.75`.
+
+### Call it from the TypeSafe SDK on Gradiated Cloud
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Hosted deployments aren't live yet. Until they are, download the decision
+  bundle and run it with the reference loader.
+</DocsCallout>
+
+On Gradiated Cloud, one line will [deploy](/docs/training/deploying/) the trained [`Artifact`](/docs/training/artifacts/):
 
 ```python
 from grad import Grad
@@ -162,9 +185,7 @@ client = Grad()
 client.deploy("ticket-triage@latest")
 ```
 
-Your model is immediately callable through the [SystemOne SDK](/docs/systemone-sdk/) (`TypeSafeClient`) by passing `"your-org/ticket-triage"` as the `model`.
-
-Confidence scores are calibrated automatically during training, so you can fall back in your own code whenever the model isn't sure enough (for example, escalating a ticket or calling `gradiated/linden-1` when confidence is below `0.75`):
+You'll then call it through the [SystemOne SDK](/docs/systemone-sdk/) (`TypeSafeClient`) by passing `"your-org/ticket-triage"` as the `model`, and fall back when confidence is low:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -267,7 +288,7 @@ curl https://api.gradiated.com/v1/systemone \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-When a prediction turns out wrong in production, record the right answer as a correction in your tracing tool (on Gradiated Cloud, the gateway keeps it with the request). The next [source sync](/docs/training/trajectories/#send-feedback-from-production) adds it to the dataset as `expected_output`.
+When a prediction turns out wrong in production, record the right answer as a correction in your tracing tool. The next [source sync](/docs/training/trajectories/#send-feedback-from-production) adds it to the dataset as `expected_output`.
 
 ## Want more control?
 

@@ -9,7 +9,7 @@ A **trajectory** is a single recorded run: the input messages, what the model an
 
 1. **Plain chat records** pushed from code or a JSONL file, in the same `{"messages": [...]}` format as OpenAI fine-tuning files.
 2. **Hugging Face datasets**, imported by name.
-3. **Automatic capture** from Gradiated inference or any [deployed model](/docs/training/deploying/).
+3. **Automatic capture** from the Gradiated gateway, through the built-in `gradiated` source (coming soon on Gradiated Cloud).
 4. **File import** from Parquet or JSONL trace exports.
 5. **Scheduled sync** from your observability provider.
 
@@ -66,7 +66,10 @@ console.log(await dataset.count());
   <DocsCodeTab label="CLI">
 
 ```bash
-# Any OpenAI chat fine-tuning JSONL file works as-is
+# Upload and parse an OpenAI chat fine-tuning file (keys grad doesn't use are dropped)
+grad import ./train.jsonl --dataset support-sft
+
+# Or send records as they are (every line must use the record keys below)
 grad datasets push support-sft ./train.jsonl
 ```
 
@@ -78,12 +81,15 @@ grad datasets push support-sft ./train.jsonl
 - **`"tools"`:** the tool definitions available in that conversation, in OpenAI function format. Assistant `tool_calls` and `tool` messages train as you'd expect.
 - **`"session_id"`:** groups records from the same conversation so they always land on the same side of the train/eval split. One is generated per record if you leave it out.
 - **`"scores"`:** any outcome you already know, such as `{"tests_passed": 1.0}`.
+- **`"timestamp"`:** when the conversation happened (ISO 8601). Synced records carry one; set it yourself if you want to filter pushed records by date.
+
+`push` with a list sends records as they are, and the server rejects keys it doesn't know (put your own fields under `"metadata"`). A file path goes through the importer, which drops them instead. OpenAI's per-message `weight` isn't read: mark a turn `"train": false` to keep it out of the loss, or `"train": true` to train an earlier assistant turn.
 
 By default only the final assistant turn is trained. To train on every assistant turn of a multi-turn agent trace, pass `train_on="all_assistant"` to the recipe. Run `grad render <dataset> --model qwen/qwen3-8b` to see exactly which tokens will be trained; the other chat-template settings are in the [reference](/docs/reference/training-parameters/#data-and-chat-templates).
 
 ## Import a Hugging Face dataset
 
-Import any public or gated dataset from the Hugging Face Hub by name. If the dataset already has a `messages` column, nothing else is needed:
+Import any public or gated dataset from the Hugging Face Hub by name. The trainer worker downloads it, so nothing lands on your machine. If the dataset already has a `messages` column, nothing else is needed:
 
 ```python
 from grad import Grad
@@ -103,6 +109,9 @@ For other layouts, map columns onto the fields a recipe needs:
 | **Preferences (DPO)**                 | `prompt="prompt", chosen="chosen", rejected="rejected"` |
 | **Tasks with a known answer (evals)** | `prompt="question", answer="answer"`                    |
 
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
 ```python
 math = client.datasets.from_hf(
     "openai/gsm8k",
@@ -120,7 +129,39 @@ prefs = client.datasets.from_hf(
 )
 ```
 
-The import runs on Gradiated's servers, so nothing is downloaded to your machine. For gated datasets, store your Hugging Face token once with `grad secrets set hf-token` and pass `secret=client.secrets.get("hf-token")`.
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+const math = await grad.datasets.fromHf("openai/gsm8k", {
+  subset: "main",
+  split: "train",
+  prompt: "question",
+  answer: "answer",
+});
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+math, err := client.Datasets.FromHF(ctx, "openai/gsm8k", grad.HFOptions{
+	Subset: "main", Split: "train", Prompt: "question", Answer: "answer",
+})
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad datasets import hf openai/gsm8k --config main --split train \
+  --column prompt=question --column answer=answer
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+`answer` becomes the record's `expected_output` and `completion` its answer turn. `limit=` imports only the first N rows. For gated or private datasets, store your Hugging Face token once with `grad secrets set hf-token` and pass `secret=client.secrets.get("hf-token")` (CLI: `--secret hf-token`).
 
 ## Push trajectories with metadata
 
@@ -207,7 +248,7 @@ curl https://api.gradiated.com/v1/datasets/diff-merge-gold/records \
 
 ## Import from files
 
-Upload JSONL, JSON or Parquet exports into a `Dataset`. Gradiated detects common formats (OpenAI chat JSONL, `grad.trajectory/1`, OpenTelemetry, Langfuse, Braintrust, etc.) and maps messages, tool calls, token counts, costs, and scores automatically. Pass `--format` only if you want to pick a parser yourself.
+Upload JSONL, JSON or Parquet exports into a `Dataset`. Gradiated detects common formats (OpenAI chat JSONL, `grad.trajectory/1`, OpenTelemetry, Langfuse, Braintrust, etc.) and maps messages, tool calls, sessions, model names and scores automatically. Token counts and costs aren't extracted from provider exports; a router that needs `metrics.cost_usd` reads it from native records, or prices candidates with `pricing=`. Pass `--format` only if you want to pick a parser yourself.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -275,9 +316,9 @@ recent_good = dataset.filter(scores={"resolved": ">=0.8"}, created_after="2026-1
 print(recent_good.count())
 ```
 
-A score condition is an operator (`>=`, `<=`, `>`, `<`, `==`, `!=`) and a number; a record without that score doesn't match. `metadata={"env": "prod"}` matches metadata fields exactly, and `created_after` / `created_before` compare the record `timestamp`. The view is saved as a dataset named `<dataset>-f-<hash>` (pass `name=` to choose one), so you can train or evaluate on it like any other dataset, and the same filter on the same version returns the same view.
+A score condition is an operator (`>=`, `<=`, `>`, `<`, `==`, `!=`) and a number; a record without that score doesn't match. `metadata={"env": "prod"}` matches metadata fields exactly, and `created_after` / `created_before` compare the record `timestamp` (a record without one never matches). The view is saved as a dataset named `<dataset>-f-<hash>` (pass `name=` to choose one), so you can train or evaluate on it like any other dataset, and the same filter on the same version returns the same view.
 
-If you want to filter by something a human or LLM needs to judge (like "did the assistant answer accurately?"), score the dataset once with a [`Judge`](/docs/training/rubrics/). `dataset.score(...)` grades each record's own answer on the server, skips records that already have every score, and saves the results to `trajectory.scores` in the dataset's next version, so you can tweak thresholds or reuse the scores across runs without paying again. It is billed like an [evaluation](/docs/training/evaluations/): judge tokens at the judge's price, and validators and regexes for free:
+If you want to filter by something a human or LLM needs to judge (like "did the assistant answer accurately?"), score the dataset once with a [`Judge`](/docs/training/rubrics/). `dataset.score(...)` grades each record's own answer on the server, skips records that already have every score, and saves the results to `trajectory.scores` in the dataset's next version, so you can tweak thresholds or reuse the scores across runs without paying again. It is billed like an [evaluation](/docs/training/evaluations/): judge tokens at the judge model's catalog price, and validators and regexes for free:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -313,7 +354,8 @@ const dataset = await grad.datasets.get("support-prod");
 const judge = new Judge({
   name: "resolved",
   model: "{{SONNET_MODEL}}",
-  prompt: "Did the assistant accurately resolve the user's request without hallucinating?",
+  prompt:
+    "Did the assistant accurately resolve the user's request without hallucinating?",
 });
 const scored = await dataset.score(judge).wait();
 
@@ -367,7 +409,7 @@ print(short_chats.count())
 
 ## Sync from observability providers
 
-Connect an observability tool to a `Dataset` to pull in new traces and scores on a schedule. Save your provider key once as a workspace `Secret` (`grad secrets set langfuse-prod`, in the Console, or as a Kubernetes Secret when self-hosting) and pass it via `client.secrets.get(...)` so raw keys are never stored in datasets or exported artifacts.
+Connect an observability tool to a `Dataset` to pull in new traces and scores on a schedule. Save your provider key once as a workspace secret (`grad secrets set langfuse-prod`, or `client.secrets.set(name, value)`) and pass it via `client.secrets.get(...)`: the value is encrypted on the server and never returned, so raw keys never end up in code, datasets or artifacts. A source feeds one dataset; a dataset can have several sources.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -429,7 +471,7 @@ _ = source.Sync(ctx)
   <DocsCodeTab label="CLI">
 
 ```bash
-# Store credential once in your workspace secret store (reads from stdin)
+# Store the key once (read from stdin): PUBLIC_KEY:SECRET_KEY for Langfuse
 grad secrets set langfuse-prod
 
 grad sources add langfuse \
@@ -438,7 +480,7 @@ grad sources add langfuse \
   --secret langfuse-prod \
   --schedule "*/15 * * * *"
 
-grad sources sync src_01J9X
+grad sources sync src_01J9X --wait
 ```
 
   </DocsCodeTab>
@@ -447,11 +489,12 @@ grad sources sync src_01J9X
 ### How syncing works
 
 - **Incremental.** Each sync fetches traces added since the last one, plus scores and corrections added to traces it already has, so late feedback still lands. Records are matched by the provider's trace ID and the latest score wins.
+- **A little behind.** Traces younger than 10 minutes wait for the next sync, because providers take a few minutes to expose new data. Score edits from the last 7 days are picked up; older ones need a full sync.
 - **Versioned.** Every sync creates a new dataset version. Old versions never change, so a run keeps training on the version it pinned.
 - **Rebuildable.** `grad sources sync ID --full` (or `source.sync(full=True)`) rebuilds the dataset from the provider as a new version, for when scores were edited long ago or you changed the mapping.
 - **Files are snapshots.** Records from `grad import` or `dataset.import_file(...)` never get later feedback. Use a source for the feedback loop.
 - **One dataset per source.** A source feeds exactly one dataset; a dataset can have several sources, for example Langfuse for one app and PostHog for another. Deleting a dataset deletes its sources; `grad sources remove ID` disconnects a source and keeps the dataset.
-- **At most once a minute.** A schedule is a five-field UTC cron, so the most often it can fire is `* * * * *`. A `sync` within a minute of the last sync's start returns that sync instead of starting another (the API adds a `Retry-After` header), so repeating or retrying it is safe. A full sync you ask for while an incremental one runs starts as soon as that one ends.
+- **At most once a minute.** A schedule is a five-field UTC cron (no `@hourly`-style names), so the most often it can fire is `* * * * *`; a missed tick runs once at the next one and never back-fills. A `sync` within a minute of the last sync's start returns that sync instead of starting another (the API adds a `Retry-After` header), so repeating or retrying it is safe. A full sync you ask for while an incremental one runs starts as soon as that one ends.
 - **Counts.** A dataset's `record_count` is the number of merged records: score updates fold into the records they belong to, and a full sync restarts the count. A record pushed again with an ID it already has is counted again.
 
 ### When a sync fails
@@ -470,23 +513,30 @@ grad sources list
 # src_01J9X  support-prod  langfuse  */15 * * * *  active (2 failed)  failed         12:00    langfuse: 401 Unauthorized
 ```
 
-On Gradiated Cloud, the gateway already records every request and its feedback, so you don't need an observability tool. Connect them with the built-in `gradiated` source: `grad sources add gradiated --dataset support-prod --schedule "0 * * * *"`.
+### On Gradiated Cloud
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  The gateway's trace capture and the built-in `gradiated` source aren't live
+  yet. Until they are, sync from your observability tool.
+</DocsCallout>
+
+On Gradiated Cloud, the gateway records every request and its feedback, so you don't need an observability tool. Connect them with the built-in `gradiated` source: `grad sources add gradiated --dataset support-prod --schedule "0 * * * *"`.
 
 ### Supported providers
 
-| Provider                      | File import `--format` | Sync with `grad sources add` | Guide                                                           |
-| ----------------------------- | ---------------------- | ---------------------------- | --------------------------------------------------------------- |
-| Gradiated Cloud gateway       | `gradiated`            | `gradiated`                  | [Integrations](/docs/training/integrations/)                    |
-| Langfuse                      | `langfuse`             | `langfuse`                   | [Langfuse](/docs/training/integrations/langfuse/)               |
-| LangSmith                     | `langsmith`            | `langsmith`                  | [LangSmith](/docs/training/integrations/langsmith/)             |
-| Braintrust                    | `braintrust`           | `braintrust`                 | [Braintrust](/docs/training/integrations/braintrust/)           |
-| PostHog                       | `posthog`              | `posthog`                    | [PostHog](/docs/training/integrations/posthog/)                 |
-| Arize Phoenix (OpenInference) | `otel`                 | `phoenix`                    | [Arize Phoenix](/docs/training/integrations/phoenix/)           |
-| OpenAI chat fine-tuning       | `openai_chat`          | none (`dataset.push()`)      |                                                                 |
-| Native schema                 | `grad_trajectories`    | none (`dataset.push()`)      |                                                                 |
-| Hugging Face Hub              | none                   | `client.datasets.from_hf`    | [Import a Hugging Face dataset](#import-a-hugging-face-dataset) |
+| Provider                      | File import `--format` | Sync with `grad sources add`     | Guide                                                           |
+| ----------------------------- | ---------------------- | -------------------------------- | --------------------------------------------------------------- |
+| Gradiated Cloud (coming soon) | `gradiated`            | `gradiated`                      | [Integrations](/docs/training/integrations/)                    |
+| Langfuse                      | `langfuse`             | `langfuse`                       | [Langfuse](/docs/training/integrations/langfuse/)               |
+| LangSmith                     | `langsmith`            | `langsmith`                      | [LangSmith](/docs/training/integrations/langsmith/)             |
+| Braintrust                    | `braintrust`           | `braintrust`                     | [Braintrust](/docs/training/integrations/braintrust/)           |
+| PostHog                       | `posthog`              | `posthog`                        | [PostHog](/docs/training/integrations/posthog/)                 |
+| Arize Phoenix (OpenInference) | `otel`                 | `phoenix`                        | [Arize Phoenix](/docs/training/integrations/phoenix/)           |
+| OpenAI chat fine-tuning       | `openai_chat`          | none (`dataset.push()`)          |                                                                 |
+| Native schema                 | `grad_trajectories`    | none (`dataset.push()`)          |                                                                 |
+| Hugging Face Hub              | none                   | none (`grad datasets import hf`) | [Import a Hugging Face dataset](#import-a-hugging-face-dataset) |
 
-Braintrust and PostHog sources also need `project` (the Braintrust project id or name, the numeric PostHog project id). File imports accept JSONL, JSON and Parquet. Any OpenTelemetry GenAI export imports with `--format otel`.
+Braintrust and PostHog sources also need `project` (the Braintrust project id or name, the numeric PostHog project id); LangSmith and Phoenix take an optional one (default `default`). File imports accept JSONL, JSON and Parquet. Any OpenTelemetry GenAI export imports with `--format otel`.
 
 ## Send feedback from production
 

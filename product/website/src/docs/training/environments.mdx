@@ -5,9 +5,11 @@
   reinforcement learning and evaluation.
 </DocsLead>
 
-<DocsCallout label="Coming soon">
-  Environments, `grad env serve` and environment evals is coming soon. In v0
-  you train and evaluate on [datasets](/docs/training/trajectories/).
+<DocsCallout label="Coming soon" tone="warn">
+  Environments, `grad env serve` and environment evals are coming soon. The
+  SDK's environment types work locally, but nothing on this page trains or
+  evaluates yet. Today you train and evaluate on
+  [datasets](/docs/training/trajectories/).
 </DocsCallout>
 
 An environment is where an agent attempts a task: it receives the model's tool calls, runs them, returns the results, and scores the finished attempt with a [`Rubric`](/docs/training/rubrics/). Pass one to the managed recipe with `GRPORecipe(env=env)` (single-turn or multi-turn, no training loop to write), to [`client.evals.create(...)`](/docs/training/evaluations/), or to `env.rollout_groups(...)` in a [custom loop](/docs/training/custom-loops/).

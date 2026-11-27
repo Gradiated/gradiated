@@ -19,9 +19,9 @@ Every decision model supports the three [SystemOne](/docs/systemone-sdk/) questi
 
 ## What data you need
 
-- **Already calling `gradiated/linden-1`?** Requests sent with the `x-gradiated-task` header are captured in the right format automatically, so you can go straight to scoring or training.
+- **Already calling `gradiated/linden-1`?** Requests sent with the `x-gradiated-task` header are captured in the right format automatically, so you can go straight to training.
 - **Pushing your own data?** Push plain records with `state`, `questions` and the expected answers in `expected_output` to a [`Dataset`](/docs/training/trajectories/). `session_id` is optional; set it when several records describe the same ticket or conversation so they stay in one split. Plan for ~200 examples per option to start (1,000+ for harder decisions).
-- **Don't have labels yet?** Score an unlabeled dataset first with a [`Judge`](/docs/training/rubrics/) (or `gradiated/linden-1`), review a sample, and train on those answers.
+- **Don't have labels yet?** Ask `gradiated/linden-1` the same questions through the [SystemOne SDK](/docs/systemone-sdk/), review a sample of its answers, and push them as `expected_output`.
 
 ```python
 from grad import Grad
@@ -139,15 +139,15 @@ grad deploy ticket-triage@latest
 ### Parameters you might change
 
 - **`model`:** leave it out to specialize the recipe-managed `gradiated/linden-1` backbone. Pass `model="qwen/qwen3-0.6b"` to train a lightweight decision model from a general open model instead.
-- **`loss`:** picked from each question type (cross-entropy for `choice`, binary cross-entropy for `noul`, ordinal loss for `score`). Pass `loss=` only to override it.
+- **`loss`:** picked from each question type (cross-entropy for `choice`, binary cross-entropy for `noul`, ordinal loss for `score`). It can't be overridden; passing `loss=` is an error.
 
 Every other setting, including the eval split (15% of sessions held out), has a default; see the [training parameters reference](/docs/reference/training-parameters/#decisionmodelrecipe). Add `--dry-run` to `grad train` to see them resolved, with a cost estimate.
 
 ## Read the evaluation report
 
-Check `run.eval_report` before shipping:
+Check `run.eval_report` before shipping. It has one entry per question under `heads` (for example `run.eval_report.heads["category"]`):
 
-- **Check each option separately, not just overall accuracy:** if 95% of your tickets are `"other"` and 5% are `"billing"`, a broken model that always picks `"other"` still scores 95% overall. Look at the per-option numbers in `run.eval_report` to make sure rare options (like escalations or safety flags) are actually caught rather than missed.
+- **Check each option separately, not just overall accuracy:** if 95% of your tickets are `"other"` and 5% are `"billing"`, a broken model that always picks `"other"` still scores 95% overall. Look at the per-option precision and recall (`per_option`) to make sure rare options (like escalations or safety flags) are actually caught rather than missed.
 - **Look at which mistakes happen (`confusion_matrix`):** for ordered `score` questions (`0 / 1 / 2`), mixing up neighbors (`0` vs `1`) is normal. If the model frequently confuses `0` with `2`, add more examples of those edge cases.
 - **Check if confidence scores are honest (`ece`):** this measures how closely the model's confidence matches reality (when it says 80% confident, it should be right around 80% of the time). Aim for under `0.05` so confidence checks in your app code behave predictably.
 
@@ -156,7 +156,10 @@ Check `run.eval_report` before shipping:
 [Deploy](/docs/training/deploying/) the trained [`Artifact`](/docs/training/artifacts/) to Gradiated Cloud in one line:
 
 ```python
-run.deploy()
+from grad import Grad
+
+client = Grad()
+client.deploy("ticket-triage@latest")
 ```
 
 Your model is immediately callable through the [SystemOne SDK](/docs/systemone-sdk/) (`TypeSafeClient`) by passing `"your-org/ticket-triage"` as the `model`.
@@ -264,11 +267,11 @@ curl https://api.gradiated.com/v1/systemone \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-When a prediction turns out wrong in production, send back the right answer with `client.feedback.record(inference_id=..., expected_output={"category": "billing"})` so your next retrain learns from the mistake automatically.
+When a prediction turns out wrong in production, send back the right answer with `client.feedback.record(inference_id=..., expected_output={"category": "billing"})` and Gradiated stores the correction with that request.
 
 ## Want more control?
 
-Need custom PyTorch decision losses or dynamic per-request token choices? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
+Custom PyTorch decision losses and dynamic per-request token choices arrive in Wave 2 with [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
 
 <DocsNext>
   <a href="/docs/training/recipes/sft/">

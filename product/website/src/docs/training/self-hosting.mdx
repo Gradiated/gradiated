@@ -5,37 +5,60 @@
   Docker Compose or in your own Kubernetes cluster with Helm.
 </DocsLead>
 
-Self-hosted deployments run the **training, evaluation, and dataset platform** inside your own VPC so prompts, traces, and trained weights never leave your network. Completed runs write standard HuggingFace LoRA or merged Safetensors [`Artifact`](/docs/training/artifacts/)s to your own S3 or GCS bucket, ready to serve on your own vLLM or SGLang cluster.
+Self-hosted deployments run the **training, evaluation, and dataset platform** inside your own VPC so prompts, traces, and trained weights never leave your network. The server needs only Postgres and an S3-compatible bucket (or a local directory for a single replica). Completed runs write standard HuggingFace LoRA or merged Safetensors [`Artifact`](/docs/training/artifacts/)s to your bucket, ready to serve on your own vLLM or SGLang cluster.
 
-Switching between local, self-hosted Kubernetes, and Gradiated Cloud only requires changing `GRAD_BASE_URL`.
+Switching between local, self-hosted Kubernetes, and Gradiated Cloud only requires changing `GRADIATED_BASE_URL`.
 
 ## Local development (Docker Compose)
 
-Start a local training stack in one command with the `grad` CLI:
+Start a local training stack in one command with the `grad` CLI (it needs Docker with the Compose plugin):
 
 ```bash
-brew install gradiated/tap/grad
+cargo install --git https://github.com/Gradiated/grad grad-cli
 
-# CPU stack (default): datasets, trace sync, rubrics, and small local runs
+# CPU stack (default): datasets, imports, evals, and small local runs
 grad local up
 
-# GPU stack (requires NVIDIA Container Toolkit): adds CUDA trainer worker
+# GPU stack (requires NVIDIA Container Toolkit): adds the CUDA trainer worker
 grad local up --gpu
 ```
 
-`grad local up` starts the API on `http://localhost:8787`, Postgres, local object storage, and a trainer worker. Run `grad local down` to stop and clean up.
+`grad local up` starts Postgres, the API on `http://127.0.0.1:8787` (loopback only; change the port with `--port` or `GRAD_PORT`), and a CPU trainer worker, from published images. Artifacts and uploads are stored in a local Docker volume. Pass `--build` to build the images from a source checkout instead.
+
+Authentication is on. The first run generates an admin key and a trainer key and saves them in the `local` CLI profile, so point the CLI and SDKs at it with:
+
+```bash
+export GRADIATED_PROFILE=local
+grad models list
+```
+
+`grad local status` shows container status and API health, `grad local logs [SERVICE] --follow` prints logs (`grad-server`, `grad-trainer` or `postgres`), and `grad local down` stops the stack and keeps its data (add `--volumes` to delete it). `grad local reset` deletes the local data and keys so the next `grad local up` starts fresh.
+
+Evals and `Judge` scoring call models through an OpenAI-compatible endpoint. To use them locally, set `GRAD_INFERENCE_BASE_URL` (and `GRAD_INFERENCE_API_KEY`) before `grad local up`, for example a vLLM server's `/v1` URL that the containers can reach.
 
 ## Production Kubernetes (Helm)
 
-Deploy `grad` into an internal ML namespace in your Kubernetes cluster using the official Helm chart. It runs the CPU API server and scale-to-zero GPU trainer workers on your existing Postgres and S3/GCS bucket, with no hot-path production gateway in front of user traffic:
+Deploy `grad` into an internal ML namespace in your Kubernetes cluster with the Helm chart in `server/helm/grad`. It runs the CPU API server and GPU trainer workers on your existing Postgres and S3 bucket, with no hot-path production gateway in front of user traffic.
+
+First create the two secrets the chart reads: the Postgres connection string, and the bootstrap admin key hash plus the trainer key that the API and the trainers share:
 
 ```bash
-helm repo add gradiated https://charts.gradiated.com
-helm repo update
+ADMIN_HASH=$(printf '%s' "$MY_ADMIN_KEY" | sha256sum | awk '{print $1}')
 
-helm upgrade --install grad gradiated/grad \
+kubectl create namespace grad
+kubectl -n grad create secret generic grad-postgres \
+  --from-literal=database-url="postgres://grad:...@postgres.internal.example:5432/grad"
+kubectl -n grad create secret generic grad-auth \
+  --from-literal=admin-api-key-hash="$ADMIN_HASH" \
+  --from-literal=trainer-api-key="$(openssl rand -hex 32)"
+```
+
+Then install the chart:
+
+```bash
+git clone https://github.com/Gradiated/grad
+helm upgrade --install grad ./grad/server/helm/grad \
   --namespace grad \
-  --create-namespace \
   -f values.yaml
 ```
 
@@ -44,79 +67,104 @@ helm upgrade --install grad gradiated/grad \
 ```yaml
 # values.yaml
 api:
-  replicas: 2
-  ingress:
-    enabled: true
-    className: nginx
-    hosts:
-      - host: grad.internal.example
-        paths:
-          - path: /
-            pathType: Prefix
-    tls:
-      - secretName: grad-tls
-        hosts:
-          - grad.internal.example
+  replicaCount: 2
+  authMode: api_key
+  deployMode: disabled
 
-# Reference a Kubernetes Secret holding ADMIN_API_KEY_HASH, DATABASE_URL, and S3 credentials
+# Secret keys created above
+database:
+  existingSecret: grad-postgres
+  secretKey: database-url
 auth:
-  existingSecret: grad-secrets
+  existingSecret: grad-auth
+  adminKeyHashKey: admin-api-key-hash
+  trainerApiKeyKey: trainer-api-key
 
 storage:
-  s3:
-    bucket: my-org-grad-artifacts
-    region: us-east-1
+  s3Bucket: my-org-grad-artifacts
+  s3Region: us-east-1
 
 trainer:
-  gpu:
-    enabled: true
-    # Scale to zero between training runs with Karpenter or KEDA
-    minReplicas: 0
-    maxReplicas: 4
-    resources:
-      limits: { nvidia.com/gpu: "1" }
-    nodeSelector:
-      accelerator: nvidia-h100
-    tolerations:
-      - key: nvidia.com/gpu
-        operator: Exists
-        effect: NoSchedule
+  gpuCount: 1
+  nodeSelector:
+    accelerator: nvidia-h100
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+
+# Scale GPU trainers to zero between runs
+keda:
+  enabled: true
+  minReplicaCount: 0
+  maxReplicaCount: 4
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: grad.internal.example
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: grad-tls
+      hosts:
+        - grad.internal.example
 ```
+
+Set `storage.s3Bucket` for any real install: without it the API keeps files on a pod-local volume that is lost on restart. The API reads S3 with the standard AWS credential chain, and `storage.s3Endpoint` points it at an S3-compatible store such as MinIO. The KEDA trigger counts queued and running jobs, so a scale-down never strands a run mid-training.
 
 ### Private VPC & air-gapped setup
 
-To keep container pulls, base model downloads, and `Judge` calls completely inside your VPC, add three blocks to `values.yaml`:
+To keep container pulls, base model downloads, and `Judge` calls inside your VPC, add three blocks to `values.yaml`:
 
 ```yaml
 # Mirror ghcr.io/gradiated/grad-server and grad-trainer to your internal registry
-image:
-  registry: 123456789012.dkr.ecr.us-east-1.amazonaws.com/gradiated
-  pullSecrets:
-    - name: ecr-creds
+api:
+  image:
+    repository: 123456789012.dkr.ecr.us-east-1.amazonaws.com/gradiated/grad-server
+trainer:
+  image:
+    repository: 123456789012.dkr.ecr.us-east-1.amazonaws.com/gradiated/grad-trainer
 
-# Load base models and open distillation teachers from your internal bucket instead of Hugging Face
+# Load base models and cartridge teachers from your internal bucket instead of Hugging Face
 models:
   mirrorUri: s3://my-org-approved-models/
-  offline: true
 
-# Route Judge calls (and off-policy text distillation) to your internal OpenAI-compatible gateway
+# Send Judge calls to your internal OpenAI-compatible gateway
 judge:
   baseUrl: https://llm-gateway.internal.example/v1
-  existingSecret: internal-llm-creds
 ```
 
-On-policy logprob distillation (`TopKKLDistill`) loads open teacher weights (such as `qwen/qwen3-32b`) directly from `models.mirrorUri` onto your own trainer GPUs, so it never needs an external API call.
+The mirror holds one directory per model (`<mirror>/<model id>/` or `<mirror>/<HF repo id>/`). [Cartridge](/docs/training/recipes/cartridges/) training loads its teacher's weights from the same mirror onto your trainer GPUs, so it never needs an external API call.
+
+### Server configuration
+
+The chart and `grad local up` set these for you. Set them yourself when you run `grad-server` another way:
+
+| Variable                                    | Default                | Notes                                                                                                                     |
+| ------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                              | required               | Postgres connection string. The server runs its migrations at boot.                                                       |
+| `AUTH_MODE`                                 | `api_key`              | `api_key` requires `ADMIN_API_KEY_HASH`. `none` turns authentication off and is for local development only.               |
+| `ADMIN_API_KEY_HASH`                        | none                   | SHA-256 hex of the bootstrap admin key.                                                                                   |
+| `TRAINER_API_KEY` or `TRAINER_API_KEY_HASH` | none                   | The key trainer workers authenticate with.                                                                                |
+| `S3_BUCKET`, `S3_REGION`, `S3_ENDPOINT`     | none                   | Object storage for uploads, checkpoints, and artifacts. Without `S3_BUCKET` the server uses `STORAGE_DIR` (`.grad-data`). |
+| `DEPLOY_MODE`                               | `disabled`             | `disabled` or `cloud`. Self-hosted servers use `disabled`: `deploy` and `/v1/route` return `501 deploy_unavailable`.      |
+| `INFERENCE_BASE_URL`, `INFERENCE_API_KEY`   | none                   | OpenAI-compatible endpoint for evals. Without it, `POST /v1/evals` returns `501 inference_unavailable`.                   |
+| `JUDGE_BASE_URL`, `JUDGE_API_KEY`           | the inference endpoint | Endpoint for `Judge` rubric items (the chart's `judge.baseUrl` sets the `GRAD_JUDGE_BASE_URL` alias).                     |
+| `GRAD_EXTRA_MODELS_JSON`                    | none                   | JSON array that adds or overrides models in the trainable catalog.                                                        |
 
 ### Authentication & API keys
 
-Self-hosted authentication is 100% local to your cluster (it never phones home to Gradiated Cloud) while keeping the same `GRADIATED_API_KEY` environment variable and `Authorization: Bearer` header as Cloud:
+Self-hosted authentication is local to your cluster (it never phones home to Gradiated Cloud) and uses the same `GRADIATED_API_KEY` environment variable and `Authorization: Bearer` header as Cloud:
 
-- **Local dev (`grad local up`):** authentication is off by default on `localhost:8787`.
-- **Scoped API keys (default in Kubernetes):** set `ADMIN_API_KEY_HASH` in `grad-secrets` (synced from AWS Secrets Manager, Vault, or External Secrets) to bootstrap your cluster. Use that key directly or mint scoped per-pipeline keys stored as SHA-256 hashes in your own Postgres:
+- **Local dev (`grad local up`):** authentication is on, with keys generated into the `local` profile. Running `server/docker-compose.yml` directly with `docker compose` defaults to `AUTH_MODE=none`.
+- **Scoped API keys (Kubernetes):** the server refuses to start in `api_key` mode without `ADMIN_API_KEY_HASH`, which the chart reads from `grad-auth`. Use the bootstrap key directly or mint scoped per-pipeline keys, stored as SHA-256 hashes in your own Postgres:
 
 ```bash
-export GRAD_BASE_URL=https://grad.internal.example
-export GRADIATED_API_KEY=<bootstrap-admin-key>
+export GRADIATED_BASE_URL=https://grad.internal.example
+export GRADIATED_API_KEY="$MY_ADMIN_KEY"
 
 # Mint a least-privilege key for nightly training jobs
 grad keys create --name ci-nightly --scopes datasets:write,runs:write,artifacts:read
@@ -125,22 +173,12 @@ grad keys create --name ci-nightly --scopes datasets:write,runs:write,artifacts:
 grad keys create --name inference-cd --scopes artifacts:read
 
 grad keys list
-grad keys revoke key_01j...
-```
-
-- **OIDC / short-lived JWTs (optional):** if your org bans static keys, add `auth.oidc` in `values.yaml` so `grad-server` accepts JWTs from GitHub Actions OIDC, Kubernetes ServiceAccounts, or Okta/Entra in the same `Authorization: Bearer` header:
-
-```yaml
-auth:
-  existingSecret: grad-secrets
-  oidc:
-    issuer: https://token.actions.githubusercontent.com
-    audience: https://grad.internal.example
+grad keys revoke key_3f9c0a1b2c3d4e5f60718293
 ```
 
 ## Connect SDKs and CLI
 
-Point the SDK or CLI at your local or self-hosted URL via `GRAD_BASE_URL` (or pass `base_url` / `baseURL` directly):
+Point the SDK or CLI at your local or self-hosted URL with `GRADIATED_BASE_URL` (or pass `base_url` / `baseURL` directly):
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -149,7 +187,7 @@ Point the SDK or CLI at your local or self-hosted URL via `GRAD_BASE_URL` (or pa
 import os
 from grad import Grad
 
-# Or set GRAD_BASE_URL=https://grad.internal.example in your environment
+# Or set GRADIATED_BASE_URL=https://grad.internal.example in your environment
 client = Grad(
     base_url="https://grad.internal.example",
     api_key=os.environ["GRADIATED_API_KEY"],
@@ -193,7 +231,7 @@ func main() {
   <DocsCodeTab label="CLI">
 
 ```bash
-export GRAD_BASE_URL=https://grad.internal.example
+export GRADIATED_BASE_URL=https://grad.internal.example
 export GRADIATED_API_KEY=grad_...
 
 grad artifacts download fast-diff-merge@latest --output ./adapter
@@ -214,13 +252,13 @@ curl https://grad.internal.example/v1/artifacts \
 
 Self-hosting gives you the complete training and evaluation platform inside your VPC while letting you keep your existing production inference stack (vLLM, SGLang, Envoy, Argo Rollouts). Gradiated Cloud adds elastic per-token training GPUs and managed production serving on top:
 
-| Capability                                         | Self-hosted (Docker / Helm)                          | Gradiated Cloud                                            |
-| -------------------------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------- |
-| Datasets, trace sync, & `feedback.record()`        | Included (your Postgres + S3)                        | Included (managed)                                         |
-| All recipes, rubrics, environments, & custom loops | Included (runs on your GPUs, scales to 0)            | Included (pay per million tokens)                          |
-| Artifacts (PEFT LoRA / merged Safetensors)         | Written to your S3/GCS; serve on your vLLM or SGLang | Downloadable anytime, or host with `run.deploy()`          |
-| Hosted production serving                          | Bring your own vLLM/SGLang + gateway/feature flags   | Built-in (`run.deploy()` + OpenAI/Anthropic/SystemOne SDK) |
-| Zero-code gateway trace capture                    | Push via SDK or sync from OTel / Langfuse            | Automatic via `x-gradiated-task`                           |
+| Capability                                 | Self-hosted (Docker / Helm)                        | Gradiated Cloud                                            |
+| ------------------------------------------ | -------------------------------------------------- | ---------------------------------------------------------- |
+| Datasets, imports, & trace sync            | Included (your Postgres + S3)                      | Included (managed)                                         |
+| Recipes, rubrics, & evals                  | Included (runs on your GPUs, scales to 0)          | Included (pay per million tokens)                          |
+| Artifacts (PEFT LoRA / merged Safetensors) | Written to your S3; serve on your vLLM or SGLang   | Downloadable anytime, or host with `run.deploy()`          |
+| Hosted production serving                  | Bring your own vLLM/SGLang + gateway/feature flags | Built-in (`run.deploy()` + OpenAI/Anthropic/SystemOne SDK) |
+| Zero-code gateway trace capture            | Push via SDK or sync from OTel / Langfuse          | Automatic via `x-gradiated-task`                           |
 
 <DocsNext>
   <a href="/docs/training/">

@@ -1,29 +1,27 @@
 # Rubrics
 
 <DocsLead>
-  Score model outputs and datasets with Python checks, validators, or an LLM
-  judge.
+  Score model outputs with Python checks, built-in validators, or an LLM judge.
 </DocsLead>
 
-A **`Rubric`** combines one or more weighted **`Scorer`** checks into an overall score while saving each individual check in [`trajectory.scores`](/docs/training/trajectories/). You can reuse the same `Rubric` or `Judge` in three places:
+A **`Rubric`** combines one or more weighted checks (a `Judge`, a `Scorer` or a built-in validator) into an overall score, the weighted mean of its items, and keeps each check's score by name. You can use it in two places:
 
-- **Cleaning datasets:** score old logs once with [`dataset.score(rubric)`](/docs/training/trajectories/), then filter on the scores.
-- **Training and evals:** pass it as `rubric=` to any recipe (such as [`GRPORecipe`](/docs/training/recipes/rl-agents/) or [`RouterRecipe`](/docs/training/recipes/router/)) or to [`client.evals.create`](/docs/training/evaluations/). `rubric=` is the one name for "how to score" everywhere, and it accepts a `Rubric`, a single `Judge` or `Scorer`, the name of a score already in your data, or a plain function.
-- **Stateful environments:** attach a `Rubric` to an [`Environment`](/docs/training/environments/) so checks can inspect your database, API, or container before it shuts down.
+- **Evals:** pass it as `rubric=` to [`client.evals.create`](/docs/training/evaluations/) to score each model's answers on a dataset. A single `Judge`, `Scorer`, validator or plain function works too.
+- **Router training:** pass a `Judge` or a `Rubric` of judges and validators as `rubric=` to [`RouterRecipe`](/docs/training/recipes/router/), or the name of a score already on your records (`rubric="task_success"`).
 
 ## Building a `Rubric`
 
-Mix fast code checks (syntax validators, unit tests, length checks) with a **`Judge`** so obvious errors are caught immediately and the model judge only grades nuance:
+Mix fast code checks (validators, exact matches, length checks) with a **`Judge`** so obvious errors are caught cheaply and the judge only grades nuance:
 
 ```python
 from grad import Judge, Rubric, Scorer, validators
 
 rubric = Rubric([
-    Scorer("valid_sql", weight=0.3, fn=validators.SQL()),
+    Scorer("valid_json", weight=0.3, fn=validators.JSON()),
     Judge(
-        name="accurate_query",
+        name="accurate_extraction",
         model="{{SONNET_MODEL}}",
-        prompt="Verify the SQL answers the user's question accurately without hallucinated columns.",
+        prompt="Does the JSON capture every field the user asked for, without invented values?",
         weight=0.7,
     ),
 ])
@@ -31,39 +29,45 @@ rubric = Rubric([
 
 ## Types of scorers
 
-Pick the scorer class that matches how you grade an answer:
+Pick the class that matches how you grade an answer:
 
-| Class                | Signature                                  | When to use it                                                                                                                                                                                                                                                                                                                                                                           |
-| -------------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`Scorer`**         | `(traj: Trajectory) -> float`              | Fast code checks (`validators.SQL()`, `validators.TypeScriptAST()`, `validators.JSONSchema(...)`), exact matches, or your own Python function.                                                                                                                                                                                                                                           |
-| **`Judge`**          | `Judge(name, model, prompt=...)`           | Grade with a frontier model string (such as `"{{SONNET_MODEL}}"`) **or** a fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact` (no prompt needed for a reward model). `model` is required, with no default that could change under you, and every score records the exact judge model and prompt hash, so scores from different judges are never mixed silently. |
-| **`StatefulScorer`** | `(traj: Trajectory, handle: H) -> float`   | Checks that query live Postgres rows, Redis keys, HTTP endpoints, or container files inside an [`Environment`](/docs/training/environments/) before cleanup.                                                                                                                                                                                                                             |
-| **`GroupScorer`**    | `(group: list[Trajectory]) -> list[float]` | Compare multiple candidate answers for the same prompt side by side (for example, **`PairwiseJudge`**).                                                                                                                                                                                                                                                                                  |
+| Class                | Signature                                | When to use it                                                                                                                                                                                                                                                                                                    |
+| -------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`Scorer`**         | `Scorer(name, fn=..., weight=1.0)`       | A built-in validator (`fn=validators.JSON()`), which runs on the server, or your own Python function `fn(traj) -> float`, which runs in your process. Return a score in `[0, 1]` (a bool counts as `1.0`/`0.0`).                                                                                                  |
+| **`Judge`**          | `Judge(model, prompt=..., name="judge")` | Grade with a model id (such as `"{{SONNET_MODEL}}"`) or a trained `Artifact`. The judge sees the conversation, the answer and any reference answer, and replies with a score in `[0, 1]`. `model` is required, with no default that could change under you, and each eval result records the judge model it used. |
+| **`StatefulScorer`** | `(traj: Trajectory, handle: H) -> float` | Checks live state inside an [`Environment`](/docs/training/environments/), which arrives in Wave 2.                                                                                                                                                                                                               |
 
-To reuse a score already stored on your imported logs, pass `Scorer.from_score("task_success", weight=1.0)`.
+The built-in validators run on the server and score the trimmed output `1.0` or `0.0`:
+
+- **`validators.JSON()`:** the output parses as JSON.
+- **`validators.NonEmpty()`:** the output isn't empty.
+- **`validators.ExactMatch()`:** the output equals the record's `expected_output`.
+- **`validators.Regex(pattern, flags="")`:** the pattern matches the output. Patterns use JavaScript syntax, up to 256 characters, with flags from `imsu`.
+
+Put one in a `Rubric` directly (`Rubric([validators.JSON()])`) or call it locally to test it: `validators.JSON()('{"ok": true}')` returns `1.0`. There are no built-in SQL, TypeScript, numeric or JSON Schema validators; write those checks as a Python `Scorer`.
 
 ## Scoring a `Dataset` with a `Judge`
 
-`dataset.score(judge)` grades logs in parallel on the server and saves the results to `trajectory.scores`. Already-scored rows are skipped automatically, so you can change filter thresholds or reuse scores across [recipes](/docs/training/recipes/) without paying again:
+Scoring stored logs in place (`dataset.score(...)`) is not available yet. To grade a model's answers on a dataset, run an eval with the judge:
 
 ```python
 from grad import Grad, Judge
 
 client = Grad()
-dataset = client.datasets.get("support-prod")
 
 judge = Judge(
     name="resolved",
     model="{{SONNET_MODEL}}",
     prompt="Did the assistant resolve the user's request accurately without policy errors?",
 )
-scored = dataset.score(judge).wait()
-good = scored.filter(scores={"resolved": ">=0.8"})
+ev = client.evals.create(models=["qwen/qwen3-8b"], dataset="support-prod", rubric=judge).wait()
+
+print(ev.summary_table())
 ```
 
 ## Where Python scorers run
 
-Built-in checks (`validators.*`, `Scorer.from_score`) and every `Judge` run on Gradiated's servers. Your own Python functions run there too: when you start a managed run, the SDK packages each function and runs it in an isolated sandbox, so you can close your laptop. Declare any third-party packages it imports:
+Built-in validators and every `Judge` run on Gradiated's servers. Your own Python functions run in your Python process (`runtime="local"`, the default). The eval waits in `awaiting_scores` while `ev.wait()` pulls the model outputs, calls your function and posts the scores, so keep the process running until the eval completes. `traj.text` is the answer; `traj.metadata` and `traj.expected_output` come from the record:
 
 ```python
 from grad import Scorer
@@ -77,46 +81,28 @@ def math_answer(traj) -> float:
 answer_check = Scorer("answer", fn=math_answer, requirements=["sympy==1.14.0"])
 ```
 
-`runs.plan()` checks every scorer before anything is billed and tells you if one can't run in the sandbox (for example, because it reads a local file). If a scorer has to run on your own machine, such as one that calls an internal service, pass `runtime="local"` and keep `grad worker` running. See [Where your code runs](/docs/training/recipes/#where-your-code-runs).
+Before any model is called, `evals.create` checks that the declared `requirements` are installed and runs each function once on a sample record, so a broken scorer fails before you spend anything.
+
+Python scorers in training recipes (`RouterRecipe(rubric=Scorer(...))`) run in a managed sandbox, which arrives in Wave 2; today the recipe rejects them. Compute the score yourself, store it in each record's `scores`, and pass its name instead. See [Where your code runs](/docs/training/recipes/#where-your-code-runs).
 
 <DocsCallout label="When to train a reward model instead" tone="tip">
   A frontier or open model `Judge` with a clear rubric is the right default for
-  most teams. If you need to strongly encode custom preferences from examples or
-  score outputs in milliseconds, train a dedicated verifier with
-  [`RewardModelRecipe`](/docs/training/recipes/reward-models/) and pass that
-  [`Artifact`](/docs/training/artifacts/) straight into `Judge(name="resolved",
-  model=verifier_artifact)`.
+  most teams. Training a dedicated verifier with
+  [`RewardModelRecipe`](/docs/training/recipes/reward-models/), to pass as
+  `Judge(name="resolved", model=verifier_artifact)`, arrives in Wave 2.
 </DocsCallout>
 
 ## Grading live state inside an `Environment`
 
-When you need to check what the agent actually changed (for example, whether a row was inserted in Postgres or a test suite passes in a container), use `StatefulScorer`:
-
-```python
-from grad import Rubric, Scorer, StatefulScorer
-
-def passes_unit_tests(traj, handle) -> float:
-    res = handle.exec("pytest -q tests/target_test.py")
-    return 1.0 if res.returncode == 0 else 0.0
-
-def concise_patch(traj) -> float:
-    return 1.0 if len(traj.token_ids) < 1024 else 0.5
-
-rubric = Rubric([
-    StatefulScorer("tests", weight=0.8, fn=passes_unit_tests),
-    Scorer("concise", weight=0.2, fn=concise_patch),
-])
-```
-
-See [Environments](/docs/training/environments/) for how `evaluate(handle, trajectory)` runs `StatefulScorer` terms before `teardown()`.
+`StatefulScorer(name, fn=f(traj, handle))` checks what an agent actually changed, such as a row inserted in Postgres or a test suite passing in a container. It runs inside an [`Environment`](/docs/training/environments/) rubric, which arrives in Wave 2; eval and training rubrics can't carry one.
 
 <DocsNext>
-  <a href="/docs/training/environments/">
+  <a href="/docs/training/evaluations/">
     <small>Next</small>
-    <strong>Environments</strong>
+    <strong>Evaluations</strong>
   </a>
-  <a href="/docs/training/recipes/reward-models/">
-    <small>Train a verifier</small>
-    <strong>Reward models</strong>
+  <a href="/docs/training/recipes/router/">
+    <small>Train with a rubric</small>
+    <strong>Model router</strong>
   </a>
 </DocsNext>

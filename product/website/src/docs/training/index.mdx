@@ -2,7 +2,7 @@
 
 <DocsLead>
   Train routers, decision models, and fine-tuned models from your production
-  logs or test environments.
+  logs or labeled examples.
 </DocsLead>
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
@@ -124,10 +124,10 @@ Already sending inference requests through Gradiated with the `x-gradiated-task`
 
 ## Where to start
 
-| If you are...                                                                                       | Recommended path                                                                                                                                                              |
-| --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Shipping a product feature** (lower LLM spend, fine-tune a smaller model, compress a long prompt) | [Trajectories](/docs/training/trajectories/) → [Recipes](/docs/training/recipes/) → [Deploying](/docs/training/deploying/)                                                    |
-| **Running RL, evals, or custom research** (custom graders, tool sandboxes, PyTorch loss functions)  | [Rubrics](/docs/training/rubrics/) & [Environments](/docs/training/environments/) → [Evaluations](/docs/training/evaluations/) → [Custom loops](/docs/training/custom-loops/) |
+| If you are...                                                                                       | Recommended path                                                                                                           |
+| --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **Shipping a product feature** (lower LLM spend, fine-tune a smaller model, compress a long prompt) | [Trajectories](/docs/training/trajectories/) → [Recipes](/docs/training/recipes/) → [Deploying](/docs/training/deploying/) |
+| **Comparing models or writing graders** (LLM judges, validators, Python scorers)                    | [Rubrics](/docs/training/rubrics/) → [Evaluations](/docs/training/evaluations/)                                            |
 
 See [Supported models](/docs/training/models/) for trainable base models and how token billing works.
 
@@ -137,7 +137,7 @@ See [Supported models](/docs/training/models/) for trainable base models and how
 
 ## The four building blocks
 
-Every workflow in `grad` uses the same four stages, whether you are training a router or a multi-turn coding agent. Click any step to see what it does:
+Every workflow in `grad` uses the same four stages, whether you are training a router or fine-tuning on multi-turn agent traces. Click any step to see what it does:
 
 <DocsTrainingFlywheel />
 
@@ -175,7 +175,7 @@ cargo add grad-sdk
   <DocsCodeTab label="CLI">
 
 ```bash
-brew install gradiated/tap/grad
+cargo install --git https://github.com/Gradiated/grad grad-cli
 grad login
 ```
 
@@ -381,12 +381,14 @@ curl https://api.gradiated.com/v1/chat/completions \
 
 ## Two ways to train
 
-Start with a built-in `Recipe` and its defaults. Learning rate, batch size and schedule are calibrated for each base model, and the dry run prints every resolved value. When you need more control, override a single piece (like the loss function or dataset split), or write your own Python loop directly on `Trainer`.
+Start with a built-in `Recipe` and its defaults. Learning rate, batch size and schedule are calibrated for each base model, and the dry run prints every resolved value. When you need more control, override a single piece (like the loss function or dataset split).
 
-| Mode                                             | How it works                                                                                                                                                                                                                 | When to use it                                                                                                                                                                                                  |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [**Recipes**](/docs/training/recipes/)           | Pick a recipe (`RouterRecipe`, `DecisionModelRecipe`, `SFTRecipe`, `DPORecipe`, `GRPORecipe`, `DistillRecipe`, `CartridgeRecipe`, `RewardModelRecipe`, `EmbeddingRecipe`), chain stages with `.then(...)`, or run from YAML. | Almost always, including multi-turn agent RL (`GRPORecipe(env=...)`). You get calibrated defaults, held-out evaluations, automatic checkpoints, and can swap individual pieces without writing a training loop. |
-| [**Custom loops**](/docs/training/custom-loops/) | Call `Trainer`, `Artifact`, `Environment`, and `Rubric` directly in Python with built-in losses or your own PyTorch `CustomLoss`.                                                                                            | You are building a new algorithm: a custom research loop, multi-trainer setup, replay buffer, or rollout logic a recipe can't express.                                                                          |
+| Mode                                             | How it works                                                                                                                             | When to use it                                                                                                                                           |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [**Recipes**](/docs/training/recipes/)           | Pick a recipe (`SFTRecipe`, `DPORecipe`, `RouterRecipe`, `DecisionModelRecipe`, `CartridgeRecipe`, `EmbeddingRecipe`), or run from YAML. | Almost always. You get calibrated defaults, held-out evaluations, automatic checkpoints, and can swap individual pieces without writing a training loop. |
+| [**Custom loops**](/docs/training/custom-loops/) | Arrives in Wave 2: call `Trainer` directly in Python with built-in losses or your own PyTorch `CustomLoss`.                              | You are building a new algorithm: a custom research loop, multi-trainer setup, replay buffer, or rollout logic a recipe can't express.                   |
+
+[RL agents](/docs/training/recipes/rl-agents/), [distillation](/docs/training/recipes/distillation/) and [reward models](/docs/training/recipes/reward-models/) also arrive in Wave 2. To train in stages, wait for the first run and pass its artifact to the next recipe: `DPORecipe(model=sft.artifact)`.
 
 You can export the full resolved config of any run as YAML (`grad runs inspect <run_id> --yaml > recipe.yaml`) to check it into Git.
 
@@ -394,7 +396,7 @@ You can export the full resolved config of any run as YAML (`grad runs inspect <
   You pay per million tokens processed (training and sampling) plus storage for
   saved artifacts and checkpoints. You never pay for idle GPUs. Start with the
   simplest option that proves value: a router or decision model trains quickly,
-  then move up to fine-tuning or RL once you have a baseline.
+  then move up to fine-tuning once you have a baseline.
 </DocsCallout>
 
 ## Using with coding agents
@@ -423,29 +425,18 @@ Read https://gradiated.com/docs/training/recipes/router.md and integrate a Gradi
 ```text
 Read https://gradiated.com/docs/training/recipes/sft.md (and https://gradiated.com/docs/training/recipes/dpo.md) and set up a fine-tuning pipeline for our task:
 1. Export verified passing examples as plain chat records (`{"messages": [...]}`, last assistant turn is the target) and push them with `client.datasets.push(name, records_or_jsonl_path)`.
-2. Score the dataset with a `Judge` (`dataset.score(judge).wait()`), keep high scorers with `dataset.filter(scores={"clean": ">=0.8"})`, and configure `SFTRecipe(model="qwen/qwen3-8b")` with its defaults (chain into `DPORecipe` with `.then(...)` if needed). Don't hand-set `lr`; the default `lr="auto"` is calibrated per model.
+2. Configure `SFTRecipe(model="qwen/qwen3-8b")` with its defaults. For a DPO stage, wait for the SFT run (`sft = client.runs.create(...).wait()`) and train `DPORecipe(model=sft.artifact)` on preference pairs. Don't hand-set `lr`; the default `lr="auto"` is calibrated per model.
 3. Run `grad render <dataset> --model qwen/qwen3-8b --limit 3` to check the chat template and loss mask, then `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json` and fix every warning.
 4. Start the run with `max_cost_usd=` set, deploy with `run.deploy()` (or download the LoRA for vLLM/SGLang), and wire `feedback.record()` so human fixes are captured as `expected_output`.
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="RL agent (Docker Compose)">
+  <DocsCodeTab label="Cartridge">
 
 ```text
-Read https://gradiated.com/docs/training/environments.md and https://gradiated.com/docs/training/recipes/rl-agents.md:
-1. If our agent is a set of Python tool functions, wrap them with `environments.Tools([...], tasks=dataset, rubric=rubric)`. Otherwise subclass `grad.Environment` around our existing `docker-compose.yml` (only `setup` and `step` are required; `step` gets parsed `action.tool_calls`).
-2. Write a `Rubric` with deterministic `StatefulScorer` assertions against the live container state.
-3. Smoke-test 2 tasks with `client.evals.create(model="qwen/qwen3-8b", tasks=..., env=env, samples=2)` and check that tool outputs are masked and containers clean up.
-4. Train with the managed `GRPORecipe(model="qwen/qwen3-8b", env=env)` and its defaults; run `client.runs.plan(...)` first and set `max_cost_usd=`. If containers must stay on our infra, run `grad env serve` and pass `env=environments.Remote(...)`.
-```
-
-  </DocsCodeTab>
-  <DocsCodeTab label="Distill / Cartridge">
-
-```text
-Read https://gradiated.com/docs/training/recipes/distillation.md (or https://gradiated.com/docs/training/recipes/cartridges.md):
-1. Identify our high-volume frontier prompts or repeated long system prompts.
-2. Configure `DistillRecipe` (32B teacher -> 4B/8B student) or `CartridgeRecipe` (`adapters.PrefixKV` over our static context).
+Read https://gradiated.com/docs/training/recipes/cartridges.md:
+1. Identify the long system prompts or reference documents we repeat on every request.
+2. Configure `CartridgeRecipe(context=Context.from_file("./context.md"))` to compress that static context into a trained prefix.
 3. Validate with `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json`, run training, compare `eval_report` against the baseline, and deploy with `grad deploy`.
 ```
 

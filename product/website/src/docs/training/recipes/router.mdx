@@ -12,19 +12,19 @@ All you need to start is a [`Dataset`](/docs/training/trajectories/) of real pro
 
 - **How the router compares models:**
   - **Already logging multiple models?** If your logs include responses from both cheap and strong models (in `metadata.model`), Gradiated trains directly on them.
-  - **Only logging one model so far?** Pass `models=[...]` to `RouterRecipe` (for example, a cheap model and your current frontier model). Gradiated replays your logged prompts against the candidate models first so it can compare how each one performs, with no sandbox environment needed for single-turn prompts.
+  - **Only logging one model so far?** Pass `models=[...]` to `RouterRecipe` (for example, a cheap model and your current frontier model) together with a `Judge` rubric. Gradiated replays your logged prompts against the candidate models in a labeling eval and scores each answer before training. Candidates must be catalog models or artifacts from your workspace that the inference endpoint serves.
 - **How quality is scored:**
-  - **No scores yet?** Pass a [`Judge`](/docs/training/rubrics/) with a plain-English prompt (or a `Rubric` with code checks) and Gradiated grades each response for you.
-  - **Already have scores in your logs?** Pass the score name (`rubric="task_success"`) to reuse them directly, or a function (`rubric=lambda t: ...`), which is packaged and run in a sandbox (see [where your code runs](/docs/training/recipes/#where-your-code-runs)).
+  - **No scores yet?** Pass a [`Judge`](/docs/training/rubrics/) with a plain-English prompt (or a `Rubric` of judges and validators) and Gradiated grades each response for you.
+  - **Already have scores in your logs?** Pass the score name (`rubric="task_success"`) to reuse them directly. You need the name when a record carries more than one score. Python scorer functions in training recipes arrive in [Wave 2](/docs/training/recipes/#where-your-code-runs).
 - **Request cost (optional):**
-  - You don't need to log costs. Gradiated calculates request cost automatically from the model name and token counts using built-in model pricing.
-  - If you have custom or self-hosted pricing, include `metrics.cost_usd` on your logs to override it.
+  - Pass `pricing={"qwen/qwen3-8b": 0.0004, ...}` (USD per request for each candidate), or include `metrics.cost_usd` on your logs. With a `Judge` rubric, the labeling eval records each call's cost at catalog prices.
+  - Without prices, the router maximizes how much traffic it offloads and `cost_savings_pct` is `null`.
 
 Plan for ~500 examples per candidate model to get started (2,000+ if your prompts cover many different tasks).
 
 ## Train the router
 
-By default, `RouterRecipe` fine-tunes `qwen/qwen3-0.6b` on your prompts and scores, holds out 15% of conversations for evaluation, and routes to stay within a 2% quality drop of your best model. Replaying prompts against candidate models and judging the answers costs money, so run `grad train ... --dry-run` first to see the estimate:
+By default, `RouterRecipe` fine-tunes `qwen/qwen3-0.6b` on your prompts and scores, holds out 15% of conversations for evaluation, and routes to stay within a 2% quality drop of your fallback model (the best-scoring candidate unless you set `fallback=`). Replaying prompts against candidate models and judging the answers is billed as an eval, separately from the run's `max_cost_usd`. Run `client.runs.plan(...)` or `grad train ... --dry-run` first: the estimate is under `labeling`.
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
@@ -48,7 +48,7 @@ recipe = RouterRecipe(
 run = client.runs.create(dataset=dataset, name="support-router", recipe=recipe).wait()
 
 print(run.artifact.id)
-print(run.eval_report["pareto_summary"])
+print(run.eval_report.pareto_summary)
 ```
 
   </DocsCodeTab>
@@ -96,16 +96,28 @@ run, _ := client.Runs.Create(ctx, grad.RunParams{
 		},
 	},
 }).Wait(ctx)
-fmt.Println(run.Artifact.ID, run.EvalReport)
+fmt.Println(run.Artifact.ID, run.EvalReport.ParetoSummary)
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="CLI">
+  <DocsCodeTab label="CLI (YAML)">
+
+```yaml
+# support-router.yaml
+dataset: support-traces
+name: support-router
+recipe: router
+models: [qwen/qwen3-8b, "{{OPUS_MODEL}}"]
+rubric:
+  - name: resolved
+    kind: judge
+    model: "{{SONNET_MODEL}}"
+    prompt: "Did the assistant solve the user's issue accurately?"
+```
 
 ```bash
-grad train --dataset support-traces --name support-router --recipe router --dry-run   # $0 estimate
-grad train --dataset support-traces --name support-router --recipe router --wait
-grad deploy support-router@latest
+grad train -f support-router.yaml --dry-run   # $0 estimate, including the labeling eval
+grad train -f support-router.yaml --wait
 ```
 
   </DocsCodeTab>
@@ -114,16 +126,17 @@ grad deploy support-router@latest
 ### When to use a router vs. fine-tuning vs. distillation
 
 - **Start with a router (`RouterRecipe`)** when a cheap model already handles most of your requests well and you only need a frontier model for the hard ones. It's the fastest way to cut LLM spend without training a new generator.
-- **Use [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) or [distillation](/docs/training/recipes/distillation/)** when no cheap model is good enough on its own yet and you want to teach a small model to handle the task directly.
+- **Use [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/)** when no cheap model is good enough on its own yet and you want to teach a small model to handle the task directly. [Distillation](/docs/training/recipes/distillation/) arrives in Wave 2.
 - **Combine them** once you have a fine-tuned 8B model by putting it alongside a frontier model in your router.
 
 ### Parameters you might change
 
-- **`models`:** the candidate models to route between. If your dataset only contains logs from one model, Gradiated replays your prompts against the others automatically. If your logs already include multiple models in `metadata.model`, you can leave `models` out.
-- **`rubric`:** how quality is measured, the same parameter every recipe and eval uses. Pass a [`Judge`](/docs/training/rubrics/) with a prompt if your logs don't have scores yet, a `Rubric` with code checks, an existing score name (`"task_success"`), or a function.
-- **`max_quality_drop`:** how much quality you'll trade for cost savings compared with your best model (`0.02`, or 2%, by default). The router is trained to route at this operating point.
+- **`models`:** the candidate models to route between. With a `Judge` rubric, Gradiated replays your prompts against them. If your logs already include scored responses from multiple models in `metadata.model`, you can leave `models` out.
+- **`rubric`:** how quality is measured. Pass a [`Judge`](/docs/training/rubrics/) with a prompt if your logs don't have scores yet, a `Rubric` of judges and validators, or an existing score name (`"task_success"`).
+- **`max_quality_drop`:** how much quality you'll trade for cost savings compared with your fallback model (`0.02`, or 2%, by default). The router is trained to route at this operating point.
+- **`pricing`:** USD per request for each candidate. It overrides `metrics.cost_usd` from your logs.
 
-Every other setting, including the router backbone, the eval split and custom pricing, has a default; see the [training parameters reference](/docs/reference/training-parameters/#routerrecipe).
+Every other setting, including the router backbone, the eval split and the `fallback` model, has a default; see the [training parameters reference](/docs/reference/training-parameters/#routerrecipe).
 
 ## Read the evaluation report
 
@@ -163,7 +176,7 @@ from grad import Grad
 client = Grad()
 
 # Host under your-org/support-router on Gradiated Cloud
-run.deploy(fallback="{{OPUS_MODEL}}")
+client.deploy("support-router@latest", fallback="{{OPUS_MODEL}}")
 
 messages = [{"role": "user", "content": "Where is invoice #9941?"}]
 tools = []  # the tool definitions you send with the request, if any
@@ -185,7 +198,7 @@ import { Grad } from "@gradiated/grad";
 
 const grad = new Grad();
 
-await run.deploy({ fallback: "{{OPUS_MODEL}}" });
+await grad.deploy("support-router@latest", { fallback: "{{OPUS_MODEL}}" });
 
 const messages = [
   { role: "user" as const, content: "Where is invoice #9941?" },
@@ -204,6 +217,8 @@ await decision.recordFeedback({ score: ticketResolved ? 1.0 : 0.0 });
   <DocsCodeTab label="Go">
 
 ```go
+_, _ = client.Deployments.Create(ctx, "support-router@latest", grad.WithFallback("{{OPUS_MODEL}}"))
+
 messages := []grad.Message{{Role: "user", Content: "Where is invoice #9941?"}}
 
 decision, _ := client.Route(ctx, "support-router", grad.RouteInput{Messages: messages})
@@ -229,13 +244,13 @@ curl https://api.gradiated.com/v1/chat/completions \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-As feedback comes in, Gradiated tracks live quality against the `max_quality_drop` target the router was trained for and stores it for your next retrain.
+Gradiated stores each feedback event with its routed request. `client.deployments.get("support-router")` shows the feedback count and average score, so you can compare live quality with the eval report.
 
 If you already call models through Gradiated with the [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/), you can skip `client.route(...)` and pass `"model": "your-org/support-router"` directly to your chat completion call. See [Deploying](/docs/training/deploying/) for updates, rollbacks, and self-hosting options.
 
 ## Want more control?
 
-Need custom routing logic or a custom loss? See [Custom loops](/docs/training/custom-loops/).
+Custom routing logic and custom losses arrive in Wave 2 with [Custom loops](/docs/training/custom-loops/).
 
 <DocsNext>
   <a href="/docs/training/recipes/decision-model/">

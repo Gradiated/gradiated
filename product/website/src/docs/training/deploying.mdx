@@ -87,7 +87,7 @@ grad deploy fast-diff-merge@2026-11-26-1
 # Next retrain: deploy the new version, check status, or roll back in one command
 grad deploy fast-diff-merge@2026-12-03-1
 grad deployments status fast-diff-merge
-grad deploy fast-diff-merge@2026-11-26-1
+grad deployments rollback fast-diff-merge
 ```
 
   </DocsCodeTab>
@@ -105,17 +105,21 @@ Because every [`Artifact`](/docs/training/artifacts/) is a fixed version, rollin
 >
 
 ```text
-Model    your-org/fast-diff-merge
-Active   fast-diff-merge@2026-12-03-1  (20,456 req/hr · p50 365ms)
+Model     your-org/fast-diff-merge
+Active    art_9d41c7e2a05b3f8816e2c4d7
+Previous  art_3f9c0a1b2c3d4e5f60718293
+Status    active
+Fallback  -
+Explore   0
 
-  Last 24h feedback
-    Active quality : 94.1%
-    Feedback rate  : 94.2% of requests
+  Feedback
+    Events        : 18,204
+    Average score : 94.1%
 ```
 
 </DocsTerminal>
 
-Deploying a new version qualifies the adapter on a serving replica first, then atomically switches `your-org/fast-diff-merge` to the new version. If anything looks wrong, roll back in one command by deploying the previous artifact (`grad deploy fast-diff-merge@2026-11-26-1`).
+Deploying a new version qualifies the adapter on a serving replica first, then atomically switches `your-org/fast-diff-merge` to the new version. If anything looks wrong, `grad deployments rollback fast-diff-merge` (or `client.deployments.rollback("fast-diff-merge")`) points the name back at the previous artifact. To go back further, deploy any earlier version (`grad deploy fast-diff-merge@2026-11-26-1`).
 
 ### Log feedback for the next training run
 
@@ -219,7 +223,7 @@ Duplicate submissions with the same `idempotency_key` are ignored safely. Feedba
 
 ## Option 2: Run on your own vLLM or SGLang
 
-If you already run your own inference infrastructure (or self-host training in your VPC), download the trained artifact directly. LoRA runs export standard HuggingFace PEFT weights (`adapter_config.json` and `adapter_model.safetensors`), and `merge_on_export=True` exports standalone merged Safetensors weights.
+If you already run your own inference infrastructure (or self-host training in your VPC), download the trained artifact directly. [Self-hosted](/docs/training/self-hosting/) servers have no hosted serving: `deploy` returns `501 deploy_unavailable` (the Python SDK raises `DeployUnavailableError` and `grad deploy` exits with code 6). LoRA runs export standard HuggingFace PEFT weights (`adapter_config.json` and `adapter_model.safetensors`), and `merge_on_export=True` exports standalone merged Safetensors weights.
 
 <DocsCodeTabs>
   <DocsCodeTab label="vLLM">

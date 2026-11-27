@@ -4,12 +4,12 @@
   Fine-tune an open model on examples of the exact outputs you want.
 </DocsLead>
 
-Use **`SFTRecipe`** when you have good examples of what the model should produce (code edits, structured JSON, SQL queries, or a specific style). Once it reliably follows your format, you can run [Preference tuning (DPO)](/docs/training/recipes/dpo/) or [RL for agents](/docs/training/recipes/rl-agents/) on top of the saved [`Artifact`](/docs/training/artifacts/) to improve it further.
+Use **`SFTRecipe`** when you have good examples of what the model should produce (code edits, structured JSON, SQL queries, or a specific style). Once it reliably follows your format, you can run [Preference tuning (DPO)](/docs/training/recipes/dpo/) on top of the saved [`Artifact`](/docs/training/artifacts/) to improve it further.
 
 ## What data you need
 
 - **Minimum volume:** 300–1,000 clean examples for focused tasks; 2,000+ for broader ones.
-- **Quality beats volume:** don't train on raw, unfiltered logs. Score your dataset with a [`Judge`](/docs/training/rubrics/) and keep only high-scoring answers (or filter on an existing score like `tests_passed` if you already log one).
+- **Quality beats volume:** don't train on raw, unfiltered logs. Keep only high-scoring answers, for example on a score you already log such as `tests_passed`.
 - **Format:** plain chat records, the same JSONL you'd send to OpenAI fine-tuning. The final assistant turn is what the model learns to write. `session_id` is optional; add it when several records come from one conversation so they stay in the same split. Imported production logs work too (see [Trajectories](/docs/training/trajectories/)).
 
 ```json
@@ -63,30 +63,24 @@ grad train --dataset ultrachat --name ultrachat-sft --recipe sft --wait
   </DocsCodeTab>
 </DocsCodeTabs>
 
-To train on your own file instead, pass its path: `client.datasets.push("my-sft", "train.jsonl")`. Add `--dry-run` to any `grad train` command to see the resolved defaults and a cost estimate first.
+To train on your own file instead, pass its path: `client.datasets.push("my-sft", "train.jsonl")` (or `grad import ./train.jsonl --dataset my-sft`). Add `--dry-run` to any `grad train` command to see the resolved defaults and a cost estimate first.
 
 ## Train on your production logs
 
-Score your `Dataset` once with a [`Judge`](/docs/training/rubrics/) to keep only good examples, then train a LoRA adapter. The held-out eval split is grouped by `session_id` by default, so multi-turn conversations never leak into eval:
+Keep only good examples, then train a LoRA adapter. Read the records, keep the ones with a passing score, and push them as a new dataset. The held-out eval split is grouped by `session_id` by default, so multi-turn conversations never leak into eval:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="Python">
 
 ```python
-from grad import Grad, Judge
+from grad import Grad
 from grad.recipes import SFTRecipe
 
 client = Grad()
 dataset = client.datasets.get("diff-merge-prod")  # pushed or imported earlier
 
-# Score logs once with a Judge and keep only high-quality examples
-judge = Judge(
-    name="clean_merge",
-    model="{{SONNET_MODEL}}",
-    prompt="Did the assistant apply the edit accurately without breaking surrounding code?",
-)
-# Field filters run server-side, with no download
-clean_dataset = dataset.score(judge).wait().filter(scores={"clean_merge": ">=0.8"})
+clean = [r for r in dataset.records() if (r.get("scores") or {}).get("tests_passed", 0) >= 1.0]
+clean_dataset = client.datasets.push("diff-merge-clean", clean)
 
 sft = client.runs.create(
     dataset=clean_dataset,
@@ -103,20 +97,15 @@ print(sft.artifact.id)
   <DocsCodeTab label="TypeScript">
 
 ```ts
-import { Grad, Judge, recipes } from "@gradiated/grad";
+import { Grad, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
-const dataset = await grad.datasets.get("diff-merge-prod");
 
-const judge = new Judge({
-  name: "clean_merge",
-  model: "{{SONNET_MODEL}}",
-  prompt:
-    "Did the assistant apply the edit accurately without breaking surrounding code?",
-});
-const cleanDataset = (await dataset.score(judge).wait()).filter({
-  scores: { clean_merge: ">=0.8" },
-});
+const clean = [];
+for await (const record of grad.datasets.records("diff-merge-prod")) {
+  if ((record.scores?.tests_passed ?? 0) >= 1.0) clean.push(record);
+}
+const cleanDataset = await grad.datasets.push("diff-merge-clean", clean);
 
 const sft = await grad.runs
   .create({
@@ -134,11 +123,7 @@ console.log(sft.artifact.id);
 
 ```yaml
 # sft-diff-merge.yaml
-dataset:
-  name: diff-merge-prod
-  filter:
-    min_score:
-      clean_merge: 0.8
+dataset: diff-merge-clean
 name: fast-diff-merge
 recipe: sft
 model: qwen/qwen3-8b
@@ -151,19 +136,19 @@ grad train -f sft-diff-merge.yaml --wait
   </DocsCodeTab>
 </DocsCodeTabs>
 
-If your logs already include a deterministic score (like `tests_passed` from CI), skip `dataset.score(judge)` and filter directly: `dataset.filter(scores={"tests_passed": "==1.0"})`. A Python function works too (`dataset.filter(lambda t: ...)`); it runs on your machine once and saves the matching IDs as a view (see [where your code runs](/docs/training/recipes/#where-your-code-runs)).
+Scoring a whole dataset with a [`Judge`](/docs/training/rubrics/) and server-side dataset filters aren't available yet, so filter records in your own code before pushing them.
 
-### When to use SFT vs. DPO vs. distillation
+### When to use SFT vs. DPO
 
-- **Use SFT (`SFTRecipe`)** when you have verified examples of the exact outputs you want (or high-scoring production answers filtered with a `Judge`).
+- **Use SFT (`SFTRecipe`)** when you have verified examples of the exact outputs you want (or high-scoring production answers).
 - **Follow with [DPO (`DPORecipe`)](/docs/training/recipes/dpo/)** when the model already follows your format but keeps making specific mistakes you can contrast as `(chosen, rejected)` pairs.
-- **Use [Distillation (`DistillRecipe`)](/docs/training/recipes/distillation/)** when you don't have gold answers yet, just prompts and a larger teacher model you want a small model to imitate.
+- **[Distillation (`DistillRecipe`)](/docs/training/recipes/distillation/)** arrives in Wave 2, for when you have prompts and a larger teacher model but no gold answers yet.
 
 ### Parameters you might change
 
 - **`adapter`:** LoRA (`rank=32`) by default. For large datasets (50,000+ records), `adapters.LoRA(rank=64)` or `128` can help.
 - **`train_on`:** trains only the final assistant turn by default. Use `train_on="all_assistant"` for multi-turn agent traces.
-- **`epochs`:** one pass by default. The dry run suggests a second epoch when a small dataset gives too few training steps.
+- **`epochs`:** one pass by default. When a small dataset gives too few training steps, the dry run warns and suggests a smaller `batch_size` or more epochs.
 
 Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#sftrecipe). To see the exact tokens that get trained, run `grad render <dataset> --model qwen/qwen3-8b` (see [chat templates](/docs/training/tuning-troubleshooting/#chat-templates-and-loss-masks)).
 
@@ -171,7 +156,7 @@ Every other setting has a default; see the [training parameters reference](/docs
 
 Host the trained [`Artifact`](/docs/training/artifacts/) on Gradiated Cloud with `sft.deploy()` (or download the LoRA weights to run on your own vLLM / SGLang server; see [Deploying](/docs/training/deploying/)).
 
-Call it through the standard [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/). For structured JSON, SQL, or code edits, you can validate the output in a few lines of app code and retry on a larger model if syntax fails:
+Call it through the standard [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/). For structured JSON, SQL, or code edits, you can check the output in a few lines of app code and retry on a larger model if the check fails:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -179,7 +164,7 @@ Call it through the standard [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](
 ```python
 import os
 from openai import OpenAI
-from grad import Grad, validators
+from grad import Grad
 
 sft.deploy()
 
@@ -192,7 +177,10 @@ oai = OpenAI(
     base_url="https://api.gradiated.com/v1",
     api_key=os.environ["GRADIATED_API_KEY"],
 )
-check_ts = validators.TypeScriptAST()
+
+def check_ts(code: str) -> bool:
+    # A cheap syntax check; use your real parser or CI here
+    return all(code.count(a) == code.count(b) for a, b in ("{}", "()", "[]"))
 
 res = oai.chat.completions.create(
     model="your-org/fast-diff-merge",
@@ -220,7 +208,7 @@ Grad().feedback.record(
 
 ```ts
 import OpenAI from "openai";
-import { Grad, validators } from "@gradiated/grad";
+import { Grad } from "@gradiated/grad";
 
 await sft.deploy();
 
@@ -241,7 +229,11 @@ const oai = new OpenAI({
   baseURL: "https://api.gradiated.com/v1",
   apiKey: process.env.GRADIATED_API_KEY,
 });
-const checkTs = validators.typeScriptAST();
+// A cheap syntax check; use your real parser or CI here
+const checkTs = (code: string): boolean =>
+  ["{}", "()", "[]"].every(
+    ([a, b]) => code.split(a).length === code.split(b).length,
+  );
 
 let res = await oai.chat.completions.create({
   model: "your-org/fast-diff-merge",
@@ -273,7 +265,7 @@ await new Grad().feedback.record({
 ```bash
 grad artifacts download fast-diff-merge@latest --output ./fast-diff-merge
 
-vllm serve qwen/qwen3-8b \
+vllm serve Qwen/Qwen3-8B \
   --enable-lora \
   --lora-modules fast-diff-merge=./fast-diff-merge
 ```
@@ -290,7 +282,7 @@ vllm serve qwen/qwen3-8b \
 
 ## Want more control?
 
-Use [Custom loops](/docs/training/custom-loops/) if you want separate learning rates per layer (`optim.ParamGroup`), or merge two checkpoints without retraining in [Artifacts](/docs/training/artifacts/).
+Separate learning rates per layer (`optim.ParamGroup`) arrive in Wave 2 with [Custom loops](/docs/training/custom-loops/).
 
 <DocsNext>
   <a href="/docs/training/recipes/dpo/">

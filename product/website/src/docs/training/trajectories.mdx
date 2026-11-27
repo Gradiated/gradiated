@@ -73,7 +73,7 @@ grad datasets push support-sft ./train.jsonl
   </DocsCodeTab>
 </DocsCodeTabs>
 
-`client.datasets.push(name, ...)` creates the dataset if it doesn't exist and appends otherwise. It accepts a list of dicts, a list of `Trajectory` objects, or a path to a `.jsonl` file. The format is detected automatically, so OpenAI chat fine-tuning files and `grad.trajectory/1` exports both work. Each record can also carry these optional keys:
+`client.datasets.push(name, ...)` creates the dataset if it doesn't exist and appends otherwise. It accepts a list of dicts, a list of `Trajectory` objects, or a path to a `.jsonl`, `.json` or `.parquet` file. The format is detected automatically, so OpenAI chat fine-tuning files and `grad.trajectory/1` exports both work. Each record can also carry these optional keys:
 
 - **`"tools"`:** the tool definitions available in that conversation, in OpenAI function format. Assistant `tool_calls` and `tool` messages train as you'd expect.
 - **`"session_id"`:** groups records from the same conversation so they always land on the same side of the train/eval split. One is generated per record if you leave it out.
@@ -96,12 +96,12 @@ print(chats.count())
 
 For other layouts, map columns onto the fields a recipe needs:
 
-| Training data                             | Column mapping                                          |
-| ----------------------------------------- | ------------------------------------------------------- |
-| **Chat (SFT)**                            | `messages="messages"` (the default)                     |
-| **Prompt and completion (SFT)**           | `prompt="question", completion="answer"`                |
-| **Preferences (DPO, reward models)**      | `prompt="prompt", chosen="chosen", rejected="rejected"` |
-| **Tasks with a known answer (RL, evals)** | `prompt="question", answer="answer"`                    |
+| Training data                         | Column mapping                                          |
+| ------------------------------------- | ------------------------------------------------------- |
+| **Chat (SFT)**                        | `messages="messages"` (the default)                     |
+| **Prompt and completion (SFT)**       | `prompt="question", completion="answer"`                |
+| **Preferences (DPO)**                 | `prompt="prompt", chosen="chosen", rejected="rejected"` |
+| **Tasks with a known answer (evals)** | `prompt="question", answer="answer"`                    |
 
 ```python
 math = client.datasets.from_hf(
@@ -124,7 +124,7 @@ The import runs on Gradiated's servers, so nothing is downloaded to your machine
 
 ## Push trajectories with metadata
 
-When you need more than messages, such as a target that isn't the last turn, per-record scores, or cost data for a [router](/docs/training/recipes/router/), push `Trajectory` objects. `Trajectory.from_messages(...)` builds one from plain messages, splitting off the last assistant turn as `expected_output`:
+When you need more than messages, such as a target that isn't the last turn, per-record scores, or cost data for a [router](/docs/training/recipes/router/), push `Trajectory` objects. `Trajectory.from_messages(...)` builds one from plain messages, and the last assistant turn stays the training target:
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -187,12 +187,11 @@ _, _ = client.Datasets.Push(ctx, "diff-merge-gold", []grad.Trajectory{traj})
   <DocsCodeTab label="cURL">
 
 ```bash
-curl https://api.gradiated.com/v1/trajectories \
+curl https://api.gradiated.com/v1/datasets/diff-merge-gold/records \
   -H "Authorization: Bearer $GRADIATED_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "dataset": "diff-merge-gold",
-    "trajectories": [{
+    "records": [{
       "session_id": "pr_481",
       "messages": [
         {"role": "user", "content": "Merge these two diffs into one patch."},
@@ -208,7 +207,7 @@ curl https://api.gradiated.com/v1/trajectories \
 
 ## Import from files
 
-Upload Parquet or JSONL exports into a `Dataset`. Gradiated detects common formats (OpenAI chat JSONL, `grad.trajectory/1`, OpenTelemetry, Langfuse, Braintrust, etc.) and maps messages, tool calls, token counts, costs, and scores automatically. Pass `--format` only if you want to pick a parser yourself.
+Upload JSONL, JSON or Parquet exports into a `Dataset`. Gradiated detects common formats (OpenAI chat JSONL, `grad.trajectory/1`, OpenTelemetry, Langfuse, Braintrust, etc.) and maps messages, tool calls, token counts, costs, and scores automatically. Pass `--format` only if you want to pick a parser yourself.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -258,60 +257,13 @@ grad import ./traces.parquet --format otel --dataset support-prod --json
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="cURL">
-
-```bash
-curl https://api.gradiated.com/v1/trajectories/imports \
-  -H "Authorization: Bearer $GRADIATED_API_KEY" \
-  -F "dataset=support-prod" \
-  -F "file=@./traces.parquet"
-```
-
-  </DocsCodeTab>
 </DocsCodeTabs>
 
 The import result lists how many trajectories were parsed, how many were dropped, and every `scores` key detected in the file so you can check target coverage before training.
 
-## Score and filter datasets
+## Filter datasets
 
-Filter a `Dataset` by field to get a new view of it. Field filters run on the server, so nothing is downloaded and no trajectories are copied:
-
-```python
-from grad import Grad
-
-client = Grad()
-dataset = client.datasets.get("support-prod")
-
-recent_good = dataset.filter(scores={"resolved": ">=0.8"}, created_after="2026-11-01")
-print(recent_good.count())
-```
-
-If you want to filter by something a human or LLM needs to judge (like "did the assistant answer accurately?"), score the dataset once with a [`Judge`](/docs/training/rubrics/). A `Judge` can use a catalog model with a prompt or a fine-tuned [reward model](/docs/training/recipes/reward-models/) [`Artifact`](/docs/training/artifacts/). `dataset.score(...)` runs in batches on the server, skips rows that already have a score, and saves results to `trajectory.scores` so you can tweak thresholds or reuse them across runs for free:
-
-```python
-from grad import Grad, Judge
-
-client = Grad()
-dataset = client.datasets.get("support-prod")
-
-# Score once (batched server-side, persisted into `trajectory.scores["resolved"]`)
-judge = Judge(
-    name="resolved",
-    model="{{SONNET_MODEL}}",
-    prompt="Did the assistant accurately resolve the user's request without hallucinating?",
-)
-scored = dataset.score(judge).wait()
-
-# Filter on the stored score (server-side, $0 to re-run with a new threshold)
-passing = scored.filter(scores={"resolved": ">=0.8"})
-print(passing.count())
-```
-
-For logic a field filter can't express, pass any Python function `(Trajectory) -> bool`. The SDK streams the dataset to your machine, runs the function there once, and saves the selected IDs as a server-side view. Training on the view still copies nothing, and it doesn't need your machine afterwards:
-
-```python
-short_chats = scored.filter(lambda t: len(t.input.messages) <= 6)
-```
+Server-side scoring and filtering (`dataset.score(judge)` and `dataset.filter(...)`) arrives in Wave 2. Until then, filter records before you push them, or read a dataset with `client.datasets.records(name)`, keep the records you want, and push them to a new dataset. To score outputs with a [`Judge`](/docs/training/rubrics/), run an [evaluation](/docs/training/evaluations/).
 
 ## Sync from observability providers
 
@@ -394,24 +346,17 @@ grad sources sync src_01J9X
 
 ### Supported providers
 
-| Provider                      | `--format` / `provider` | File imports                                | Incremental sync        |
-| ----------------------------- | ----------------------- | ------------------------------------------- | ----------------------- |
-| OpenAI chat fine-tuning       | `openai_chat`           | JSONL                                       | `dataset.push()`        |
-| Hugging Face Hub              | `hf`                    | Any Hub dataset (`client.datasets.from_hf`) | Re-import by revision   |
-| Gradiated Native              | `gradiated`             | JSONL, `.jsonl.zst`                         | Automatic / S3 cursor   |
-| Native schema                 | `grad_trajectories`     | JSONL, Parquet                              | `dataset.push()`        |
-| OpenTelemetry / OpenInference | `otel`                  | OTLP JSONL, Parquet                         | OTLP collector          |
-| PostHog                       | `posthog`               | Batch Parquet, CSV, JSON                    | HogQL API               |
-| Langfuse                      | `langfuse`              | S3 Parquet, JSONL, CSV                      | Traces + Scores API     |
-| Braintrust                    | `braintrust`            | BTQL JSONL, CSV                             | BTQL cursor             |
-| LangSmith                     | `langsmith`             | Bulk Parquet                                | Runs + Feedback API     |
-| Arize Phoenix                 | `phoenix`               | Parquet, JSONL                              | Spans + Annotations API |
-| Datadog LLMObs                | `datadog`               | Span archive                                | Events Search API       |
-| W&B Weave                     | `weave`                 | Parquet, JSONL                              | Calls + Feedback API    |
-| Comet Opik                    | `opik`                  | JSON, CSV                                   | Traces API              |
-| Pydantic Logfire              | `logfire`               | Arrow, Parquet                              | SQL Query API           |
-| Laminar                       | `laminar`               | SQL export                                  | Query API               |
-| Helicone                      | `helicone`              | JSONL, CSV                                  | Query API               |
+| Provider                      | `--format` / `provider`   | File imports         | Incremental sync      |
+| ----------------------------- | ------------------------- | -------------------- | --------------------- |
+| OpenAI chat fine-tuning       | `openai_chat`             | JSONL, JSON, Parquet | `dataset.push()`      |
+| Hugging Face Hub              | `client.datasets.from_hf` | Any Hub dataset      | Re-import by revision |
+| Gradiated Native              | `gradiated`               | JSONL, JSON, Parquet | Automatic / S3 cursor |
+| Native schema                 | `grad_trajectories`       | JSONL, JSON, Parquet | `dataset.push()`      |
+| OpenTelemetry / OpenInference | `otel`                    | JSONL, JSON, Parquet | OTLP collector        |
+| PostHog                       | `posthog`                 | JSONL, JSON, Parquet | HogQL API             |
+| Langfuse                      | `langfuse`                | JSONL, JSON, Parquet | Traces + Scores API   |
+| Braintrust                    | `braintrust`              | JSONL, JSON, Parquet | BTQL cursor           |
+| LangSmith                     | `langsmith`               | JSONL, JSON, Parquet | Runs + Feedback API   |
 
 ## What to include in your data
 
@@ -423,10 +368,7 @@ Every record needs `messages` (or `input.messages`). Beyond that, include only t
 | **Decision model (`DecisionModelRecipe`)** | `expected_output` (the target label)                                                                                                       |
 | **Model router (`RouterRecipe`)**          | Optional `metadata.model`, `scores`, and `metrics.cost_usd` (or pass a `Judge` and `models=` to score and compare automatically)           |
 | **Preference alignment (`DPORecipe`)**     | `chosen` and `rejected` completions for the same prompt, or paired records sharing a `group_id` with `role="chosen"` and `role="rejected"` |
-| **RL (`GRPORecipe`)**                      | Just the prompt, plus `answer` if your rubric checks against a known answer                                                                |
 | **Multi-turn conversations**               | `session_id` so turns from the same conversation stay together across train and eval splits                                                |
-
-Once a dataset is rendered for a base model, each trajectory exposes `traj.token_ids` and `traj.loss_mask`, which your [rubrics](/docs/training/rubrics/) and [custom loops](/docs/training/custom-loops/) can read.
 
 Need images, audio, tools, or the full JSON field list? See the [Primitives reference](/docs/reference/primitives/).
 

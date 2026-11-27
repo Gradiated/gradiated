@@ -90,30 +90,41 @@ grad deploy docs-embedder@latest
 
 - **Use `EmbeddingRecipe`** when you search or retrieve across thousands or millions of documents (RAG, code search, semantic deduplication) and general-purpose embeddings miss your domain terms.
 - **Use a [Decision model](/docs/training/recipes/decision-model/)** when you want a direct answer (a category, yes/no probability, or score) rather than nearest-neighbor search.
-- **Use [Context Cartridges](/docs/training/recipes/cartridges/)** when your docs fit in up to ~500k tokens and are mostly static, so you can skip retrieval and bake them straight into a small KV prefix.
+- **Use [Context Cartridges](/docs/training/recipes/cartridges/)** when your docs fit in the model's context window and are mostly static, so you can skip retrieval and bake them straight into a small KV prefix.
 
 ### Parameters you might change
 
 - **`loss=losses.InfoNCE(temp=...)`:** pulls matching `(query, positive)` pairs together and pushes `negatives` apart. `temp` is `0.05` by default; lower it (to `0.03`) to sharpen rankings when wrong docs are very similar to the right one.
-- **`model`:** leave it out to use the recipe-managed encoder, `baai/bge-small-en-v1.5` (sub-10 ms inference). `grad models list --training` shows any other encoders available to your workspace.
+- **`pool`:** `pooling.Mean()` (the default) averages the token vectors; `pooling.CLS()` uses the first token's vector.
+- **`model`:** leave it out to use the recipe-managed encoder, `baai/bge-small-en-v1.5` (sub-10 ms inference). `grad models list --recipe embedding` shows any other encoders your server offers.
 
 The recipe trains every weight of the encoder (they're small enough that this beats LoRA), and `run.artifact` is the checkpoint with the best held-out top-10 hit rate. Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#embeddingrecipe).
 
-## Embed offline or deploy
+## Deploy or download
 
-Extract normalized embeddings directly from the exported [`Artifact`](/docs/training/artifacts/), [deploy](/docs/training/deploying/) it on Gradiated Cloud (callable via `openai.embeddings.create(model="your-org/docs-embedder", ...)`), or download the weights for your own serving stack:
+[Deploy](/docs/training/deploying/) the trained [`Artifact`](/docs/training/artifacts/) on Gradiated Cloud and embed with `client.embeddings.create(...)` (or `openai.embeddings.create(model="your-org/docs-embedder", ...)`). Vectors are L2-normalized and use the trained pooling:
 
 ```python
-from grad import Record
+from grad import Grad
 
-vectors = run.artifact.embed([Record(text="rotate api keys")]).embeddings  # uses the trained pooling
+client = Grad()
+client.deploy("docs-embedder@latest")
 
-run.deploy()
+vectors = client.embeddings.create(model="docs-embedder", input=["rotate api keys"]).embeddings
+```
+
+To serve it yourself, download it. The artifact is a standard transformers model directory with sentence-transformers pooling files, so `SentenceTransformer("./docs-embedder")` loads it:
+
+```python
+from grad import Grad
+
+client = Grad()
+client.artifacts.download("docs-embedder@latest", "./docs-embedder", format="files")
 ```
 
 ## Want more control?
 
-Need custom loss functions, embeddings you can truncate to smaller sizes to save storage, or a reranker that scores query/doc pairs directly? See [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
+Custom loss functions, embeddings you can truncate to smaller sizes, and rerankers that score query/doc pairs directly arrive in Wave 2 with [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
 
 <DocsNext>
   <a href="/docs/training/custom-loops/">

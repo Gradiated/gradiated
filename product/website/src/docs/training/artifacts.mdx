@@ -9,27 +9,23 @@ An **`Artifact`** is a saved, versioned model produced by a training run (`fast-
 
 ## Inspect and test an artifact
 
-Load any saved artifact with `client.artifacts.get(...)` (or use `run.artifact` straight from a finished run). Check its held-out `eval_report` or score a batch of examples offline before deploying:
+Load any saved artifact with `client.artifacts.get(...)` (or use `run.artifact` straight from a finished run) and check its held-out `eval_report` before deploying. To compare it with other models on your own examples, pass it to an [evaluation](/docs/training/evaluations/):
 
 ```python
-from grad import Grad, Record
+from grad import Grad
 
 client = Grad()
 art = client.artifacts.get("fast-diff-merge@2026-11-26-1")
 
+print(art.base_model, art.recipe_kind)
 print(art.eval_report)
-
-preds = art.infer_batch([
-    Record(messages=[{"role": "user", "content": "Merge these two diffs into one patch: ..."}]),
-])
-print(preds[0].text)
 ```
 
-You can pass any trained `Artifact` anywhere a model name is accepted:
+You can pass a trained `Artifact` in place of a model name:
 
-- **Start the next training stage:** `DPORecipe(model=sft.artifact, ...)` or `GRPORecipe(model=sft.artifact, ...)`.
-- **Use as a judge:** `Judge(name="sql_ok", model=reward_model_artifact)`.
-- **Use as a distillation teacher:** `DistillRecipe(model="qwen/qwen3-4b", teacher=teacher_artifact)`.
+- **Continue training:** `DPORecipe(model=sft.artifact, ...)` or `SFTRecipe(model=sft.artifact, ...)` (from SFT and DPO LoRA artifacts).
+- **Evaluate it:** `client.evals.create(models=[art, "qwen/qwen3-8b"], dataset=..., rubric=...)`.
+- **Use as a judge:** `Judge(name="sql_ok", model=art, prompt="Is this SQL correct?")`.
 
 ## Which checkpoint becomes the artifact
 
@@ -89,24 +85,6 @@ grad deploy fast-diff-merge@2026-11-26-1
 </DocsCodeTabs>
 
 See [Deploying](/docs/training/deploying/) for updates, rollbacks, calling deployed models with the OpenAI / Anthropic / SystemOne SDKs, and self-hosting details.
-
-## Merge artifacts without retraining
-
-Combine two models trained from the same base (for example, a coding model and a reasoning model) into a single new `Artifact` with `client.artifacts.merge()`. Supported merge methods are `mergers.TIES`, `mergers.Linear`, `mergers.DARE`, and `mergers.SLERP`:
-
-```python
-from grad import Grad, mergers
-
-client = Grad()
-coder = client.artifacts.get("coder@v4")
-reasoner = client.artifacts.get("reasoner@v2")
-
-merged = client.artifacts.merge(
-    name="assistant-merged",
-    artifacts=[(coder, 0.6), (reasoner, 0.4)],
-    merger=mergers.TIES(density=0.5),
-)
-```
 
 <DocsNext>
   <a href="/docs/training/deploying/">

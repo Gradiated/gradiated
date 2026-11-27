@@ -85,7 +85,7 @@ In practice you'll usually run DPO on a model you've already fine-tuned with SFT
 
 ## Train with `DPORecipe`
 
-Pass an existing SFT [`Artifact`](/docs/training/artifacts/) directly as `model=`, or chain `SFTRecipe` into `DPORecipe` with `.then(...)` so DPO starts automatically when SFT finishes:
+Pass an existing SFT [`Artifact`](/docs/training/artifacts/) as `model=`, or run SFT first, wait for it, and pass `sft.artifact`:
 
 <DocsCodeTabs action={<DocsApiKeyAction />}>
   <DocsCodeTab label="From an SFT artifact">
@@ -95,7 +95,7 @@ from grad import Grad
 from grad.recipes import DPORecipe
 
 client = Grad()
-sft_art = client.artifacts.get("fast-diff-merge@sft-v1")
+sft_art = client.artifacts.get("fast-diff-merge@latest")
 prefs = client.datasets.get("diff-merge-preferences")
 
 dpo = client.runs.create(
@@ -108,25 +108,26 @@ print(dpo.artifact.id, dpo.eval_report)
 ```
 
   </DocsCodeTab>
-  <DocsCodeTab label="Chain SFT → DPO (.then)">
+  <DocsCodeTab label="SFT, then DPO">
 
 ```python
 from grad import Grad
 from grad.recipes import DPORecipe, SFTRecipe
 
 client = Grad()
-sft_ds = client.datasets.get("diff-merge-prod").filter(scores={"tests_passed": "==1.0"})
-prefs_ds = client.datasets.get("diff-merge-preferences")
 
-dpo = (
-    client.runs.create(
-        dataset=sft_ds,
-        name="fast-diff-merge",
-        recipe=SFTRecipe(model="qwen/qwen3-8b"),
-    )
-    .then(dataset=prefs_ds, recipe=DPORecipe())  # starts from the SFT result
-    .wait()
-)
+sft = client.runs.create(
+    dataset=client.datasets.get("diff-merge-gold"),
+    name="fast-diff-merge",
+    recipe=SFTRecipe(model="qwen/qwen3-8b"),
+).wait()
+print(sft.eval_report)  # check SFT before continuing
+
+dpo = client.runs.create(
+    dataset=client.datasets.get("diff-merge-preferences"),
+    name="fast-diff-merge",
+    recipe=DPORecipe(model=sft.artifact),
+).wait()
 ```
 
   </DocsCodeTab>
@@ -136,7 +137,7 @@ dpo = (
 import { Grad, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
-const sftArt = await grad.artifacts.get("fast-diff-merge@sft-v1");
+const sftArt = await grad.artifacts.get("fast-diff-merge@latest");
 const prefs = await grad.datasets.get("diff-merge-preferences");
 
 const dpo = await grad.runs
@@ -151,20 +152,27 @@ console.log(dpo.artifact.id, dpo.evalReport);
 ```
 
   </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad train --dataset diff-merge-preferences --name fast-diff-merge --recipe dpo --model fast-diff-merge@latest --wait
+```
+
+  </DocsCodeTab>
 </DocsCodeTabs>
 
 ### When to use SFT vs. DPO vs. RL
 
 - **Start with [SFT](/docs/training/recipes/sft/)** when the model doesn't follow your format, schema, or style yet and you have examples of good answers.
 - **Follow with DPO (`DPORecipe`)** when the model mostly works but keeps repeating specific mistakes you can show as `(chosen, rejected)` pairs.
-- **Move to [RL (`GRPORecipe`)](/docs/training/recipes/rl-agents/)** when you can grade answers automatically with tests, validators, or a judge and want the model to discover better solutions on its own.
+- **Move to [RL (`GRPORecipe`)](/docs/training/recipes/rl-agents/)**, which arrives in Wave 2, when you can grade answers automatically with tests, validators, or a judge and want the model to discover better solutions on its own.
 
 ### Parameters you might change
 
 - **`loss=losses.DPO(beta=...)`:** `beta` is `0.1` by default. Higher (`0.2`–`0.5`) stays closer to your starting model; lower (`0.05`) pushes harder away from rejected patterns.
 - **`lr_scale`:** DPO's learning rate is set automatically and is much lower than SFT's. If held-out preference accuracy climbs fast but your format breaks, pass `lr_scale=0.5`.
 
-When `model=` is an SFT artifact, DPO keeps training that same adapter, and the starting checkpoint is the reference model, so you never load one yourself. Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#dporecipe).
+When `model=` is an SFT artifact, DPO keeps training that same LoRA adapter (same rank and alpha), and the starting checkpoint is the reference model, so you never load one yourself. The artifact must be a PEFT LoRA adapter, not a merged export. Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#dporecipe).
 
 ## Deploy
 
@@ -176,7 +184,7 @@ dpo.deploy()
 
 ## Want more control?
 
-You can swap `losses.DPO()` for your own PyTorch `losses.CustomLoss` (like SimPO, ORPO, or KTO) right inside `DPORecipe`. See [Custom loops](/docs/training/custom-loops/) and [Advanced objectives](/docs/training/advanced-objectives/).
+Custom PyTorch losses (`losses.CustomLoss`, like SimPO, ORPO, or KTO) arrive in Wave 2 with [Custom loops](/docs/training/custom-loops/) and [Advanced objectives](/docs/training/advanced-objectives/).
 
 <DocsNext>
   <a href="/docs/training/recipes/rl-agents/">

@@ -5,35 +5,28 @@
   token-based training billing works.
 </DocsLead>
 
-Pass any model ID as a plain lowercase string (such as `"qwen/qwen3-8b"`) to a [`Recipe`](/docs/training/recipes/) or [`Trainer`](/docs/training/custom-loops/). You can also pass a previously trained `.grad` [`Artifact`](/docs/training/artifacts/) to continue training from an earlier stage (for example, `SFT -> DPO` or `SFT -> GRPO`).
+Pass any model ID as a plain lowercase string (such as `"qwen/qwen3-8b"`) to a [`Recipe`](/docs/training/recipes/). You can also pass an SFT or DPO [`Artifact`](/docs/training/artifacts/) to `SFTRecipe` or `DPORecipe` to continue training from an earlier stage (for example, `SFT -> DPO`).
 
 ## Trainable base models
 
-These tables mirror the live catalog. `grad models list --training` is the source of truth, so check it if anything here looks out of date.
+These tables mirror the live catalog. `grad models list` is the source of truth, so check it if anything here looks out of date.
 
 | Model ID          | Best for                                                           | Adapters        | Notes                                                                    |
 | ----------------- | ------------------------------------------------------------------ | --------------- | ------------------------------------------------------------------------ |
 | `qwen/qwen3-0.6b` | Model routers, fast classifiers, latency-critical SFT              | LoRA            | Default backbone for `RouterRecipe`; sub-15 ms routing.                  |
 | `qwen/qwen3-1.7b` | Lightweight extraction, formatting, high-volume structured outputs | LoRA            | Good balance of speed and instruction following.                         |
-| `qwen/qwen3-4b`   | Fast distilled assistants, narrow coding and SQL helpers           | LoRA, Cartridge | Common student target for `DistillRecipe`.                               |
-| `qwen/qwen3-8b`   | General SFT, DPO, RL agents, reward models, Cartridges             | LoRA, Cartridge | Default for every recipe except routers, decision models and embeddings. |
+| `qwen/qwen3-4b`   | Fast assistants, narrow coding and SQL helpers                     | LoRA, Cartridge | Smallest model that supports Cartridges.                                 |
+| `qwen/qwen3-8b`   | General SFT, DPO and Cartridges                                    | LoRA, Cartridge | Default for every recipe except routers, decision models and embeddings. |
 | `qwen/qwen3-14b`  | Harder reasoning, multi-step tool use, domain synthesis            | LoRA, Cartridge | Strong step up when 8B plateaus on complex logic.                        |
-| `qwen/qwen3-32b`  | High-accuracy RL, distillation teacher, complex coding agents      | LoRA, Cartridge | Also widely used as an open teacher for `DistillRecipe`.                 |
+| `qwen/qwen3-32b`  | High-accuracy SFT and DPO, complex coding agents                   | LoRA, Cartridge | Largest base model in the catalog.                                       |
 
 All Qwen3 models are hybrid thinking models. Recipes render their chat template with `thinking="auto"` by default; see [Chat templates and loss masks](/docs/training/tuning-troubleshooting/#chat-templates-and-loss-masks).
 
-### Preview models
-
-These have training support built but aren't open to every workspace yet. Ask for access from the console or your Gradiated contact. `grad models list --training` shows them once your workspace is enabled. Until a preview model's learning rate has been calibrated, pass an explicit `lr=` (see [What `"auto"` assumes](/docs/training/tuning-troubleshooting/#what-auto-assumes)).
-
-| Model ID                            | Best for                                                      | Adapters | Current limits                                                                                                                                                                         |
-| ----------------------------------- | ------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `z-ai/glm-5.3-flash`                | Multimodal (image + text) fine-tuning and UI/document agents  | LoRA     | Training sequences are capped at 512 tokens for now, so it suits short classification, extraction and image-question tasks, not long agent traces. Takes `MediaRef.image(...)` inputs. |
-| `deepseek/deepseek-v4.1-flash-1017` | High-throughput coding, reasoning, and tool-use post-training | LoRA     | LoRA only.                                                                                                                                                                             |
+Multimodal (image + text) fine-tuning and DeepSeek MoE training arrive in Wave 2.
 
 ### Recipe-managed backbones
 
-Some recipes pick their own backbone, so you don't pass these as `model=` to `SFTRecipe` or `GRPORecipe`:
+Some recipes pick their own backbone, so you don't pass these as `model=` to `SFTRecipe` or `DPORecipe`:
 
 | Model ID                 | Used by               | Notes                                                                            |
 | ------------------------ | --------------------- | -------------------------------------------------------------------------------- |
@@ -45,41 +38,42 @@ Some recipes pick their own backbone, so you don't pass these as `model=` to `SF
 Check the exact list of trainable models and their context limits at any time via the CLI or API:
 
 ```bash
-grad models list --training
+grad models list
+grad models list --recipe sft
 ```
 
-Or fetch `GET https://api.gradiated.com/v1/models` and filter for entries whose `properties.supported_uses` includes `"training"`. See [Models and pricing](/docs/models-pricing/) for the live catalog table and serving rates.
+Or fetch `GET https://api.gradiated.com/v1/models`: each entry lists its `recipes`, `adapters`, `max_context_tokens` and `price_per_million_tokens_usd`. See [Models and pricing](/docs/models-pricing/) for the live catalog table and serving rates.
 
 <DocsCallout label="Self-hosting custom Hugging Face checkpoints" tone="tip">
   When [self-hosting](/docs/training/self-hosting/) `grad` in your own VPC, you
-  can train any compatible Hugging Face model stored in your internal
-  `models.mirrorUri` bucket, including internal pretrained checkpoints or
-  domain-specific encoders.
+  can register other compatible Hugging Face models, including internal
+  pretrained checkpoints, with the API server's `GRAD_EXTRA_MODELS_JSON`
+  setting, and trainers load their weights from your `models.mirrorUri` bucket.
 </DocsCallout>
 
 ## Model retirement
 
 Base models get replaced as better open models ship. When we retire one, you get at least 90 days' notice, and nothing you trained stops working without warning:
 
-- **Notice:** the retirement date and a named replacement are announced in the changelog and by email, and `runs.plan()` and `grad models list` show them from the day of the announcement.
-- **New runs:** you can start runs on a retiring model until its retirement date. After that, `runs.plan()` fails and names the replacement.
+- **Notice:** the retirement date and a named replacement are announced in the changelog and by email.
+- **New runs:** you can start runs on a retiring model until its retirement date. After that, `runs.plan()` rejects the model.
 - **Your artifacts:** trained weights stay downloadable as PEFT adapters for as long as you keep them, so you can always serve them yourself with vLLM or SGLang.
 - **Your deployments:** hosted deployments of artifacts on a retiring base keep serving until the retirement date. Retrain on the replacement with the same recipe and data, then [deploy the new artifact](/docs/training/deploying/).
-- **Recipe defaults:** when you leave out `model=`, the run uses the current default, and the dry run says which one. If the default changed since the last run with the same `name`, the plan warns you. Export the config with `grad runs inspect <run> --yaml` to pin the exact model.
+- **Recipe defaults:** when you leave out `model=`, the run uses the current default, and the dry run says which one. Export the config with `grad runs inspect <run> --yaml` to pin the exact model.
 
 ## Judge and comparison models
 
-[`Judge`](/docs/training/rubrics/) and [`Evaluations`](/docs/training/evaluations/) can call any frontier or open model in the catalog (such as `"{{SONNET_MODEL}}"`, `"{{OPUS_MODEL}}"`, `"{{GPT_MODEL}}"`, or `"qwen/qwen3-32b"`), or any fine-tuned [reward model](/docs/training/recipes/reward-models/) `Artifact` you trained yourself.
+[`Judge`](/docs/training/rubrics/) and [`Evaluations`](/docs/training/evaluations/) can call any frontier or open model in the catalog (such as `"{{SONNET_MODEL}}"`, `"{{OPUS_MODEL}}"`, `"{{GPT_MODEL}}"`, or `"qwen/qwen3-32b"`), or a chat model `Artifact` you fine-tuned yourself.
 
 ## How training billing works
 
 Training on Gradiated Cloud uses the same token-metered model as inference:
 
-- **Training & sampling tokens:** billed **per million tokens processed** across forward/backward passes, RL/distillation rollouts, and logprob scoring, so you don't pay for idle GPU time.
-- **Weight & checkpoint storage:** billed for saved `.grad` artifacts and checkpoints (automatic recipe checkpoints and `save_state()` checkpoints) retained in your workspace.
+- **Training & sampling tokens:** billed **per million tokens processed** across forward/backward passes, teacher sampling and logprob scoring, so you don't pay for idle GPU time.
+- **Weight & checkpoint storage:** billed for saved `.grad` artifacts and checkpoints retained in your workspace.
 - **Zero-cost pre-flight estimate:** run `grad train --dry-run` or `client.runs.plan(...)` before launching any managed recipe to see `estimated_tokens` and `estimated_cost_usd` at `$0`.
-- **Spend cap:** pass `max_cost_usd=` on any run; it stops cleanly and saves a checkpoint when the cap is reached.
-- **Checkpoint retention:** the best and final checkpoints of every run are kept until you delete them; other checkpoints expire after 30 days.
+- **Spend cap:** pass `max_cost_usd=` on any run; it stops cleanly with status `stopped_budget` and saves a checkpoint when the cap is reached.
+- **Checkpoint retention:** the best and final checkpoints of every run never expire; other checkpoints expire after 30 days unless you promote them.
 
 ```bash
 grad train --dataset support-prod --name support-sft --recipe sft --dry-run

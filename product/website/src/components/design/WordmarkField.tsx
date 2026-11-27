@@ -70,12 +70,16 @@ const BITMAP = WORDMARK_CHIPS.map((row) =>
  *  to within 3%: every chip and every gap identical. Otherwise (1x screens,
  *  phones) the step is exact and fractional, and the engine snaps each chip
  *  onto whole pixels at one size, so only a gap moves, by one device pixel.
- *  Whole steps alone left the mark 15% short of the footer at 1024. */
+ *  Whole steps alone left the mark 15% short of the footer at 1024.
+ *
+ *  Never wider than the host: below 3 device pixels a step (a narrow window
+ *  on a 1x screen) the chips go down to a pixel rather than the grid
+ *  overflowing the footer, since the column count no longer gives way. */
 const chipGeometry = (width: number, ratio: number) => {
   const exact = (width * ratio) / CHIP_COLS;
-  const whole = Math.max(3, Math.floor(exact));
-  const step = whole >= exact * 0.97 ? whole : Math.max(3, exact);
-  const chip = Math.max(2, Math.round((step * 2) / 3));
+  const whole = Math.floor(exact);
+  const step = whole >= 3 && whole >= exact * 0.97 ? whole : exact;
+  const chip = Math.min(step, Math.max(1, Math.round((step * 2) / 3)));
   return { chipSize: chip / ratio, gap: (step - chip) / ratio };
 };
 

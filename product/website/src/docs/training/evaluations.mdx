@@ -145,50 +145,66 @@ Use `samples=1` and `temperature=0` for a quick deterministic check. For decisio
 
 `client.evals.plan(...)` (or `grad eval plan`) takes the same arguments and returns the task count, model and judge calls, and `estimated_cost_usd` for $0. Evals are billed for their model and judge calls, and `ev.total_cost_usd` shows the final cost.
 
-## Check for regressions on a public benchmark
+## Check for regressions with standard benchmarks
 
-Fine-tuning on a narrow task can cost general ability, such as instruction following or math. To catch it, import a public benchmark as a dataset with [`datasets.from_hf`](/docs/training/trajectories/) and evaluate on it alongside your own tasks. This example checks grade-school math on the first 200 GSM8K test problems, with a local scorer that compares the final number:
+Fine-tuning on a narrow task can cost general ability, such as math or broad knowledge. Run standard benchmarks alongside your own tasks to catch it. `client.datasets.from_benchmark(...)` imports one as a dataset from Hugging Face at a pinned revision, with fixed prompts and an answer check, so results are comparable across runs:
+
+| Benchmark         | Measures                                                   | Answer check                    |
+| ----------------- | ---------------------------------------------------------- | ------------------------------- |
+| `"gsm8k"`         | Grade-school math word problems (1,319 test problems)      | The final number matches        |
+| `"mmlu"`          | Broad knowledge across 57 subjects (14,042 questions)      | The chosen letter matches (A–D) |
+| `"mmlu_pro"`      | Harder knowledge and reasoning across 14 subjects (12,032) | The chosen letter matches (A–J) |
+| `"arc_challenge"` | Grade-school science questions (1,172)                     | The chosen letter matches       |
+
+An eval on a benchmark dataset without a `rubric=` uses the benchmark's own answer check, a server-side validator (`final_number` or `choice`):
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
 
 ```python
-import re
-
-from grad import Grad, Rubric, Scorer
+from grad import Grad
 
 client = Grad()
 
-gsm8k = client.datasets.from_hf(
-    "openai/gsm8k",
-    config="main",
-    split="test",
-    prompt="question",
-    completion="answer",
-    limit=200,
-    name="gsm8k-test-200",
-)
-
-
-def last_number(text):
-    numbers = re.findall(r"-?\d+(?:\.\d+)?", str(text or "").replace(",", ""))
-    return numbers[-1] if numbers else None
-
-
-def final_answer_matches(traj):
-    expected = last_number(traj.expected_output)
-    return expected is not None and last_number(traj.text) == expected
-
+gsm8k = client.datasets.from_benchmark("gsm8k", limit=200)
 
 ev = client.evals.create(
     name="sql-agent-regressions",
     models=["qwen/qwen3-8b", "sql-agent@latest"],
     dataset=gsm8k,
-    rubric=Rubric([Scorer("gsm8k_answer", fn=final_answer_matches)]),
     baseline="qwen/qwen3-8b",
 ).wait()
 
 print(ev.summary_table())
 ```
 
-Import the benchmark once and reuse the dataset, so every comparison scores the same pinned version. Built-in hosted benchmarks are coming soon.
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```typescript
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+const gsm8k = await grad.datasets.fromBenchmark("gsm8k", { limit: 200 });
+
+const ev = await grad.evals
+  .create({ name: "sql-agent-regressions", models: ["qwen/qwen3-8b", "sql-agent@latest"], dataset: gsm8k, baseline: "qwen/qwen3-8b" })
+  .wait();
+console.log(ev.summaryTable());
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad datasets import benchmark gsm8k --limit 200
+grad eval --models qwen/qwen3-8b,sql-agent@latest --dataset gsm8k-200 --baseline qwen/qwen3-8b --wait
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+`limit=` imports the first N problems of the pinned revision (the same ones every time), which is enough to spot a regression of a few points without paying for the full benchmark; the dataset is named `gsm8k-200` (or `gsm8k` without a limit, or `name=`). Import the benchmark once and reuse the dataset, so every comparison scores the same problems. For any other public benchmark, import it with [`datasets.from_hf`](/docs/training/trajectories/) and pass your own `rubric=`.
 
 ## Evaluate during training
 

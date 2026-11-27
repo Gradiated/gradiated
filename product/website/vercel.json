@@ -8,6 +8,15 @@
   "trailingSlash": true,
   "crons": [{ "path": "/api/roadmap-digest/", "schedule": "0 18 * * *" }],
   "redirects": [
+    { "source": "/rss.xml", "destination": "/feed.xml", "permanent": true },
+    { "source": "/atom.xml", "destination": "/feed.xml", "permanent": true },
+    { "source": "/feed", "destination": "/feed.xml", "permanent": true },
+    { "source": "/feed/", "destination": "/feed.xml", "permanent": true },
+    {
+      "source": "/library/feed.xml",
+      "destination": "/feed.xml",
+      "permanent": true
+    },
     { "source": "/hardware", "destination": "/", "permanent": true },
     { "source": "/hardware/", "destination": "/", "permanent": true },
     {

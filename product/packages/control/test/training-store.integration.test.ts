@@ -243,7 +243,7 @@ describe("training record store", () => {
       (await reads.listVersions(own.task.id)).map((version) => version.id),
     ).toEqual([versionId]);
     expect(
-      await reads.setProductionVersion(own.task.id, versionId),
+      await reads.setProductionVersion(own.task.id, versionId, "user:test"),
     ).toMatchObject({ productionVersionId: versionId });
   });
 });

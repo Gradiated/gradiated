@@ -98,6 +98,7 @@ describe("private adapter hosting", () => {
       version.trainingRunId,
       1024,
       sha256,
+      version.workspaceId,
     );
     expect(
       (await db.database.select().from(tasks).where(eq(tasks.id, task.id)))[0]!

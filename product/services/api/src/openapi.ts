@@ -106,6 +106,12 @@ export const unservedDependencies = (): AppDependencies => ({
         download: unserved("training.files.download"),
         remove: unserved("training.files.remove"),
       },
+      artifacts: {
+        publish: unserved("training.artifacts.publish"),
+        publishAsService: unserved("training.artifacts.publishAsService"),
+        deleteVersion: unserved("training.artifacts.deleteVersion"),
+        releasePendingPins: unserved("training.artifacts.releasePendingPins"),
+      },
       shares: {
         get: unserved("training.shares.get"),
         shared: unserved("training.shares.shared"),
@@ -122,6 +128,7 @@ export const unservedDependencies = (): AppDependencies => ({
       listRunEvents: unserved("training.listRunEvents"),
       listVersions: unserved("training.listVersions"),
       getVersion: unserved("training.getVersion"),
+      listProductionChanges: unserved("training.listProductionChanges"),
       evaluationResults: unserved("training.evaluationResults"),
       downloadAdapter: unserved("training.downloadAdapter"),
       adapterWeights: unserved("training.adapterWeights"),

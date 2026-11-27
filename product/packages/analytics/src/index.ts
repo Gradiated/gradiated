@@ -92,6 +92,11 @@ export const eventSchemas = {
     task_id: id,
     version_id: id,
   }),
+  task_version_published: z.strictObject({
+    ...workspace,
+    task_id: id,
+    version_id: id,
+  }),
 } as const;
 
 export type AnalyticsEvent = keyof typeof eventSchemas;

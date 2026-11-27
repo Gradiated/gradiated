@@ -201,9 +201,52 @@ export const taskVersions = pgTable(
       foreignColumns: [trainingRuns.id, trainingRuns.taskId],
     }).onDelete("cascade"),
     unique("task_versions_task_name_unique").on(table.taskId, table.name),
+    uniqueIndex("task_versions_task_artifact_unique")
+      .on(table.taskId, sql`(${table.adapter}->'source'->>'artifact_id')`)
+      .where(sql`${table.adapter} ? 'source'`),
     index("task_versions_task_created_index").on(table.taskId, table.createdAt),
   ],
 );
+
+export const taskProductionChanges = pgTable(
+  "task_production_changes",
+  {
+    id: uuid("id").primaryKey(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => tasks.id, { onDelete: "cascade" }),
+    fromVersionId: uuid("from_version_id").references(() => taskVersions.id, {
+      onDelete: "set null",
+    }),
+    toVersionId: uuid("to_version_id").references(() => taskVersions.id, {
+      onDelete: "set null",
+    }),
+    actor: text("actor").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    check(
+      "task_production_changes_actor_check",
+      sql`${table.actor} ~ '^(user|key|service):[A-Za-z0-9_-]{1,64}$'`,
+    ),
+    index("task_production_changes_task_created_index").on(
+      table.taskId,
+      table.createdAt,
+    ),
+  ],
+);
+
+// Pins of deleted versions that grad has not yet confirmed released.
+export const taskVersionPinReleases = pgTable("task_version_pin_releases", {
+  versionId: uuid("version_id").primaryKey(),
+  workspaceId: uuid("workspace_id").notNull(),
+  artifactId: text("artifact_id").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+    .defaultNow()
+    .notNull(),
+});
 
 export const modelUploads = pgTable("model_uploads", {
   id: uuid("id").primaryKey(),

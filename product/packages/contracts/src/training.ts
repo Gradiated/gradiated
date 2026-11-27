@@ -75,8 +75,35 @@ export const RunEvaluationSchema = z
   .openapi("RunEvaluation");
 export type RunEvaluation = z.infer<typeof RunEvaluationSchema>;
 
+export const GRAD_ARTIFACT_BUNDLE = "grad.artifact/1";
+export const DEPLOYABLE_ARTIFACT_FORMATS = ["peft_lora", "cartridge"] as const;
+export const PLANNED_ARTIFACT_FORMATS = [
+  "encoder_safetensors",
+  "router_bundle",
+  "decision_bundle",
+  "reward_bundle",
+] as const;
+export const ARTIFACT_SOURCES = ["run", "upload", "import"] as const;
+export const GradArtifactIdSchema = z
+  .string()
+  .regex(/^[a-z][a-z0-9]{0,15}_[A-Za-z0-9]{1,64}$/)
+  .describe("A grad artifact ID, such as art_3f9c0a1b2c3d4e5f60718293.");
+export const GradArtifactSourceSchema = z
+  .object({
+    kind: z.literal("grad"),
+    artifact_id: GradArtifactIdSchema,
+    artifact_source: z.enum(ARTIFACT_SOURCES),
+    bundle: z.literal(GRAD_ARTIFACT_BUNDLE),
+  })
+  .describe(
+    "The grad artifact this version serves. Its archive is the artifact's bundle, read in place.",
+  )
+  .openapi("GradArtifactSource");
+export type GradArtifactSource = z.infer<typeof GradArtifactSourceSchema>;
+
 const AdapterArtifactFields = {
   artifact_uri: z.string().startsWith("s3://"),
+  source: GradArtifactSourceSchema.optional(),
   sha256: Sha256Schema,
   size_bytes: CountSchema,
   base_model_revision: z
@@ -312,6 +339,19 @@ export const TaskVersionSchema = z
   .openapi("TaskVersion");
 export type TaskVersion = z.infer<typeof TaskVersionSchema>;
 
+export const PublishedTaskVersionSchema = TaskVersionSchema.extend({
+  qualification: z
+    .object({
+      outcome: z
+        .enum(["passed", "rejected", "pending"])
+        .describe(
+          "passed: the version loaded on serving capacity and is available. rejected: the runtime refused it. pending: no capacity could test it yet; promote retries.",
+        ),
+      detail: z.string().optional(),
+    })
+    .describe("The serving check run after publishing."),
+}).openapi("PublishedTaskVersion");
+
 export const TaskTrainingScheduleSchema = z
   .string()
   .trim()
@@ -388,6 +428,49 @@ export const VersionReferenceSchema = z
 export const PromoteVersionSchema = z
   .strictObject({ version_id: VersionReferenceSchema })
   .openapi("PromoteVersion");
+
+export const VersionNameSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(128)
+  .regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/);
+
+export const ArtifactReferenceSchema = z
+  .union([
+    GradArtifactIdSchema,
+    z
+      .string()
+      .regex(/^[a-z0-9][a-z0-9._-]{0,63}@[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/),
+  ])
+  .describe(
+    "The grad artifact to publish: its ID, or `name@version` within this workspace.",
+  );
+
+export const PublishTaskVersionSchema = z
+  .strictObject({
+    artifact: ArtifactReferenceSchema,
+    name: VersionNameSchema.optional().describe(
+      "Version name. Defaults to the artifact's version.",
+    ),
+  })
+  .openapi("PublishTaskVersion");
+export type PublishTaskVersion = z.infer<typeof PublishTaskVersionSchema>;
+
+export const ProductionChangeSchema = z
+  .object({
+    id: UuidSchema,
+    from_version_id: UuidSchema.nullable(),
+    to_version_id: UuidSchema.nullable(),
+    actor: z
+      .string()
+      .describe("Who moved the pointer: `user:<id>` or `key:<id>`."),
+    created_at: TimestampSchema,
+  })
+  .openapi("ProductionChange");
+export const ProductionChangeListSchema = z
+  .object({ data: z.array(ProductionChangeSchema) })
+  .openapi("ProductionChangeList");
 
 const WorkspacePathSchema = z.object({ workspace_id: UuidSchema });
 

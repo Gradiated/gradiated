@@ -221,6 +221,7 @@ describe("training service", () => {
       version.trainingRunId,
       version.adapter.size_bytes,
       version.adapter.sha256,
+      version.workspaceId,
     );
     sign.mockClear();
     await expect(

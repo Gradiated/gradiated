@@ -26,6 +26,9 @@ import type { AdapterQualifier, QualificationLock } from "./qualification.js";
 import { createTrainingRunStore } from "./run-store.js";
 import { createTrainingStore } from "./store.js";
 import type { TaskVersionRecord } from "./records.js";
+import { userActor } from "./production-changes.js";
+import type { GradArtifacts } from "./grad.js";
+import { createArtifactPublisher } from "./publish.js";
 import { TrainingAdmissionError, type TrainingEngine } from "./types.js";
 
 export type {
@@ -49,8 +52,18 @@ export const createTrainingService = (
   qualifyAdapter?: AdapterQualifier,
   lockQualification?: QualificationLock,
   reportShareSecret?: string,
+  artifacts: {
+    grad?: GradArtifacts;
+    bundles?: Pick<ObjectStorage, "stream" | "uri">;
+  } = {},
 ) => {
   const records = createTrainingStore(database);
+  const publisher = createArtifactPublisher({
+    database,
+    ...artifacts,
+    ...(qualifyAdapter ? { qualifyAdapter } : {}),
+    ...(lockQualification ? { lockQualification } : {}),
+  });
 
   const member = async (userId: string, workspaceId: string) => {
     const result = await requireWorkspaceMembership(database, {
@@ -119,11 +132,13 @@ export const createTrainingService = (
       version.trainingRunId ?? version.id,
       version.adapter.size_bytes,
       version.adapter.sha256,
+      version.workspaceId,
     );
   };
 
   return {
     uploads,
+    artifacts: publisher,
     files: createVersionFiles(database, uploadStorage),
     shares,
     async startRun(userId: string, workspaceId: string, taskId: string) {
@@ -356,6 +371,7 @@ export const createTrainingService = (
         version.trainingRunId ?? version.id,
         version.adapter.size_bytes,
         version.adapter.sha256,
+        version.workspaceId,
       );
     },
 
@@ -392,6 +408,17 @@ export const createTrainingService = (
       return { task, version: await findVersion(task.id, version) };
     },
 
+    async listProductionChanges(
+      userId: string,
+      workspaceId: string,
+      name: string,
+    ) {
+      await member(userId, workspaceId);
+      const task = await findTask(workspaceId, name);
+
+      return records.listProductionChanges(task.id);
+    },
+
     async promote(
       userId: string,
       workspaceId: string,
@@ -407,7 +434,11 @@ export const createTrainingService = (
         version.status === "available" &&
         version.adapter.format !== "cartridge"
       )
-        return records.setProductionVersion(task.id, version.id);
+        return records.setProductionVersion(
+          task.id,
+          version.id,
+          userActor(userId),
+        );
 
       if (!qualifyAdapter)
         throw new ControlServiceError(
@@ -427,10 +458,15 @@ export const createTrainingService = (
       let promoted: Awaited<ReturnType<typeof records.promoteQualifiedVersion>>;
       try {
         await qualifyAdapter(version);
-        promoted = await records.promoteQualifiedVersion(task.id, version.id, {
-          productionVersionId: task.productionVersionId,
-          updatedAt: task.updatedAt,
-        });
+        promoted = await records.promoteQualifiedVersion(
+          task.id,
+          version.id,
+          {
+            productionVersionId: task.productionVersionId,
+            updatedAt: task.updatedAt,
+          },
+          userActor(userId),
+        );
       } finally {
         await release().catch(() => undefined);
       }

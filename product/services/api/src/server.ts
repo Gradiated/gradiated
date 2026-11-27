@@ -28,6 +28,7 @@ import {
   createTraceService,
   createTrainingService,
   createAdapterDownloads,
+  createGradArtifacts,
   createAdapterHostingService,
   createAdapterQualifier,
   createDeploymentStore,
@@ -214,7 +215,18 @@ const trainingEngine = createTrainingEngine(process.env);
 const artifactStorage = environment.TRAINING_ARTIFACTS_BUCKET
   ? new ObjectStorage(environment.TRAINING_ARTIFACTS_BUCKET)
   : undefined;
-const adapterDownloads = createAdapterDownloads(artifactStorage);
+const gradBundles = environment.GRAD_ARTIFACTS_BUCKET
+  ? new ObjectStorage(environment.GRAD_ARTIFACTS_BUCKET)
+  : undefined;
+const gradServiceToken = environment.GRAD_SERVICE_TOKEN;
+const grad =
+  environment.GRAD_SERVER_URL && gradServiceToken
+    ? createGradArtifacts({
+        baseUrl: environment.GRAD_SERVER_URL,
+        authorization: async () => gradServiceToken,
+      })
+    : undefined;
+const adapterDownloads = createAdapterDownloads(artifactStorage, gradBundles);
 
 const deploymentStore = createDeploymentStore(database);
 const qualifyAdapter = createAdapterQualifier({
@@ -228,6 +240,30 @@ const validateEvaluationModel = createEvaluationModelValidator(
   externalModels,
   catalogBilling,
 );
+
+const training = createTrainingService(
+  database,
+  contents,
+  adapterDownloads,
+  trainingEngine.engine,
+  validateEvaluationModel,
+  artifactStorage,
+  qualifyAdapter,
+  createQualificationLock(valkey),
+  // Rotating this key invalidates every public report link.
+  environment.BETTER_AUTH_SECRET,
+  {
+    ...(grad ? { grad } : {}),
+    ...(gradBundles ? { bundles: gradBundles } : {}),
+  },
+);
+const pinReleases = grad
+  ? setInterval(() => {
+      training.artifacts.releasePendingPins().catch((error: unknown) => {
+        serviceLog("warn", "grad_pin_release_failed", { error });
+      });
+    }, 60_000).unref()
+  : undefined;
 
 const app = createApp({
   githubInstallations:
@@ -286,18 +322,7 @@ const app = createApp({
     waitlist: createWaitlistService(database),
     workspaces: createWorkspaceApiKeyService(database, validateEvaluationModel),
     traces: createTraceService(database, contents),
-    training: createTrainingService(
-      database,
-      contents,
-      adapterDownloads,
-      trainingEngine.engine,
-      validateEvaluationModel,
-      artifactStorage,
-      qualifyAdapter,
-      createQualificationLock(valkey),
-      // Rotating this key invalidates every public report link.
-      environment.BETTER_AUTH_SECRET,
-    ),
+    training,
   },
 });
 
@@ -372,6 +397,7 @@ const release = async (dependency: string, close: () => Promise<unknown>) => {
 
 const shutdown = async (signal: NodeJS.Signals) => {
   serviceLog("info", "api_stopping", { signal });
+  clearInterval(pinReleases);
 
   await Promise.all([
     release("http", () => closeServer(server)),

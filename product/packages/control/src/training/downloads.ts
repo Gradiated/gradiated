@@ -16,35 +16,53 @@ export type AdapterDownloads = {
     runId: string,
     sizeBytes: number,
     sha256: string,
+    workspaceId?: string,
   ): Promise<{ url: string; expires_at: string }>;
   weights?(
     uri: string,
     runId: string,
     sizeBytes: number,
     sha256: string,
+    workspaceId?: string,
   ): Promise<AdapterWeights>;
 };
+
+type ArchiveStorage = Pick<
+  ObjectStorage,
+  "bucket" | "head" | "checksum" | "signDownload" | "read" | "stream" | "put"
+>;
 
 // Bump when the summary changes so cached summaries are recomputed.
 const WEIGHTS_VERSION = "v1";
 // Bounds the one-time CPU cost of a summary; uploads are capped at 512 MiB.
 const MAX_SUMMARY_BYTES = 1024 * 1024 * 1024;
 
+// `artifacts` is the training bucket: grad's released bundles, read in place.
 export const createAdapterDownloads = (
-  storage:
-    | Pick<
-        ObjectStorage,
-        | "bucket"
-        | "head"
-        | "checksum"
-        | "signDownload"
-        | "read"
-        | "stream"
-        | "put"
-      >
-    | undefined,
+  storage: ArchiveStorage | undefined,
+  artifacts?: ArchiveStorage,
 ): AdapterDownloads => {
-  const archiveKey = (uri: string, runId: string) => {
+  const archiveKey = (
+    uri: string,
+    runId: string,
+    sha256: string,
+    workspaceId?: string,
+  ) => {
+    if (
+      artifacts &&
+      workspaceId &&
+      uri ===
+        `s3://${artifacts.bucket}/artifacts/${workspaceId}/${sha256}.grad.tar.gz` &&
+      /^[0-9a-f-]{36}$/.test(workspaceId) &&
+      /^[0-9a-f]{64}$/.test(sha256)
+    )
+      return {
+        storage: artifacts,
+        key: uri.slice(`s3://${artifacts.bucket}/`.length),
+        filename: `${sha256}.grad.tar.gz`,
+        contentType: "application/gzip",
+      };
+
     const bucket = storage?.bucket;
     const key = uri.slice(`s3://${bucket}/`.length);
     if (
@@ -136,8 +154,8 @@ export const createAdapterDownloads = (
         );
       }
     },
-    async sign(uri, runId, sizeBytes, sha256) {
-      const archive = archiveKey(uri, runId);
+    async sign(uri, runId, sizeBytes, sha256, workspaceId) {
+      const archive = archiveKey(uri, runId, sha256, workspaceId);
       if (!archive)
         throw new ControlServiceError(
           "unavailable",
@@ -179,11 +197,12 @@ export const createAdapterDownloads = (
         );
       }
     },
-    weights(uri, runId, sizeBytes, sha256) {
-      const archive = archiveKey(uri, runId);
+    weights(uri, runId, sizeBytes, sha256, workspaceId) {
+      const archive = archiveKey(uri, runId, sha256, workspaceId);
       if (
+        !storage ||
         !archive ||
-        archive.filename !== "adapter.tar.gz" ||
+        archive.filename === CARTRIDGE_FILE ||
         !/^[0-9a-f]{64}$/.test(sha256)
       )
         return Promise.reject(
@@ -192,7 +211,8 @@ export const createAdapterDownloads = (
             "The adapter archive is unavailable.",
           ),
         );
-      const { storage, key } = archive;
+      const { storage: source, key } = archive;
+      const cache = storage;
       const cacheKey = `runs/${runId}/output/adapter-weights/${sha256}.${WEIGHTS_VERSION}.json`;
       const pending = inFlight.get(cacheKey);
       if (pending) return pending;
@@ -202,7 +222,7 @@ export const createAdapterDownloads = (
           return AdapterWeightsSchema.parse(
             JSON.parse(
               Buffer.from(
-                await storage.read(cacheKey, {
+                await cache.read(cacheKey, {
                   maxBytes: 16 * 1024 * 1024,
                   timeoutMs: 10_000,
                 }),
@@ -215,7 +235,7 @@ export const createAdapterDownloads = (
         const summary = await (queue = queue
           .catch(() => undefined)
           .then(async () => {
-            const object = await storage.head(key);
+            const object = await source.head(key);
             if (object.sizeBytes !== sizeBytes || sizeBytes > MAX_SUMMARY_BYTES)
               throw new Error("Adapter size mismatch.");
             if (!object.versionId || object.versionId === "null")
@@ -237,7 +257,7 @@ export const createAdapterDownloads = (
               await import("./adapter-weights.js");
             const result = await summarizeAdapterArchive(
               verified(
-                storage.stream(key, {
+                source.stream(key, {
                   versionId: object.versionId,
                   maxBytes: sizeBytes,
                   timeoutMs: 300_000,
@@ -250,7 +270,7 @@ export const createAdapterDownloads = (
             return result;
           }) as Promise<AdapterWeights>);
         try {
-          await storage.put(
+          await cache.put(
             cacheKey,
             Buffer.from(JSON.stringify(summary), "utf8"),
           );

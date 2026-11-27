@@ -130,8 +130,7 @@ export const createMetrics = () => {
     }),
     gradDemand: new Gauge({
       name: "gradiated_gpu_fleet_grad_demand_jobs",
-      help: "grad's open train jobs, by the GPU memory they need",
-      labelNames: ["gpu_memory_gb"],
+      help: "grad's open train jobs (claimable plus running), one GPU each",
       registers: [registry],
     }),
     gradGpus: new Gauge({

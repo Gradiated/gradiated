@@ -774,15 +774,15 @@ holder `grad`, which only the operator writes (`src/grad.ts`). `GRAD_ENABLED`
 is `false` by default; turned off, the operator leases nothing to grad and
 hands back what grad holds.
 
-- **Demand.** The operator reads `max by (gpu_memory_gb)
-  (grad_jobs_open{kind="train"})` from `GRAD_PROMETHEUS_URL`; one v0 job needs
-  one GPU, of 80 GB unless the series names another class. A query with no
-  samples means grad is down, not idle, so leases are held as they are. When
-  demand exceeds the GPUs on grad's hosts for two minutes, the operator writes a
-  preemptible 24-hour request for one spare host: Ready, in the pool, with no
-  pods, of a product in `GRAD_GPU_PRODUCTS`, with enough GPU memory, that no
-  pending model replica would take, and whose loss leaves `GRAD_BUFFER_GPUS`
-  free GPUs on the other in-pool hosts of its product. One lease is in flight
+- **Demand.** The operator reads `max(grad_jobs_open{kind="train"})`
+  (claimable plus running train jobs) from `GRAD_PROMETHEUS_URL`; one v0 job
+  needs one GPU of at least 80 GB, so `GRAD_GPU_PRODUCTS` takes only such
+  products. A query with no samples means grad is down, not idle, so leases
+  are held as they are. When demand exceeds the GPUs on grad's hosts for two
+  minutes, the operator writes a preemptible 24-hour request for one spare
+  host: Ready, in the pool, with no pods, of a product in `GRAD_GPU_PRODUCTS`,
+  that no pending model replica would take, and whose loss leaves
+  `GRAD_BUFFER_GPUS` free GPUs on the other in-pool hosts of its product. One lease is in flight
   at a time, up to `GRAD_MAX_HOSTS`. A host whose GPUs the open jobs have not
   needed for fifteen minutes is handed back, the newest first.
 - **Wiped on every switch.** A lease to `grad` re-images the drained host
@@ -797,8 +797,13 @@ hands back what grad holds.
   `runtimes.json` (`GRAD_TRAINER_RUNTIME`; a release names its
   `docker.io/gradiated/grad-trainer:<version>-gpu@sha256:…` source image), as
   the runtime user in its own cgroup, with `GRAD_SERVER_URL` and
-  `GRAD_WORKER_TOKEN` from the request and nothing else from it. The token is
-  never written to disk. The agent refuses `train_start` beside a pod or a GPU
+  `GRAD_WORKER_TOKEN` from the request and nothing else from it, and
+  `GRAD_WORKER_ID=<instance>`, the host the token is bound to (grad answers
+  any other worker ID with `403 worker_host_mismatch`). The token lives only in
+  the trainers' environment, never on disk; it expires with the lease, so it
+  is never rotated. Trainers that exit are started again, under a new token,
+  at most every five minutes. The `grad-trainer` release must be 0.2.0-alpha.4
+  or later, the first whose worker reads `GRAD_WORKER_TOKEN`. The agent refuses `train_start` beside a pod or a GPU
   compute process, and pod creation while trainers are recorded. Trainer
   operations carry the management key and no controller epoch, since trainers
   are not pods.

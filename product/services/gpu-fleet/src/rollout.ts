@@ -39,12 +39,7 @@ import {
   type HostFacts,
   type Plan,
 } from "./plan.js";
-import {
-  fitsOnceUncordoned,
-  placementFits,
-  POD_NAMESPACE,
-  type PlacedPod,
-} from "./placement.js";
+import { placementFits, POD_NAMESPACE, type PlacedPod } from "./placement.js";
 
 // What a pass knows of a host: the planner's facts and its GPU use.
 type Facts = HostFacts & {
@@ -63,6 +58,8 @@ export const returnEvent = (rollout: Rollout) => {
     ? "expired"
     : "preempted";
 };
+// The taint Kubernetes adds to a cordoned node.
+const UNSCHEDULABLE_TAINT = "node.kubernetes.io/unschedulable";
 
 export const DEFAULT_LIMITS = {
   Cordon: 10 * MINUTE,
@@ -633,9 +630,10 @@ export const createRollouts = (deps: RolloutDependencies) => {
       (pod) => !pod.terminating,
     );
     const serving = live.some((pod) => pod.model);
-    if (serving && (rollout.kind === "reimage" || rollout.kind === "lease"))
-      return { next: "Surge" };
-    if (live.length && rollout.kind === "lease")
+    if (serving && rollout.kind === "reimage") return { next: "Surge" };
+    // Only a grad lease wipes its host on the way to Hold.
+    if (serving && wipesOnLease(rollout)) return { next: "Surge" };
+    if (live.length && wipesOnLease(rollout))
       return { block: "A pod that is not a model replica runs on the host" };
     // A leased host was handed over empty; any pod on it now landed while
     // its cordon was lifted, and is not wiped with it.
@@ -1244,7 +1242,7 @@ export const createRollouts = (deps: RolloutDependencies) => {
       // A wiped grad host is handed over once it runs the pins; it stays
       // cordoned, so there is nothing to soak.
       return healthy(facts, rollout)
-        ? { next: rollout.kind === "lease" ? "Hold" : "Soak" }
+        ? { next: wipesOnLease(rollout) ? "Hold" : "Soak" }
         : {
             stay:
               rollout.kind === "bundle"
@@ -1676,8 +1674,24 @@ export const createRollouts = (deps: RolloutDependencies) => {
         time - Math.max(pending, settled) < limits.unschedulable
       )
         continue;
-      const host = leased.find(({ host, node }) =>
-        fitsOnceUncordoned(pod, host.spec.inventory.gpuCount, node!, residents),
+      const host = leased.find(
+        ({ host, node }) =>
+          pod.gpus <= host.spec.inventory.gpuCount &&
+          placementFits(
+            pod.placement,
+            // The lease's cordon goes with the return.
+            {
+              ...node!,
+              taints: (node!.taints ?? []).filter(
+                (taint) => taint.key !== UNSCHEDULABLE_TAINT,
+              ),
+            },
+            {
+              labels: pod.labels ?? {},
+              namespace: pod.namespace ?? POD_NAMESPACE,
+              residents,
+            },
+          ),
       );
       if (host) {
         plans.set(host.host.spec.instanceId, {

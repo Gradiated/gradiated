@@ -1,20 +1,25 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createCluster } from "../src/cluster.js";
 import {
   createGrad,
+  DEMAND_QUERY,
   GRAD_HOLDER,
   parseGradConfig,
-  unmetDemand,
+  prometheusDemand,
+  type Grad,
   type GradConfig,
   type TrainerStatus,
   type Trainers,
   type WorkerTokens,
 } from "../src/grad.js";
 import { LEASE_ANNOTATION, ROLLOUTS, SCALED_OBJECTS } from "../src/hosts.js";
+import type { Kubernetes } from "../src/kubernetes.js";
 import { createMetrics, type Metrics } from "../src/metrics.js";
 import { createRollouts } from "../src/rollout.js";
+import type { Pins } from "../src/pins.js";
 import {
+  NEW_BUNDLE,
   OLD_BUNDLE,
   OLD_IMAGE,
   pins,
@@ -165,7 +170,7 @@ const setup = (
     config,
     demand: async () => {
       if (demand.jobs === undefined) throw new Error("no samples");
-      return new Map([[80, demand.jobs]]);
+      return demand.jobs;
     },
     trainers: trainers.trainers,
     tokens: tokens.tokens,
@@ -182,17 +187,18 @@ const setup = (
 // status alone; grad's demand windows live in its one instance.
 const run = async (
   fleet: Simulation,
-  grad: ReturnType<typeof createGrad>,
+  grad: Grad | undefined,
   until: () => boolean,
   passes = 400,
   metrics: Metrics = createMetrics(),
+  pinned: Pins = CURRENT,
 ) => {
   for (let pass = 0; pass < passes && !until(); pass++) {
     const rollouts = createRollouts({
       api: fleet.kube.api,
       cluster: createCluster(fleet.kube.api, () => undefined),
       ping: fleet.ping,
-      pins: async () => CURRENT,
+      pins: async () => pinned,
       enrollment: async () => fleet.enrollment,
       modelStatuses: async () => new Map(),
       mode: "act",
@@ -202,7 +208,7 @@ const run = async (
       metrics,
       now: fleet.now,
       limits: { soakFor: 60_000, unschedulable: 10 * MINUTE },
-      grad,
+      ...(grad && { grad }),
     });
     await fleet.observe();
     await rollouts.pass().catch(() => undefined);
@@ -269,6 +275,10 @@ describe("grad tenancy", () => {
     expect(() => enabled({ GRAD_GPU_PRODUCTS: "A100" })).toThrow(
       /unknown GPU product/,
     );
+    // Every catalog base needs one 80 GB GPU.
+    expect(() => enabled({ GRAD_GPU_PRODUCTS: "L40S" })).toThrow(
+      /less than 80 GB/,
+    );
     expect(enabled({ GRAD_GPU_PRODUCTS: "H100, B300" }).products).toEqual([
       "H100",
       "B300",
@@ -316,6 +326,17 @@ describe("grad tenancy", () => {
     // Running trainers are left alone: no second token.
     await run(fleet, grad, () => false, 10);
     expect(minted).toHaveLength(1);
+
+    // Trainers that exit, say on a rejected token, are started again only
+    // every five minutes, each time under a new token.
+    hosts.get(SPARE)!.stoppedAt = 0;
+    await run(fleet, grad, () => minted.length === 2, 2);
+    expect(minted).toHaveLength(2);
+    hosts.get(SPARE)!.stoppedAt = 0;
+    await run(fleet, grad, () => false, 9);
+    expect(minted).toHaveLength(2);
+    await run(fleet, grad, () => minted.length === 3, 2);
+    expect(minted).toHaveLength(3);
     expect(
       await metrics.registry.getSingleMetricAsString(
         "gradiated_gpu_fleet_grad_gpus",
@@ -445,32 +466,141 @@ describe("grad tenancy", () => {
   });
 });
 
-describe("unmetDemand", () => {
-  const host = (gpuProduct: string, gpuCount: number) =>
-    ({ spec: { inventory: { gpuProduct, gpuCount } } }) as never;
+describe("grad tenancy, off", () => {
+  // What the fleet's hosts, nodes and lease requests look like after a pass.
+  const snapshot = (fleet: Simulation) =>
+    [SPARE, FIRST, SECOND].map((id) => ({
+      status: fleet.host(id).status,
+      annotations: fleet.host(id).metadata.annotations,
+      unschedulable: fleet.node(id).spec?.unschedulable,
+      pods: fleet.podsOn(id).length,
+      resets: fleet.sim(id).resets,
+    }));
 
-  it("fills the largest memory classes first from GPUs big enough", () => {
-    expect(unmetDemand(new Map([[80, 2]]), [host("H100", 2)])).toBeUndefined();
-    expect(unmetDemand(new Map([[80, 3]]), [host("H100", 2)])).toEqual({
-      memoryGb: 80,
-      gpus: 1,
+  // A person's lease, its preemption by a model replica, and a host bundle
+  // rollout over the whole fleet: the serving paths grad's changes touch.
+  const scenario = async (grad: Grad | undefined) => {
+    const fleet = gradFleet();
+    const snapshots: unknown[] = [];
+    const step = async (passes: number, pinned: Pins = CURRENT) => {
+      for (let pass = 0; pass < passes; pass++) {
+        await run(fleet, grad, () => false, 1, createMetrics(), pinned);
+        snapshots.push(snapshot(fleet));
+      }
+    };
+    fleet.annotateLease(SPARE, {
+      holder: "research-agent",
+      purpose: "SFT sweep",
+      until: new Date(fleet.now().getTime() + 6 * 60 * MINUTE).toISOString(),
     });
-    expect(
-      unmetDemand(
-        new Map([
-          [80, 1],
-          [141, 1],
-        ]),
-        [host("H100", 1), host("H200", 1)],
+    await step(40);
+    expect(fleet.host(SPARE).status?.lease?.holder).toBe("research-agent");
+    scale(fleet, "kev", 3);
+    await step(200);
+    await step(300, pins(OLD_IMAGE, NEW_BUNDLE));
+    // Pod UIDs are random; number them in the order they appear.
+    const uids = new Map<string, string>();
+    return JSON.parse(
+      JSON.stringify({
+        snapshots,
+        calls: fleet.kube.calls.map(({ method, path }) => `${method} ${path}`),
+        violations: fleet.violations,
+      }).replace(
+        /[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/g,
+        (uid) => {
+          if (!uids.has(uid)) uids.set(uid, `pod-uid-${uids.size}`);
+          return uids.get(uid)!;
+        },
       ),
-    ).toBeUndefined();
-    expect(unmetDemand(new Map([[141, 1]]), [host("H100", 8)])).toEqual({
-      memoryGb: 141,
-      gpus: 1,
+    ) as {
+      snapshots: ReturnType<typeof snapshot>[];
+      calls: string[];
+      violations: string[];
+    };
+  };
+
+  it("with GRAD_ENABLED unset, the operator does exactly what it did without grad", async () => {
+    const touched: string[] = [];
+    const never = (what: string) => async () => {
+      touched.push(what);
+      throw new Error(`${what} called while grad is off`);
+    };
+    const fleet = gradFleet();
+    const off = createGrad({
+      api: new Proxy({} as Kubernetes, {
+        get: (_, name) => never(`api.${String(name)}`),
+      }),
+      cluster: { unscheduledModelPods: never("unscheduledModelPods") },
+      config: parseGradConfig({}),
+      demand: never("demand"),
+      trainers: {
+        status: never("trainers.status"),
+        start: never("trainers.start"),
+        stop: never("trainers.stop"),
+      },
+      tokens: { mint: never("tokens.mint"), revoke: never("tokens.revoke") },
+      mode: "act",
+      leading: () => true,
+      log: (event) => touched.push(String(event.event)),
+      metrics: createMetrics(),
+      now: fleet.now,
     });
-    expect(unmetDemand(new Map([[80, 1]]), [host("L40S", 4)])).toEqual({
-      memoryGb: 80,
-      gpus: 1,
-    });
+
+    const without = await scenario(undefined);
+    const withOff = await scenario(off);
+
+    // The scenario really exercised the paths: the lease was preempted and
+    // returned, and every host took the new bundle.
+    expect(
+      without.snapshots.some(
+        ([spare]) => spare?.status?.rollout?.kind === "return",
+      ),
+    ).toBe(true);
+    expect(
+      without.snapshots
+        .at(-1)
+        ?.map((host) => host.status?.rollout?.target.bundle.sha256),
+    ).toEqual([NEW_BUNDLE, NEW_BUNDLE, NEW_BUNDLE]);
+    expect(withOff).toEqual(without);
+    expect(without.violations).toEqual([]);
+    expect(touched).toEqual([]);
+  });
+});
+
+describe("prometheusDemand", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const answer = (result: unknown[]) =>
+    vi.fn(
+      async (_url: string) =>
+        new Response(
+          JSON.stringify({
+            status: "success",
+            data: { resultType: "vector", result },
+          }),
+        ),
+    );
+
+  it("reads grad's open train jobs, and treats no samples as grad being down", async () => {
+    const fetch = answer([{ metric: {}, value: [1, "3"] }]);
+    vi.stubGlobal("fetch", fetch);
+    await expect(prometheusDemand("http://prometheus:9090/")()).resolves.toBe(
+      3,
+    );
+    expect(String(fetch.mock.calls[0]![0])).toBe(
+      `http://prometheus:9090/api/v1/query?query=${encodeURIComponent(DEMAND_QUERY)}`,
+    );
+    // grad exports only a kind label (docs/METRICS.md in grad).
+    expect(DEMAND_QUERY).toBe('max(grad_jobs_open{kind="train"})');
+
+    vi.stubGlobal("fetch", answer([{ metric: {}, value: [1, "0"] }]));
+    await expect(prometheusDemand("http://prometheus:9090")()).resolves.toBe(0);
+    vi.stubGlobal("fetch", answer([{ metric: {}, value: [1, "NaN"] }]));
+    await expect(prometheusDemand("http://prometheus:9090")()).rejects.toThrow(
+      /not a number/,
+    );
+    vi.stubGlobal("fetch", answer([]));
+    await expect(prometheusDemand("http://prometheus:9090")()).rejects.toThrow(
+      /no samples/,
+    );
   });
 });

@@ -15,7 +15,7 @@ import {
 } from "./hosts.js";
 import { isConflict, type Kubernetes } from "./kubernetes.js";
 import type { Metrics } from "./metrics.js";
-import { fitsOnceUncordoned, type PlacedPod } from "./placement.js";
+import { placementFits, POD_NAMESPACE, type PlacedPod } from "./placement.js";
 
 // grad, the training platform, is a preemptible tenant of the fleet. While its
 // train queue needs GPUs and serving has room to spare, the operator leases
@@ -43,22 +43,54 @@ export const GRAD_LIMITS = {
   // TrainStop moves on this long after the drain grace, trainers or not:
   // the re-image ends whatever is left.
   stopMargin: 15_000,
+  // A trainer that exits (a rejected token, a crash) is started again no
+  // sooner than this, so a failing host does not mint a token every pass.
+  restartAfter: 5 * MINUTE,
 };
 
 // GPU memory per GPU, in GB, by the CRD's inventory.gpuProduct.
 export const GPU_MEMORY_GB: Readonly<Record<string, number>> = {
   L4: 24,
   L40S: 48,
-  H100: 80,
+  // H100 NVL has 94 GB. The lease token's GPU memory is a cap, so it names
+  // the largest of the product.
+  H100: 94,
   "RTX-PRO-6000": 96,
   H200: 141,
   B200: 180,
   B300: 288,
 };
 
-// Every catalog base trains on one 80 GB GPU with the recipe defaults, so a
-// job whose demand names no memory class needs this much.
-export const DEFAULT_MEMORY_CLASS_GB = 80;
+// Every catalog base trains on one 80 GB GPU with the recipe defaults, so
+// grad may lease only hosts whose GPUs have at least this much.
+export const TRAIN_GPU_MEMORY_GB = 80;
+
+// The taint Kubernetes adds to a cordoned node.
+const UNSCHEDULABLE_TAINT = "node.kubernetes.io/unschedulable";
+
+// Whether a pending model replica would land on a host held out of the pool,
+// as a leased one is, once its cordon goes with the return.
+const fitsOnceUncordoned = (
+  pod: ClusterPod,
+  gpuCount: number,
+  node: NodeState,
+  residents: PlacedPod[],
+) =>
+  pod.gpus <= gpuCount &&
+  placementFits(
+    pod.placement,
+    {
+      ...node,
+      taints: (node.taints ?? []).filter(
+        (taint) => taint.key !== UNSCHEDULABLE_TAINT,
+      ),
+    },
+    {
+      labels: pod.labels ?? {},
+      namespace: pod.namespace ?? POD_NAMESPACE,
+      residents,
+    },
+  );
 
 const csv = z
   .string()
@@ -87,7 +119,11 @@ export const gradConfigSchema = z
       z.array(
         z
           .string()
-          .refine((product) => product in GPU_MEMORY_GB, "unknown GPU product"),
+          .refine((product) => product in GPU_MEMORY_GB, "unknown GPU product")
+          .refine(
+            (product) => (GPU_MEMORY_GB[product] ?? 0) >= TRAIN_GPU_MEMORY_GB,
+            `has less than ${TRAIN_GPU_MEMORY_GB} GB per GPU`,
+          ),
       ),
     ),
     // How long trainers get to checkpoint and requeue after SIGTERM before
@@ -157,14 +193,12 @@ export type GradConfig = z.infer<typeof gradConfigSchema>;
 export const parseGradConfig = (env: Record<string, string | undefined>) =>
   gradConfigSchema.parse(env);
 
-// Open train jobs by the GPU memory each needs, in GB.
-export type Demand = ReadonlyMap<number, number>;
+// grad's open train jobs (claimable plus running); each needs one GPU.
+export type Demand = number;
 
 // Every grad-server replica exports the same queue gauge, so take the
-// largest. A gpu_memory_gb label, should grad add one, splits it by memory
-// class; without it every job needs an 80 GB GPU.
-export const DEMAND_QUERY =
-  'max by (gpu_memory_gb) (grad_jobs_open{kind="train"})';
+// largest.
+export const DEMAND_QUERY = 'max(grad_jobs_open{kind="train"})';
 
 const vectorSchema = z.object({
   status: z.literal("success"),
@@ -194,15 +228,10 @@ export const prometheusDemand =
       );
     const { result } = vectorSchema.parse(await response.json()).data;
     if (!result.length) throw new Error("grad_jobs_open has no samples");
-
-    const demand = new Map<number, number>();
-    for (const { metric, value } of result) {
-      const jobs = Math.ceil(Number(value[1]));
-      const memory = Number(metric.gpu_memory_gb ?? DEFAULT_MEMORY_CLASS_GB);
-      if (!(jobs > 0) || !(memory > 0)) continue;
-      demand.set(memory, (demand.get(memory) ?? 0) + jobs);
-    }
-    return demand;
+    const jobs = Math.ceil(Number(result[0]!.value[1]));
+    if (!Number.isFinite(jobs))
+      throw new Error("grad_jobs_open is not a number");
+    return Math.max(0, jobs);
   };
 
 const trainerStatusSchema = z.object({
@@ -388,28 +417,11 @@ export const heldByGrad = (host: GpuHost) =>
 const gpusOf = (host: GpuHost) => host.spec.inventory.gpuCount;
 const memoryOf = (host: GpuHost) =>
   GPU_MEMORY_GB[host.spec.inventory.gpuProduct] ?? 0;
+const gpusIn = (hosts: GradHostFacts[]) =>
+  hosts.reduce((sum, item) => sum + gpusOf(item.host), 0);
 const since = (value: string | undefined) => {
   const time = Date.parse(value ?? "");
   return Number.isNaN(time) ? undefined : time;
-};
-
-// The largest memory class whose jobs these hosts' GPUs cannot all run. The
-// largest classes are filled first, each from the smallest GPUs with enough
-// memory, so one v0 job runs per GPU.
-export const unmetDemand = (demand: Demand, hosts: GpuHost[]) => {
-  const slots = hosts
-    .map((host) => ({ memory: memoryOf(host), gpus: gpusOf(host) }))
-    .sort((a, b) => a.memory - b.memory);
-  for (const [memoryGb, jobs] of [...demand].sort(([a], [b]) => b - a)) {
-    let left = jobs;
-    for (const slot of slots) {
-      if (slot.memory < memoryGb || !left) continue;
-      const used = Math.min(slot.gpus, left);
-      slot.gpus -= used;
-      left -= used;
-    }
-    if (left > 0) return { memoryGb, gpus: left };
-  }
 };
 
 // What the rollout pass read about a host.
@@ -445,6 +457,8 @@ export const createGrad = (deps: GradDependencies) => {
   // Kept in memory: a restarted operator waits the windows out again.
   let unmetSince: number | undefined;
   let surplusSince: number | undefined;
+  // When trainers were last started, by lease.
+  const startedAt = new Map<string, number>();
 
   // Writes or removes grad's request on a fresh read of the host, only if
   // the host has no request or has grad's, and only if the host is unchanged
@@ -526,6 +540,10 @@ export const createGrad = (deps: GradDependencies) => {
       return;
     if (workers.some((worker) => worker.state === "draining") || !status.staged)
       return;
+    const last = startedAt.get(leaseId);
+    if (last !== undefined && now().getTime() - last < limits.restartAfter)
+      return;
+    startedAt.set(leaseId, now().getTime());
 
     const token = await deps.tokens.mint({
       hostId: host.spec.instanceId,
@@ -566,7 +584,7 @@ export const createGrad = (deps: GradDependencies) => {
     all: GradHostFacts[],
     pending: ClusterPod[],
     residents: PlacedPod[],
-    unmet: { memoryGb: number; gpus: number },
+    unmet: number,
   ) =>
     all
       .filter((item) => {
@@ -574,7 +592,6 @@ export const createGrad = (deps: GradDependencies) => {
         const rollout = host.status?.rollout;
         return (
           config.products.includes(host.spec.inventory.gpuProduct) &&
-          memoryOf(host) >= unmet.memoryGb &&
           hostState(host, node) === "in_pool" &&
           !leaseRequest(host) &&
           !host.status?.lease &&
@@ -592,7 +609,7 @@ export const createGrad = (deps: GradDependencies) => {
       })
       .sort((a, b) => {
         const [x, y] = [gpusOf(a.host), gpusOf(b.host)];
-        const [cx, cy] = [x >= unmet.gpus, y >= unmet.gpus];
+        const [cx, cy] = [x >= unmet, y >= unmet];
         return (
           Number(cy) - Number(cx) ||
           (cx ? x - y : y - x) ||
@@ -615,10 +632,7 @@ export const createGrad = (deps: GradDependencies) => {
         },
         gpusOf(host),
       );
-    if (!demand) return;
-    metrics.gradDemand.reset();
-    for (const [memory, jobs] of demand)
-      metrics.gradDemand.set({ gpu_memory_gb: String(memory) }, jobs);
+    if (demand !== undefined) metrics.gradDemand.set(demand);
   };
 
   // Runs after each rollout pass, whether or not a rollout is under way:
@@ -746,11 +760,8 @@ export const createGrad = (deps: GradDependencies) => {
     report(grad, demand);
     if (taken.size) return;
 
-    const unmet = unmetDemand(
-      demand,
-      kept.map((item) => item.host),
-    );
-    if (unmet) {
+    const unmet = demand - gpusIn(kept);
+    if (unmet > 0) {
       surplusSince = undefined;
       unmetSince ??= time;
       // One lease at a time: each re-images a host, and the fleet does one
@@ -765,7 +776,7 @@ export const createGrad = (deps: GradDependencies) => {
       if (!item) return;
       const leased = await writeRequest(item.host, {
         holder: GRAD_HOLDER,
-        purpose: `grad training: ${unmet.gpus} open train jobs need GPUs with ${unmet.memoryGb} GB`,
+        purpose: `grad training: ${unmet} open train jobs need a GPU`,
         until: new Date(time + limits.leaseFor).toISOString(),
         preemptible: true,
       });
@@ -776,7 +787,7 @@ export const createGrad = (deps: GradDependencies) => {
         event: "grad_lease_requested",
         instance_id: item.host.spec.instanceId,
         gpus: gpusOf(item.host),
-        unmet_gpus: unmet.gpus,
+        unmet_gpus: unmet,
       });
       return;
     }
@@ -791,13 +802,7 @@ export const createGrad = (deps: GradDependencies) => {
           (since(b.host.status?.lease?.since) ?? 0) -
           (since(a.host.status?.lease?.since) ?? 0),
       )[0];
-    if (
-      !newest ||
-      unmetDemand(
-        demand,
-        kept.filter((item) => item !== newest).map((item) => item.host),
-      )
-    ) {
+    if (!newest || demand > gpusIn(kept.filter((item) => item !== newest))) {
       surplusSince = undefined;
       return;
     }

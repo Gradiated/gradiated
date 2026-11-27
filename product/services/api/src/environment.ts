@@ -23,7 +23,7 @@ const ApiOnlyEnvironmentSchema = z.object({
     .transform((value) => value || undefined),
   POSTHOG_HOST: z.url().default("https://us.i.posthog.com"),
   TRAINING_ARTIFACTS_BUCKET: z.string().min(1).optional(),
-  // grad's bucket; the API reads only its `artifacts/` prefix.
+  // grad's bucket; the API reads only the release keys grad's resolve names.
   GRAD_ARTIFACTS_BUCKET: z.string().min(1).optional(),
   // grad-server's internal listener, such as http://grad-internal.training.svc:8789.
   GRAD_SERVER_URL: z.url().optional(),

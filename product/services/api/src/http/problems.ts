@@ -181,6 +181,7 @@ export const problems = {
 } satisfies Record<string, ProblemBody | ((...args: never[]) => ProblemBody)>;
 
 const PUBLISH_CONFLICTS = new Set<PublishErrorCode>([
+  "artifact_checksum_mismatch",
   "model_base_mismatch",
   "version_name_taken",
   "version_in_production",

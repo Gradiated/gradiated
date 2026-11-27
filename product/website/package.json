@@ -17,7 +17,7 @@
     "icons:pixel": "node scripts/pixel-icons.ts && prettier --write src/components/design/pixel-icons.generated.ts",
     "sync:team-places": "node scripts/sync-team-places.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --config tests/vitest.config.ts && tsx --test scripts/article-metadata.test.ts && node --test scripts/sand-*.test.mjs scripts/article-citations.test.mjs scripts/article-links.test.mjs"
+    "test": "vitest run --config tests/vitest.config.ts && tsx --test scripts/article-metadata.test.ts && node --test scripts/sand-*.test.mjs scripts/article-citations.test.mjs scripts/article-links.test.mjs scripts/feed.test.mjs"
   },
   "dependencies": {
     "@amcharts/amcharts5": "5.21.1",

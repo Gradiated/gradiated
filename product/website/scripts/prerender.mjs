@@ -2,6 +2,8 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { renderFeed } from "./feed.mjs";
+
 const websiteRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outputRoot = join(websiteRoot, "dist");
 const serverRoot = join(outputRoot, "server");
@@ -170,6 +172,22 @@ const sitemap = [
   "",
 ].join("\n");
 await writeFile(join(outputRoot, "sitemap.xml"), sitemap);
+
+await writeFile(
+  join(outputRoot, "feed.xml"),
+  renderFeed({
+    absoluteUrl,
+    articles: pages
+      .filter(({ metadata }) => metadata.kind === "article" && metadata.index)
+      .map(({ metadata, path }) => ({
+        html: renderPage(path),
+        metadata,
+        url: absoluteUrl(canonicalPath(path)),
+      })),
+    description: pages.find(({ path }) => path === "/library/").metadata
+      .description,
+  }),
+);
 
 await writeFile(
   join(outputRoot, "robots.txt"),

@@ -72,6 +72,7 @@ grad sources add posthog \
   --dataset support-prod \
   --host https://us.posthog.com \
   --secret posthog-prod \
+  --project 12345 \
   --schedule "*/30 * * * *"
 
 grad sources list
@@ -91,6 +92,7 @@ source = dataset.add_source(
     provider=sources.PostHog(
         host="https://us.posthog.com",
         secret=client.secrets.get("posthog-prod"),
+        project="12345",
     ),
     schedule="*/30 * * * *",
 )
@@ -110,6 +112,7 @@ const source = await dataset.addSource({
   provider: sources.posthog({
     host: "https://us.posthog.com",
     secret: await grad.secrets.get("posthog-prod"),
+    project: "12345",
   }),
   schedule: "*/30 * * * *",
 });
@@ -124,7 +127,7 @@ dataset, _ := client.Datasets.Get(ctx, "support-prod")
 secret, _ := client.Secrets.Get(ctx, "posthog-prod")
 
 source, _ := dataset.AddSource(ctx, grad.SourceParams{
-	Provider: grad.PostHogSource{Host: "https://us.posthog.com", Secret: secret},
+	Provider: grad.PostHogSource{Host: "https://us.posthog.com", Secret: secret, Project: "12345"},
 	Schedule: "*/30 * * * *",
 })
 _ = source.Sync(ctx)
@@ -161,6 +164,7 @@ A [router](/docs/training/recipes/router/) can use the raw dataset as is: it lea
 
 ## Keys and hosts
 
+- **Project (required):** the numeric project id from **Project settings**, for example `12345`.
 - **Key:** a personal API key with the **Query Read** permission for the project (grad reads events with the query API). The project API key you capture with can't read data.
 - **Hosts:** the app host, `https://us.posthog.com` or `https://eu.posthog.com`, not the `i.posthog.com` ingestion host; or your self-hosted PostHog URL.
 

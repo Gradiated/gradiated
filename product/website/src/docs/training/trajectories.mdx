@@ -367,7 +367,7 @@ On Gradiated Cloud, the gateway already records every request and its feedback, 
 | Native schema                 | `grad_trajectories`    | none (`dataset.push()`)      |                                                                 |
 | Hugging Face Hub              | none                   | `client.datasets.from_hf`    | [Import a Hugging Face dataset](#import-a-hugging-face-dataset) |
 
-File imports accept JSONL, JSON and Parquet. Any OpenTelemetry GenAI export imports with `--format otel`.
+Braintrust and PostHog sources also need `project` (the Braintrust project id or name, the numeric PostHog project id). File imports accept JSONL, JSON and Parquet. Any OpenTelemetry GenAI export imports with `--format otel`.
 
 ## Send feedback from production
 
@@ -431,28 +431,6 @@ logger.logFeedback({
   scores: { resolved: 0 },
   expected: "It is in Billing > Invoices.",
   comment: "Wrong menu",
-});
-```
-
-  </DocsCodeTab>
-  <DocsCodeTab label="Helicone">
-
-```ts
-// Send your own request ID (and properties) with the model call through Helicone...
-const requestId = crypto.randomUUID();
-const headers = {
-  "Helicone-Request-Id": requestId,
-  "Helicone-Property-Model-Version": "v42",
-};
-
-// ...then rate it later. Helicone feedback is a boolean rating.
-await fetch(`https://api.helicone.ai/v1/request/${requestId}/feedback`, {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${process.env.HELICONE_API_KEY}`,
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({ rating: true }),
 });
 ```
 

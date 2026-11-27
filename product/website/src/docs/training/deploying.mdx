@@ -121,7 +121,7 @@ Deploying a new version qualifies the adapter on a serving replica first, then a
 
 The Gradiated gateway records every request to your deployed model, along with its feedback, so you don't need a separate observability tool. Connect them to a dataset with the built-in `gradiated` [source](/docs/training/trajectories/#sync-from-observability-providers): each sync adds a new dataset version with the latest traces and scores, ready for your next run.
 
-If you already log to Langfuse, LangSmith, Braintrust, Helicone, Phoenix or PostHog, keep sending feedback there and sync it the same way. See [Send feedback from production](/docs/training/trajectories/#send-feedback-from-production).
+If you already log to Langfuse, LangSmith, Braintrust, Phoenix or PostHog, keep sending feedback there and sync it the same way. See [Send feedback from production](/docs/training/trajectories/#send-feedback-from-production).
 
 ## Option 2: Run on your own vLLM or SGLang
 

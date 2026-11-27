@@ -51,6 +51,21 @@ The training API (`grad-server`) is the same on Gradiated Cloud, `grad local up`
 | `POST` | `/v1/datasets/{name}/imports`      | Import an uploaded file or a Hugging Face dataset into a dataset (async job). |
 | `GET`  | `/v1/imports` / `/v1/imports/{id}` | List import jobs or get one.                                                  |
 
+### Secrets and sources
+
+| Method   | Path                               | Purpose                                                                                                  |
+| -------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `POST`   | `/v1/secrets`                      | Create or replace a workspace secret `{name, value}`. The value is encrypted and never returned.         |
+| `GET`    | `/v1/secrets`                      | List secret names and metadata.                                                                          |
+| `GET`    | `/v1/secrets/{name}`               | Get one secret's metadata (what `secrets.get` returns: a reference, not the value).                      |
+| `DELETE` | `/v1/secrets/{name}`               | Delete a secret (409 `secret_in_use` while a source uses it).                                            |
+| `POST`   | `/v1/datasets/{name}/sources`      | Connect a provider `{provider: {kind, host, secret, project, filters}, schedule}` to a dataset.          |
+| `GET`    | `/v1/sources` / `/v1/sources/{id}` | List sources (`?dataset=`) or get one with its latest sync.                                              |
+| `POST`   | `/v1/sources/{id}/sync`            | Sync now `{full}`; returns the import job, or the one already running. Each sync adds a dataset version. |
+| `DELETE` | `/v1/sources/{id}`                 | Remove a source. Its dataset and versions stay.                                                          |
+
+An unknown provider is 422 `source_provider_unsupported`; the `gradiated` source on a self-hosted server is 501 `source_unavailable`; a server without `GRAD_SECRETS_KEY` answers secret writes with 501 `secrets_unavailable`.
+
 ### Runs, checkpoints and artifacts
 
 | Method | Path                           | Purpose                                                                                        |

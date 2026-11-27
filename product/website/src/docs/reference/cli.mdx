@@ -137,6 +137,7 @@ When the run ends the view closes and prints the usual summary: time, tokens and
 | `grad keys create --name N --scopes A,B` | Create a scoped key; the secret is printed once. See [API key scopes](/docs/api-reference/#api-key-scopes). |
 | `grad keys list` / `revoke ID`           | List or revoke keys.                                                                                        |
 | `grad usage`                             | Billed usage: one row per billed increment of a run or eval attempt.                                        |
+| `grad ui [RUN]`                          | Open the server's web UI in your browser, signed in with the current profile's key (`RUN` opens one run).   |
 
 List commands take `--limit` and `--cursor`.
 

@@ -54,7 +54,7 @@ export const TierExplorer = (): ReactElement => {
             value={sdk === "openai" ? "OpenAI SDK" : "Anthropic SDK"}
           />
           <button
-            className="gr-button gr-button--ghost gr-tier-copy"
+            className="gr-button gr-button--ghost gr-button--sm gr-tier-copy"
             onClick={() => {
               void navigator.clipboard
                 .writeText(snippetFor(sdk, language, tier.id))

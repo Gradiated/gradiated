@@ -82,6 +82,9 @@
 
 .gr-doc-langpick {
   display: inline-flex;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
   margin-inline-end: auto;
   padding: 2px;
   border: 1px solid var(--color-rule);
@@ -232,6 +235,25 @@
     var(--color-code-text) 82%,
     var(--color-code-muted)
   );
+}
+
+/* Tab rows scroll sideways instead of stacking a label word by word. */
+.gr-doc-tablist {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.gr-doc-tab {
+  flex: none;
+  white-space: nowrap;
+}
+
+@media (max-width: 40rem) {
+  .gr-doc-langpick-option {
+    padding: 0.4em 0.5em;
+    letter-spacing: 0.04em;
+  }
 }
 
 .gr-doc-tabs-missing {
@@ -1822,4 +1844,9 @@
   .gr-doc-toc-list a::before {
     transition: none !important;
   }
+}
+
+/* Long identifiers in running text break instead of pushing the column. */
+.gr-doc-main :not(pre) > code {
+  overflow-wrap: anywhere;
 }

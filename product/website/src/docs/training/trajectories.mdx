@@ -653,13 +653,13 @@ Each [integration guide](/docs/training/integrations/) shows how the provider's 
 
 Every record needs `messages` (or `input.messages`). Beyond that, include only the fields your recipe uses:
 
-| If you are training...                     | Also include                                                                                                                               |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Fine-tune (`SFTRecipe`)**                | Nothing else: the final assistant message is the target. Use `expected_output` only when the target isn't in `messages`.                   |
-| **Decision model (`DecisionModelRecipe`)** | `expected_output` (the target label)                                                                                                       |
-| **Model router (`RouterRecipe`)**          | Optional `metadata.model`, `scores`, and `metrics.cost_usd` (or pass a `Judge` and `models=` to score and compare automatically)           |
-| **Preference alignment (`DPORecipe`)**     | `chosen` and `rejected` completions for the same prompt, or paired records sharing a `group_id` with `role="chosen"` and `role="rejected"` |
-| **Multi-turn conversations**               | `session_id` so turns from the same conversation stay together across train and eval splits                                                |
+| If you are training...                     | Also include                                                                                                                                                                                                                                                                                                |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Fine-tune (`SFTRecipe`)**                | Nothing else: the final assistant message is the target. When a record has `expected_output` (a gold answer, or a correction synced from LangSmith, Braintrust or Langfuse), that is the target instead and replaces the logged final answer. Records without a prompt (a user or system turn) don't train. |
+| **Decision model (`DecisionModelRecipe`)** | `expected_output` (the target label)                                                                                                                                                                                                                                                                        |
+| **Model router (`RouterRecipe`)**          | Optional `metadata.model`, `scores`, and `metrics.cost_usd` (or pass a `Judge` and `models=` to score and compare automatically)                                                                                                                                                                            |
+| **Preference alignment (`DPORecipe`)**     | `chosen` and `rejected` completions for the same prompt, or paired records sharing a `group_id` with `role="chosen"` and `role="rejected"`                                                                                                                                                                  |
+| **Multi-turn conversations**               | `session_id` so turns from the same conversation stay together across train and eval splits                                                                                                                                                                                                                 |
 
 Need images, audio, tools, or the full JSON field list? See the [Primitives reference](/docs/reference/primitives/).
 

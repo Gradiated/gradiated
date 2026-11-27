@@ -6,7 +6,7 @@
 
 ## What syncs
 
-Each root run of a trace becomes one record, with its inputs and outputs as `messages`. Feedback on the run becomes `scores` (by feedback `key`), and a feedback `correction` becomes `expected_output`, so SFT can train on the fixed answer.
+Each root run of a trace becomes one record, with its inputs and outputs as `messages`. Feedback on the run becomes `scores` (by feedback `key`), and a feedback `correction` becomes `expected_output`, so SFT trains on the fixed answer and DPO pairs it against the logged one. A correction or output with one named field (`{"answer": "..."}`) is unwrapped to its text; several fields stay JSON.
 
 | LangSmith                       | grad record                            |
 | ------------------------------- | -------------------------------------- |

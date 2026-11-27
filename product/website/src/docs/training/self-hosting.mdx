@@ -52,6 +52,27 @@ Evals and `Judge` scoring call models through an OpenAI-compatible endpoint. To 
 
 Running `server/docker-compose.yml` with plain `docker compose` defaults to `AUTH_MODE=none` for development. To turn authentication on there, export `GRAD_AUTH_MODE=api_key`, `GRAD_ADMIN_API_KEY_HASH` (the SHA-256 hex of your admin key), `GRAD_TRAINER_API_KEY` and `GRAD_SECRETS_KEY` (`openssl rand -base64 32`) first.
 
+## Web UI
+
+Every `grad-server` also serves a web UI at `/` for watching training, much like the Temporal UI for workflows. After `grad local up` it is at `http://127.0.0.1:8787/`, and `grad ui` opens it in your browser already signed in with your CLI profile:
+
+```bash
+grad --profile local ui           # the runs list
+grad --profile local ui run_01J9X # one run
+grad ui --no-open                 # print the URL instead
+```
+
+- **Runs**: status, phase, recipe, model, dataset version, cost against the cap and age, filtered by status or name.
+- **A run**: status, phase and attempt N/M, live loss and eval-loss, learning-rate, throughput and cost-versus-cap charts, the event timeline (phases, interruptions, resumes, warnings, checkpoints), checkpoints with a **Promote** button, the recipe's eval report, the artifact with its download command, the resolved config, and **Cancel** and **Resume**.
+- **Datasets**: versions, records with their merged scores, sources with their last sync status and error and a **Sync** button, and recent imports.
+- **Evals**: scores with 95% confidence intervals, pass@k, the delta against the baseline, and failures.
+- **Usage**: the billing ledger with totals.
+- **Health**: server readiness, the training and import worker pools and the queue.
+
+The UI calls only the public `/v1` API with the viewer's key, so it shows exactly what that key can read through the SDKs. With `AUTH_MODE=none` there is no login; otherwise paste an API key. The key stays in that browser tab's `sessionStorage` (never a cookie or `localStorage`) and is forgotten when the tab closes; `grad ui` hands it over once in the URL fragment, which browsers never send to the server. Pages are served with a strict Content-Security-Policy and can't be framed.
+
+The UI is on by default. Set `UI_ENABLED=false` (Helm: `ui.enabled: false`) to serve only the API. It needs no extra port or exposure: it shares the API's address, so keep the server on loopback or behind your ingress as before.
+
 ## Production Kubernetes (Helm)
 
 The chart in `server/helm/grad` runs two or more API replicas, a migrations Job and two pull-based worker pools on your own Postgres and S3 bucket. Nothing sits in front of your production traffic.
@@ -186,10 +207,11 @@ The chart and `grad local up` set these for you. Set them yourself when you run 
 | `USAGE_FLUSH_TOKENS`, `USAGE_FLUSH_SECONDS` | `1000000`, `300`       | A running attempt adds a usage row whenever this many tokens or seconds are unbilled, plus one at each checkpoint and at the end.                                                                                                                                  |
 | `JOB_EVENT_RETENTION_DAYS`                  | `90`                   | Days run metrics and events are kept.                                                                                                                                                                                                                              |
 | `DEFAULT_WORKSPACE_ID`                      | `local`                | The workspace the bootstrap admin key acts in.                                                                                                                                                                                                                     |
+| `UI_ENABLED`                                | `true`                 | Serve the [web UI](#web-ui) at `/`. Off by default with `AUTH_MODE=cloud`.                                                                                                                                                                                         |
 | `GRAD_EXTRA_MODELS_JSON`                    | none                   | JSON array that adds or overrides models in the trainable catalog.                                                                                                                                                                                                 |
 | `GRAD_JUDGE_MODELS_JSON`                    | none                   | Judge models beyond the catalog, with prices: `[{"id": "anthropic/claude-sonnet-5-5", "price_per_million_tokens_usd": 3}]`. A `Judge` must name a catalog model, one of these, or an artifact of the eval's workspace; anything else is `422 unknown_judge_model`. |
 
-The API answers `GET /health/live` and `GET /health/ready` (ready once Postgres answers) for probes.
+The API answers `GET /health/live` and `GET /health/ready` (ready once Postgres answers) for probes. Every other path outside `/v1` that a browser opens returns the web UI.
 
 ### Trainer workers
 

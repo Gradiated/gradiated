@@ -22,6 +22,8 @@ Use **`DPORecipe`** after [Supervised fine-tuning (SFT)](/docs/training/recipes/
 }
 ```
 
+A record whose `expected_output` corrects its logged answer (a correction synced from LangSmith, Braintrust or Langfuse) is a pair on its own: the correction is chosen and the logged answer rejected. Datasets in TRL's implicit-prompt format, where `chosen` and `rejected` are whole conversations with no `prompt`, work too: their shared opening turns become the prompt.
+
 If your pairs come from production [trajectories](/docs/training/trajectories/), store each side as its own trajectory with a shared `group_id` and `role: "chosen"` or `role: "rejected"`:
 
 ```json

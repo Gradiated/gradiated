@@ -91,7 +91,7 @@ A source feeds exactly one dataset; a dataset can have several sources, and dele
 | `GET`  | `/v1/artifacts/{id}`           | Get an artifact by id, `name@version` or `name@latest`.                                        |
 | `GET`  | `/v1/artifacts/{id}/download`  | Download the `.grad.tar.gz` bundle. Verify it against `X-Artifact-Sha256`.                     |
 
-Run status is `queued`, `running`, `completed`, `failed`, `cancelled` or `stopped_budget`.
+Run status is `queued`, `running`, `completed`, `failed`, `cancelled`, `stopped_budget` (hit its `max_cost_usd`; resume with a higher cap) or `stopped_balance` (the Cloud workspace ran out of balance; resume after a top-up with the same cap).
 
 ### Evaluations
 

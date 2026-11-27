@@ -9,15 +9,15 @@
 
 PostHog stores LLM calls as `$ai_generation` events grouped by `$ai_trace_id`. Each trace becomes one record, and any feedback event that carries the same `$ai_trace_id` (a thumbs survey response) becomes a score on it.
 
-| PostHog                                     | grad record                            |
-| ------------------------------------------- | -------------------------------------- |
-| `$ai_trace_id`                              | `id` (the merge key for late feedback) |
-| `$ai_input` / `$ai_output_choices`          | `messages`                             |
-| `survey sent` with the same `$ai_trace_id`  | `scores` (thumbs up = 1, down = 0)     |
-| `$ai_session_id`                            | `session_id`                           |
-| `$ai_model`                                 | `metadata.model`                       |
-| Your own event properties (`model_version`) | `metadata`                             |
-| `distinct_id`                               | `metadata.user_id`                     |
+| PostHog                                     | grad record                                                                                                                                                      |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `$ai_trace_id`                              | `id` (the merge key for late feedback)                                                                                                                           |
+| `$ai_input` / `$ai_output_choices`          | `messages`                                                                                                                                                       |
+| `survey sent` with the same `$ai_trace_id`  | `scores.thumbs` from the survey's thumbs question (up = 1, down = 0); other numeric answers keep their value under their question ID; text answers aren't synced |
+| `$ai_session_id`                            | `session_id`                                                                                                                                                     |
+| `$ai_model`                                 | `metadata.model`                                                                                                                                                 |
+| Your own event properties (`model_version`) | `metadata`                                                                                                                                                       |
+| `distinct_id`                               | `metadata.user_id`                                                                                                                                               |
 
 ## Tag generations with the model and version
 

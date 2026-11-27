@@ -20,6 +20,9 @@ grad local up
 # GPU stack (requires the NVIDIA Container Toolkit): adds the CUDA trainer worker
 grad local up --gpu
 
+# Add Prometheus and Grafana with the grad dashboards
+grad local up --observability
+
 # Or build the images from a checkout instead of pulling them
 grad local up --build
 ```
@@ -77,36 +80,35 @@ The UI is on by default. Set `UI_ENABLED=false` (Helm: `ui.enabled: false`) to s
 
 The chart in `server/helm/grad` runs two or more API replicas, a migrations Job and two pull-based worker pools on your own Postgres and S3 bucket. Nothing sits in front of your production traffic.
 
-First create the Secret the chart reads (`secret.name`, default `grad`). Every key except `database-url` is optional:
-
-```bash
-kubectl create namespace grad
-kubectl -n grad create secret generic grad \
-  --from-literal=database-url="postgres://grad:...@postgres.internal.example:5432/grad" \
-  --from-literal=admin-api-key-hash="$(printf '%s' "$MY_ADMIN_KEY" | sha256sum | awk '{print $1}')" \
-  --from-literal=trainer-api-key="$(openssl rand -hex 32)" \
-  --from-literal=secrets-key="$(openssl rand -base64 32)"
-```
-
-| Key                                          | Used by                   | Purpose                                                                                                                        |
-| -------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `database-url`                               | API, migrations Job, KEDA | Postgres connection string (required).                                                                                         |
-| `admin-api-key-hash`                         | API                       | SHA-256 hex of the bootstrap admin key. The API refuses to start in `api_key` mode without it.                                 |
-| `trainer-api-key`                            | API, workers              | The key workers authenticate with.                                                                                             |
-| `trainer-keys-json`                          | API                       | Per-pool worker keys scoped by job kind (`TRAINER_KEYS_JSON`); point each `workers.<name>.apiKeySecretKey` at its own key.     |
-| `secrets-key`                                | API                       | `GRAD_SECRETS_KEY`, which encrypts workspace secrets (provider keys, HF tokens). Without it, secrets and sources answer `501`. |
-| `inference-api-key`, `judge-api-key`         | API                       | Keys for `evals.inferenceBaseUrl` and `evals.judgeBaseUrl`.                                                                    |
-| `metrics-token`                              | API, Prometheus, KEDA     | Bearer token for `/metrics` with `metrics.requireToken`.                                                                       |
-| `aws-access-key-id`, `aws-secret-access-key` | API                       | Static S3 keys (MinIO). Leave them out with EKS Pod Identity or IRSA.                                                          |
-
-With External Secrets or sealed-secrets, sync the same keys into that Secret; no credential goes into values. Then install the chart from a checkout (the first release also publishes it as `oci://ghcr.io/gradiated/charts/grad`):
+Install it from a checkout (the first release also publishes it as `oci://ghcr.io/gradiated/charts/grad`) with the [values below](#minimal-valuesyaml):
 
 ```bash
 git clone https://github.com/Gradiated/grad
 helm upgrade --install grad ./grad/server/helm/grad \
-  --namespace grad \
+  --namespace grad --create-namespace \
   -f values.yaml
 ```
+
+The chart creates the Secret every pod reads (`<release>-grad`) and generates what you leave out: `GRAD_SECRETS_KEY`, an admin API key, and one worker key per pool, scoped to that pool's job kinds. Generated keys are kept across upgrades, and the Secret survives `helm uninstall`, so a reinstall still reads your workspace secrets. Read the admin key with:
+
+```bash
+kubectl -n grad get secret grad-grad -o jsonpath='{.data.admin-api-key}' | base64 -d
+```
+
+To manage the Secret yourself (External Secrets, sealed-secrets), set `secrets.create: false` and `secrets.existingSecret` to its name. Every key except `database-url` is optional:
+
+| Key                                          | Used by               | Purpose                                                                                                                                               |
+| -------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `database-url`                               | API, migrations Job   | Postgres connection string (required).                                                                                                                |
+| `admin-api-key-hash`                         | API                   | SHA-256 hex of the bootstrap admin key. The API refuses to start in `api_key` mode without it.                                                        |
+| `trainer-api-key`                            | API, workers          | One key for every worker pool.                                                                                                                        |
+| `trainer-keys-json`                          | API                   | Per-pool worker keys scoped by job kind (`TRAINER_KEYS_JSON`); point each `workers.<name>.apiKeySecretKey` at the Secret key holding that pool's key. |
+| `secrets-key`                                | API                   | `GRAD_SECRETS_KEY`, which encrypts workspace secrets (provider keys, HF tokens). Without it, secrets and sources answer `501`.                        |
+| `inference-api-key`, `judge-api-key`         | API                   | Keys for `evals.inferenceBaseUrl` and `evals.judgeBaseUrl`.                                                                                           |
+| `metrics-token`                              | API, Prometheus, KEDA | Bearer token for `/metrics` with `metrics.requireToken`.                                                                                              |
+| `aws-access-key-id`, `aws-secret-access-key` | API                   | Static S3 keys (MinIO). Leave them out with EKS Pod Identity or IRSA.                                                                                 |
+
+Keys from older versions of this guide (`secret`, `database`, `auth`, `trainer`, `judge`, `api.deployMode`, `models.mirrorUri`, `keda.minReplicaCount`) fail the render with the name of their replacement.
 
 The chart pins the image tags of its own version. Until the first release publishes them, set `api.image.tag`, `workers.import.image.tag` and `workers.train.image.tag` to `main` (`main-gpu` for the GPU workers) or a `sha-<7>` build.
 
@@ -114,6 +116,9 @@ The chart pins the image tags of its own version. Until the first release publis
 
 ```yaml
 # values.yaml
+secrets:
+  databaseUrl: postgres://grad:...@postgres.internal.example:5432/grad # required
+
 storage:
   s3Bucket: my-org-grad-artifacts # required
   s3Region: us-east-1
@@ -162,23 +167,23 @@ What the chart installs:
 
 The values you are most likely to set (see `server/helm/grad/values.yaml` for all of them):
 
-| Value                                                            | Default                           | Notes                                                                                                                                                                          |
-| ---------------------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `secret.name`                                                    | `grad`                            | The Secret above.                                                                                                                                                              |
-| `storage.s3Bucket`, `storage.s3Region`, `storage.s3Endpoint`     | required, `us-east-1`, none       | The bucket; set the endpoint for an S3-compatible store (path-style).                                                                                                          |
-| `api.replicaCount`                                               | `2`                               | Also `api.image.*`, `api.authMode` (`api_key`), `api.defaultWorkspaceId`, `api.env`, `api.resources`, scheduling and `api.podDisruptionBudget`.                                |
-| `workers.train`                                                  | 1 replica, 1 GPU, kinds `[train]` | `gpuCount`, `replicaCount`, `image.tag`, `env`, `nodeSelector`, `tolerations`, `affinity`, `resources`, `terminationGracePeriodSeconds` (300).                                 |
-| `workers.import`                                                 | 1 CPU replica, kinds `[import]`   | Imports and source syncs, with the same keys as `workers.train`.                                                                                                               |
-| `workerDefaults`                                                 | `ghcr.io/gradiated/grad-trainer`  | `image.repository`, `apiKeySecretKey` (`trainer-api-key`; per pool `workers.<name>.apiKeySecretKey`), `pollIntervalSeconds`, `leaseSeconds`.                                   |
-| `evals.inferenceBaseUrl`, `evals.judgeBaseUrl`                   | none                              | OpenAI-compatible endpoints for evals and `Judge` items. Without the first, evals answer `501 inference_unavailable`.                                                          |
-| `models.mirror`                                                  | none                              | Weights mirror, `s3://bucket/prefix` or a directory (`GRAD_MODELS_MIRROR`).                                                                                                    |
-| `keda.enabled`, `keda.trigger`                                   | `false`, `prometheus`             | `keda.workers.<pool>.{minReplicaCount,maxReplicaCount}` (train 0 to 8, import 1 to 4), `targetOpenJobs`, `pollingInterval`, `cooldownPeriod`, `keda.prometheus.serverAddress`. |
-| `metrics.*`                                                      | on, ports 9464 and 9465           | See [Monitoring](#monitoring).                                                                                                                                                 |
-| `migrations.enabled`                                             | `true`                            | Migrations in a pre-install and pre-upgrade hook Job.                                                                                                                          |
-| `networkPolicy.enabled`                                          | `false`                           | `apiIngressFrom`, `workerEgress`.                                                                                                                                              |
-| `ui.enabled`                                                     | `true`                            | The [web UI](#web-ui) at `/`.                                                                                                                                                  |
-| `ingress.*`                                                      | off                               | `className`, `annotations`, `hosts`, `tls`.                                                                                                                                    |
-| `serviceAccount.annotations`, `workerServiceAccount.annotations` | none                              | IRSA or Workload Identity for S3 (EKS Pod Identity needs none).                                                                                                                |
+| Value                                                            | Default                           | Notes                                                                                                                                                                                                                                                                |
+| ---------------------------------------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `secrets.create`                                                 | `true`                            | Create and fill the Secret; set `secrets.databaseUrl` (required), and optionally `adminApiKeyHash`, `secretsKey`, `inferenceApiKey`, `judgeApiKey`, `metricsToken`, `awsAccessKeyId`, `awsSecretAccessKey`. With `false`, name your own in `secrets.existingSecret`. |
+| `storage.s3Bucket`, `storage.s3Region`, `storage.s3Endpoint`     | required, `us-east-1`, none       | The bucket; set the endpoint for an S3-compatible store (path-style).                                                                                                                                                                                                |
+| `api.replicaCount`                                               | `2`                               | Also `api.image.*`, `api.authMode` (`api_key`), `api.defaultWorkspaceId`, `api.env`, `api.resources`, scheduling and `api.podDisruptionBudget`.                                                                                                                      |
+| `workers.train`                                                  | 1 replica, 1 GPU, kinds `[train]` | `gpuCount`, `replicaCount`, `image.tag`, `env`, `nodeSelector`, `tolerations`, `affinity`, `resources`, `terminationGracePeriodSeconds` (300).                                                                                                                       |
+| `workers.import`                                                 | 1 CPU replica, kinds `[import]`   | Imports and source syncs, with the same keys as `workers.train`.                                                                                                                                                                                                     |
+| `workerDefaults`                                                 | `ghcr.io/gradiated/grad-trainer`  | `image.repository`, `apiKeySecretKey` (`trainer-api-key`; per pool `workers.<name>.apiKeySecretKey`), `pollIntervalSeconds`, `leaseSeconds`.                                                                                                                         |
+| `evals.inferenceBaseUrl`, `evals.judgeBaseUrl`                   | none                              | OpenAI-compatible endpoints for evals and `Judge` items. Without the first, evals answer `501 inference_unavailable`.                                                                                                                                                |
+| `models.mirror`                                                  | none                              | Weights mirror, `s3://bucket/prefix` or a directory (`GRAD_MODELS_MIRROR`).                                                                                                                                                                                          |
+| `keda.enabled`, `keda.trigger`                                   | `false`, `prometheus`             | `keda.workers.<pool>.{minReplicaCount,maxReplicaCount}` (train 0 to 8, import 1 to 4), `targetOpenJobs`, `pollingInterval`, `cooldownPeriod`, `keda.prometheus.serverAddress`.                                                                                       |
+| `metrics.*`                                                      | on, ports 9464 and 9465           | See [Monitoring](#monitoring).                                                                                                                                                                                                                                       |
+| `migrations.enabled`                                             | `true`                            | Migrations in a pre-install and pre-upgrade hook Job.                                                                                                                                                                                                                |
+| `networkPolicy.enabled`                                          | `false`                           | `apiIngressFrom`, `workerEgress`.                                                                                                                                                                                                                                    |
+| `ui.enabled`                                                     | `true`                            | The [web UI](#web-ui) at `/`.                                                                                                                                                                                                                                        |
+| `ingress.*`                                                      | off                               | `className`, `annotations`, `hosts`, `tls`.                                                                                                                                                                                                                          |
+| `serviceAccount.annotations`, `workerServiceAccount.annotations` | none                              | IRSA or Workload Identity for S3 (EKS Pod Identity needs none).                                                                                                                                                                                                      |
 
 `storage.s3Bucket` is required: the chart refuses to render without it, because replicas and workers share files through presigned S3 URLs. Give the API access to the bucket through its ServiceAccount (`serviceAccount.annotations`; EKS Pod Identity needs none) or the static keys above, and set `storage.s3Endpoint` for MinIO, R2 or another S3-compatible store. Everything in the bucket is written once and never overwritten: dataset versions as gzip-compressed JSONL parts (`.jsonl.gz`), checkpoints and artifacts as `.grad.tar.gz` bundles.
 
@@ -190,14 +195,18 @@ With prometheus-operator (kube-prometheus-stack), turn on the scrape configs, th
 
 ```yaml
 metrics:
-  requireToken: true # add `metrics-token` to the Secret; scrapes and KEDA send it as a bearer token
+  requireToken: true # the chart generates `metrics-token`; monitors and KEDA send it
   serviceMonitor: { enabled: true, labels: { release: kube-prometheus-stack } }
   podMonitor: { enabled: true, labels: { release: kube-prometheus-stack } }
   prometheusRule: { enabled: true, labels: { release: kube-prometheus-stack } }
   grafanaDashboards: { enabled: true }
 ```
 
-The alerts fire on a 5xx rate above 5%, a job queued for 30 minutes, queued jobs with no worker that can claim them, a paused source, and a running attempt that has billed nothing for 15 minutes; `metrics.prometheusRule.*` sets the thresholds. The three dashboards (Overview, Training, and Evals and sources) load as ConfigMaps for the Grafana sidecar. Without the operator, import them from [`deploy/grafana/`](https://github.com/Gradiated/grad/tree/main/deploy/grafana) and pick your Prometheus data source.
+The alerts fire on a 5xx rate above 5%, a job queued for 30 minutes, queued jobs with no worker that can claim them, a paused source, and a running attempt that has billed nothing for 15 minutes; `metrics.prometheusRule.*` sets the thresholds. The three dashboards (Overview, Training, and Evals and sources) load as ConfigMaps for the Grafana sidecar. Without the operator, import them from [`deploy/grafana/`](https://github.com/Gradiated/grad/tree/main/deploy/grafana) and pick your Prometheus data source. [`docs/METRICS.md`](https://github.com/Gradiated/grad/blob/main/docs/METRICS.md) lists every metric with its labels; labels never carry run, dataset or workspace IDs.
+
+On a single machine, `grad local up --observability` runs Prometheus and Grafana next to the stack, on `127.0.0.1:9090` and `127.0.0.1:3000` (`GRAD_PROMETHEUS_PORT`, `GRAD_GRAFANA_PORT`), with the same dashboards provisioned, and prints the Grafana URL. Anyone on the machine can view them; sign in as `admin` (password `GRAD_GRAFANA_PASSWORD`, default `admin`) to edit.
+
+Tracing is off unless `OTEL_EXPORTER_OTLP_ENDPOINT` is set. grad-server then exports OpenTelemetry spans for HTTP requests, database queries and storage operations, and hands the trace to the worker with each job, so one trace follows a run from creation through claim and training to completion. The standard `OTEL_*` variables (headers, service name, sampler) apply. Logs are JSON lines with `request_id`, `trace_id` and `job_id`.
 
 ### Private VPC and air-gapped setup
 
@@ -244,6 +253,7 @@ The chart and `grad local up` set these for you. Set them yourself when you run 
 | `GRAD_JUDGE_BASE_URL`, `GRAD_JUDGE_API_KEY`         | the inference endpoint     | Endpoint for `Judge` rubric items. The chart sets them from `evals.judgeBaseUrl` and the `judge-api-key` secret key. The older `INFERENCE_*` and `JUDGE_*` names still work, with a warning at startup.                                                            |
 | `EVAL_EXECUTOR`, `EVAL_CONCURRENCY`                 | `true`, `8`                | Whether this replica runs evals, and how many model calls it makes at once.                                                                                                                                                                                        |
 | `MAX_ATTEMPTS`                                      | `10`                       | Attempts per job that may end without a result (a crash, a lost worker) before the run fails with the last error.                                                                                                                                                  |
+| `MAX_PREEMPTIONS`                                   | `20`                       | Attempts per job that may end because their worker's compute was reclaimed (SIGTERM or a termination notice). They don't count toward `MAX_ATTEMPTS`.                                                                                                              |
 | `USAGE_FLUSH_TOKENS`, `USAGE_FLUSH_SECONDS`         | `1000000`, `300`           | A running attempt adds a usage row whenever this many tokens or seconds are unbilled, plus one at each checkpoint and at the end.                                                                                                                                  |
 | `JOB_EVENT_RETENTION_DAYS`                          | `90`                       | Days run metrics and events are kept.                                                                                                                                                                                                                              |
 | `DEFAULT_WORKSPACE_ID`                              | `local`                    | The workspace the bootstrap admin key acts in.                                                                                                                                                                                                                     |
@@ -258,24 +268,27 @@ The API answers `GET /health/live` and `GET /health/ready` (ready once Postgres 
 
 Workers are plain processes (the `grad-trainer` command from `server/trainer`, or the `grad-trainer` image) that pull jobs from the API, so you can run them on any machine that reaches it, including GPU hosts outside the cluster:
 
-| Variable                                                | Default        | Notes                                                                                                                                    |
-| ------------------------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `GRAD_SERVER_URL`, `TRAINER_API_KEY`                    | required       | The API's URL and the worker key.                                                                                                        |
-| `GRAD_WORKER_KINDS`                                     | `train,import` | Which jobs to claim. Run GPU hosts with `train` only; imports and source syncs (`import`) need no GPU.                                   |
-| `GRAD_WORKER_ID`                                        | hostname-based | A label for logs.                                                                                                                        |
-| `GRAD_MODEL_PATHS`                                      | none           | JSON map of model ID to a local directory or Hugging Face repo. `gradiated/linden-1` weights aren't public and must come from here.      |
-| `GRAD_MODELS_MIRROR`, `GRAD_MODELS_CACHE`               | none           | A directory or `s3://` prefix holding `<mirror>/<model id>/`, and where downloaded weights are cached.                                   |
-| `GRAD_OFFLINE` (or `HF_HUB_OFFLINE`)                    | off            | Never download from Hugging Face; a missing model fails with `model_unavailable`.                                                        |
-| `GRAD_SOURCES_EGRESS_ALLOW`, `GRAD_SOURCES_EGRESS_DENY` | none           | Source syncs only reach public `https` hosts. Allow private CIDRs here (for a self-hosted Langfuse or Phoenix), or deny more.            |
-| `GRAD_WORKER_METRICS_PORT`                              | off            | Serve the worker's Prometheus metrics (`grad_trainer_*`: phase, step time, tokens/s, GPU use, checkpoint and upload times) on this port. |
-| `GRAD_SOURCES_SETTLE_SECONDS`                           | `600`          | How old a provider's new traces must be before a sync reads them, so late spans and scores land first.                                   |
+| Variable                                                | Default        | Notes                                                                                                                                     |
+| ------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `GRAD_SERVER_URL`, `TRAINER_API_KEY`                    | required       | The API's URL and the worker key.                                                                                                         |
+| `GRAD_WORKER_KINDS`                                     | `train,import` | Which jobs to claim. Run GPU hosts with `train` only; imports and source syncs (`import`) need no GPU.                                    |
+| `GRAD_WORKER_ID`                                        | hostname-based | A label for logs.                                                                                                                         |
+| `GRAD_MODEL_PATHS`                                      | none           | JSON map of model ID to a local directory or Hugging Face repo. `gradiated/linden-1` weights aren't public and must come from here.       |
+| `GRAD_MODELS_MIRROR`, `GRAD_MODELS_CACHE`               | none           | A directory or `s3://` prefix holding `<mirror>/<model id>/`, and where downloaded weights are cached.                                    |
+| `GRAD_OFFLINE` (or `HF_HUB_OFFLINE`)                    | off            | Never download from Hugging Face; a missing model fails with `model_unavailable`.                                                         |
+| `GRAD_SOURCES_EGRESS_ALLOW`, `GRAD_SOURCES_EGRESS_DENY` | none           | Source syncs only reach public `https` hosts. Allow private CIDRs here (for a self-hosted Langfuse or Phoenix), or deny more.             |
+| `GRAD_WORKER_METRICS_PORT`                              | off            | Serve the worker's Prometheus metrics (`grad_trainer_*`: phase, step time, tokens/s, GPU use, checkpoint and upload times) on this port.  |
+| `GRAD_SOURCES_SETTLE_SECONDS`                           | `600`          | How old a provider's new traces must be before a sync reads them, so late spans and scores land first.                                    |
+| `GRAD_RECLAIM_GRACE_SECONDS`                            | `25`           | On SIGTERM the worker saves a checkpoint of the current step if the next step and a checkpoint fit in this time, then hands the run back. |
+| `GRAD_TERMINATION_NOTICE`                               | off            | `aws`: also poll the EC2 instance metadata for a termination notice (IMDSv2) and treat it like SIGTERM, with the notice's lead time.      |
+| `GRAD_WORKER_GPU`                                       | detected       | The GPU the worker reports at `starting` (`nvidia-smi` by default): `none`, or JSON `{"name": "NVIDIA H100 80GB HBM3", "memory_gb": 80}`. |
 
 ### Authentication and API keys
 
 Self-hosted authentication is local to your cluster (it never calls Gradiated Cloud) and uses the same `GRADIATED_API_KEY` variable and `Authorization: Bearer` header:
 
 - **Local dev (`grad local up`):** authentication is on, with keys generated into the `local` profile.
-- **Kubernetes:** use the bootstrap admin key directly, or mint scoped per-pipeline keys. They're stored as SHA-256 hashes in your Postgres:
+- **Kubernetes:** use the admin key the chart generated (or the one whose hash you set in `secrets.adminApiKeyHash`), or mint scoped per-pipeline keys. They're stored as SHA-256 hashes in your Postgres:
 
 ```bash
 export GRADIATED_BASE_URL=https://grad.internal.example

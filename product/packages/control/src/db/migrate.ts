@@ -5,7 +5,13 @@ import { createControlDatabase } from "./client.js";
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error("DATABASE_URL is required");
 
-const { database, pool } = createControlDatabase(connectionString);
+// A migration waiting behind a long transaction queues every reader of its
+// table behind it; failing fast lets the job retry instead.
+const { database, pool } = createControlDatabase(
+  connectionString,
+  10,
+  "-c lock_timeout=5s",
+);
 
 try {
   const deadline = Date.now() + 60_000;

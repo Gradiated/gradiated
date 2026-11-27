@@ -1,7 +1,7 @@
 /* ---------------------------------------------------------------------------
    pages — the compositions the product pages are built from.
 
-   Chrome for /inference/, /training/, /hardware/ and /model-detail/, in the
+   Chrome for /inference/, /training/ and /model-detail/, in the
    same sense layouts.css is chrome for /style/: these are page shapes, not
    system primitives. Anything here that turns out to be needed by a third
    page belongs in components.css instead.
@@ -2845,13 +2845,19 @@ a.gr-read-author-name:focus-visible {
     padding-block-start: calc(1.5 * var(--u));
   }
 
+  /* A centred fold fills the screen and centres itself; the offset would
+     only push it past one screen. */
+  .gr-root .gr-module--fold:has(.gr-fold-centred, .gr-lab-stage) {
+    padding-block-start: 0;
+  }
+
   /* Out-specifies the narrow tier's own hero padding rule. */
   .gr-root[data-tier]:not([data-tier="wide"]) .gr-fold .gr-page-hero,
   .gr-root[data-tier]:not([data-tier="wide"]) .gr-module .gr-page-hero {
     padding-block-start: 0;
   }
 
-  .gr-root .gr-fold:not(:has(.gr-fold-centred)) {
+  .gr-root .gr-fold:not(:has(.gr-fold-centred, .gr-lab-stage)) {
     min-height: 0;
     align-content: start;
   }

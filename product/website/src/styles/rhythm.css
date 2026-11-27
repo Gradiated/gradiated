@@ -27,11 +27,16 @@
   }
 
   /* -- first fold: every page's content starts the same distance from the
-        top, half a section gap, beside the strip rather than under a bar */
+        top, half a section gap, beside the strip rather than under a bar.
+        A centred fold is exempt: it fills the screen and centres itself,
+        so an offset would only push it past one screen. */
   .gr-rail-sheet
     .gr-root[data-tier]:not([data-tier="wide"])
     .gr-band:first-of-type
-    > .gr-module:first-child:not(.gr-module--profile) {
+    > .gr-module:first-child:not(
+      .gr-module--profile,
+      :has(.gr-fold-centred, .gr-lab-stage)
+    ) {
     padding-block-start: calc(var(--rhythm-section) / 2);
   }
 

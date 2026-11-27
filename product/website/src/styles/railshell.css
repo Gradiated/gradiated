@@ -1053,3 +1053,22 @@
     animation: none;
   }
 }
+
+/* Hide the rail's scrollbars on systems that always show them; scrolling still works. */
+.gr-rail-docnav,
+.gr-rail-under,
+.gr-rail-menu,
+.gr-docrail {
+  scrollbar-width: none;
+}
+
+.gr-rail-docnav::-webkit-scrollbar,
+.gr-rail-under::-webkit-scrollbar,
+.gr-rail-menu::-webkit-scrollbar,
+.gr-docrail::-webkit-scrollbar {
+  display: none;
+}
+
+.gr-rail-docnav[data-overflow] {
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 48px), transparent);
+}

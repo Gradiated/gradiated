@@ -3,6 +3,7 @@ import { handbookPages } from "./handbook";
 import { models } from "./models";
 import { papers } from "./papers";
 import { articles, authorOf } from "./articles";
+import { ogImageFor } from "./og-pages";
 import { team } from "./team";
 
 export const siteOrigin = "https://gradiated.com";
@@ -30,9 +31,9 @@ export const formatPageTitle = (title: string): string =>
 
 const pageMetadata: Record<string, PageMetadataContent> = {
   "/": {
-    title: "Run open models",
+    title: "Open Source AI Lab",
     description:
-      "Gradiated trains a router for your workload, using open models where they meet your quality requirements and frontier models where they’re needed.",
+      "Gradiated builds open models for everyday software work and trains custom models for teams moving workloads off frontier APIs.",
   },
   "/about/": {
     title: "About",
@@ -64,11 +65,6 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     title: "Inference",
     description:
       "Open-model inference priced for the latency your workload requires.",
-  },
-  "/hardware/": {
-    title: "Hardware",
-    description:
-      "Inference hardware designed for efficient, long-running cloud workloads.",
   },
   "/artwork-generator/": {
     title: "Artwork generator",
@@ -165,7 +161,7 @@ const pageMetadata: Record<string, PageMetadataContent> = {
   "/docs/systemone-sdk/": {
     title: "SystemOne SDK",
     description:
-      "Use linden-1 with the TypeSafe SystemOne SDK on Gradiated. Copy Python, Node, and cURL examples for choices, probabilities, and scores.",
+      "Use Linden-1 with the TypeSafe SystemOne SDK on Gradiated. Copy Python, Node, and cURL examples for choices, probabilities, and scores.",
   },
   "/docs/service-tiers/": {
     title: "Service tiers",
@@ -399,7 +395,10 @@ const metadataDetailsFor = (
   pathname: string,
 ): Pick<PageMetadata, "image" | "kind" | "publishedAt"> => {
   if (pathname.startsWith("/docs/")) {
-    return { image: defaultImage, kind: "documentation" };
+    return {
+      image: ogImageFor(pathname) ?? defaultImage,
+      kind: "documentation",
+    };
   }
   if (pathname !== "/careers/" && pathname.startsWith("/careers/")) {
     return {
@@ -408,7 +407,8 @@ const metadataDetailsFor = (
       publishedAt: "2026-08-28",
     };
   }
-  return { image: defaultImage, kind: "website" };
+  if (pathname === "/") return { image: "/brand/og-home.jpg", kind: "website" };
+  return { image: ogImageFor(pathname) ?? defaultImage, kind: "website" };
 };
 
 export const getPageMetadata = (pathname: string): PageMetadata => {
@@ -418,7 +418,7 @@ export const getPageMetadata = (pathname: string): PageMetadata => {
     return {
       title: article.title,
       description: article.description ?? article.title,
-      image: article.image,
+      image: ogImageFor(normalizedPath) ?? article.image,
       publishedAt: article.publishedAt,
       updatedAt: article.updatedAt,
       author: article.author,

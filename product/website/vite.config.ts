@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createRequire } from "node:module";
 import { spawnSync } from "node:child_process";
+import { Readable } from "node:stream";
 import { fileURLToPath } from "node:url";
 import mdx from "@mdx-js/rollup";
 import { defineConfig, loadEnv } from "vite";
@@ -12,6 +13,7 @@ import remarkGfm from "remark-gfm";
 import remarkFrontmatter from "remark-frontmatter";
 import rehypeHighlight from "rehype-highlight";
 import { all } from "lowlight";
+import { POST as suggestModelName } from "./api/model-name-suggestions.js";
 
 const require = createRequire(import.meta.url);
 const {
@@ -64,6 +66,54 @@ const mdxPlugin = mdx({
     rehypeArticleExternalLinks,
   ],
 });
+
+const modelNameSuggestions: Plugin = {
+  name: "model-name-suggestions",
+  apply: "serve",
+  configureServer(server) {
+    // Vercel provides these in deployments; locally they come from .env.local.
+    const local = loadEnv(server.config.mode, process.cwd(), [
+      "MODEL_NAME_",
+      "KV_",
+      "UPSTASH_",
+    ]);
+    for (const [key, value] of Object.entries(local))
+      process.env[key] ??= value;
+    server.middlewares.use(
+      "/api/model-name-suggestions",
+      async (request, response) => {
+        const headers = new Headers();
+        for (const [key, value] of Object.entries(request.headers)) {
+          if (value !== undefined)
+            headers.set(key, Array.isArray(value) ? value.join(", ") : value);
+        }
+
+        const init = {
+          method: request.method,
+          headers,
+          body:
+            request.method === "POST"
+              ? (Readable.toWeb(request) as ReadableStream<Uint8Array>)
+              : undefined,
+          duplex: "half",
+        };
+        try {
+          const result = await suggestModelName(
+            new Request(
+              `http://${request.headers.host}/api/model-name-suggestions`,
+              init,
+            ),
+          );
+          response.writeHead(result.status, Object.fromEntries(result.headers));
+          response.end(await result.text());
+        } catch {
+          response.writeHead(500);
+          response.end();
+        }
+      },
+    );
+  },
+};
 
 /* Job postings come only from Ashby, synced into src/ashby-jobs.generated.ts.
    `pnpm build` syncs before building; the dev server does it on start, so a
@@ -180,6 +230,7 @@ export default defineConfig(({ command, isSsrBuild, mode }) => {
       ),
     },
     plugins: [
+      modelNameSuggestions,
       syncAshbyJobs,
       syncTeamPlaces,
       syncTeamMedia(),

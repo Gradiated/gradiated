@@ -22,7 +22,6 @@ import { PageMetadata } from "./components/PageMetadata";
 import { ModelDetailPage } from "./pages/ModelDetailPage";
 import { CareersIndexPage, JobDetailPage } from "./pages/CareersPages";
 import { DocsNextPage } from "./pages/DocsNextPage";
-import { HardwarePage } from "./pages/HardwarePage";
 import { HomePage } from "./pages/HomePage";
 import { InferencePage } from "./pages/InferencePage";
 import { LEGAL, LegalPage } from "./pages/LegalPages";
@@ -263,14 +262,6 @@ export const AppRoutes = (): ReactElement => (
         </Shelled>
       }
       path="/training/"
-    />
-    <Route
-      element={
-        <Shelled>
-          <HardwarePage />
-        </Shelled>
-      }
-      path="/hardware/"
     />
     <Route
       element={

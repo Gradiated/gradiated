@@ -12,14 +12,20 @@ import {
 } from "../src/catalog/models/index.js";
 import { createCatalogService } from "../src/catalog/service.js";
 import {
+  modelDeployments,
   models,
   tasks,
   workspaces,
   trainingRuns,
   taskVersions,
 } from "../src/db/schema/index.js";
+import { createInstanceService } from "../src/instances/service.js";
 import { trainingAdapter } from "./support/training.js";
-import { modelInput, seedMember } from "./support/fixtures.js";
+import {
+  deploymentRelease,
+  modelInput,
+  seedMember,
+} from "./support/fixtures.js";
 import { createTestDatabase, type TestDatabase } from "./support/postgres.js";
 
 describe("catalog apply", () => {
@@ -146,6 +152,49 @@ describe("catalog apply", () => {
     expect(await owners()).toEqual([{ id: next.id }]);
   });
 
+  it("migrates existing deployments atomically when a model ID becomes an alias", async () => {
+    const catalog = createCatalogService(testDatabase.database);
+    const instances = createInstanceService(testDatabase.database);
+    const host = await instances.register({
+      provider: "runpod",
+      providerAccountId: "test",
+      providerInstanceId: randomUUID(),
+      region: "US-NE-1",
+      sku: "B300",
+      faultDomain: "catalog-apply-host",
+    });
+    const oldModel = modelInput();
+    const newModel = modelInput({ aliases: [oldModel.id] });
+    await catalog.upsertModel(oldModel);
+    const deploymentId = randomUUID();
+    await testDatabase.database.insert(modelDeployments).values({
+      id: deploymentId,
+      instanceId: host.id,
+      modelId: oldModel.id,
+      status: "available",
+      provider: "runpod",
+      region: "US-NE-1",
+      faultDomain: "catalog-apply-host",
+      serviceUrl: `http://gpu-${host.id}.tailscale-inference.svc.cluster.local:8888/alloc/${deploymentId}`,
+      release: deploymentRelease(),
+    });
+
+    await applyCatalog(testDatabase.database, [
+      newModel,
+      { ...oldModel, aliases: [], status: "retired" },
+    ]);
+
+    const [deployment] = await testDatabase.database
+      .select()
+      .from(modelDeployments)
+      .where(eq(modelDeployments.id, deploymentId));
+    expect(deployment).toMatchObject({
+      id: deploymentId,
+      modelId: newModel.id,
+      status: "available",
+    });
+  });
+
   it("puts a model edited in the database back to its catalog definition", async () => {
     const [kev] = catalogModels.filter(
       (model) => model.id === "jaredpalmer/kev-9b",
@@ -165,20 +214,31 @@ describe("catalog apply", () => {
     expect(stored).toMatchObject({ name: kev!.name, status: kev!.status });
   });
 
-  it("retires the previous Dealign ID after the requested model qualifies", async () => {
+  it("retires the previous Dealign IDs after the requested model qualifies", async () => {
     const catalog = createCatalogService(testDatabase.database);
-    const legacy = legacyModels[0]!;
-    await catalog.upsertModel({ ...legacy, status: "unavailable" });
+    const retiredDealign = legacyModels.filter((model) =>
+      model.id.startsWith("dealignai/glm-5.3-flash-uncensored"),
+    );
+    for (const legacy of retiredDealign) {
+      await catalog.upsertModel({ ...legacy, status: "unavailable" });
+    }
 
     await applyCatalog(testDatabase.database);
 
     const listed = await catalog.listModels();
-    expect(listed.map((model) => model.id)).not.toContain(legacy.id);
+    for (const legacy of retiredDealign) {
+      expect(listed.map((model) => model.id)).not.toContain(legacy.id);
+    }
     expect(listed).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: "dealignai/glm-5.3-flash-uncensored",
-          name: "GLM-5.3 Flash Uncensored",
+          id: "glm-5.3-flash-cyber",
+          name: "GLM 5.3 Flash Cyber",
+          aliases: [
+            "dealignai/glm-5.3-flash-uncensored",
+            "dealignai/glm-5.3-flash-cyber",
+            "glm-5.3-flash-uncensored",
+          ],
           status: "available",
         }),
       ]),

@@ -129,7 +129,6 @@ product/inference/build/
 /people/
 /tasks/active/2026-07-28-inference-talent-corpus.md
 /tasks/done/2026-07-28-uk-inference-chip-talent.md
-/.coherence/
 /.github/ISSUE_TEMPLATE/onboarding.yml
 /.github/ISSUE_TEMPLATE/offboarding.yml
 /.github/workflows/drata-sync.yml

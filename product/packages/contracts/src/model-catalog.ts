@@ -38,6 +38,16 @@ export const MODEL_CATALOG = [
     },
   },
   {
+    id: "kimi-k3.1-pro-cyber",
+    displayName: "Kimi K3.1 Pro Cyber",
+    icon: null,
+    supportedUses: ["judge", "comparison", "serving"],
+    architecture: {
+      model: "yetalabs/Kimi-K3.1-Pro-abliterated",
+      revision: "0911ef0765f49d26dfa25bb0d071f29463f8000b",
+    },
+  },
+  {
     id: "deepseek/deepseek-v4.1-flash-1017",
     displayName: "DeepSeek V4.1 Flash 1017",
     icon: "/model-providers/deepseek.svg",
@@ -80,8 +90,8 @@ export const MODEL_CATALOG = [
     },
   },
   {
-    id: "dealignai/glm-5.3-flash-uncensored",
-    displayName: "GLM-5.3 Flash Uncensored",
+    id: "glm-5.3-flash-cyber",
+    displayName: "GLM 5.3 Flash Cyber",
     icon: "/model-providers/zai.svg",
     supportedUses: ["judge", "comparison", "serving"],
   },
@@ -252,8 +262,20 @@ export const MODEL_CATALOG = [
 const LEGACY_MODEL_CATALOG = [
   {
     id: "dealignai/glm-5.3-flash-uncensored-nvfp4",
-    displayName: "GLM-5.3 Flash Uncensored",
+    displayName: "GLM 5.3 Flash Cyber",
     icon: "/model-providers/zai.svg",
+    supportedUses: ["judge", "comparison", "serving"],
+  },
+  {
+    id: "dealignai/glm-5.3-flash-uncensored",
+    displayName: "GLM 5.3 Flash Cyber",
+    icon: "/model-providers/zai.svg",
+    supportedUses: ["judge", "comparison", "serving"],
+  },
+  {
+    id: "yetalabs/kimi-k3.1-pro-abliterated",
+    displayName: "Kimi K3.1 Pro Cyber",
+    icon: null,
     supportedUses: ["judge", "comparison", "serving"],
   },
 ] as const satisfies readonly CatalogEntry[];

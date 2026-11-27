@@ -111,10 +111,6 @@ const NAV_ITEMS: NavItem[] = [
       ],
     },
   },
-  /* Promoted out of the Product panel to a destination of its own. No panel
-     yet — one card is not a gallery, and the shared panel only earns its
-     complexity where there is a set to move between. */
-  { href: "/hardware/", label: "Hardware" },
   { href: "/library/", label: "Library" },
   { href: "/handbook/", label: "Handbook" },
   ...(hasGuide

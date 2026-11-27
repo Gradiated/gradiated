@@ -92,6 +92,10 @@ describe("model configurations", () => {
     },
     "deepseek/deepseek-v4.1-flash": { input: [300, 7], output: [1_200, 1_200] },
     "z-ai/glm-5.3-flash": { input: [150, 30], output: [500, 500] },
+    "glm-5.3-flash-cyber": {
+      input: [150, 15],
+      output: [450, 450],
+    },
     "dealignai/glm-5.3-flash-uncensored": {
       input: [150, 15],
       output: [450, 450],
@@ -106,6 +110,14 @@ describe("model configurations", () => {
     "moonshotai/kimi-k3.1-pro": {
       input: [1_600, 160],
       output: [8_000, 8_000],
+    },
+    "kimi-k3.1-pro-cyber": {
+      input: [1_000, 100],
+      output: [5_000, 5_000],
+    },
+    "yetalabs/kimi-k3.1-pro-abliterated": {
+      input: [1_000, 100],
+      output: [5_000, 5_000],
     },
     "z-ai/glm-5.3": { input: [1_400, 260], output: [4_400, 4_400] },
     "posthog/jeeves": { input: [20, 20], output: [0] },
@@ -136,12 +148,15 @@ describe("model configurations", () => {
       "deepseek/deepseek-v4.1-flash-1017": "deepseek/deepseek-v4.1-flash-1017",
       "deepseek/deepseek-v4.1-flash": "deepseek/deepseek-v4.1-flash",
       "z-ai/glm-5.3-flash": "z-ai/glm-5.3-flash",
+      "glm-5.3-flash-cyber": null,
       "dealignai/glm-5.3-flash-uncensored": null,
       "dealignai/glm-5.3-flash-uncensored-nvfp4": null,
       "jaredpalmer/kev-9b": undefined,
       "gradiated/linden-1": null,
       "perplexity-ai/pplx-decider-v1.2": null,
       "moonshotai/kimi-k3.1-pro": "moonshotai/kimi-k3.1-pro",
+      "kimi-k3.1-pro-cyber": null,
+      "yetalabs/kimi-k3.1-pro-abliterated": null,
       "z-ai/glm-5.3": "z-ai/glm-5.3",
       "posthog/jeeves": null,
       "posthog/jevk5": null,
@@ -186,6 +201,7 @@ describe("model configurations", () => {
       "decision",
       "chat",
       "chat",
+      "chat",
       "decision",
       "decision",
     ]);
@@ -217,6 +233,10 @@ it("offers Kimi with exact OpenRouter capacity and its reasoning contract", () =
   expect(
     model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
   ).toBe("moonshotai/kimi-k3.1-pro");
+  expect(model && "tokenizer" in model ? model.tokenizer : undefined).toEqual({
+    path: "moonshotai/Kimi-K3.1-Pro",
+    revision: "d9e99b0792a5e93b78ea9bea62a68167e36ddd9e",
+  });
   expect(model?.properties).toMatchObject({
     hugging_face_id: "moonshotai/Kimi-K3.1-Pro",
     quantization: "mxfp4",
@@ -232,6 +252,42 @@ it("offers Kimi with exact OpenRouter capacity and its reasoning contract", () =
         },
       },
     ],
+  });
+});
+
+it("offers YetaLabs' Kimi K3.1 Pro Cyber without OpenRouter fallback and aliases NanoGPT's ID", () => {
+  const model = catalogModels.find((item) => item.id === "kimi-k3.1-pro-cyber");
+  const retired = legacyModels.find(
+    (item) => item.id === "yetalabs/kimi-k3.1-pro-abliterated",
+  );
+
+  expect(model?.status).toBe("available");
+  expect(model?.name).toBe("Kimi K3.1 Pro Cyber");
+  expect(model && "aliases" in model ? model.aliases : undefined).toEqual([
+    "yetalabs/kimi-k3.1-pro-abliterated",
+    "yetalabs/kimi-k3.1-pro-ablated",
+    "yetalabs/kimi-k3.1-pro-uncensored",
+    "kimi-k3.1-pro-abliterated",
+    "kimi-k3.1-pro-ablated",
+    "kimi-k3.1-pro-uncensored",
+  ]);
+  expect(retired?.status).toBe("retired");
+  expect(
+    model && "openrouterModelId" in model ? model.openrouterModelId : undefined,
+  ).toBeNull();
+  expect(model && "tokenizer" in model ? model.tokenizer : undefined).toEqual({
+    path: "yetalabs/Kimi-K3.1-Pro-abliterated",
+    revision: "0911ef0765f49d26dfa25bb0d071f29463f8000b",
+  });
+  expect(model?.properties).toMatchObject({
+    hugging_face_id: "yetalabs/Kimi-K3.1-Pro-abliterated",
+    quantization: "mxfp4",
+    tokenizer: "Kimi K3.1",
+    input_modalities: [{ type: "text" }],
+    reasoning: {
+      supported_efforts: ["low", "high", "max"],
+      default_effort: "max",
+    },
   });
 });
 
@@ -265,15 +321,26 @@ it("retires original DeepSeek Flash and keeps 1017 as an explicit selection", ()
 });
 
 it("identifies Dealign weights separately from the stock training base", () => {
-  const model = catalogModels.find(
+  const model = catalogModels.find((item) => item.id === "glm-5.3-flash-cyber");
+  const retired = legacyModels.find(
     (item) => item.id === "dealignai/glm-5.3-flash-uncensored",
   );
 
   expect(model?.status).toBe("available");
+  expect(model?.name).toBe("GLM 5.3 Flash Cyber");
+  expect(model && "aliases" in model ? model.aliases : undefined).toEqual([
+    "dealignai/glm-5.3-flash-uncensored",
+    "dealignai/glm-5.3-flash-cyber",
+    "glm-5.3-flash-uncensored",
+  ]);
   expect(model?.properties).toMatchObject({
     hugging_face_id: "dealignai/GLM-5.3-Flash-UNCENSORED-NVFP4",
     quantization: "nvfp4",
   });
+  expect(retired?.status).toBe("retired");
+  expect(retired && "aliases" in retired ? retired.aliases : undefined).toEqual(
+    [],
+  );
 });
 
 it("serves text-only linden-1 with no external provider or training capability", () => {

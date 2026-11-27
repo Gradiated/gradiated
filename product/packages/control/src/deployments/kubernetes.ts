@@ -67,7 +67,12 @@ export const createKubernetesDeploymentStore = (database: ControlDatabase) => ({
         const [model] = await tx
           .select({ id: models.id, type: models.type })
           .from(models)
-          .where(eq(models.id, pod.modelId));
+          .where(
+            sql`${pod.modelId} = any(${models.aliases})
+              or (${models.id} = ${pod.modelId} and (${models.status} <> 'retired' or not exists (
+                select 1 from models aliased where ${pod.modelId} = any(aliased.aliases)
+              )))`,
+          );
         // An organization's model serves one declared interface; a pod of the
         // other protocol never becomes one of its deployments, or the gateway
         // could route a request to a release that can't answer it.
@@ -82,7 +87,7 @@ export const createKubernetesDeploymentStore = (database: ControlDatabase) => ({
         const row = ModelDeploymentInsertSchema.parse({
           id: pod.id,
           instanceId: host.id,
-          modelId: pod.modelId,
+          modelId: model.id,
           status: pod.draining
             ? "draining"
             : pod.qualified && pod.servingEnabled

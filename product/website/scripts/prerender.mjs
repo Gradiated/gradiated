@@ -3,6 +3,8 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { renderFeed } from "./feed.mjs";
+
 const require = createRequire(import.meta.url);
 const { substituteDocModels } = require("./docs-models.cjs");
 
@@ -45,7 +47,8 @@ const renderHead = ({ metadata, path, structuredData, title }) => {
     `<meta property="og:url" content="${canonicalUrl}" />`,
     `<meta property="og:image" content="${imageUrl}" />`,
     `<meta property="og:image:alt" content="${escapeHtml(`${metadata.title} - Gradiated`)}" />`,
-    `<meta name="twitter:card" content="${metadata.image.startsWith("/assets/") ? "summary_large_image" : "summary"}" />`,
+    // The square brand mark is the only image made for a small card.
+    `<meta name="twitter:card" content="${metadata.image.includes("gradiated-mark") ? "summary" : "summary_large_image"}" />`,
     `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(metadata.description)}" />`,
     `<meta name="twitter:image" content="${imageUrl}" />`,
@@ -195,6 +198,22 @@ const sitemap = [
   "",
 ].join("\n");
 await writeFile(join(outputRoot, "sitemap.xml"), sitemap);
+
+await writeFile(
+  join(outputRoot, "feed.xml"),
+  renderFeed({
+    absoluteUrl,
+    articles: pages
+      .filter(({ metadata }) => metadata.kind === "article" && metadata.index)
+      .map(({ metadata, path }) => ({
+        html: renderPage(path),
+        metadata,
+        url: absoluteUrl(canonicalPath(path)),
+      })),
+    description: pages.find(({ path }) => path === "/library/").metadata
+      .description,
+  }),
+);
 
 await writeFile(
   join(outputRoot, "robots.txt"),

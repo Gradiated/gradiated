@@ -1,8 +1,8 @@
 # SystemOne SDK
 
-<DocsLead>Use the TypeSafe SDK to ask linden-1 for decisions. Set your Gradiated base URL, API key, and model, then send a state and named questions.</DocsLead>
+<DocsLead>Use the TypeSafe SDK to ask Linden-1 for decisions. Set your Gradiated base URL, API key, and model, then send a state and named questions.</DocsLead>
 
-linden-1 is Gradiated's open decision model, served through the native SystemOne API. If you already use TypeSafe's SDK for Jev, use the same client with `gradiated/linden-1` on Gradiated. This selects linden-1; `jev-latest` is not a Gradiated model alias.
+Linden-1 is Gradiated's open decision model, served through the native SystemOne API. If you already use TypeSafe's SDK for Jev, use the same client with `gradiated/linden-1` on Gradiated. This selects Linden-1; `jev-latest` is not a Gradiated model alias.
 
 ## Install
 
@@ -181,10 +181,10 @@ console.log(response.answers.urgency.score);
 
 ## Supported requests
 
-linden-1 accepts 1–1,024 named questions per request. A choice has 1–255 options, as an object of descriptions or a list of option names, and a score 1–255 ordered criteria; a single option or level is answered with certainty. Instructions are optional: a question without them is asked through its criteria alone. States are text, JSON or a text-only chat; images and other media are not supported. The hosted runtime limits bodies to 1 MiB and each question's prompt, including the state, to 32,768 tokens.
+Linden-1 accepts 1–1,024 named questions per request. A choice has 1–255 options, as an object of descriptions or a list of option names, and a score 1–255 ordered criteria; a single option or level is answered with certainty. Instructions are optional: a question without them is asked through its criteria alone. States are text, JSON or a text-only chat; images and other media are not supported. The hosted runtime limits bodies to 1 MiB and each question's prompt, including the state, to 32,768 tokens.
 
-Use the native SystemOne endpoint for linden-1. It returns all answers in one response, with no streaming or text generation parameters such as `max_tokens` or `temperature`. Only the `default` service tier is supported; omit `service_tier` to use it.
+Use the native SystemOne endpoint for Linden-1. It returns all answers in one response, with no streaming or text generation parameters such as `max_tokens` or `temperature`. Only the `default` service tier is supported; omit `service_tier` to use it.
 
-Usage counts the tokens linden-1 reads: the prompt shared by all questions once, plus each question's own part. A request of up to about 3,000 tokens is read twice, so it counts roughly twice its length. Generated output tokens are zero. See [errors and retries](/docs/errors/) for handling rejected requests and rate limits.
+Usage counts the tokens Linden-1 reads: the prompt shared by all questions once, plus each question's own part. A request of up to about 3,000 tokens is read twice, so it counts roughly twice its length. Generated output tokens are zero. See [errors and retries](/docs/errors/) for handling rejected requests and rate limits.
 
 SDK reference: [Python](https://github.com/typesafe-ai/typesafe-sdk-python) · [JavaScript](https://github.com/typesafe-ai/typesafe-sdk-js).

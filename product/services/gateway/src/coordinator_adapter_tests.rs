@@ -19,6 +19,7 @@ fn state() -> TestServingState {
         sha256: "a".repeat(64),
         format: crate::AdapterFormat::PeftLora,
         num_tokens: None,
+        source_kind: None,
     });
     state
 }
@@ -256,4 +257,27 @@ async fn a_cartridge_without_its_length_is_invalid() {
     assert!(private_request(Arc::new(state), "acme/task-a")
         .await
         .is_err());
+}
+
+#[tokio::test]
+async fn a_version_published_from_an_artifact_never_degrades_to_its_base_model() {
+    let published = || {
+        let mut state = state();
+        state.adapter.as_mut().unwrap().source_kind = Some("grad".to_owned());
+        state.model.as_mut().unwrap().openrouter_model_id = Some("vendor/model".to_owned());
+        state
+    };
+    let request = private_request(Arc::new(published()), "acme/task-a")
+        .await
+        .unwrap();
+    assert_eq!((&request.base, &request.external), (&None, &None));
+
+    let mut state = published();
+    state.model.as_mut().unwrap().deployments[0]
+        .release
+        .lora_enabled = None;
+    assert_eq!(
+        private_request(Arc::new(state), "acme/task-a").await.err(),
+        Some(GatewayError::ModelUnavailable)
+    );
 }

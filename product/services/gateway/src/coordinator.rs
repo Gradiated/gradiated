@@ -633,15 +633,13 @@ impl RequestCoordinator {
         let from_openrouter = authorization.from_openrouter;
         let identity = authorization.into_hosted_identity()?;
         let pinned = deployment_target.is_some();
-        // A cartridge fails closed: without one, the answer is not the version's, so
-        // neither the base model nor OpenRouter may serve it.
-        let cartridge = adapter
+        let fails_closed = adapter
             .as_ref()
-            .is_some_and(crate::PrivateAdapter::is_cartridge);
-        let external = self.external_model(&model, from_openrouter, pinned || cartridge);
-        // An adapter that cannot be served falls back to its base model without it;
-        // a pinned request keeps its exact deployment instead.
-        let base = (adapter.is_some() && !pinned && !cartridge).then(|| {
+            .is_some_and(crate::PrivateAdapter::fails_closed);
+        let external = self.external_model(&model, from_openrouter, pinned || fails_closed);
+        // An uploaded LoRA that cannot be served falls back to its base model without
+        // it; a pinned request keeps its exact deployment instead.
+        let base = (adapter.is_some() && !pinned && !fails_closed).then(|| {
             let mut base = model.clone();
             base.deployments.retain(|deployment| {
                 !deployment.release.is_system_one() && !deployment.release.sends_token_ids()

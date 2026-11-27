@@ -123,6 +123,7 @@ async fn a_retired_hosted_model_yields_its_name_to_a_private_model() {
             sha256: "a".repeat(64),
             format: crate::AdapterFormat::PeftLora,
             num_tokens: None,
+            source_kind: None,
         });
         let state = Arc::new(state);
 

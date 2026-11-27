@@ -489,8 +489,9 @@ grad sources sync src_01J9X --wait
 ### How syncing works
 
 - **Incremental.** Each sync fetches traces added since the last one, plus scores and corrections added to traces it already has, so late feedback still lands. Records are matched by the provider's trace ID and the latest score wins.
-- **A little behind.** Traces younger than 10 minutes wait for the next sync, because providers take a few minutes to expose new data. Score edits from the last 7 days are picked up; older ones need a full sync.
-- **Versioned.** Every sync creates a new dataset version. Old versions never change, so a run keeps training on the version it pinned.
+- **A little behind.** Traces younger than 10 minutes wait for the next sync, because providers take a few minutes to expose new data. New feedback lands with the next sync; edits to feedback from the last hour are picked up within 15 minutes (each provider page says how it finds them), and older edits need a full sync.
+- **Versioned.** Syncs add dataset versions: a scheduled sync at most every `version_interval` (15 minutes by default), a sync you start yourself at once; see [Versions](/docs/training/integrations/#versions). Old versions never change, so a run keeps training on the version it pinned.
+- **Filtered.** `filters`, `sample_rate` and record caps choose which traces a source syncs; see [Choose which traces sync](/docs/training/integrations/#choose-which-traces-sync).
 - **Rebuildable.** `grad sources sync ID --full` (or `source.sync(full=True)`) rebuilds the dataset from the provider as a new version, for when scores were edited long ago or you changed the mapping.
 - **Files are snapshots.** Records from `grad import` or `dataset.import_file(...)` never get later feedback. Use a source for the feedback loop.
 - **One dataset per source.** A source feeds exactly one dataset; a dataset can have several sources, for example Langfuse for one app and PostHog for another. Deleting a dataset deletes its sources; `grad sources remove ID` disconnects a source and keeps the dataset.

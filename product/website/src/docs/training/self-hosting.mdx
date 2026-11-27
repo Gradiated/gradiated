@@ -270,20 +270,23 @@ The API answers `GET /health/live` and `GET /health/ready` (ready once Postgres 
 
 Workers are plain processes (the `grad-trainer` command from `server/trainer`, or the `grad-trainer` image) that pull jobs from the API, so you can run them on any machine that reaches it, including GPU hosts outside the cluster:
 
-| Variable                                                | Default        | Notes                                                                                                                                     |
-| ------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `GRAD_SERVER_URL`, `TRAINER_API_KEY`                    | required       | The API's URL and the worker key.                                                                                                         |
-| `GRAD_WORKER_KINDS`                                     | `train,import` | Which jobs to claim. Run GPU hosts with `train` only; imports and source syncs (`import`) need no GPU.                                    |
-| `GRAD_WORKER_ID`                                        | hostname, PID  | A name prefix for logs. Each process adds a random suffix, so a restarted worker takes a new attempt.                                     |
-| `GRAD_MODEL_PATHS`                                      | none           | JSON map of model ID to a local directory or Hugging Face repo. `gradiated/linden-1` weights aren't public and must come from here.       |
-| `GRAD_MODELS_MIRROR`, `GRAD_MODELS_CACHE`               | none           | A directory or `s3://` prefix holding `<mirror>/<model id>/`, and where downloaded weights are cached.                                    |
-| `GRAD_OFFLINE` (or `HF_HUB_OFFLINE`)                    | off            | Never download from Hugging Face; a missing model fails with `model_unavailable`.                                                         |
-| `GRAD_SOURCES_EGRESS_ALLOW`, `GRAD_SOURCES_EGRESS_DENY` | none           | Source syncs only reach public `https` hosts. Allow private CIDRs here (for a self-hosted Langfuse or Phoenix), or deny more.             |
-| `GRAD_WORKER_METRICS_PORT`                              | off            | Serve the worker's Prometheus metrics (`grad_trainer_*`: phase, step time, tokens/s, GPU use, checkpoint and upload times) on this port.  |
-| `GRAD_SOURCES_SETTLE_SECONDS`                           | `600`          | How old a provider's new traces must be before a sync reads them, so late spans and scores land first.                                    |
-| `GRAD_RECLAIM_GRACE_SECONDS`                            | `25`           | On SIGTERM the worker saves a checkpoint of the current step if the next step and a checkpoint fit in this time, then hands the run back. |
-| `GRAD_TERMINATION_NOTICE`                               | off            | `aws`: also poll the EC2 instance metadata for a termination notice (IMDSv2) and treat it like SIGTERM, with the notice's lead time.      |
-| `GRAD_WORKER_GPU`                                       | detected       | The GPU the worker reports at `starting` (`nvidia-smi` by default): `none`, or JSON `{"name": "NVIDIA H100 80GB HBM3", "memory_gb": 80}`. |
+| Variable                                                           | Default         | Notes                                                                                                                                     |
+| ------------------------------------------------------------------ | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `GRAD_SERVER_URL`, `TRAINER_API_KEY`                               | required        | The API's URL and the worker key.                                                                                                         |
+| `GRAD_WORKER_KINDS`                                                | `train,import`  | Which jobs to claim. Run GPU hosts with `train` only; imports and source syncs (`import`) need no GPU.                                    |
+| `GRAD_WORKER_ID`                                                   | hostname, PID   | A name prefix for logs. Each process adds a random suffix, so a restarted worker takes a new attempt.                                     |
+| `GRAD_MODEL_PATHS`                                                 | none            | JSON map of model ID to a local directory or Hugging Face repo. `gradiated/linden-1` weights aren't public and must come from here.       |
+| `GRAD_MODELS_MIRROR`, `GRAD_MODELS_CACHE`                          | none            | A directory or `s3://` prefix holding `<mirror>/<model id>/`, and where downloaded weights are cached.                                    |
+| `GRAD_OFFLINE` (or `HF_HUB_OFFLINE`)                               | off             | Never download from Hugging Face; a missing model fails with `model_unavailable`.                                                         |
+| `GRAD_SOURCES_EGRESS_ALLOW`, `GRAD_SOURCES_EGRESS_DENY`            | none            | Source syncs only reach public `https` hosts. Allow private CIDRs here (for a self-hosted Langfuse or Phoenix), or deny more.             |
+| `GRAD_WORKER_METRICS_PORT`                                         | off             | Serve the worker's Prometheus metrics (`grad_trainer_*`: phase, step time, tokens/s, GPU use, checkpoint and upload times) on this port.  |
+| `GRAD_SOURCES_SETTLE_SECONDS`                                      | `600`           | How old a provider's new traces must be before a sync reads them, so late spans and scores land first.                                    |
+| `GRAD_SOURCES_RESCAN_SECONDS`, `GRAD_SOURCES_RESCAN_EVERY_SECONDS` | `3600`, `900`   | How far back a sync re-reads feedback for edits, and how often (Phoenix: `GRAD_SOURCES_PHOENIX_RESCAN_SECONDS`, 7 days).                  |
+| `GRAD_SOURCES_<PROVIDER>_REQUESTS_PER_MINUTE`                      | the provider's  | Raise a provider's request rate for a bigger plan (Langfuse's default is the Hobby tier's 30; Pro allows 1000).                           |
+| `GRAD_IMPORT_PART_RECORDS`, `GRAD_IMPORT_PART_BYTES`               | `50000`, 64 MiB | Imports and syncs upload dataset parts of this size straight to object storage; grad-server never carries the records.                    |
+| `GRAD_RECLAIM_GRACE_SECONDS`                                       | `25`            | On SIGTERM the worker saves a checkpoint of the current step if the next step and a checkpoint fit in this time, then hands the run back. |
+| `GRAD_TERMINATION_NOTICE`                                          | off             | `aws`: also poll the EC2 instance metadata for a termination notice (IMDSv2) and treat it like SIGTERM, with the notice's lead time.      |
+| `GRAD_WORKER_GPU`                                                  | detected        | The GPU the worker reports at `starting` (`nvidia-smi` by default): `none`, or JSON `{"name": "NVIDIA H100 80GB HBM3", "memory_gb": 80}`. |
 
 ### Authentication and API keys
 

@@ -36,11 +36,121 @@ Self-hosted servers don't have the gateway, so the `gradiated` source is Cloud-o
 1. Tag each trace with the model and version that produced it.
 2. Send feedback to the same tool when you learn the outcome: a thumbs up, a test result, a human fix.
 3. Store the tool's API key with `grad secrets set NAME` (or `client.secrets.set(name, value)`) and add a source with `grad sources add`. A source feeds one dataset; a dataset can have several sources, one per provider or project.
-4. Each sync adds a new dataset version with the latest scores. Runs pin a version, so retraining on newer feedback never changes an old run.
+4. Syncs add new dataset versions with the latest scores (a scheduled sync at most every 15 minutes; see [Versions](#versions)). Runs pin a version, so retraining on newer feedback never changes an old run.
 
 Deleting a dataset deletes its sources. A source syncs at most once a minute. If syncs keep failing (a revoked key, say), the source backs off and, after 10 failures in a row, pauses; `grad sources list` shows its status and last error, and `grad sources sync ID` or a new value for its secret resumes it. See [When a sync fails](/docs/training/trajectories/#when-a-sync-fails).
 
 A one-off file import is a snapshot and never gets later feedback; see [Import from files](/docs/training/trajectories/#import-from-files).
+
+## Choose which traces sync
+
+A busy app logs far more than you want to train on. Narrow a source with `filters`, keep a share of traces with `sample_rate`, and cap how many new traces it takes:
+
+| Filter                                                                        | Value                         | A trace matches when                                    |
+| ----------------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------------- |
+| `tags`                                                                        | a list                        | it carries every tag                                    |
+| `environment`, `model`, `version`, `release`, `name`, `user_id`, `session_id` | a string or a list            | it has one of the values (`name` is the trace or route) |
+| `metadata`                                                                    | `{key: value}`                | each key equals its value                               |
+| `from`, `to`                                                                  | ISO 8601 times                | it started in `[from, to)`                              |
+| `has_feedback`                                                                | `true`                        | it has a score or a correction                          |
+| `min_score`                                                                   | a number, or `{name: number}` | every score (or each named score) is at least that      |
+
+A trace must match every filter you set. LangSmith also takes `filter`, a [LangSmith filter expression](https://docs.langchain.com/langsmith/trace-query-syntax) that is ANDed with the rest. Any other key is a `422 source_filter_unsupported`, so a typo never silently syncs everything. grad sends each filter its provider's API supports with the request (each provider page lists which) and applies the rest to what it fetched.
+
+Feedback usually arrives after the trace, so `has_feedback` and `min_score` are checked on the merged dataset: a trace is stored when it syncs, and dataset reads and training see it once its scores pass.
+
+`sample_rate` (between 0 and 1) keeps that share of traces, chosen by a hash of the trace ID: a re-sync keeps the same sample, and a trace's later feedback follows it. `max_records_per_sync` and `max_records_per_day` (a UTC day) cap the new traces a source takes; the rest aren't synced, and the sync's `drop_reasons` count them. Feedback on traces already synced always lands.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad sources add langfuse \
+  --dataset support-prod \
+  --secret langfuse-prod \
+  --schedule "* * * * *" \
+  --filter environment=production \
+  --filter 'min_score={"resolved": 1}' \
+  --sample-rate 0.1 \
+  --max-records-per-day 100000
+
+grad sources show src_01J9X
+grad sources update src_01J9X --filter environment=production --filter 'tags=["support"]' --max-records-per-day 0
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, sources
+
+client = Grad()
+source = client.sources.create(
+    "support-prod",
+    sources.Langfuse(
+        secret="langfuse-prod",
+        filters={"environment": "production", "min_score": {"resolved": 1}},
+    ),
+    schedule="* * * * *",
+    sample_rate=0.1,
+    max_records_per_day=100_000,
+)
+print(source.filters)  # {'environment': ['production'], 'min_score': {'resolved': 1}}
+
+source.update(filters={"environment": "production", "tags": ["support"]}, max_records_per_day=None)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, sources } from "@gradiated/grad";
+
+const grad = new Grad();
+const source = await grad.sources.create("support-prod", {
+  provider: sources.langfuse({
+    secret: "langfuse-prod",
+    filters: { environment: "production", min_score: { resolved: 1 } },
+  }),
+  schedule: "* * * * *",
+  sampleRate: 0.1,
+  maxRecordsPerDay: 100_000,
+});
+console.log(source.filters);
+
+await source.update({
+  filters: { environment: "production", tags: ["support"] },
+  maxRecordsPerDay: null,
+});
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+source, _ := client.Sources.Create(ctx, grad.DatasetName("support-prod"), grad.SourceParams{
+	Provider: grad.LangfuseSource{Secret: grad.SecretName("langfuse-prod"), Filters: map[string]any{
+		"environment": "production",
+		"min_score":   map[string]any{"resolved": 1},
+	}},
+	Schedule:         "* * * * *",
+	SampleRate:       0.1,
+	MaxRecordsPerDay: 100_000,
+})
+fmt.Println(source.Filters())
+
+noCap := 0
+_ = source.Update(ctx, grad.SourceUpdate{MaxRecordsPerDay: &noCap})
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+The source shows the effective filters (single values become lists), its sample rate and caps, and `records_today`. An update applies from the next sync; `filters` replaces them all (`{}` clears them) and `null` removes a cap. Traces already synced stay; `grad sources sync ID --full` rebuilds the dataset with the new settings.
+
+## Versions
+
+A scheduled sync can run every minute, but it adds a dataset version at most every `version_interval` seconds (default 900; `0` makes every sync a version). Until then what it fetched waits, staged, and the source shows `pending_records`; the next version takes it all, in order, and a sync that finds nothing new adds no version. A version also comes as soon as 100,000 records wait. On a self-hosted server, `SOURCE_VERSION_INTERVAL_SECONDS` sets the default interval and `SOURCE_VERSION_MAX_RECORDS` that threshold. The first sync, a sync you start yourself and a full sync always add a version at once, and removing a source turns what waits into a last version. Set it with `version_interval` (`--version-interval` on the CLI) when you add or update a source.
 
 <DocsNext>
   <a href="/docs/training/integrations/langfuse/">

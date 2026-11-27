@@ -135,13 +135,17 @@ _ = source.Sync(ctx)
 
 ## How syncing works
 
-Each sync is incremental: it pulls traces added since the last sync, plus scores and corrections added to traces it already has, so feedback that arrives days later still counts. Records are matched by the provider's trace ID and the latest score wins. Traces younger than 10 minutes wait for the next sync, because providers take a few minutes to expose new data. Score edits from the last 7 days are picked up; older edits need a full sync.
+Each sync is incremental: it pulls traces added since the last sync, plus scores and corrections added to traces it already has, so feedback that arrives days later still counts. Records are matched by the provider's trace ID and the latest score wins. Traces younger than 10 minutes wait for the next sync, because providers take a few minutes to expose new data. Phoenix has no time filter on annotations, so grad finds them through their spans: annotations on new spans land with the next sync, and annotations on spans from the last 7 days within 15 minutes (`GRAD_SOURCES_PHOENIX_RESCAN_SECONDS` on the workers changes the window). Older annotations need a full sync.
 
-Every sync creates a new dataset version. Old versions never change, so a run keeps the exact data it pinned. If you edit old scores or change the mapping, `grad sources sync src_01J9X --full` (or `source.sync(full=True)`) rebuilds the dataset from the provider as a new version.
+Syncs add dataset versions (a scheduled one at most every `version_interval`, 15 minutes by default; see [Versions](/docs/training/integrations/#versions)). Old versions never change, so a run keeps the exact data it pinned. If you edit old scores or change the mapping, `grad sources sync src_01J9X --full` (or `source.sync(full=True)`) rebuilds the dataset from the provider as a new version.
 
 `source.sync()` returns the import job (call `.wait()` to block), or the sync already in progress; on the CLI, add `--wait`. A source syncs at most once a minute, and one that keeps failing backs off and then pauses; see [When a sync fails](/docs/training/trajectories/#when-a-sync-fails).
 
 A one-off `grad import` of an exported file is a snapshot: it never gets later feedback. Use a source for the feedback loop.
+
+## Filter what syncs
+
+Every source takes the [shared filters, `sample_rate` and record caps](/docs/training/integrations/#choose-which-traces-sync). grad sends `name`, `from`/`to`, `metadata` and a single `user_id` or `session_id` to Phoenix's spans API; the rest (tags included, which Phoenix can't match) are matched after fetching.
 
 ## Choose what to train on
 

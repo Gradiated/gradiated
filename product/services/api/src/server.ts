@@ -28,6 +28,7 @@ import {
   createTraceService,
   createTrainingService,
   createAdapterDownloads,
+  createEvalVersions,
   createGradArtifacts,
   ServingBasesSchema,
   createAdapterHostingService,
@@ -281,7 +282,8 @@ const pinReleases = grad
       if (releasingPins) return;
       releasingPins = true;
       training.artifacts
-        .releasePendingPins()
+        .deleteExpiredVersions()
+        .then(() => training.artifacts.releasePendingPins())
         .catch((error: unknown) => {
           serviceLog("warn", "grad_pin_release_failed", { error });
         })
@@ -415,6 +417,7 @@ const trainingInternalServer = environment.TRAINING_INTERNAL_TOKEN
           database,
           createUsageEventWriter(clickhouse),
         ),
+        evals: createEvalVersions(database, training.artifacts),
       }).fetch,
       hostname: environment.TRAINING_INTERNAL_HOST,
       port: environment.TRAINING_INTERNAL_PORT,

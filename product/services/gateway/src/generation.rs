@@ -451,6 +451,11 @@ pub struct GenerationIdentity {
     api_key_id: Uuid,
     model_id: String,
     served_release_digest: String,
+    /// `eval` for grad's eval traffic, so its usage is reported apart; absent otherwise.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    lane: Option<crate::auth::Lane>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    eval_id: Option<String>,
 }
 
 impl GenerationIdentity {
@@ -474,6 +479,8 @@ impl GenerationIdentity {
             api_key_id: caller.api_key_id,
             model_id,
             served_release_digest,
+            lane: (caller.lane == crate::auth::Lane::Eval).then_some(caller.lane),
+            eval_id: caller.eval_id.clone(),
         })
     }
 
@@ -498,6 +505,8 @@ impl GenerationIdentity {
             api_key_id,
             organization_id,
             workspace_id,
+            lane: crate::auth::Lane::Standard,
+            eval_id: None,
         };
 
         Self::authenticated(&caller, model_id, served_release_digest)
@@ -936,6 +945,8 @@ mod tests {
             api_key_id: Uuid::from_u128(1),
             organization_id: Uuid::from_u128(2),
             workspace_id: Uuid::from_u128(3),
+            lane: crate::auth::Lane::Standard,
+            eval_id: None,
         }
     }
 

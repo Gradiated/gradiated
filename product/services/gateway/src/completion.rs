@@ -1,4 +1,5 @@
 mod dispatch;
+mod eval_permit;
 mod route_lease;
 mod settlement;
 mod stream;
@@ -20,6 +21,7 @@ use uuid::Uuid;
 
 use self::{
     dispatch::{CapacityPlan, LocalTier, RuntimeCall, Target},
+    eval_permit::EvalPermit,
     route_lease::HeldRoute,
     settlement::{
         Delivery, FailedGeneration, GenerationEnd, GenerationSettlement, GenerationTerminal,
@@ -280,7 +282,7 @@ impl CompletionService {
 
         plan.promote(placed.deployment_id);
         self.metrics
-            .session_routed(metric_model(request), placed.outcome.as_str());
+            .session_routed(&metric_model(request), placed.outcome.as_str());
 
         Ok(Some(HeldRoute::new(
             self.serving_state.clone(),
@@ -292,6 +294,49 @@ impl CompletionService {
                 expires_at: lease_expires_at,
             },
         )))
+    }
+
+    /// Eval-lane keys share a per-workspace concurrency and per-minute limit of
+    /// their own, checked before the organization's admission.
+    async fn admit_eval(
+        &self,
+        request: &QualifiedRequest,
+        now: chrono::DateTime<Utc>,
+    ) -> Result<Option<EvalPermit>, GatewayError> {
+        if request.identity.lane != crate::auth::Lane::Eval {
+            return Ok(None);
+        }
+
+        let lease = crate::serving_state::EvalLease {
+            workspace_id: request.identity.workspace_id,
+            generation_id: request.metadata.generation_id,
+            now,
+            expires_at: AdmissionLease::new(
+                request.metadata.generation_id,
+                request.metadata.received_at,
+                now,
+                &self.config,
+            )?
+            .lease_expires_at(),
+        };
+        let admission = self
+            .serving_state
+            .admit_eval(&lease, &self.config)
+            .await
+            .map_err(|error| {
+                crate::diagnostics::limited_warn!(generation_id = %lease.generation_id,
+                    phase = "eval_admission", error_code = error.diagnostic_code(),
+                    "eval admission failed");
+                GatewayError::ServingStateUnavailable
+            })?;
+
+        match admission {
+            crate::serving_state::EvalAdmission::Admitted => {
+                Ok(Some(EvalPermit::new(self.serving_state.clone(), lease)))
+            }
+            crate::serving_state::EvalAdmission::ConcurrencyCapped
+            | crate::serving_state::EvalAdmission::RateCapped => Err(GatewayError::EvalLaneLimited),
+        }
     }
 
     async fn admit(
@@ -313,6 +358,7 @@ impl CompletionService {
         })?;
 
         let admitted_at = cmp::max(Utc::now(), request.metadata.received_at);
+        let eval = self.admit_eval(&request, admitted_at).await?;
         let admission = self
             .serving_state
             .admit(
@@ -324,8 +370,9 @@ impl CompletionService {
             )
             .await;
 
+        let model = metric_model(&request).into_owned();
         let scope = GenerationScope {
-            model: metric_model(&request),
+            model: &model,
             deployment: plan.target.metric_label(),
             protocol: plan.target.protocol_label(),
             stream: request.request.stream,
@@ -343,7 +390,7 @@ impl CompletionService {
         let metrics = self.metrics.generation_admitted(&scope);
         let capacity = self
             .metrics
-            .capacity(metric_model(&request), request.is_verification);
+            .capacity(&metric_model(&request), request.is_verification);
         if let Some(reason) = plan.reason {
             capacity.fell_back(plan.target.capacity(), reason);
         }
@@ -352,6 +399,7 @@ impl CompletionService {
             request,
             plan,
             route,
+            eval,
             generation_identity,
             lease,
             serving_state: self.serving_state.clone(),
@@ -439,13 +487,24 @@ async fn unless_panicked<T>(
 }
 
 /// Metrics name an adapter's base model, which keeps their labels bounded.
-fn metric_model(request: &QualifiedRequest) -> &str {
+fn base_model(request: &QualifiedRequest) -> &str {
     request
         .adapter
         .as_ref()
         .map_or(request.request.model.as_str(), |adapter| {
             adapter.base_model_id.as_str()
         })
+}
+
+/// Eval traffic is labelled apart, so pool autoscaling, which reads these
+/// metrics by model, never counts it. A cold pool is woken explicitly instead.
+fn metric_model(request: &QualifiedRequest) -> std::borrow::Cow<'_, str> {
+    let model = base_model(request);
+    if request.identity.lane == crate::auth::Lane::Eval {
+        std::borrow::Cow::Owned(format!("eval:{model}"))
+    } else {
+        std::borrow::Cow::Borrowed(model)
+    }
 }
 
 fn served_release_digest(request: &QualifiedRequest, local: &LocalCapacity) -> String {
@@ -476,7 +535,14 @@ impl Unroutable {
 
     fn reject(self, request: &QualifiedRequest, metrics: &GatewayMetrics) -> GatewayError {
         if self.reason == FallbackReason::AtCapacity {
-            metrics.routing_capacity_rejected(metric_model(request), request.is_verification);
+            metrics.routing_capacity_rejected(&metric_model(request), request.is_verification);
+        }
+        // The pool has a replica that cannot take requests right now: an eval
+        // waits for it, but never asks the autoscaler for another.
+        if self.reason == FallbackReason::Unavailable
+            && request.identity.lane == crate::auth::Lane::Eval
+        {
+            return GatewayError::CapacityUnavailable { wake: None };
         }
 
         if let Some(diagnostics) = self.diagnostics {
@@ -538,6 +604,7 @@ struct Generation {
     request: QualifiedRequest,
     plan: CapacityPlan,
     route: Option<HeldRoute>,
+    eval: Option<EvalPermit>,
     generation_identity: GenerationIdentity,
     lease: AdmissionLease,
     serving_state: Arc<dyn ServingState>,
@@ -575,6 +642,7 @@ impl Generation {
             price_cap: pricing.price_cap(),
             plan: self.plan,
             route: self.route,
+            eval: self.eval,
             local_attempts: 0,
             attempts: 0,
             capacity_metrics: self.capacity,

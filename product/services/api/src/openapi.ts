@@ -113,6 +113,9 @@ export const unservedDependencies = (): AppDependencies => ({
         publishAsService: unserved("training.artifacts.publishAsService"),
         deleteVersion: unserved("training.artifacts.deleteVersion"),
         releasePendingPins: unserved("training.artifacts.releasePendingPins"),
+        deleteExpiredVersions: unserved(
+          "training.artifacts.deleteExpiredVersions",
+        ),
       },
       shares: {
         get: unserved("training.shares.get"),

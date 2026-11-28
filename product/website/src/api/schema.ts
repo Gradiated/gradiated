@@ -3294,10 +3294,10 @@ export interface components {
       /** @description The serving check run after publishing. */
       qualification: {
         /**
-         * @description passed: the version loaded on serving capacity and is available. rejected: the runtime refused it. pending: no capacity could test it yet; promote retries.
+         * @description passed: the version loaded on serving capacity and is available. rejected: the runtime refused it. pending: no capacity could test it yet; promote retries. skipped: eval-only versions, which are never promoted.
          * @enum {string}
          */
-        outcome: "passed" | "rejected" | "pending";
+        outcome: "passed" | "rejected" | "pending" | "skipped";
         detail?: string;
       };
     };

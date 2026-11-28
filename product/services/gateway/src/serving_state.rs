@@ -49,6 +49,10 @@ const PLACE_ROUTE_V1: &str = concat!(
     include_str!("scripts/prelude.lua"),
     include_str!("scripts/place_route_v1.lua")
 );
+const ADMIT_EVAL_V1: &str = concat!(
+    include_str!("scripts/prelude.lua"),
+    include_str!("scripts/admit_eval_v1.lua")
+);
 const CLAIM_ROUTE_V1: &str = concat!(
     include_str!("scripts/prelude.lua"),
     include_str!("scripts/claim_route_v1.lua")
@@ -142,6 +146,44 @@ pub trait ServingState: Send + Sync {
     async fn claim_route(&self, lease: &RouteLease) -> Result<(), ServingStateError>;
 
     async fn release_route(&self, lease: &RouteLease) -> Result<(), ServingStateError>;
+
+    async fn admit_eval(
+        &self,
+        lease: &EvalLease,
+        config: &GatewayConfig,
+    ) -> Result<EvalAdmission, ServingStateError>;
+
+    async fn release_eval(&self, lease: &EvalLease) -> Result<(), ServingStateError>;
+}
+
+/// One eval-lane generation's slot in its workspace's eval limits.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EvalLease {
+    pub workspace_id: Uuid,
+    pub generation_id: Uuid,
+    pub now: DateTime<Utc>,
+    pub expires_at: DateTime<Utc>,
+}
+
+impl EvalLease {
+    fn inflight_key(&self) -> String {
+        format!("eval-inflight:{{eval-{}}}", self.workspace_id)
+    }
+
+    fn minute_key(&self) -> String {
+        format!(
+            "eval-requests:{{eval-{}}}:{}",
+            self.workspace_id,
+            self.now.timestamp() / 60
+        )
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum EvalAdmission {
+    Admitted,
+    ConcurrencyCapped,
+    RateCapped,
 }
 
 #[derive(Clone)]
@@ -154,6 +196,7 @@ pub struct ValkeyServingState {
     mark_refreshed_script: Script,
     place_route_script: Script,
     claim_route_script: Script,
+    eval_admission_script: Script,
     database: PostgresReader,
     record_cache_ttl: Duration,
     record_loads: SingleFlight<String>,
@@ -226,6 +269,7 @@ impl ValkeyServingState {
             mark_refreshed_script: Script::new(MARK_ACCOUNT_REFRESHED_V1),
             place_route_script: Script::new(PLACE_ROUTE_V1),
             claim_route_script: Script::new(CLAIM_ROUTE_V1),
+            eval_admission_script: Script::new(ADMIT_EVAL_V1),
             database,
             record_cache_ttl,
             record_loads: SingleFlight::default(),
@@ -790,6 +834,43 @@ impl ServingState for ValkeyServingState {
             .query(
                 redis::cmd("ZREM")
                     .arg(lease.lease_key())
+                    .arg(lease.generation_id.to_string()),
+            )
+            .await?;
+
+        Ok(())
+    }
+
+    async fn admit_eval(
+        &self,
+        lease: &EvalLease,
+        config: &GatewayConfig,
+    ) -> Result<EvalAdmission, ServingStateError> {
+        let result: i64 = self
+            .eval_admission_script
+            .prepare_invoke()
+            .key(lease.inflight_key())
+            .key(lease.minute_key())
+            .arg(lease.generation_id.to_string())
+            .arg(lease.now.timestamp_millis())
+            .arg(lease.expires_at.timestamp_millis())
+            .arg(config.eval_concurrency_cap)
+            .arg(config.eval_requests_per_minute)
+            .invoke_async(&mut self.connection.clone())
+            .await?;
+
+        match result {
+            1 => Ok(EvalAdmission::Admitted),
+            2 => Ok(EvalAdmission::ConcurrencyCapped),
+            _ => Ok(EvalAdmission::RateCapped),
+        }
+    }
+
+    async fn release_eval(&self, lease: &EvalLease) -> Result<(), ServingStateError> {
+        let _: i64 = self
+            .query(
+                redis::cmd("ZREM")
+                    .arg(lease.inflight_key())
                     .arg(lease.generation_id.to_string()),
             )
             .await?;

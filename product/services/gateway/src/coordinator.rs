@@ -123,6 +123,7 @@ impl HostedRequest {
             .as_ref()
             .map_or_else(|| model.id.clone(), |adapter| adapter.model_id());
         request.runtime_model_name = adapter.as_ref().map(|adapter| adapter.runtime_name());
+        request.eval_lane = identity.lane == crate::auth::Lane::Eval;
         request.cartridge_tokens = adapter
             .as_ref()
             .map_or(0, crate::PrivateAdapter::cartridge_tokens);
@@ -139,7 +140,7 @@ impl HostedRequest {
             .transpose()?
             .flatten();
         if local.is_none() && base.is_none() && external.is_none() {
-            return Err(no_capacity(&model, adapter.is_some()));
+            return Err(no_capacity(&model, adapter.is_some(), identity.lane));
         }
 
         let system_one = local
@@ -190,7 +191,7 @@ impl HostedRequest {
                     .all(|name| openrouter_supports_parameter(external.id(), name))
         });
         if local.is_none() && base.is_none() && external.is_none() {
-            return Err(no_capacity(&model, adapter.is_some()));
+            return Err(no_capacity(&model, adapter.is_some(), identity.lane));
         }
 
         let effective_output_tokens = effective_output_tokens(&request, output)?;
@@ -234,10 +235,23 @@ impl HostedRequest {
     }
 }
 
+fn has_ready_replica(model: &GatewayModel) -> bool {
+    model
+        .deployments
+        .iter()
+        .any(|deployment| deployment.status == crate::DeploymentStatus::Available)
+}
+
 /// Keeps the errors that predate external capacity; only a mapped model may have
 /// no deployments by design.
-fn no_capacity(model: &GatewayModel, adapter: bool) -> GatewayError {
-    if adapter {
+fn no_capacity(model: &GatewayModel, adapter: bool, lane: crate::auth::Lane) -> GatewayError {
+    // An eval wakes a pool only from zero: with a ready replica, it would ask
+    // the autoscaler for a second one.
+    if lane == crate::auth::Lane::Eval && !has_ready_replica(model) {
+        GatewayError::CapacityUnavailable {
+            wake: Some(model.id.clone()),
+        }
+    } else if adapter {
         GatewayError::ModelUnavailable
     } else if model.openrouter_model_id.is_some() && model.deployments.is_empty() {
         GatewayError::RuntimeUnavailable
@@ -270,7 +284,16 @@ pub struct RequestCoordinator {
     serving_state: Arc<dyn ServingState>,
     verification_workspace_id: Option<Uuid>,
     fallback_routes: Option<FallbackRoutes>,
+    eval_tokens: crate::auth::EvalServiceTokens,
+    eval_cold_start_wait: std::time::Duration,
+    eval_waiters: Arc<tokio::sync::Semaphore>,
 }
+
+/// Request bodies, in KiB, that eval requests waiting for a cold pool may hold
+/// in one gateway process; each counts at least `EVAL_WAITER_MIN_KIB`, so at
+/// most 64 wait at once. The rest answer `capacity_unavailable` at once.
+const EVAL_WAIT_BUDGET_KIB: u32 = 64 * 1024;
+const EVAL_WAITER_MIN_KIB: u32 = 1024;
 
 impl RequestCoordinator {
     pub fn new(serving_state: Arc<dyn ServingState>) -> Self {
@@ -278,7 +301,37 @@ impl RequestCoordinator {
             serving_state,
             verification_workspace_id: None,
             fallback_routes: (!cfg!(test)).then(FallbackRoutes::default),
+            eval_tokens: crate::auth::EvalServiceTokens::default(),
+            eval_cold_start_wait: std::time::Duration::ZERO,
+            eval_waiters: Arc::new(tokio::sync::Semaphore::new(EVAL_WAIT_BUDGET_KIB as usize)),
         }
+    }
+
+    /// A place for an eval request of `body_bytes` to wait for a cold pool, if
+    /// the process has room for it.
+    pub(crate) fn eval_waiter(
+        &self,
+        body_bytes: usize,
+    ) -> Option<tokio::sync::OwnedSemaphorePermit> {
+        let kib = u32::try_from(body_bytes.div_ceil(1024))
+            .unwrap_or(u32::MAX)
+            .max(EVAL_WAITER_MIN_KIB);
+        self.eval_waiters.clone().try_acquire_many_owned(kib).ok()
+    }
+
+    /// How long an eval request waits for a pool at zero to start a replica.
+    pub fn with_eval_cold_start_wait(mut self, wait: std::time::Duration) -> Self {
+        self.eval_cold_start_wait = wait;
+        self
+    }
+
+    pub(crate) fn eval_cold_start_wait(&self) -> std::time::Duration {
+        self.eval_cold_start_wait
+    }
+
+    pub fn with_eval_service_tokens(mut self, tokens: crate::auth::EvalServiceTokens) -> Self {
+        self.eval_tokens = tokens;
+        self
     }
 
     pub fn with_verification_workspace(mut self, workspace_id: Option<Uuid>) -> Self {
@@ -615,6 +668,9 @@ impl RequestCoordinator {
             {
                 return Err(inconsistent_state("invalid_private_adapter"));
             }
+            if resolved.eval_only && authorization.identity.lane != crate::auth::Lane::Eval {
+                return Err(GatewayError::ModelNotFound);
+            }
             model = self
                 .serving_state
                 .model_for(access, &resolved.base_model_id)
@@ -647,6 +703,7 @@ impl RequestCoordinator {
             base
         });
         if let Some(adapter) = &adapter {
+            let ready = has_ready_replica(&model);
             model.deployments.retain(|deployment| {
                 deployment.release.lora_enabled == Some(true)
                     && (!adapter.is_cartridge()
@@ -661,7 +718,12 @@ impl RequestCoordinator {
                     && !deployment.release.sends_token_ids()
             });
             if model.deployments.is_empty() && base.is_none() {
-                return Err(GatewayError::ModelUnavailable);
+                // Ready replicas that cannot load this adapter are no cold start.
+                return Err(if ready {
+                    GatewayError::ModelUnavailable
+                } else {
+                    no_capacity(&model, true, identity.lane)
+                });
             }
         }
 
@@ -741,6 +803,10 @@ impl RequestCoordinator {
         headers: &HeaderMap,
         received_at: DateTime<Utc>,
     ) -> Result<Authorization, GatewayError> {
+        if self.eval_tokens.matches(headers)? {
+            return self.authorize_eval(headers).await;
+        }
+
         let digest = extract_api_key(headers)?.digest();
         let credential = self
             .serving_state
@@ -786,6 +852,68 @@ impl RequestCoordinator {
             identity,
             funds_hosted: account.funds_hosted_requests(),
             from_openrouter,
+        })
+    }
+}
+
+impl RequestCoordinator {
+    /// grad's eval workers hold one service token and name the workspace each
+    /// request bills to; the token is refused on any other lane.
+    async fn authorize_eval(&self, headers: &HeaderMap) -> Result<Authorization, GatewayError> {
+        let Some((workspace_id, eval_id)) = crate::auth::eval_target(headers)? else {
+            return Err(GatewayError::InvalidApiKey);
+        };
+        let workspace = self
+            .serving_state
+            .workspace(workspace_id)
+            .await
+            .map_err(state_unavailable("workspace_read"))?
+            .ok_or_else(|| GatewayError::invalid_request(Some("x-gradiated-workspace")))?;
+        let account = self
+            .serving_state
+            .account(workspace.organization_id)
+            .await
+            .map_err(state_unavailable("account_read"))?
+            .ok_or_else(|| inconsistent_state("account_missing"))?;
+        // Only customers' workspaces bill eval traffic.
+        if account.organization_kind != crate::domain::OrganizationKind::Customer {
+            return Err(GatewayError::invalid_request(Some("x-gradiated-workspace")));
+        }
+        let identity = AuthenticatedIdentity {
+            api_key_id: Uuid::nil(),
+            organization_id: workspace.organization_id,
+            workspace_id,
+            lane: crate::auth::Lane::Eval,
+            eval_id,
+        };
+        tracing::Span::current()
+            .record(
+                "organization_id",
+                tracing::field::display(identity.organization_id),
+            )
+            .record(
+                "workspace_id",
+                tracing::field::display(identity.workspace_id),
+            );
+        // Audit: the token can bill any workspace, so every use names the one it billed.
+        tracing::info!(
+            target: "gradiated_gateway::audit",
+            event = "eval_service_credential",
+            organization_id = %identity.organization_id,
+            workspace_id = %identity.workspace_id,
+            eval_id = identity.eval_id.as_deref().unwrap_or(""),
+            "eval service credential used"
+        );
+        let identity =
+            authorize_access(identity, &workspace, &account).map_err(|error| match error {
+                AccessError::InconsistentServingState => inconsistent_state("tenant_mismatch"),
+                error => error.into(),
+            })?;
+
+        Ok(Authorization {
+            identity,
+            funds_hosted: account.funds_hosted_requests(),
+            from_openrouter: false,
         })
     }
 }

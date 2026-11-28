@@ -1,4 +1,7 @@
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use axum::{
     body::Bytes,
@@ -343,18 +346,75 @@ async fn serve(
     } else {
         (headers, body, None)
     };
+
+    // An eval request that finds its pool at zero wakes it and waits for the
+    // replica; each attempt starts its generation deadline afresh. Waiters are
+    // bounded per process, so the rest answer at once and grad retries them.
+    let waiting_until = Instant::now() + state.coordinator.eval_cold_start_wait();
+    let mut metadata = metadata;
+    let mut authorization = authorization;
+    let mut waiter = None;
+    loop {
+        match attempt(
+            state,
+            endpoint,
+            metadata.clone(),
+            headers,
+            &body,
+            is_verification,
+            authorization.take(),
+        )
+        .await
+        {
+            Err(GatewayError::CapacityUnavailable { wake }) => {
+                if let Some(model) = &wake {
+                    state.metrics.routing_capacity_rejected(model, false);
+                }
+                if Instant::now() >= waiting_until {
+                    return Err(GatewayError::CapacityUnavailable { wake });
+                }
+                if waiter.is_none() {
+                    waiter = state.coordinator.eval_waiter(body.len());
+                    if waiter.is_none() {
+                        return Err(GatewayError::CapacityUnavailable { wake });
+                    }
+                }
+                tokio::time::sleep(
+                    EVAL_COLD_START_POLL
+                        .min(waiting_until.saturating_duration_since(Instant::now())),
+                )
+                .await;
+                metadata.received_at = Utc::now();
+            }
+            result => return result,
+        }
+    }
+}
+
+/// How often a waiting eval request looks for its pool's first replica.
+const EVAL_COLD_START_POLL: Duration = Duration::from_secs(10);
+
+async fn attempt(
+    state: &GatewayState,
+    endpoint: &Endpoint,
+    metadata: RequestMetadata,
+    headers: &HeaderMap,
+    body: &Bytes,
+    is_verification: &mut bool,
+    authorization: Option<crate::coordinator::Authorization>,
+) -> Result<Response, GatewayError> {
     let classified = state
         .coordinator
         .classify_authorized(
             headers,
-            &body,
+            body,
             metadata.received_at,
             endpoint.protocol,
             is_verification,
             authorization,
         )
         .await;
-    crate::diagnostics::body::record("client_request", &body, None);
+    crate::diagnostics::body::record("client_request", body, None);
     let ClassifiedRequest { hosted, request } = classified?;
     if matches!(endpoint.operation, Operation::CountTokens)
         && headers.contains_key(&DEPLOYMENT_ID_HEADER)
@@ -1341,6 +1401,177 @@ mod tests {
             assert!(!logged.contains("DO_NOT_LOG_THIS"));
             assert!(!logged.contains("PRIVATE_PROMPT"));
         }
+    }
+
+    fn cold_eval_state() -> TestServingState {
+        let mut state = TestServingState::ready();
+        let model = state.model.as_ref().unwrap().clone();
+        state.adapter = Some(crate::PrivateAdapter {
+            workspace_id: crate::test_support::WORKSPACE_ID,
+            organization_slug: "acme".to_owned(),
+            task_name: "grad-eval".to_owned(),
+            version_id: Uuid::from_u128(78),
+            name: "fast-diff-merge.2026-11-26-1".to_owned(),
+            status: "available".to_owned(),
+            size_bytes: 10,
+            base_model_id: model.id.clone(),
+            base_model_revision: model.deployments[0].release.model_revision.clone(),
+            sha256: "a".repeat(64),
+            format: crate::AdapterFormat::PeftLora,
+            num_tokens: None,
+            source_kind: Some("grad".to_owned()),
+            eval_only: true,
+        });
+        // The pool is at zero: its one replica, which serves adapters, is still starting.
+        let deployment = &mut state.model.as_mut().unwrap().deployments[0];
+        deployment.release.lora_enabled = Some(true);
+        deployment.status = crate::DeploymentStatus::Unavailable;
+        state
+    }
+
+    async fn metrics_text(application: Router) -> String {
+        let metrics = application
+            .oneshot(
+                Request::builder()
+                    .uri("/metrics")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        String::from_utf8(
+            axum::body::to_bytes(metrics.into_body(), 1 << 20)
+                .await
+                .unwrap()
+                .to_vec(),
+        )
+        .unwrap()
+    }
+
+    fn wakes(text: &str, model: &str) -> bool {
+        text.lines().any(|line| {
+            line.contains("routing_capacity_rejections_total")
+                && line.contains(&format!("model=\"{model}\""))
+        })
+    }
+
+    #[tokio::test]
+    async fn an_eval_never_asks_for_a_replica_beside_a_ready_one() {
+        // A ready replica that cannot load the adapter is no cold start: the
+        // eval fails at once and the pool is not scaled.
+        let mut state = cold_eval_state();
+        let deployment = &mut state.model.as_mut().unwrap().deployments[0];
+        deployment.status = crate::DeploymentStatus::Available;
+        deployment.release.lora_enabled = None;
+        let model = state.model.as_ref().unwrap().id.clone();
+        let application =
+            super::support::router_for_eval(Arc::new(state), std::time::Duration::from_secs(60));
+
+        let started = Instant::now();
+        let response = eval_completion(application.clone()).await;
+
+        assert!(started.elapsed() < std::time::Duration::from_secs(5));
+        assert_eq!(error_code(response).await, "model_unavailable");
+        assert!(!wakes(&metrics_text(application).await, &model));
+    }
+
+    #[tokio::test]
+    async fn an_eval_waits_for_an_unroutable_ready_replica_without_waking_the_pool() {
+        let mut state = cold_eval_state();
+        state.model.as_mut().unwrap().deployments[0].status = crate::DeploymentStatus::Available;
+        // The replica is listed ready, but reports no healthy status.
+        state.statuses = Some(Vec::new());
+        let model = state.model.as_ref().unwrap().id.clone();
+        let application =
+            super::support::router_for_eval(Arc::new(state), std::time::Duration::from_millis(300));
+
+        let response = eval_completion(application.clone()).await;
+
+        assert_eq!(error_code(response).await, "capacity_unavailable");
+        assert!(!wakes(&metrics_text(application).await, &model));
+    }
+
+    async fn eval_completion(application: Router) -> Response {
+        let workspace = crate::test_support::WORKSPACE_ID.to_string();
+        let bearer = format!("Bearer {}", super::support::EVAL_TOKEN);
+        application
+            .oneshot(json_request(
+                "/v1/chat/completions",
+                &[
+                    ("authorization", bearer.as_str()),
+                    ("x-gradiated-source", "eval"),
+                    ("x-gradiated-workspace", workspace.as_str()),
+                ],
+                r#"{"model":"acme/grad-eval/fast-diff-merge.2026-11-26-1","messages":[{"role":"user","content":"hi"}]}"#,
+            ))
+            .await
+            .unwrap()
+    }
+
+    #[tokio::test]
+    async fn an_eval_on_a_pool_at_zero_wakes_it_then_gives_up_with_capacity_unavailable() {
+        let state = Arc::new(cold_eval_state());
+        let model = state.model.as_ref().unwrap().id.clone();
+        let application =
+            super::support::router_for_eval(state, std::time::Duration::from_millis(300));
+
+        let started = Instant::now();
+        let response = eval_completion(application.clone()).await;
+
+        assert!(started.elapsed() >= std::time::Duration::from_millis(300));
+        assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+        assert_eq!(response.headers()["retry-after"], "30");
+        assert_eq!(error_code(response).await, "capacity_unavailable");
+
+        // The wake signal names the pool's own model, which asks for one replica.
+        let text = metrics_text(application).await;
+        assert!(wakes(&text, &model), "{text}");
+    }
+
+    #[tokio::test]
+    async fn an_eval_service_token_bills_customer_workspaces_only() {
+        let mut state = cold_eval_state();
+        state.account.as_mut().unwrap().organization_kind =
+            crate::domain::OrganizationKind::DistributionChannel;
+        let application =
+            super::support::router_for_eval(Arc::new(state), std::time::Duration::ZERO);
+
+        let response = eval_completion(application).await;
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(error_code(response).await, "invalid_request");
+    }
+
+    #[test]
+    fn eval_requests_waiting_for_a_cold_pool_are_bounded_per_process() {
+        let coordinator = crate::RequestCoordinator::new(Arc::new(TestServingState::ready()));
+
+        let small: Vec<_> = (0..64)
+            .map(|_| coordinator.eval_waiter(100).expect("room to wait"))
+            .collect();
+        assert!(coordinator.eval_waiter(100).is_none());
+        drop(small);
+
+        // A large body takes a larger share: two of the largest fit.
+        let large: Vec<_> = (0..2)
+            .map(|_| coordinator.eval_waiter(32_000_000).expect("room to wait"))
+            .collect();
+        assert!(coordinator.eval_waiter(32_000_000).is_none());
+        assert!(coordinator.eval_waiter(100).is_some());
+        drop(large);
+    }
+
+    #[tokio::test]
+    async fn without_a_wait_an_eval_on_a_pool_at_zero_fails_at_once() {
+        let application =
+            super::support::router_for_eval(Arc::new(cold_eval_state()), std::time::Duration::ZERO);
+
+        let response = eval_completion(application.clone()).await;
+
+        assert_eq!(error_code(response).await, "capacity_unavailable");
+        // Even without waiting, the pool is asked for its first replica.
+        let model = cold_eval_state().model.unwrap().id;
+        assert!(wakes(&metrics_text(application).await, &model));
     }
 }
 

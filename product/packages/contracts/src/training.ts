@@ -22,6 +22,7 @@ export type EvaluationJudge = z.infer<typeof EvaluationJudgeSchema>;
 
 export const TRAINING_TRIGGERS = ["automation", "manual"] as const;
 export const TASK_VERSION_STATUSES = ["available", "unavailable"] as const;
+export const TASK_PURPOSES = ["serving", "eval"] as const;
 
 export const RunStageSchema = z.enum(RUN_STAGES).openapi("RunStage");
 
@@ -345,9 +346,9 @@ export const PublishedTaskVersionSchema = TaskVersionSchema.extend({
   qualification: z
     .object({
       outcome: z
-        .enum(["passed", "rejected", "pending"])
+        .enum(["passed", "rejected", "pending", "skipped"])
         .describe(
-          "passed: the version loaded on serving capacity and is available. rejected: the runtime refused it. pending: no capacity could test it yet; promote retries.",
+          "passed: the version loaded on serving capacity and is available. rejected: the runtime refused it. pending: no capacity could test it yet; promote retries. skipped: eval-only versions, which are never promoted.",
         ),
       detail: z.string().optional(),
     })

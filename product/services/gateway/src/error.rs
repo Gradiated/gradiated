@@ -26,6 +26,8 @@ pub enum GatewayError {
     ProxyOverloaded,
     InsufficientBalance,
     ConcurrencyExceeded,
+    /// The workspace's eval lane is at its concurrency or per-minute limit.
+    EvalLaneLimited,
     SettlementBacklog,
     /// The runtime's own `Retry-After`, capped; `None` sends the admission default.
     CapacityExceeded {
@@ -33,6 +35,13 @@ pub enum GatewayError {
     },
     ModelNotFound,
     ModelUnavailable,
+    /// An eval request found no ready replica, and none arrived in time. `wake`
+    /// names the model whose pool is at zero, for its scale-from-zero signal; it
+    /// is `None` when the pool has a replica that cannot take requests right now.
+    /// It is never sent.
+    CapacityUnavailable {
+        wake: Option<String>,
+    },
     ServingStateUnavailable,
     RuntimeUnavailable,
     FinalizationUnavailable,
@@ -85,13 +94,15 @@ impl GatewayError {
             Self::ProviderTimeout => StatusCode::GATEWAY_TIMEOUT,
             Self::ProxyOverloaded => StatusCode::SERVICE_UNAVAILABLE,
             Self::InsufficientBalance => StatusCode::PAYMENT_REQUIRED,
-            Self::ConcurrencyExceeded | Self::SettlementBacklog | Self::CapacityExceeded { .. } => {
-                StatusCode::TOO_MANY_REQUESTS
-            }
+            Self::ConcurrencyExceeded
+            | Self::EvalLaneLimited
+            | Self::SettlementBacklog
+            | Self::CapacityExceeded { .. } => StatusCode::TOO_MANY_REQUESTS,
             Self::ModelNotFound | Self::ModelUnavailable => StatusCode::NOT_FOUND,
             Self::ServingStateUnavailable
             | Self::RuntimeUnavailable
-            | Self::FinalizationUnavailable => StatusCode::SERVICE_UNAVAILABLE,
+            | Self::FinalizationUnavailable
+            | Self::CapacityUnavailable { .. } => StatusCode::SERVICE_UNAVAILABLE,
         }
     }
 
@@ -110,10 +121,12 @@ impl GatewayError {
             Self::ProxyOverloaded => "proxy_overloaded",
             Self::InsufficientBalance => "insufficient_balance",
             Self::ConcurrencyExceeded => "concurrency_exceeded",
+            Self::EvalLaneLimited => "eval_lane_limited",
             Self::SettlementBacklog => "settlement_backlog",
             Self::CapacityExceeded { .. } => "capacity_exceeded",
             Self::ModelNotFound => "model_not_found",
             Self::ModelUnavailable => "model_unavailable",
+            Self::CapacityUnavailable { .. } => "capacity_unavailable",
             Self::ServingStateUnavailable => "serving_state_unavailable",
             Self::RuntimeUnavailable => "runtime_unavailable",
             Self::FinalizationUnavailable => "finalization_unavailable",
@@ -124,15 +137,17 @@ impl GatewayError {
         match self {
             Self::InvalidApiKey | Self::ProviderKeyRequired => "authentication_error",
             Self::WorkspaceArchived | Self::OrganizationSuspended => "permission_error",
-            Self::ConcurrencyExceeded | Self::SettlementBacklog | Self::CapacityExceeded { .. } => {
-                "rate_limit_error"
-            }
+            Self::ConcurrencyExceeded
+            | Self::EvalLaneLimited
+            | Self::SettlementBacklog
+            | Self::CapacityExceeded { .. } => "rate_limit_error",
             Self::ProviderUnavailable
             | Self::ProviderTimeout
             | Self::ProxyOverloaded
             | Self::ServingStateUnavailable
             | Self::RuntimeUnavailable
-            | Self::FinalizationUnavailable => "api_error",
+            | Self::FinalizationUnavailable
+            | Self::CapacityUnavailable { .. } => "api_error",
             Self::InvalidRequest { .. }
             | Self::UnsupportedParameter { .. }
             | Self::ContextLengthExceeded { .. }
@@ -166,10 +181,14 @@ impl GatewayError {
             Self::ConcurrencyExceeded => {
                 "The organization has reached its funded concurrency limit."
             }
+            Self::EvalLaneLimited => "The workspace's eval requests are at their rate limit.",
             Self::SettlementBacklog => "Generation settlement is temporarily backlogged.",
             Self::CapacityExceeded { .. } => "The model is temporarily at capacity.",
             Self::ModelNotFound => "The requested model was not found.",
             Self::ModelUnavailable => "The requested model is unavailable.",
+            Self::CapacityUnavailable { .. } => {
+                "No capacity for this model started in time. Retry later."
+            }
             Self::ServingStateUnavailable => "Required serving state is unavailable.",
             Self::RuntimeUnavailable => "The model runtime is unavailable.",
             Self::FinalizationUnavailable => "Generation finalization is unavailable.",
@@ -192,17 +211,21 @@ impl GatewayError {
             | Self::ProxyOverloaded
             | Self::InsufficientBalance
             | Self::ConcurrencyExceeded
+            | Self::EvalLaneLimited
             | Self::SettlementBacklog
             | Self::CapacityExceeded { .. }
             | Self::ServingStateUnavailable
             | Self::RuntimeUnavailable
-            | Self::FinalizationUnavailable => None,
+            | Self::FinalizationUnavailable
+            | Self::CapacityUnavailable { .. } => None,
         }
     }
 
     pub(crate) fn retry_after_seconds(&self) -> Option<u8> {
         match self {
             Self::ConcurrencyExceeded => Some(ADMISSION_RETRY_AFTER_SECONDS),
+            Self::EvalLaneLimited => Some(SETTLEMENT_RETRY_AFTER_SECONDS),
+            Self::CapacityUnavailable { .. } => Some(MAX_RETRY_AFTER_SECONDS),
             Self::CapacityExceeded {
                 retry_after_seconds,
             } => Some(retry_after_seconds.unwrap_or(ADMISSION_RETRY_AFTER_SECONDS)),

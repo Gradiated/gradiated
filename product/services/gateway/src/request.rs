@@ -77,7 +77,13 @@ pub struct InferenceRequest {
     /// catalog default. Set by the coordinator.
     #[serde(skip)]
     pub(crate) open_output_limit: bool,
+    /// Sent with the runtime's lowest priority, after every service tier.
+    #[serde(skip)]
+    pub(crate) eval_lane: bool,
 }
+
+/// Below `flex`, so the runtime schedules eval requests after all customer traffic.
+pub(crate) const EVAL_RUNTIME_PRIORITY: i64 = 20;
 
 impl InferenceRequest {
     pub fn parse_kind(body: &[u8], kind: RequestKind) -> Result<Self, GatewayError> {
@@ -105,6 +111,7 @@ impl InferenceRequest {
             decision: Some(decision),
             continue_final_message: false,
             open_output_limit: false,
+            eval_lane: false,
         })
     }
 
@@ -176,6 +183,7 @@ impl InferenceRequest {
             decision: _,
             continue_final_message,
             open_output_limit,
+            eval_lane,
         } = self;
 
         let mut messages = messages;
@@ -203,7 +211,11 @@ impl InferenceRequest {
         parameters.insert("stream".to_owned(), Value::Bool(stream));
         parameters.insert(
             "priority".to_owned(),
-            Value::from(service_tier.runtime_priority()),
+            Value::from(if eval_lane {
+                EVAL_RUNTIME_PRIORITY
+            } else {
+                service_tier.runtime_priority()
+            }),
         );
 
         if stream {
@@ -583,5 +595,19 @@ mod tests {
         let external = request.into_external_body(131_072, "author/model");
         assert!(!external.contains_key("max_completion_tokens"));
         assert!(!external.contains_key("max_tokens"));
+    }
+
+    #[test]
+    fn eval_requests_run_below_every_service_tier() {
+        let mut request = InferenceRequest::parse(
+            br#"{"model":"model-a","messages":[{"role":"user","content":"hello"}],"service_tier":"fast"}"#,
+        )
+        .unwrap();
+        request.eval_lane = true;
+
+        let body = request.into_upstream_body_for_model(32, None);
+
+        assert_eq!(body["priority"], EVAL_RUNTIME_PRIORITY);
+        assert!(EVAL_RUNTIME_PRIORITY > crate::ServiceTier::Flex.runtime_priority());
     }
 }

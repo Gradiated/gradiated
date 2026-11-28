@@ -76,6 +76,15 @@ export const GenerationPropertiesSchema = z
       ...generationPropertyFields,
       event_schema_version: z.literal(2),
       service_tier: ServiceTierSchema,
+      lane: z
+        .literal("eval")
+        .optional()
+        .describe("Set on grad's eval traffic, which bills like any other."),
+      eval_id: z
+        .string()
+        .regex(/^[a-z]+_[A-Za-z0-9]{1,64}$/)
+        .optional()
+        .describe("The grad eval an eval-lane generation belongs to."),
     }),
   ])
   .openapi("GenerationProperties");

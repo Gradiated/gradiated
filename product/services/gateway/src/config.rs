@@ -27,6 +27,10 @@ pub struct GatewayConfig {
     pub lease_finalization_margin_seconds: u64,
     pub expired_lease_cleanup_grace_seconds: u64,
     pub organization_concurrency_cap: u64,
+    pub eval_concurrency_cap: u64,
+    pub eval_requests_per_minute: u64,
+    pub eval_service_tokens: Vec<String>,
+    pub eval_cold_start_wait_seconds: u64,
     pub balance_per_concurrency_slot_nano_usd: u64,
     pub settlement_backlog_limit: u64,
 
@@ -142,6 +146,13 @@ impl fmt::Debug for GatewayConfig {
                 "organization_concurrency_cap",
                 &self.organization_concurrency_cap,
             )
+            .field("eval_concurrency_cap", &self.eval_concurrency_cap)
+            .field("eval_service_tokens", &self.eval_service_tokens.len())
+            .field(
+                "eval_cold_start_wait_seconds",
+                &self.eval_cold_start_wait_seconds,
+            )
+            .field("eval_requests_per_minute", &self.eval_requests_per_minute)
             .field(
                 "balance_per_concurrency_slot_nano_usd",
                 &self.balance_per_concurrency_slot_nano_usd,
@@ -191,6 +202,10 @@ impl TryFrom<Environment> for GatewayConfig {
             lease_finalization_margin_seconds: environment.lease_finalization_margin_seconds,
             expired_lease_cleanup_grace_seconds: environment.expired_lease_cleanup_grace_seconds,
             organization_concurrency_cap: environment.organization_concurrency_cap,
+            eval_concurrency_cap: environment.eval_concurrency_cap,
+            eval_requests_per_minute: environment.eval_requests_per_minute,
+            eval_service_tokens: environment.eval_service_tokens()?,
+            eval_cold_start_wait_seconds: environment.eval_cold_start_wait_seconds,
             balance_per_concurrency_slot_nano_usd: environment
                 .balance_per_concurrency_slot_nano_usd,
             settlement_backlog_limit: environment.settlement_backlog_limit,
@@ -244,6 +259,29 @@ struct Environment {
     #[validate(range(min = 1, max = MAX_SAFE_INTEGER))]
     organization_concurrency_cap: u64,
     #[serde(
+        rename = "gateway_eval_concurrency_cap",
+        default = "default_eval_concurrency_cap"
+    )]
+    #[validate(range(min = 1, max = MAX_SAFE_INTEGER))]
+    eval_concurrency_cap: u64,
+    #[serde(
+        rename = "gateway_eval_requests_per_minute",
+        default = "default_eval_requests_per_minute"
+    )]
+    #[validate(range(min = 1, max = MAX_SAFE_INTEGER))]
+    eval_requests_per_minute: u64,
+    /// Comma-separated: the current token and, while rotating, the previous one.
+    #[serde(rename = "gateway_eval_service_tokens")]
+    eval_service_tokens: Option<String>,
+    /// How long one eval request waits for a pool at zero (five to eight minutes
+    /// to its first replica); grad retries past it.
+    #[serde(
+        rename = "gateway_eval_cold_start_wait_seconds",
+        default = "default_eval_cold_start_wait_seconds"
+    )]
+    #[validate(range(max = 1_800))]
+    eval_cold_start_wait_seconds: u64,
+    #[serde(
         rename = "gateway_balance_per_concurrency_slot_nano_usd",
         default = "default_balance_per_concurrency_slot_nano_usd"
     )]
@@ -287,6 +325,26 @@ struct Environment {
 }
 
 impl Environment {
+    fn eval_service_tokens(&self) -> Result<Vec<String>, ConfigError> {
+        let Some(raw) = self
+            .eval_service_tokens
+            .as_deref()
+            .filter(|raw| !raw.is_empty())
+        else {
+            return Ok(Vec::new());
+        };
+        let tokens: Vec<String> = raw.split(',').map(str::to_owned).collect();
+        let valid = tokens.len() <= 2
+            && tokens.iter().all(|token| {
+                (32..=4096).contains(&token.len())
+                    && token.bytes().all(|byte| byte.is_ascii_graphic())
+            });
+
+        valid
+            .then_some(tokens)
+            .ok_or(ConfigError::EvalServiceTokens)
+    }
+
     fn openrouter(&self) -> Result<OpenRouterConfig, ConfigError> {
         let base_url = self
             .openrouter_base_url
@@ -374,6 +432,20 @@ fn default_organization_concurrency_cap() -> u64 {
     500
 }
 
+fn default_eval_concurrency_cap() -> u64 {
+    20
+}
+
+fn default_eval_requests_per_minute() -> u64 {
+    600
+}
+
+// Below grad's 120 s request timeout, leaving time for the first generation;
+// grad's six attempts make about ten minutes of waiting for a cold pool.
+fn default_eval_cold_start_wait_seconds() -> u64 {
+    90
+}
+
 fn default_balance_per_concurrency_slot_nano_usd() -> u64 {
     1_000_000_000
 }
@@ -402,6 +474,10 @@ pub enum ConfigError {
     OpenRouterBaseUrl,
     #[error("GATEWAY_FALLBACK_ROUTES must contain valid Baseten or Modal routes")]
     FallbackRoutes,
+    #[error(
+        "GATEWAY_EVAL_SERVICE_TOKENS takes one or two tokens of 32 to 4096 printable characters"
+    )]
+    EvalServiceTokens,
 }
 
 #[cfg(test)]
@@ -459,6 +535,14 @@ mod tests {
             default_expired_lease_cleanup_grace_seconds()
         );
         assert_eq!(config.organization_concurrency_cap, 500);
+        assert_eq!(
+            (
+                config.eval_concurrency_cap,
+                config.eval_requests_per_minute,
+                config.eval_cold_start_wait_seconds
+            ),
+            (20, 600, 90)
+        );
         assert_eq!(config.balance_per_concurrency_slot_nano_usd, 1_000_000_000);
         assert_eq!(config.settlement_backlog_limit, 100_000);
         assert_eq!(config.valkey_iam(), None);
@@ -703,6 +787,30 @@ mod tests {
             let error = minimal_with(overrides).expect_err("the override is invalid");
 
             assert!(expected(&error), "{overrides:?} gave {error:?}");
+        }
+    }
+
+    #[test]
+    fn eval_service_tokens_take_one_or_two_long_tokens() {
+        let long = "a".repeat(32);
+        let rotating = format!("{long},{}", "b".repeat(40));
+        assert_eq!(
+            minimal_with(&[("GATEWAY_EVAL_SERVICE_TOKENS", &rotating)])
+                .unwrap()
+                .eval_service_tokens
+                .len(),
+            2
+        );
+        assert!(minimal_with(&[]).unwrap().eval_service_tokens.is_empty());
+        for invalid in [
+            "short",
+            &format!("{long},{long},{long}"),
+            &format!("{long} "),
+        ] {
+            assert!(matches!(
+                minimal_with(&[("GATEWAY_EVAL_SERVICE_TOKENS", invalid)]),
+                Err(ConfigError::EvalServiceTokens)
+            ));
         }
     }
 }

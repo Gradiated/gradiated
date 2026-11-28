@@ -583,6 +583,7 @@ fn adapter() -> crate::PrivateAdapter {
         format: crate::AdapterFormat::PeftLora,
         num_tokens: None,
         source_kind: None,
+        eval_only: false,
     }
 }
 

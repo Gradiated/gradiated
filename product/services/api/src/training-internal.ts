@@ -9,13 +9,16 @@ import {
   UsageEventIngestResultSchema,
   UsageEventRejectionSchema,
   problemContent,
+  ArtifactReferenceSchema,
+  UuidSchema,
 } from "@gradiated/contracts";
 import {
+  type EvalVersions,
   UsageEventRejectedError,
   type PriceListRecord,
   type TrainingBillingService,
 } from "@gradiated/control";
-import { createRoute, OpenAPIHono } from "@hono/zod-openapi";
+import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 import { bodyLimit } from "hono/body-limit";
 import { requestId } from "hono/request-id";
 
@@ -27,6 +30,7 @@ export interface TrainingInternalDependencies {
   // The current token and, during a rotation, the previous one.
   tokens: readonly string[];
   billing: TrainingBillingService;
+  evals?: EvalVersions;
 }
 
 const digest = (value: string) => createHash("sha256").update(value).digest();
@@ -147,11 +151,59 @@ const priceListResponse = (list: PriceListRecord) => ({
   })),
 });
 
+const evalVersionsRoute = createRoute({
+  method: "post",
+  path: "/api/internal/v1/training/eval-versions",
+  operationId: "publishEvalVersion",
+  summary: "Publish an artifact for an eval",
+  description:
+    "Publishes an artifact as an eval-only version: in the workspace's hidden eval model, never promoted, callable only on the gateway's eval lane, and deleted with its pin 7 days after the last call here. Idempotent per workspace and artifact.",
+  tags: ["Training evals"],
+  request: {
+    body: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: z.strictObject({
+            workspace_id: UuidSchema,
+            artifact_id: ArtifactReferenceSchema,
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "The eval-only version and its gateway model name.",
+      content: {
+        "application/json": {
+          schema: z.object({
+            model: z.string().describe("`<org_slug>/<model>/<version>`."),
+            version_id: UuidSchema,
+          }),
+        },
+      },
+    },
+    ...unauthorized,
+    404: {
+      description: "Unknown artifact or workspace.",
+      content: problemContent,
+    },
+    409: { description: "Conflict.", content: problemContent },
+    422: { description: "Not servable.", content: problemContent },
+    503: {
+      description: "grad or storage unavailable.",
+      content: problemContent,
+    },
+  },
+});
+
 const etagOf = (version: string) => `"${version}"`;
 
 export const createTrainingInternalApp = ({
   tokens,
   billing,
+  evals,
 }: TrainingInternalDependencies) => {
   const authorized = createTokenCheck(tokens);
   const app = new OpenAPIHono<ApiEnvironment>({
@@ -223,6 +275,21 @@ export const createTrainingInternalApp = ({
       );
     }
   });
+
+  if (evals)
+    app.openapi(evalVersionsRoute, async (context) => {
+      const body = context.req.valid("json");
+      const published = await evals.publish(
+        body.workspace_id,
+        body.artifact_id,
+      );
+
+      context.header("Cache-Control", "no-store");
+      return context.json(
+        { model: published.model, version_id: published.version.id },
+        200,
+      );
+    });
 
   app.onError((error, context) => {
     const problem = toApiProblem(error);

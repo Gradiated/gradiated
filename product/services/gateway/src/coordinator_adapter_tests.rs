@@ -20,6 +20,7 @@ fn state() -> TestServingState {
         format: crate::AdapterFormat::PeftLora,
         num_tokens: None,
         source_kind: None,
+        eval_only: false,
     });
     state
 }
@@ -280,4 +281,118 @@ async fn a_version_published_from_an_artifact_never_degrades_to_its_base_model()
         private_request(Arc::new(state), "acme/task-a").await.err(),
         Some(GatewayError::ModelUnavailable)
     );
+}
+
+const EVAL_TOKEN: &str = "eval-service-token-0123456789abcdef";
+
+async fn eval_request(
+    state: TestServingState,
+    extra: &[(&'static str, &str)],
+) -> Result<QualifiedRequest, GatewayError> {
+    let body = serde_json::to_vec(&serde_json::json!({
+        "model": "acme/task-a/task-a-v1",
+        "messages": [{"role": "user", "content": "hello"}]
+    }))
+    .unwrap();
+    let workspace = WORKSPACE_ID.to_string();
+    let bearer = format!("Bearer {EVAL_TOKEN}");
+    let mut values = vec![
+        ("authorization", bearer.as_str()),
+        ("x-gradiated-workspace", workspace.as_str()),
+    ];
+    values.extend_from_slice(extra);
+    let headers = super::support::headers(&values);
+    let coordinator = RequestCoordinator::new(Arc::new(state))
+        .with_eval_service_tokens(crate::auth::EvalServiceTokens::new([EVAL_TOKEN]));
+    let classified = coordinator
+        .classify(
+            &headers,
+            &body,
+            crate::test_support::metadata().received_at,
+            Protocol::OpenAiChat,
+        )
+        .await?;
+
+    coordinator.qualify(
+        crate::test_support::metadata(),
+        &headers,
+        classified.hosted,
+        &body,
+        RequestKind::Chat,
+    )
+}
+
+fn eval_only() -> TestServingState {
+    let mut state = state();
+    state.adapter.as_mut().unwrap().eval_only = true;
+    state
+}
+
+#[tokio::test]
+async fn an_eval_only_version_answers_the_eval_lane_only() {
+    assert_eq!(
+        private_request(Arc::new(eval_only()), "acme/task-a/task-a-v1")
+            .await
+            .err(),
+        Some(GatewayError::ModelNotFound)
+    );
+
+    let request = eval_request(
+        eval_only(),
+        &[
+            ("x-gradiated-source", "eval"),
+            ("x-gradiated-eval-id", "ev_abc123"),
+        ],
+    )
+    .await
+    .unwrap();
+    assert_eq!(request.identity.lane, crate::auth::Lane::Eval);
+    assert_eq!(request.identity.workspace_id, WORKSPACE_ID);
+    assert_eq!(request.identity.eval_id.as_deref(), Some("ev_abc123"));
+    assert!(request.request.eval_lane);
+}
+
+#[tokio::test]
+async fn the_eval_service_token_needs_the_eval_source_and_a_workspace() {
+    assert_eq!(
+        eval_request(eval_only(), &[]).await.err(),
+        Some(GatewayError::InvalidApiKey)
+    );
+    assert_eq!(
+        eval_request(
+            eval_only(),
+            &[
+                ("x-gradiated-source", "eval"),
+                ("x-gradiated-eval-id", "EV 1")
+            ]
+        )
+        .await
+        .err(),
+        Some(GatewayError::invalid_request(Some("x-gradiated-eval-id")))
+    );
+
+    let mut state = eval_only();
+    state.workspace = None;
+    assert_eq!(
+        eval_request(state, &[("x-gradiated-source", "eval")])
+            .await
+            .err(),
+        Some(GatewayError::invalid_request(Some("x-gradiated-workspace")))
+    );
+}
+
+#[tokio::test]
+async fn a_workspace_key_tagged_eval_stays_on_the_standard_lane() {
+    let headers = super::support::headers(&[
+        ("authorization", "Bearer grad_test"),
+        ("x-gradiated-source", "eval"),
+    ]);
+    let body =
+        br#"{"model":"acme/task-a/task-a-v1","messages":[{"role":"user","content":"hello"}]}"#;
+    let request = super::support::qualify(Arc::new(state()), &headers, body, RequestKind::Chat)
+        .await
+        .unwrap();
+
+    assert_eq!(request.identity.lane, crate::auth::Lane::Standard);
+    assert!(!request.request.eval_lane);
 }

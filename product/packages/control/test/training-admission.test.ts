@@ -26,6 +26,7 @@ const context = (): Context => ({
     judgeModelId: "openai/gpt-5",
     productionVersionId: null,
     trainingSchedule: "0 3 * * 1",
+    purpose: "serving",
     createdAt: new Date(),
     updatedAt: new Date(),
   },

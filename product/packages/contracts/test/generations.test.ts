@@ -92,10 +92,31 @@ describe("GenerationSettledSchema", () => {
       "version 2 with a service tier",
       { event_schema_version: 2, service_tier: "flex" },
     ],
+    [
+      "version 2 on the eval lane",
+      {
+        event_schema_version: 2,
+        service_tier: "default",
+        lane: "eval",
+        eval_id: "ev_abc",
+      },
+    ],
   ])("accepts %s", (_, properties) => {
     expect(
       GenerationSettledSchema.safeParse(generationSettled(properties)).success,
     ).toBe(true);
+  });
+
+  it("rejects a lane other than eval", () => {
+    expect(
+      GenerationSettledSchema.safeParse(
+        generationSettled({
+          event_schema_version: 2,
+          service_tier: "default",
+          lane: "standard",
+        }),
+      ).success,
+    ).toBe(false);
   });
 
   it("rejects version 1 with a service tier", () => {

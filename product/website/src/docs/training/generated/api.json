@@ -8447,6 +8447,7 @@
    "properties": {
     "id": {
      "type": "string",
+     "description": "Source id (`src_` and 24 hex characters).",
      "minLength": 1
     },
     "workspace_id": {
@@ -8455,6 +8456,7 @@
     },
     "dataset": {
      "type": "string",
+     "description": "The dataset the source syncs into (one per source).",
      "minLength": 1,
      "maxLength": 64,
      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
@@ -8509,7 +8511,8 @@
      "type": [
       "string",
       "null"
-     ]
+     ],
+     "description": "Five-field UTC cron; null when the source syncs only on request."
     },
     "sample_rate": {
      "type": "number",
@@ -8519,13 +8522,15 @@
      "type": [
       "integer",
       "null"
-     ]
+     ],
+     "description": "At most this many new traces per sync; null for no cap."
     },
     "max_records_per_day": {
      "type": [
       "integer",
       "null"
-     ]
+     ],
+     "description": "At most this many new traces per UTC day; null for no cap."
     },
     "records_today": {
      "type": "integer",
@@ -8577,7 +8582,8 @@
       "string",
       "null"
      ],
-     "format": "date-time"
+     "format": "date-time",
+     "description": "When the last sync failed; null if none has."
     },
     "consecutive_failures": {
      "type": "integer",
@@ -9074,6 +9080,7 @@
    "properties": {
     "id": {
      "type": "string",
+     "description": "Usage row id.",
      "minLength": 1
     },
     "kind": {
@@ -9088,7 +9095,8 @@
      "type": [
       "string",
       "null"
-     ]
+     ],
+     "description": "The run's or eval's name."
     },
     "run_id": {
      "type": [
@@ -9099,6 +9107,7 @@
     },
     "attempt": {
      "type": "integer",
+     "description": "The attempt the tokens belong to.",
      "minimum": 1
     },
     "tokens_from": {
@@ -9108,18 +9117,22 @@
     },
     "tokens_through": {
      "type": "integer",
+     "description": "The attempt's tokens this row ends at; `tokens` is the difference from `tokens_from`.",
      "minimum": 0
     },
     "tokens": {
      "type": "integer",
+     "description": "Tokens billed in this row.",
      "minimum": 0
     },
     "cost_usd": {
      "type": "number",
+     "description": "The charge, in USD.",
      "minimum": 0
     },
     "price_version": {
      "type": "string",
+     "description": "The version of the catalog price the charge was computed with.",
      "minLength": 1
     },
     "billed_by": {
@@ -9132,11 +9145,13 @@
     },
     "idempotency_key": {
      "type": "string",
+     "description": "`run-usage:{id}:{attempt}:{tokens_through}` (`eval-usage:` for evals); unique, so an increment is never billed twice.",
      "minLength": 1
     },
     "created_at": {
      "type": "string",
-     "format": "date-time"
+     "format": "date-time",
+     "description": "When the increment was billed."
     }
    }
   },

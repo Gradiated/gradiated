@@ -67,6 +67,9 @@
   "dataset_not_found": [
    404
   ],
+  "dataset_part_missing": [
+   410
+  ],
   "dataset_version_not_found": [
    404,
    422
@@ -309,6 +312,9 @@
   ],
   "source_upstream_unavailable": [
    503
+  ],
+  "storage_object_missing": [
+   500
   ],
   "storage_unavailable": [
    503

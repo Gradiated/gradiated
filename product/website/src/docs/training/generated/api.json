@@ -1142,8 +1142,8 @@
    "method": "GET",
    "path": "/v1/runs/{id}/metrics",
    "tag": "Runs",
-   "summary": "Training step metrics as JSON pages, or a live SSE stream",
-   "description": "With `Accept: text/event-stream` the response is a Server-Sent Events stream of `metric` events (event id = `seq`) followed by one `status` event carrying the final Run; reconnect with `Last-Event-ID` to resume. Otherwise returns a JSON page: `next_cursor` pages through the points written so far (null on the last page, like every list), and `tail_cursor` polls for points written later.",
+   "summary": "Training step metrics as JSON pages",
+   "description": "`next_cursor` pages through the points written so far (null on the last page, like every list), and `tail_cursor` polls for points written later. To follow a run live, stream its events (`GET /v1/runs/{id}/events`, `metric` events).",
    "params": [
     {
      "name": "id",
@@ -5507,6 +5507,7 @@
    "properties": {
     "id": {
      "type": "string",
+     "description": "Eval id (`eval_` and 24 hex characters).",
      "minLength": 1
     },
     "workspace_id": {
@@ -5527,6 +5528,7 @@
     },
     "models": {
      "type": "array",
+     "description": "The models evaluated: catalog ids, artifacts (`name@version`) or models the inference endpoint serves.",
      "items": {
       "type": "string"
      }
@@ -5535,7 +5537,8 @@
      "type": [
       "string",
       "null"
-     ]
+     ],
+     "description": "The model the summary compares the others with (`vs_baseline`); null for none."
     },
     "task_source": {
      "type": "object",
@@ -5571,30 +5574,36 @@
     },
     "samples": {
      "type": "integer",
+     "description": "Answers generated per task and model.",
      "minimum": 1
     },
     "temperature": {
      "type": "number",
+     "description": "Sampling temperature of the model calls.",
      "minimum": 0,
      "maximum": 2
     },
     "max_tokens": {
      "type": "integer",
+     "description": "The most tokens each answer may have.",
      "minimum": 1
     },
     "pass_threshold": {
      "type": "number",
+     "description": "Score at or above which a task passes.",
      "minimum": 0,
      "maximum": 1
     },
     "judge_models": {
      "type": "array",
+     "description": "The judge models the rubric calls.",
      "items": {
       "type": "string"
      }
     },
     "local_scorers": {
      "type": "array",
+     "description": "Code scorers that run in the SDK process; the eval waits in `awaiting_scores` until they post their scores.",
      "items": {
       "type": "string"
      }
@@ -5629,6 +5638,7 @@
     },
     "total_cost_usd": {
      "type": "number",
+     "description": "Cost of the model and judge calls so far, in USD.",
      "minimum": 0
     },
     "scored_dataset_version": {
@@ -5643,7 +5653,8 @@
      "type": [
       "string",
       "null"
-     ]
+     ],
+     "description": "Why the eval failed; null otherwise."
     },
     "waiting_reason": {
      "type": [
@@ -5671,7 +5682,8 @@
       "string",
       "null"
      ],
-     "format": "date-time"
+     "format": "date-time",
+     "description": "When the eval reached a final status; null until then."
     }
    }
   },
@@ -6629,6 +6641,7 @@
     },
     "models": {
      "type": "array",
+     "description": "The models to evaluate: catalog ids, artifacts (`name@version`) or models your inference endpoint serves.",
      "minItems": 1,
      "maxItems": 16,
      "items": {
@@ -6639,17 +6652,20 @@
     },
     "baseline": {
      "type": "string",
+     "description": "One of `models`; the summary reports every other model's difference from it.",
      "minLength": 1,
      "maxLength": 200
     },
     "dataset": {
      "type": "string",
+     "description": "The dataset whose records are the tasks.",
      "minLength": 1,
      "maxLength": 64,
      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
     },
     "dataset_version": {
      "type": "integer",
+     "description": "The version to evaluate. Default: the current one, pinned when the eval is created.",
      "minimum": 1
     },
     "rubric": {
@@ -6663,24 +6679,28 @@
     },
     "samples": {
      "type": "integer",
+     "description": "Answers per task and model; 3 or more for decisions you will act on.",
      "default": 1,
      "minimum": 1,
      "maximum": 32
     },
     "temperature": {
      "type": "number",
+     "description": "Sampling temperature of the model calls.",
      "default": 0.7,
      "minimum": 0,
      "maximum": 2
     },
     "max_tokens": {
      "type": "integer",
+     "description": "The most tokens each answer may have.",
      "default": 1024,
      "minimum": 1,
      "maximum": 32768
     },
     "limit": {
      "type": "integer",
+     "description": "Evaluate only the first `limit` tasks.",
      "minimum": 1,
      "maximum": 100000
     },

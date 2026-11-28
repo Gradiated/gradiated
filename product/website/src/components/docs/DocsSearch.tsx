@@ -139,6 +139,12 @@ export const DocsSearch = (): ReactElement => {
 
   useEffect(() => setActive(0), [query]);
 
+  useEffect(() => {
+    document
+      .getElementById(`${listId}-${active}`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [active, listId]);
+
   const go = (entry: Entry | undefined) => {
     if (!entry) return;
     dialog.current?.close();

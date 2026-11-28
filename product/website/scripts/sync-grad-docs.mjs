@@ -253,6 +253,13 @@ const changelog = () => {
     },
   });
 
+  /* Links relative to the repository point at it on GitHub, in both forms. */
+  const absoluteMarkdown = (markdown) =>
+    markdown.replace(
+      /\]\((?![a-z]+:|#)\.?\/?([^)]+)\)/gi,
+      (_, path) => `](${GITHUB}${path})`,
+    );
+
   const releases = [];
   for (const section of source.split(/^## /m).slice(1)) {
     const [heading, ...rest] = section.split("\n");
@@ -265,7 +272,7 @@ const changelog = () => {
       version: match[1],
       date: match[2] ?? null,
       html: marked.parse(body),
-      markdown: body,
+      markdown: absoluteMarkdown(body),
     });
   }
   return releases;

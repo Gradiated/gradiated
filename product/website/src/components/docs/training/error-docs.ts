@@ -131,6 +131,12 @@ export const ERROR_DOCS: Record<string, ErrorDoc> = {
     means:
       "The dataset has no such version; the message names its current version.",
   },
+  dataset_part_missing: {
+    area: data,
+    means:
+      "Part of this dataset version is missing from object storage (the bucket was lost, or restored from a backup older than the database), so its records can't be read. Retrying won't help.",
+    fix: "Push or import the records again as a new version.",
+  },
   empty_dataset: {
     area: data,
     means: "The dataset version has zero records.",
@@ -560,6 +566,12 @@ export const ERROR_DOCS: Record<string, ErrorDoc> = {
       "`GET /health/ready` on a replica that is draining before it stops, so load balancers send traffic elsewhere.",
     fix: "Nothing to do: retry, and another replica answers.",
   },
+  storage_object_missing: {
+    area: server,
+    means:
+      "Data the request needs is missing from object storage: it was lost, or the bucket was restored from a backup older than the database.",
+    fix: "Restore the bucket from a backup taken after the database's, or report it with the `request_id`.",
+  },
   storage_unavailable: {
     area: server,
     means:
@@ -631,6 +643,7 @@ export const STATUS_MEANING: Record<number, string> = {
   403: "Forbidden",
   404: "Not found",
   409: "Conflict",
+  410: "Gone",
   413: "Payload too large",
   422: "Unprocessable request",
   429: "Too many requests",

@@ -19,8 +19,9 @@ A **source** connects a [`Dataset`](/docs/training/trajectories/) to a tracing t
 ## On Gradiated Cloud
 
 <DocsCallout label="Coming soon on Gradiated Cloud">
-  The built-in `gradiated` source isn't live yet. Until it is, sync from your
-  observability tool with one of the sources above.
+  The built-in `gradiated` source isn't live yet: creating or syncing one
+  answers `501 source_unavailable` ("coming soon on Gradiated Cloud"). Until it
+  is, sync from your observability tool with one of the sources above.
 </DocsCallout>
 
 If your app calls models through the Gradiated gateway, the gateway records every request and its feedback, so you don't need an observability tool. Connect them with the built-in `gradiated` source; it needs no host or secret:
@@ -150,7 +151,7 @@ The source shows the effective filters (single values become lists), its sample 
 
 ## Versions
 
-A scheduled sync can run every minute, but it adds a dataset version at most every `version_interval` seconds (default 900; `0` makes every sync a version). Until then what it fetched waits, staged, and the source shows `pending_records`; the next version takes it all, in order, and a sync that finds nothing new adds no version. A version also comes as soon as 100,000 records wait. On a self-hosted server, `SOURCE_VERSION_INTERVAL_SECONDS` sets the default interval and `SOURCE_VERSION_MAX_RECORDS` that threshold. The first sync, a sync you start yourself and a full sync always add a version at once, and removing a source turns what waits into a last version. Set it with `version_interval` (`--version-interval` on the CLI) when you add or update a source.
+A scheduled sync can run every minute, but it adds a dataset version at most every `version_interval` seconds (default 900; `0` makes every sync a version). Until then what it fetched waits, staged, and the source shows `pending_records`; the next version takes it all, in order, and a sync that finds nothing new adds no version. A version also comes as soon as 100,000 records wait. The first sync, a sync you start yourself and a full sync always add a version at once, and removing a source turns what waits into a last version. Set it with `version_interval` (`--version-interval` on the CLI) when you add or update a source.
 
 <DocsNext>
   <a href="/docs/training/integrations/langfuse/">

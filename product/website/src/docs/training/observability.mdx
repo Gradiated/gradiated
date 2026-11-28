@@ -1,0 +1,102 @@
+# Observability
+
+<DocsLead>
+  Watch a self-hosted grad server with Prometheus metrics, one Grafana
+  dashboard, warning-level alerts and JSON logs.
+</DocsLead>
+
+grad-server exports Prometheus metrics with a `grad_` prefix at `/metrics`, and every component writes one JSON object per line to stdout. The Helm chart and `grad local up --observability` wire both up for you; this page lists what you get. [`docs/METRICS.md`](https://github.com/Gradiated/grad/blob/main/docs/METRICS.md) is the full list, generated from the code, with every label.
+
+## Where the metrics are
+
+- **grad-server** serves `/metrics` on the API port, or on `METRICS_PORT` to keep them off the public listener (Helm: `metrics.port`, 9464). `METRICS_TOKEN` (Helm: `metrics.requireToken`) requires a bearer token. Gauges read from Postgres are sampled every 15 seconds and are the same on every replica, so aggregate them with `max`. Labels never carry run, dataset or workspace IDs.
+- **Trainer workers** serve their own `grad_trainer_*` metrics on `GRAD_WORKER_METRICS_PORT` (Helm: `metrics.workerPort`, 9465; `0` turns it off). They also report their phase, tokens/s and GPU memory in every heartbeat, so the server's `grad_worker_*` gauges cover pools Prometheus can't scrape.
+- **Eval workers** have no metrics port: their model and judge call counts reach grad-server with every batch of outputs.
+
+For GPU health beyond utilisation and memory (SM occupancy, temperatures, XID errors), run NVIDIA's dcgm-exporter on your GPU nodes; grad doesn't duplicate it.
+
+## What they answer
+
+| Area                 | Metrics                                                                                                                                                                                                                                                                                                                                                     |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Queue and scheduling | `grad_jobs{kind,status}`, `grad_jobs_open` (what KEDA scales on), `grad_job_oldest_queued_age_seconds`, `grad_job_claim_latency_seconds`, `grad_job_fair_share_wait_seconds`, `grad_jobs_over_workspace_limit`, `grad_queue_limit_rejections_total`, `grad_jobs_unfit` (runs no online GPU fits)                                                            |
+| Runs and jobs        | `grad_job_duration_seconds{kind,recipe_kind,status}`, `grad_job_failures_total{kind,recipe_kind,error_code}` (`attempts_exhausted`, `preemptions_exhausted`, `invalid_artifact`, `source_unavailable`, `job_error`), `grad_job_attempts_total`, `grad_job_requeues_total{reason}`, `grad_checkpoints_total{reason}`, `grad_training_tokens_total`           |
+| Workers and GPUs     | `grad_workers_online{kind}`, `grad_worker_phase`, `grad_worker_tokens_per_second`, `grad_worker_gpu_utilization_ratio`, `grad_worker_gpu_memory_used_bytes`, `grad_worker_heartbeats_total`; per worker `grad_trainer_phase`, `grad_trainer_step_duration_seconds`, `grad_trainer_checkpoints_total{reason,result}`, `grad_trainer_upload_duration_seconds` |
+| Evals                | `grad_eval_outputs_total`, `grad_eval_judge_calls_total`, `grad_eval_inference_errors_total{target,reason}` (`rate_limited`, `capacity_unavailable`, `timeout`, `unreachable`, `server_error`, `rejected`, `malformed`)                                                                                                                                     |
+| Sources              | `grad_source_syncs_total{provider,status}`, `grad_source_records_synced_total`, `grad_source_score_updates_total`, `grad_source_sync_lag_seconds`, `grad_source_consecutive_failures`, `grad_sources_paused`                                                                                                                                                |
+| Usage and billing    | `grad_billed_tokens_total`, `grad_billed_cost_usd_total`, `grad_usage_flush_lag_seconds`; Gradiated Cloud only: `grad_usage_export_lag_seconds`, `grad_usage_export_pending_rows`, `grad_usage_export_failures_total`, `grad_usage_parked_rows`, `grad_billing_checks_total{op,result}`, `grad_price_list_age_seconds`                                      |
+| Auth                 | `grad_worker_auth_total{mode,result}`, `grad_token_reviews_total{result}` (`saturated` past 8 in flight), `grad_token_review_duration_seconds`, `grad_token_reviews_in_flight`, `grad_auth_cache_lookups_total{mode,result}`                                                                                                                                |
+| API and dependencies | `grad_http_requests_total` and `grad_http_request_duration_seconds` by route template, `grad_http_errors_total{code}` (every error response by its problem `code`), `grad_sse_streams`, `grad_db_pool_connections`, `grad_db_query_errors_total`, `grad_storage_operation_errors_total{op}`, `grad_maintenance_last_tick_timestamp_seconds`                 |
+
+## Dashboard
+
+One dashboard, **grad / Training platform** ([`deploy/grafana/grad.json`](https://github.com/Gradiated/grad/blob/main/deploy/grafana/grad.json)), has a section per question:
+
+- **Overview:** 5xx ratio, p95 latency, waiting and running jobs, the oldest waiting job, workers online, the job failure ratio and the maintenance tick's age.
+- **Queue & scheduling**, **Runs & jobs**, **Workers & GPUs**, **Evals** and **Sources**.
+- **Billing & usage** (Gradiated Cloud only).
+- **Auth & security**, **API & SSE** and **Dependencies** (Postgres, S3, maintenance, process).
+- **Logs**, from Loki: the `grad-server`, `grad-eval-worker`, `grad-trainer` and `migrate` containers by their `namespace` and `container` labels, which Grafana Alloy and Promtail set.
+
+Its variables are the Prometheus and Loki data sources (`DS_PROMETHEUS`, `DS_LOKI`, so it imports into any Grafana), the namespace and the worker pool. It replaces the Overview, Training and Evals & Sources dashboards of earlier releases.
+
+## Alerts
+
+`metrics.prometheusRule.enabled` adds a PrometheusRule. Every alert is `severity: warning`; none is meant to page. The settings under `metrics.prometheusRule` change the thresholds.
+
+| Alert                        | Fires when                                                                                                                                                                                                  | Setting                          |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `GradApiErrorRateHigh`       | More than 5% of API requests return 5xx over 5 minutes, at more than 0.1 requests/s                                                                                                                         | `error5xxRatio`                  |
+| `GradJobQueuedTooLong`       | The oldest claimable job of a kind has waited 30 minutes                                                                                                                                                    | `oldestQueuedSeconds`            |
+| `GradNoWorkersForQueuedJobs` | Train, import or eval jobs are queued and no worker of that kind has been online for 15 minutes                                                                                                             |                                  |
+| `GradJobFailureRateHigh`     | More than 25% of a kind's jobs failed over 30 minutes, with at least 3 failures                                                                                                                             | `failureRatio`, `failureMinJobs` |
+| `GradUsageFlushLagging`      | A running attempt has written no usage row for 15 minutes                                                                                                                                                   | `usageFlushLagSeconds`           |
+| `GradUsagePushLagging`       | Gradiated Cloud: usage hasn't reached billing for 30 minutes                                                                                                                                                | `usagePushLagSeconds`            |
+| `GradUsageRowsParked`        | Gradiated Cloud: billing refused a usage row for good (422 or 409) and it was parked; see [parked usage rows](https://github.com/Gradiated/grad/blob/main/docs/CLOUD_MODE.md#parked-usage-rows) to retry it |                                  |
+| `GradTokenReviewSaturated`   | Worker tokens keep being refused because 8 TokenReviews are in flight                                                                                                                                       |                                  |
+| `GradDatabaseErrors`         | More than 5% of Postgres queries fail over 5 minutes                                                                                                                                                        | `dbErrorRatio`                   |
+| `GradStorageErrors`          | Object storage operations keep failing                                                                                                                                                                      |                                  |
+| `GradMaintenanceStalled`     | The maintenance loop hasn't finished a tick for 5 minutes                                                                                                                                                   |                                  |
+| `GradSourcePaused`           | A source was paused after repeated sync failures                                                                                                                                                            |                                  |
+
+## Turn it on
+
+With prometheus-operator (kube-prometheus-stack), turn on the scrape configs, the alerts and the dashboard in your Helm values:
+
+```yaml
+metrics:
+  requireToken: true # the chart generates `metrics-token`; monitors and KEDA send it
+  serviceMonitor: { enabled: true, labels: { release: kube-prometheus-stack } }
+  podMonitor: { enabled: true, labels: { release: kube-prometheus-stack } }
+  prometheusRule: { enabled: true, labels: { release: kube-prometheus-stack } }
+  grafanaDashboards: { enabled: true }
+```
+
+`grafanaDashboards` loads the dashboard as a ConfigMap labelled `grafana_dashboard: "1"` for the Grafana sidecar, and the PodMonitor labels worker series with their `pool`. With `networkPolicy.enabled`, `metrics.allowFrom` says who may reach the metrics ports. Without the operator, import `deploy/grafana/grad.json` into Grafana and pick your data sources.
+
+On one machine, `grad local up --observability` runs Prometheus on `127.0.0.1:18789` (7 days of data) and Grafana on `127.0.0.1:18788` with the dashboard provisioned, and prints the Grafana URL. Anyone on the machine can view it; sign in as `admin` (password `GRAD_GRAFANA_PASSWORD`, default `admin`) to edit. The local stack has no Loki, so the Logs section stays empty there; `grad local logs` shows the same lines.
+
+## Logs
+
+Every component logs one JSON object per line to stdout:
+
+- `time`, `level` (`info`, `warn`, `error`), `component` (`api`, `eval-worker`, `migrate` or `trainer`) and `msg`.
+- `request_id`, `trace_id`, `job_id`, `run_id`, `attempt`, `worker_id` and `workspace_id` where they apply. IDs go in logs, never in metric labels.
+- Errors carry `error`, `error_type` and `stack`.
+
+The trainer logs each claim, phase change, checkpoint, reclaim, OOM retry, lease loss and the attempt's outcome, and routes library warnings through the same format. It no longer prints `[grad-trainer] ...` text to stderr, so update any log filter that matched it. API keys, worker tokens, bearer tokens and presigned-URL signatures are masked if one ever reaches a log line, and import workers also mask the provider keys and Hugging Face tokens their job carries.
+
+## Tracing
+
+Tracing is off unless `OTEL_EXPORTER_OTLP_ENDPOINT` (or `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`) is set. grad-server then exports OpenTelemetry spans for HTTP requests, Postgres queries and storage operations, and passes a W3C `traceparent` to the worker with each job, so one trace follows a run from creation through claim and training to completion. The standard `OTEL_*` variables (headers, service name, sampler) apply.
+
+<DocsNext>
+  <a href="/docs/training/self-hosting/">
+    <small>Advanced</small>
+    <strong>Self-hosting</strong>
+  </a>
+  <a href="/docs/reference/cli/">
+    <small>Reference</small>
+    <strong>CLI reference</strong>
+  </a>
+</DocsNext>

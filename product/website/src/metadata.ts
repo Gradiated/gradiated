@@ -249,6 +249,11 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Run Gradiated on your laptop with Docker Compose or in your own Kubernetes cluster with Helm.",
   },
+  "/docs/training/observability/": {
+    title: "Observability for self-hosted grad",
+    description:
+      "Prometheus metrics, the grad Grafana dashboard, warning-level alerts and JSON logs for a self-hosted training server.",
+  },
   "/docs/training/recipes/router/": {
     title: "Model router guide",
     description:

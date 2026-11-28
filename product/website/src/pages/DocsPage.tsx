@@ -22,6 +22,7 @@ import DocsTrainingDeploying from "../docs/training/deploying.mdx";
 import DocsTrainingEnvironments from "../docs/training/environments.mdx";
 import DocsTrainingEvaluations from "../docs/training/evaluations.mdx";
 import DocsTrainingModels from "../docs/training/models.mdx";
+import DocsTrainingObservability from "../docs/training/observability.mdx";
 import DocsTrainingOverview from "../docs/training/index.mdx";
 import DocsTrainingRecipes from "../docs/training/recipes.mdx";
 import DocsTrainingRubrics from "../docs/training/rubrics.mdx";
@@ -171,6 +172,11 @@ export const documents = {
     title: "Self-hosting",
     path: "/docs/training/self-hosting/",
     Component: DocsTrainingSelfHosting,
+  },
+  "training-observability": {
+    title: "Observability",
+    path: "/docs/training/observability/",
+    Component: DocsTrainingObservability,
   },
   "recipe-router": {
     title: "Model router",
@@ -338,6 +344,7 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
       "training-advanced-objectives",
       "training-tuning-troubleshooting",
       "training-self-hosting",
+      "training-observability",
     ],
   },
   { heading: "Integrations", items: ["opencode", "codex", "claude-code"] },

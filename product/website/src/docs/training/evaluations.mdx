@@ -12,6 +12,13 @@ Every training run produces an automatic held-out `eval_report`, and you can als
 - **Catch regressions:** evaluate on a public benchmark next to your own tasks so a fine-tune that wins on your data doesn't quietly lose general ability.
 - **Mine hard examples:** export failing predictions directly into a new [`Dataset`](/docs/training/trajectories/) for your next training run.
 
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Evals on Gradiated Cloud aren't live yet: `evals.plan`, `evals.create` and
+  `grad eval` answer `501 inference_unavailable` ("Evals aren't available on
+  Gradiated Cloud yet"). Training, datasets and artifact downloads work without
+  them. Run evals on a self-hosted server or on `grad local up --dev-models`.
+</DocsCallout>
+
 ## Evaluate a dataset with a `Rubric`
 
 Pass one or more models (catalog base models or trained [`Artifact`](/docs/training/artifacts/) refs such as `sql-agent@latest`), a held-out `Dataset`, and the same [`Rubric`](/docs/training/rubrics/) you use for training:
@@ -118,6 +125,17 @@ grad eval \
 
 The CLI takes rubric files in YAML or JSON with `regex`, `validator`, and `judge` items. `Scorer` functions run in your own process, so use the Python, TypeScript or Go SDK for those.
 
+<DocsCallout label="Try it locally" tone="tip">
+  On `grad local up --dev-models`, evals run on the stack's CPU inference
+  endpoint with no extra setup. Use `test/tiny-qwen3` (and
+  `test/tiny-qwen3-teacher` as the "larger" model) instead of the Qwen catalog
+  models, artifacts you trained on them (`sql-agent@latest`), and
+  `test/tiny-judge` as the judge: it scores the word overlap of the answer with
+  the reference answer, deterministically. Checkpoint evals during training
+  (`evals=`) aren't served locally: their evals record an error per output, so
+  evaluate `run.artifact` after the run instead.
+</DocsCallout>
+
 <DocsTerminal
   title="Side-by-side evaluation summary"
   command="grad eval --models qwen/qwen3-8b,sql-agent@latest,qwen/qwen3-32b --dataset sql-eval-holdout --rubric ./rubric.yaml --samples 4 --temperature 0.7 --baseline qwen/qwen3-8b --wait"
@@ -140,6 +158,8 @@ qwen/qwen3-32b    95.0%    [93.6%, 96.3%]  +28.6%       pass@1=93.0% pass@4=98.0
 - **`pass@k`:** the share of tasks where at least one of `k` attempts counted as passing (see `pass_threshold` in the [reference](/docs/reference/training-parameters/#evaluations)). Reported for `k=1` and `k=samples`. A big gap between pass@1 and pass@4 means the model can solve the task but isn't reliable yet.
 - **`vs baseline`:** the paired difference from `baseline=` on the same tasks. `ev.summary` also holds its confidence interval. Paired comparisons need far fewer tasks than comparing two separate means.
 - **`$/1k tasks`:** model and judge cost per 1,000 tasks at current rates, so you can weigh quality against spend. `ev.summary` also has `tokens_per_task`, and `ev.summary_table()` in Python prints both.
+
+While an eval waits for a model, `ev.waiting_reason` says why: `capacity_unavailable` (a serving pool scaled to zero is starting), `rate_limited` or `inference_unavailable` (the endpoint is down). The eval keeps its place and spends no retry, and fails only if one call waits longer than `GRAD_EVAL_CAPACITY_WAIT_SECONDS` (12 minutes by default). Stored outputs are never generated or billed twice.
 
 Use `samples=1` and `temperature=0` for a quick deterministic check. For decisions you'll act on, use at least 3–4 samples per task: single-sample scores on a few hundred tasks often move several points between runs.
 
@@ -252,7 +272,14 @@ for result in run.checkpoint_evals:
     print(result["step"], result["name"], result["status"], result["score"])
 ```
 
-Each checkpoint eval runs on the eval executor against the checkpoint (the inference endpoint serves it under its checkpoint id) and is billed like any eval; the dry run estimates the cost per checkpoint. The results are also in the run's `checkpoint_eval:<name>` job events and in `run.eval_report["checkpoint_evals"]` when the run finishes. Code scorers can't run during training, so run those in an eval on `run.artifact` afterwards.
+Each checkpoint eval runs on an eval worker against the checkpoint (your inference endpoint serves it under its checkpoint id) and is billed like any eval; the dry run estimates the cost per checkpoint. The results are also in the run's `checkpoint_eval:<name>` job events and in `run.eval_report["checkpoint_evals"]` when the run finishes. Code scorers can't run during training, so run those in an eval on `run.artifact` afterwards.
+
+<DocsCallout label="Not on Gradiated Cloud">
+  Gradiated Cloud serves published artifacts, not checkpoints, so it refuses
+  checkpoint evals: planning or creating a run with `evals=` answers `422
+  checkpoint_evals_unsupported_on_cloud`. Evaluate `run.artifact` after training
+  instead. The held-out `eval_report` every run produces is unaffected.
+</DocsCallout>
 
 ## Turn eval failures into your next training dataset
 

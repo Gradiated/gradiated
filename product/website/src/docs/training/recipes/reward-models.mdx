@@ -36,7 +36,7 @@ If a prompted judge is still missing subtle preferences you can demonstrate with
 
 ## What data you need
 
-- **Minimum volume:** 500 to 2,000 `(chosen, rejected)` pairs in a [`Dataset`](/docs/training/trajectories/), in the same format as [Preference tuning (DPO)](/docs/training/recipes/dpo/): one `{"prompt", "chosen", "rejected"}` record per pair, or two trajectories sharing a `group_id`.
+- **Minimum volume:** 500 to 2,000 `(chosen, rejected)` pairs in a [`Dataset`](/docs/training/trajectories/), in the same format as [Preference tuning (DPO)](/docs/training/recipes/dpo/): one `{"prompt", "chosen", "rejected"}` record per pair, or two trajectories sharing a `group_id`. A record whose `expected_output` corrects its logged answer (a synced correction) is a pair too: the correction is chosen and the logged answer rejected.
 - **To try it first on public data:** `client.datasets.from_hf("trl-lib/ultrafeedback_binarized", split="train", chosen="chosen", rejected="rejected", limit=2000)` gives you a ready-made preference dataset.
 
 ## Train with `RewardModelRecipe`

@@ -101,10 +101,12 @@ grad artifacts download support-router@latest --output ./support-router
 <DocsCallout label="Coming soon on Gradiated Cloud">
   `api.gradiated.com` doesn't serve training yet. Run these against a local
   stack: `grad local up --dev-models`, then `export GRADIATED_PROFILE=local`
-  (see [Install and connect](#install-and-connect)). Its trainer runs on your
-  CPU, so pass `model="test/tiny-qwen3"` (`--model test/tiny-qwen3` in the CLI):
-  the run finishes in seconds, while `qwen/qwen3-8b` needs a GPU (`grad local up
-  --gpu`) and the plan warns about it.
+  (see [Run it locally](#run-it-locally)). Its trainer runs on your CPU, so pass
+  `model="test/tiny-qwen3"` (`--model test/tiny-qwen3` in the CLI): the run
+  finishes in seconds, while `qwen/qwen3-8b` needs a GPU (`grad local up --gpu`)
+  and the plan warns about it. The same stack runs evals: `--dev-models` also
+  starts a CPU inference endpoint that serves `test/tiny-qwen3`, the adapters
+  you train on it and a deterministic test judge, `test/tiny-judge`.
 </DocsCallout>
 
 The router examples train on the scores already in your traces. `support_traces.jsonl` is any OpenAI chat JSONL export with a `scores` field per record; the repository ships a synthetic one in `examples/support_traces.jsonl`.
@@ -112,6 +114,29 @@ The router examples train on the scores already in your traces. `support_traces.
 `--wait` follows the run in a full-screen terminal view. This one is replayed from a recorded run:
 
 <DocsRunReplay />
+
+## Run it locally
+
+The whole loop runs on a laptop with Docker: train a router and a fine-tune, then evaluate the fine-tune against its base model with a judge. `--dev-models` adds tiny, randomly initialised test models and a CPU inference endpoint for evals, so every step finishes in seconds:
+
+```bash
+grad local up --dev-models
+export GRADIATED_PROFILE=local   # the CLI and every SDK now use the local stack
+curl -LO https://raw.githubusercontent.com/Gradiated/grad/main/examples/support_traces.jsonl
+grad import ./support_traces.jsonl --dataset support-prod
+grad train --dataset support-prod --name support-router --recipe router --model test/tiny-qwen3 \
+  --rubric resolved --max-cost-usd 1 --wait
+grad artifacts download support-router@latest --output ./support-router
+
+# Eval an SFT adapter against its base on the same traces, with a judge
+grad train --dataset support-prod --name support-sft --recipe sft --model test/tiny-qwen3 --max-cost-usd 1 --wait
+printf -- '- name: overlap\n  kind: judge\n  model: test/tiny-judge\n' > rubric.yaml
+grad eval --name sft-vs-base --models support-sft@latest,test/tiny-qwen3 --dataset support-prod \
+  --rubric rubric.yaml --limit 20 --baseline test/tiny-qwen3 --wait
+grad local down                  # add --volumes to delete the data
+```
+
+`grad eval` prints the report when it finishes; the SDKs have `ev.summary_table()` and the web UI an Evals page (`grad ui`). The tiny models' answers are noise: the scores check the pipeline, not a model. For real models, start the stack with `--gpu` and use catalog ids such as `qwen/qwen3-8b`.
 
 ## Where to start
 
@@ -161,7 +186,7 @@ go get github.com/Gradiated/grad/sdks/go@latest
   <DocsCodeTab label="Rust">
 
 ```bash
-cargo add grad-sdk@0.2.0-alpha.3
+cargo add grad-sdk --git https://github.com/Gradiated/grad --tag v0.2.0-alpha.5
 ```
 
   </DocsCodeTab>
@@ -169,18 +194,18 @@ cargo add grad-sdk@0.2.0-alpha.3
 
 ```bash
 brew install gradiated/tap/grad   # macOS and Linux
-# or: cargo install --locked grad-cli@0.2.0-alpha.3
+# or: cargo install --locked --git https://github.com/Gradiated/grad --tag v0.2.0-alpha.5 grad-cli
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Until 0.2.0 is out every release is a prerelease: pip, npm, `go get @latest` and Homebrew install the newest one as they are, and Cargo needs the version. Release binaries of the CLI are on [GitHub Releases](https://github.com/Gradiated/grad/releases). The Rust crate is published as `grad-sdk` and imported as `grad` (`use grad::Client;`). To try unreleased changes, install from the repository instead, for example `pip install "grad-sdk @ git+https://github.com/Gradiated/grad#subdirectory=sdks/python"` or `cargo install --locked --git https://github.com/Gradiated/grad grad-cli`.
+Until 0.2.0 is out every release is a prerelease: pip, npm, `go get @latest` and Homebrew install the newest one (0.2.0-alpha.5) as they are. crates.io still has 0.2.0-alpha.3, so install the Rust crate and the CLI from the release tag with Cargo. Release binaries of the CLI are on [GitHub Releases](https://github.com/Gradiated/grad/releases). The Rust crate is published as `grad-sdk` and imported as `grad` (`use grad::Client;`). To try unreleased changes, install from the repository instead, for example `pip install "grad-sdk @ git+https://github.com/Gradiated/grad#subdirectory=sdks/python"` or `cargo install --locked --git https://github.com/Gradiated/grad grad-cli`.
 
 Then start a local stack (it needs Docker with the Compose plugin) and point the CLI and SDKs at it:
 
 ```bash
-grad local up           # or --build to build the images from your checkout
+grad local up           # --dev-models adds tiny test models; --build builds the images from your checkout
 export GRADIATED_PROFILE=local
 grad models list
 ```

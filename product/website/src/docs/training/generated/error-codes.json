@@ -110,6 +110,9 @@
   "eval_not_found": [
    404
   ],
+  "forbidden": [
+   403
+  ],
   "format_base_mismatch": [
    422
   ],

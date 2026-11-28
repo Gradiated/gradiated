@@ -217,6 +217,12 @@ const errorCodes = () => {
     )) {
       add(m[2], m[1]);
     }
+    // A helper whose code is a default parameter: (detail, code = "forbidden") => new ApiError(403, code, ...)
+    for (const m of text.matchAll(
+      /code = "([a-z][a-z0-9_]+)",?\s*\)[^=]*=>\s*new ApiError\(\s*(\d{3})/g,
+    )) {
+      add(m[1], m[2]);
+    }
     for (const m of text.matchAll(/\bnotFound\(\s*"([a-z_]+)"/g)) {
       add(`${m[1]}_not_found`, 404);
     }

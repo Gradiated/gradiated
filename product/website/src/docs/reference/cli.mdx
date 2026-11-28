@@ -132,6 +132,7 @@ When the run ends the view closes and prints the usual summary: time, tokens and
 | `grad keys list` / `revoke ID`           | List or revoke keys.                                                                                                                                                               |
 | `grad usage`                             | Cost and tokens for a period, by kind (training, eval, scoring, labeling, teacher), with the top 5 runs and evals. `--from`, `--to`, `--by day\|week\|month\|model\|recipe\|kind`. |
 | `grad usage list`                        | The billed rows, newest first: `--from`, `--to`, `--run RUN` (with the evals it started), `--eval EVAL`, `--kind`, `--limit`, `--cursor`.                                          |
+| `grad completion SHELL`                  | Print a completion script for `bash`, `zsh`, `fish`, `elvish` or `powershell`, for example `grad completion zsh > "${fpath[1]}/_grad"`.                                            |
 | `grad ui [RUN]`                          | Open the server's web UI in your browser, signed in with the current profile's key (`RUN` opens one run).                                                                          |
 
 List commands take `--limit` and `--cursor`. Usage periods are UTC and default to this month: `--from` is inclusive, `--to YYYY-MM-DD` covers that whole day and a timestamp is exclusive.

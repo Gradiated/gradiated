@@ -4312,12 +4312,14 @@
    "properties": {
     "name": {
      "type": "string",
+     "description": "Key name.",
      "minLength": 1,
      "maxLength": 64,
      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
     },
     "scopes": {
      "type": "array",
+     "description": "The scopes the key gets (at least one); a `:write` scope includes its `:read`, and `admin` includes every workspace scope.",
      "minItems": 1,
      "items": {
       "$ref": "ApiKeyScope"
@@ -4377,12 +4379,14 @@
    "properties": {
     "name": {
      "type": "string",
+     "description": "Dataset name: lowercase letters, digits, `.`, `_` and `-`, unique in the workspace.",
      "minLength": 1,
      "maxLength": 64,
      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
     },
     "metadata": {
      "type": "object",
+     "description": "Free-form metadata stored on the dataset.",
      "additionalProperties": {}
     }
    }
@@ -7061,6 +7065,7 @@
    "properties": {
     "records": {
      "type": "array",
+     "description": "Records to append; together they become the next dataset version.",
      "minItems": 1,
      "maxItems": 50000,
      "items": {
@@ -7069,6 +7074,7 @@
     },
     "metadata": {
      "type": "object",
+     "description": "Keys merged into the dataset's metadata.",
      "additionalProperties": {}
     }
    }

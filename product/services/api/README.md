@@ -20,6 +20,17 @@ the new one. It has no per-IP rate limit.
 - `POST /api/internal/v1/billing/usage-events`: up to 500 priced training
   events, billed once each by `event_id`.
 
+## grad workspace states
+
+With `GRAD_SERVER_URL` (grad-server's internal listener, its `INTERNAL_PORT`;
+unset by default) the API tells grad when a workspace is suspended, reinstated
+or deleted. Database triggers queue the newest state per workspace in
+`grad_workspace_state_outbox`, and each replica sends due rows every minute
+with a service JWT (`service:control`, scope `workspaces:admin`), retrying with
+backoff. Unset, nothing is sent and state changes are unaffected. Logs:
+`grad_workspace_state_sent`, `grad_workspace_state_failed` (with `reason`
+such as `http 503`) and `grad_workspace_already_deleted`.
+
 ## Engineer onboarding
 
 The console's `/onboarding?journey=post-training` steps use organization-owned routes. Each

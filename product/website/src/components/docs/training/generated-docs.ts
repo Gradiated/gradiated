@@ -15,6 +15,12 @@ const apiMarkdown = (): string =>
   API.operations
     .map((op) => {
       const body = op.body ? childrenOf(op.body) : null;
+      const params = op.params
+        .map(
+          (param) =>
+            `- \`${param.name}\` (${param.in}, ${typeLabel(param.schema)}${param.required ? ", required" : ""})${param.description ? `: ${param.description}` : ""}`,
+        )
+        .join("\n");
       const fields = body
         ? Object.entries(body.properties)
             .map(
@@ -23,16 +29,17 @@ const apiMarkdown = (): string =>
             )
             .join("\n")
         : "";
-      const response = op.responses[0];
       return [
         `## ${op.method} ${op.path}`,
         "",
         op.summary,
         op.description ? `\n${op.description}` : "",
+        params ? `\nParameters:\n\n${params}` : "",
         fields ? `\nBody:\n\n${fields}` : "",
-        response
-          ? `\nReturns ${response.status}${response.schema ? ` ${typeLabel(response.schema)}` : ""}: ${response.description}`
-          : "",
+        ...op.responses.map(
+          (variant) =>
+            `\nReturns ${variant.status}${variant.schema ? ` ${typeLabel(variant.schema)}` : ""}: ${variant.description}`,
+        ),
         "",
         "```bash",
         curlFor(op),

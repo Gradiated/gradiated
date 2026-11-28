@@ -187,7 +187,11 @@ export const constraints = (schema: Schema): string[] => {
   } else if (resolved.maxLength !== undefined) {
     out.push(`≤ ${resolved.maxLength} chars`);
   }
-  if (resolved.maxItems !== undefined) out.push(`≤ ${resolved.maxItems} items`);
+  if (resolved.minItems !== undefined && resolved.minItems > 0) {
+    range(resolved.minItems, resolved.maxItems, " items");
+  } else if (resolved.maxItems !== undefined) {
+    out.push(`≤ ${resolved.maxItems} items`);
+  }
   if (resolved.default !== undefined) {
     out.push(`default ${JSON.stringify(resolved.default)}`);
   }

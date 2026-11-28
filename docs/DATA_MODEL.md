@@ -289,6 +289,23 @@ The training platform (grad) authenticates `grad_` keys by reading this view wit
 
 Revoked, expired and hidden keys, and keys of non-customer organizations, have no row. `status` is `active` only while the organization is active, the workspace is not archived and the creator is an active member or verified staff, the same rules as the API's access checks. A removed member's keys therefore keep serving inference but stop working for training.
 
+### 9b. `grad_workspace_state_outbox`
+
+The newest workspace state grad has not yet confirmed, one row per workspace (migration 0042). Triggers write it in the transaction that changes the state: an organization's `status` (for its unarchived workspaces), a workspace's `archived_at`, or a workspace's deletion, including through an organization's deletion. A workspace is `suspended` while it is archived or its organization is not active, `active` otherwise, and `deleted` once its row is gone; a newer state replaces a pending one, except that nothing replaces `deleted`.
+
+| Field             | Type        | Null | Rules                                                  |
+| ----------------- | ----------- | ---- | ------------------------------------------------------ |
+| `workspace_id`    | uuid        | no   | Primary key; no FK, so it outlives a deleted workspace |
+| `state`           | text        | no   | `active`, `suspended` or `deleted`                     |
+| `generation`      | integer     | no   | Bumped on every replacement                            |
+| `attempts`        | integer     | no   | Failed sends                                           |
+| `last_error`      | text        | yes  | The last failure, such as `http 503`                   |
+| `next_attempt_at` | timestamptz | no   | When a sweep may send it next                          |
+| `created_at`      | timestamptz | no   | First queued                                           |
+| `updated_at`      | timestamptz | no   | Last replaced                                          |
+
+With `GRAD_SERVER_URL` set, every API replica sweeps it each minute: it claims one due row at a time (`FOR UPDATE SKIP LOCKED`, pushing `next_attempt_at` two minutes out), sends `PUT /internal/v1/workspaces/{ws}/state` to grad with a service JWT (`sub service:control`, `ws`, scope `workspaces:admin`), and deletes the row on a 2xx or on `409 workspace_deleted` unless a newer state arrived meanwhile. Other responses retry with backoff from one minute to 15. Without `GRAD_SERVER_URL` nothing is sent and rows stay queued.
+
 ## Model catalog
 
 ### 10. `models`

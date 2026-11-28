@@ -46,6 +46,7 @@ const COLLAGE: CollageLayer[] = [
   {
     drift: 0.3,
     file: "hero-aerial.webp",
+    fill: { by: "height", share: 0.8, x: "right", y: "top" },
     from: { r: 3, x: 6, y: -6 },
     left: 2274,
     top: 0,
@@ -54,6 +55,7 @@ const COLLAGE: CollageLayer[] = [
   {
     drift: 0.22,
     file: "hero-monitor.webp",
+    fill: { by: "height", share: 0.7, x: "right", y: "bottom" },
     from: { r: 2, x: 6, y: -3 },
     left: 1933,
     top: 334,
@@ -62,6 +64,7 @@ const COLLAGE: CollageLayer[] = [
   {
     drift: 0.15,
     file: "hero-grass.webp",
+    fill: { by: "width", x: "left", y: "bottom" },
     from: { r: -1.5, x: -2, y: 14 },
     left: 17,
     top: 438,
@@ -70,6 +73,7 @@ const COLLAGE: CollageLayer[] = [
   {
     drift: 0.1,
     file: "hero-heatmap.webp",
+    fill: { by: "width", x: "left", y: "bottom" },
     from: { r: -4, x: -8, y: 12 },
     left: -2,
     top: 1715,
@@ -78,6 +82,7 @@ const COLLAGE: CollageLayer[] = [
   {
     drift: 0.08,
     file: "hero-paper.webp",
+    fill: { by: "width", x: "left", y: "bottom" },
     from: { r: 2, x: 3, y: 16 },
     left: 538,
     top: 967,
@@ -86,6 +91,7 @@ const COLLAGE: CollageLayer[] = [
   {
     drift: 0.04,
     file: "hero-laptop.webp",
+    fill: { by: "height", share: 0.7, x: "right", y: "bottom" },
     from: { r: 1.5, x: 5, y: 6 },
     left: 996,
     top: 801,
@@ -276,7 +282,11 @@ const Interlude = (): ReactElement => {
   return (
     <Module bleed className="gr-careers-module gr-careers-interlude" index={3}>
       <p className="gr-careers-interlude-line" ref={lineRef}>
-        <span>Gradiated</span>
+        <span
+          aria-label="Gradiated"
+          className="gr-careers-interlude-logo"
+          role="img"
+        />
         <span>Inference lab in Cambridge,&nbsp;UK</span>
       </p>
       {/* Film grain over the photograph. */}

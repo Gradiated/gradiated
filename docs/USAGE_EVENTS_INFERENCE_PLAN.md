@@ -8,6 +8,7 @@ Training usage is written to ClickHouse `usage_events` from day one: grad pushes
 ## Why it is not a one-line dual write
 
 - **Price versions.** Every `usage_events` row names a `price_version`. Inference prices are captured per generation as `pricing.components[].unit_price` at admission, and no versioned inference price list exists. Either inference catalog prices become `price_lists` versions (product `inference`, SKUs `inference:<model>:<unit>`), with the gateway stamping the version it admitted with, or inference rows carry a sentinel such as `gateway:pricing:v1` and the unit price as a tag. The first is the real fix; the second only unblocks reporting.
+- **SKU names.** `price_list_items` accepts only lowercase `train:` or `inference:` plus `author/slug`, with no `:<unit>` suffix and the single unit `token`, and the training list already uses `inference:<model>` for blended eval estimates. Per-component inference SKUs need a wider check and units, and catalog IDs such as `Qwen/Qwen3-0.6B` or `kimi-k3.1-pro-cyber` need a mapping.
 - **One row per component.** A generation has up to six priced components (`request`, `input_token`, `cached_input_token`, `cache_write_token`, `output_token`, `reasoning_token`). That is six `usage_events` rows per generation, so at current volume the table grows several times faster than `generations`.
 - **Readers.** The usage summary, the generation log, the console usage page and the Metabase models all read `generations` with its materialized columns. Each needs a `usage_events` query and a reconciliation period.
 

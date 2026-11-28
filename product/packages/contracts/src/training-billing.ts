@@ -26,13 +26,14 @@ export const PriceSkuSchema = z
   )
   .openapi({ example: "inference:anthropic/claude-sonnet-5-5" });
 
+// The gateway's operational balance is a safe JS integer, so no amount may exceed one.
 const NanoUsdSchema = z
   .union([
     z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
-    z.string().regex(/^\d{1,19}$/),
+    z.string().regex(/^\d{1,16}$/),
   ])
   .transform((value) => BigInt(value))
-  .refine((value) => value <= 9_223_372_036_854_775_807n, "Out of range.");
+  .refine((value) => value <= BigInt(Number.MAX_SAFE_INTEGER), "Out of range.");
 
 export const PriceListQuerySchema = z.object({
   product: z.literal("training"),

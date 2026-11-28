@@ -1862,16 +1862,11 @@
 /* -- filter row (API reference, errors) ------------------------------------ */
 
 .gr-api-filter {
-  position: sticky;
-  top: var(--nav-h);
-  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.4em 0.8em;
   margin-block: var(--u);
-  padding-block: 0.6em;
-  background: var(--color-substrate);
 }
 
 .gr-root .gr-api-filter-label {
@@ -2491,15 +2486,15 @@
 .gr-root .gr-doc-step {
   position: relative;
   margin: 0;
-  padding: 0 0 calc(1.2 * var(--u)) 2.6em;
+  padding: 0 0 calc(1.2 * var(--u)) 2.75rem;
 }
 
 .gr-doc-step::before {
   content: "";
   position: absolute;
-  top: 2.2em;
+  top: 2.6rem;
   bottom: 0;
-  left: 0.85em;
+  left: 0.7rem;
   width: 1px;
   background: var(--color-rule);
 }
@@ -2512,13 +2507,14 @@
   margin-block-start: calc(0.6 * var(--u));
 }
 
+/* The heading is the positioned box; the number hangs in the step's gutter. */
 .gr-doc-step-number {
   position: absolute;
-  left: 0;
+  left: -2.75rem;
   display: inline-grid;
   place-items: center;
-  width: 1.75em;
-  height: 1.75em;
+  width: 1.4rem;
+  height: 1.4rem;
   border: 1px solid var(--color-rule);
   border-radius: 50%;
   background: var(--color-substrate);
@@ -2562,5 +2558,6 @@
   .gr-doc-step-number {
     position: static;
     margin-inline-end: 0.5em;
+    vertical-align: 0.15em;
   }
 }

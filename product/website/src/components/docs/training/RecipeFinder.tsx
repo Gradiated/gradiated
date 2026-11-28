@@ -163,7 +163,7 @@ export const RecipeFinder = (): ReactElement => {
         </dl>
 
         <p className="gr-dx-small-label">One record</p>
-        <pre className="gr-dx-record">
+        <pre className="gr-dx-record" tabIndex={0}>
           <code>{recipe.record}</code>
         </pre>
 

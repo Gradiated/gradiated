@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import type { ComponentType, ReactElement, ReactNode } from "react";
 
 /* A note in the margin of the text, not a banner: a rule, a label, the words.
@@ -80,19 +80,27 @@ const deferred = <P extends object>(
 ) => {
   const Widget = lazy(load);
 
-  const Deferred = (props: P): ReactElement => (
-    <Suspense
-      fallback={
-        <div
-          aria-hidden="true"
-          className="gr-dx gr-dx-placeholder"
-          style={{ minHeight }}
-        />
-      }
-    >
-      <Widget {...props} />
-    </Suspense>
-  );
+  /* Mounted after hydration: a lazy component suspending during the server
+     render makes React give up on the boundary (error #419) and log it. */
+  const Deferred = (props: P): ReactElement => {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+
+    const placeholder = (
+      <div
+        aria-hidden="true"
+        className="gr-dx gr-dx-placeholder"
+        style={{ minHeight }}
+      />
+    );
+    if (!mounted) return placeholder;
+
+    return (
+      <Suspense fallback={placeholder}>
+        <Widget {...props} />
+      </Suspense>
+    );
+  };
 
   return Deferred;
 };

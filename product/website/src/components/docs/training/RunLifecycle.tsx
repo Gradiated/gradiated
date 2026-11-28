@@ -329,7 +329,7 @@ export const RunLifecycle = ({
           {station.output ? (
             <div className="gr-dx-output">
               <span className="gr-dx-small-label">{station.outputLabel}</span>
-              <pre>{station.output}</pre>
+              <pre tabIndex={0}>{station.output}</pre>
             </div>
           ) : null}
         </div>

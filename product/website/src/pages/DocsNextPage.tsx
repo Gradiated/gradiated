@@ -155,7 +155,7 @@ const DocsPre = ({
    wide table is how a docs page ends up with a horizontal scrollbar on every
    screen. */
 const DocsTable = (props: ComponentPropsWithoutRef<"table">): ReactElement => (
-  <div className="gr-doc-tablewrap">
+  <div className="gr-doc-tablewrap" tabIndex={0}>
     <table {...props} />
   </div>
 );

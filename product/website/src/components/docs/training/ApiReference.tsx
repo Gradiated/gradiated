@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import type { ReactElement, ReactNode } from "react";
 
 import { useSdkLanguage } from "../DocsLanguage";
@@ -425,6 +425,17 @@ export const DocsApiReference = (): ReactElement => {
     [],
   );
   const visible = API.operations.filter((op) => matches(op, query)).length;
+
+  /* The samples settle into the reader's language after hydration, which
+     moves everything; land a deep link on its endpoint once they have. */
+  useEffect(() => {
+    const anchor = window.location.hash.slice(1);
+    if (!anchor) return;
+    const frame = window.requestAnimationFrame(() =>
+      document.getElementById(anchor)?.scrollIntoView(),
+    );
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   return (
     <div className="gr-api">

@@ -22,4 +22,5 @@ CREATE TABLE "price_lists" (
 ALTER TABLE "balance_transactions" DROP CONSTRAINT "balance_transactions_source_type_check";--> statement-breakpoint
 ALTER TABLE "price_list_items" ADD CONSTRAINT "price_list_items_price_list_id_price_lists_id_fk" FOREIGN KEY ("price_list_id") REFERENCES "public"."price_lists"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 CREATE UNIQUE INDEX "price_lists_product_effective_at_unique" ON "price_lists" USING btree ("product","effective_at");--> statement-breakpoint
-ALTER TABLE "balance_transactions" ADD CONSTRAINT "balance_transactions_source_type_check" CHECK ("balance_transactions"."source_type" in ('stripe_checkout_session', 'stripe_refund', 'stripe_dispute', 'generation_settlement_batch', 'openrouter_payment', 'operator', 'stripe_invoice', 'usage_event'));
+-- NOT VALID: existing rows already satisfy the wider list, so this skips a full scan.
+ALTER TABLE "balance_transactions" ADD CONSTRAINT "balance_transactions_source_type_check" CHECK ("balance_transactions"."source_type" in ('stripe_checkout_session', 'stripe_refund', 'stripe_dispute', 'generation_settlement_batch', 'openrouter_payment', 'operator', 'stripe_invoice', 'usage_event')) NOT VALID;

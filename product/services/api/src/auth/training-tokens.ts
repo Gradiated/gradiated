@@ -13,6 +13,8 @@ export const SERVICE_TOKEN_SCOPES = [
   "workspaces:admin",
 ] as const;
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
 // The plugin's session token endpoint signs a token without a workspace.
 export const DISABLED_JWT_PATHS = ["/token"];
 
@@ -85,8 +87,16 @@ export const signServiceToken = async (
 ): Promise<TrainingToken> => {
   if (!/^[a-z][a-z0-9-]{0,62}$/.test(subject.service))
     throw new Error(`Invalid service name: ${subject.service}`);
+  if (!UUID.test(subject.workspaceId))
+    throw new Error(`Invalid workspace ID: ${subject.workspaceId}`);
   if (subject.scopes.length === 0)
     throw new Error("A service token needs at least one scope.");
+  // The type allows only these; a cast or untyped caller must not widen them.
+  const unknown = subject.scopes.filter(
+    (scope) => !(SERVICE_TOKEN_SCOPES as readonly string[]).includes(scope),
+  );
+  if (unknown.length > 0)
+    throw new Error(`Invalid service token scopes: ${unknown.join(", ")}`);
 
   const iat = Math.floor(now.getTime() / 1000);
   const exp = iat + SERVICE_TOKEN_LIFETIME_SECONDS;

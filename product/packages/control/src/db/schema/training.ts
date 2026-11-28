@@ -317,3 +317,41 @@ export const taskVersionFiles = pgTable(
     index("task_version_files_version_index").on(table.versionId),
   ],
 );
+
+export const GRAD_WORKSPACE_STATES = [
+  "active",
+  "suspended",
+  "deleted",
+] as const;
+
+// The newest workspace state grad has not yet confirmed. Triggers on
+// organizations and workspaces write it (migration 0042); there is no FK, so a
+// deleted workspace's row outlives it.
+export const gradWorkspaceStateOutbox = pgTable(
+  "grad_workspace_state_outbox",
+  {
+    workspaceId: uuid("workspace_id").primaryKey(),
+    state: text("state", { enum: GRAD_WORKSPACE_STATES }).notNull(),
+    generation: integer("generation").default(1).notNull(),
+    attempts: integer("attempts").default(0).notNull(),
+    lastError: text("last_error"),
+    nextAttemptAt: timestamp("next_attempt_at", {
+      withTimezone: true,
+      mode: "date",
+    })
+      .defaultNow()
+      .notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    check(
+      "grad_workspace_state_outbox_state_check",
+      sql`${table.state} in (${inList(GRAD_WORKSPACE_STATES)})`,
+    ),
+  ],
+);

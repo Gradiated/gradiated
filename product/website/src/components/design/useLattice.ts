@@ -16,7 +16,8 @@ import { useEffect, useRef, useState } from "react";
  *      N units fits the available width, where N has good divisors. CSS can
  *      clamp and round but it cannot pick N.
  *
- * The unit is an integer, keeping the lattice pixel-exact, except on phones.
+ * The unit is fractional at every size, so the margin is the one chosen in
+ * marginFor rather than whatever whole units leave over.
  */
 
 /** Unit counts per tier. Each divides cleanly by 2, 3, 4, 6 and 12. */
@@ -27,19 +28,30 @@ import { useEffect, useRef, useState } from "react";
    384px module inside 108px margins. `compact` fills it: 24 units hit U_MAX at
    624, which is where mid begins. */
 const TIERS = [
-  { margin: 24, minWidth: 900, moduleU: 48, name: "wide" },
-  { margin: 24, minWidth: 620, moduleU: 36, name: "mid" },
-  /* Phones: exactly 36px a side. The unit goes fractional to fit, so the
-     gutter does not vary with the leftover of whole units. */
-  { exact: true, margin: 36, minWidth: 432, moduleU: 24, name: "compact" },
-  { exact: true, margin: 36, minWidth: 0, moduleU: 16, name: "narrow" },
+  { minWidth: 900, moduleU: 48, name: "wide" },
+  { minWidth: 620, moduleU: 36, name: "mid" },
+  { minWidth: 432, moduleU: 24, name: "compact" },
+  { minWidth: 0, moduleU: 16, name: "narrow" },
 ] as const;
+
+/**
+ * The margin a side, by the element's width. Tablets and desktops used whole
+ * units with a 24px floor, so the margin was the leftover: 24-46px, jumping
+ * as the window moved and thinner than a phone's. It now rises with width:
+ * 36 on phones, 36-56 across tablets, then 56 + 10% of the width beyond
+ * 900. Once the unit reaches U_MAX the module stops at 1152px and the rest
+ * becomes margin, as before.
+ */
+export const marginFor = (width: number): number => {
+  if (width < 620) return 36;
+  if (width < 900) return 36 + ((width - 620) * 20) / 280;
+  return 56 + (width - 900) * 0.1;
+};
 
 export type Tier = (typeof TIERS)[number]["name"];
 
 const U_MAX = 24;
 const U_MIN = 12;
-const MIN_MARGIN = 24;
 
 export type Lattice = {
   moduleU: number;
@@ -72,12 +84,8 @@ const EMPTY: Lattice = {
 
 export const resolveLattice = (width: number): Lattice => {
   const tier = TIERS.find(({ minWidth }) => width >= minWidth) ?? TIERS.at(-1)!;
-  const usable = width - (tier.margin ?? MIN_MARGIN) * 2;
-  const fit = usable / tier.moduleU;
-  const u = Math.min(
-    U_MAX,
-    Math.max(U_MIN, "exact" in tier ? fit : Math.floor(fit)),
-  );
+  const fit = (width - marginFor(width) * 2) / tier.moduleU;
+  const u = Math.min(U_MAX, Math.max(U_MIN, fit));
 
   return {
     moduleU: tier.moduleU,

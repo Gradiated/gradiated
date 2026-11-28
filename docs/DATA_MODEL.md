@@ -451,7 +451,9 @@ Immutable history of durable balance movements. This is a customer wallet ledger
 | `created_by`       | uuid        | yes  | FK `users.id`; manual credits and adjustments only                          |
 | `created_at`       | timestamptz | no   | Movement time                                                               |
 
-`(source_type, source_id)` is unique and is the idempotency boundary. Source types are `stripe_checkout_session`, `stripe_invoice`, `stripe_refund`, `stripe_dispute`, `generation_settlement_batch`, `openrouter_payment` and `operator`.
+`(source_type, source_id)` is unique and is the idempotency boundary. Source types are `stripe_checkout_session`, `stripe_invoice`, `stripe_refund`, `stripe_dispute`, `generation_settlement_batch`, `openrouter_payment`, `operator` and `usage_event`.
+
+A `usage_event` movement is one priced increment of training usage that grad pushed to the training listener (see [Training usage](#training-usage)); its `source_id` is the grad `event_id`. The gateway replays it into the operational balance like any other non-settlement movement, so admission sees training spend.
 
 A balance mutation locks the account row, inserts the immutable movement and updates `billing_accounts.balance` in one PostgreSQL transaction. Positive amounts add funds and negative amounts consume funds. Usage is aggregated from launch: every terminal generation belongs to one global settlement slot derived from its Valkey Stream ID. All organizations share that slot. For each organization with nonzero usage in the slot, the PostgreSQL settlement worker posts one `generation_settlement_batch` movement whose negative amount is the sum of its generation charges and whose `generation_count` counts those charged generations. Individual generations remain queryable in ClickHouse. An organization with only zero-charge generations produces no PostgreSQL balance transaction.
 
@@ -513,6 +515,12 @@ One charge of an organization's saved card, made through a Stripe invoice.
 An organization has at most one `pending` charge of either reason. A charge creates a draft invoice, records its ID, adds one line item, finalizes it and pays it off-session with the saved card. Each step reuses an idempotency key derived from the row ID, so a retry after a crash or a Stripe outage resumes the same invoice instead of charging twice. A paid invoice posts a `topup` with source `stripe_invoice`, and the `invoice.paid` webhook posts the same source idempotently if the charging process stops first. A decline voids the invoice and marks the row `failed`; for `auto_top_up` it also turns auto top-up off and records Stripe's reason, so a failing card is never retried automatically. Workers retry pending rows older than two minutes and resolve rows older than 23 hours by reading the invoice, before Stripe forgets the idempotency keys. An `invoice.payment_failed` webhook fails a pending row whose payment Stripe accepted and later declined.
 
 Every worker polls accounts with auto top-up enabled. A claim locks the billing account row, reads the operational Valkey balance plus any PostgreSQL credits the gateway has not applied yet, and inserts a `pending` `auto_top_up` row only when that balance is below the threshold and the organization has fewer than `AUTO_TOP_UP_MAX_PER_HOUR` auto top-ups in the last hour. Worker metrics count charges by reason and outcome, the oldest pending charge and rate-limited claims; alerts fire on declined auto top-ups, repeated charge errors, a charge pending for thirty minutes and a rate-limited organization.
+
+### 12b. Training usage
+
+`price_lists` (`id` `pv_…`, `product` `training`, `effective_at`, `placeholder`) and `price_list_items` (`price_list_id`, `sku` `train:<base model>` or `inference:<gateway model>`, `unit` `token`, `price_nano_usd_per_million`) are immutable price versions; a price change inserts a new version. The current version of a product is the latest with `effective_at <= now()`. The first training version, `pv_training_2026_11_27_placeholder`, holds made-up placeholder prices and says so with `placeholder = true`. Its `inference:` SKUs are blended prompt and completion prices that grad uses only to estimate evals and to decide which judges it allows; ingest bills only `train:` SKUs.
+
+grad calls the API's private training listener for prices, a balance check and usage ingest. Ingest checks each event's amount as `round_half_up(quantity × price / 10^6)` against the version it names, posts one `usage_event` balance transaction per nonzero event in one PostgreSQL transaction, and then inserts the events into ClickHouse `usage_events`. A replayed event posts nothing; a replay with different values is refused. Only `product = training` events with `train:` SKUs are accepted, so the eval inference that the gateway bills as generations is never billed twice.
 
 ## PostgreSQL-to-Valkey synchronization
 
@@ -712,6 +720,27 @@ The application validates the complete properties document before insertion; it 
 One TypeScript ClickHouse-ingestion consumer group reads `GenerationSettled` from Valkey. For each event it derives the global `settlement.slot_id` from the Valkey Stream ID's time bucket and settlement schema. Every organization in that time bucket receives the same slot ID; ClickHouse materializes it for chronological reconciliation. The worker issues one logical insert per generation with ClickHouse `async_insert = 1` and `wait_for_async_insert = 1`; ClickHouse combines those inserts server-side. Retries use a generation-ID-based insert deduplication token as a normal-path optimization, but billing correctness never depends on the lifetime of that token. The worker acknowledges a stream entry only after ClickHouse confirms the asynchronous insert was flushed, uses `XAUTOCLAIM` to recover abandoned pending entries, and trims only through the contiguous acknowledged watermark. That watermark is derived from the consumer group's last-delivered ID and oldest pending ID rather than stored in another database table. Do not use `ReplacingMergeTree`, lifecycle updates or `FINAL` queries for the launch schema.
 
 Do not store prompts, completions, arbitrary request JSON, credentials, private runtime URLs, or attempt arrays. One customer-visible generation can have one safe runtime retry. Generations have no TTL and are retained indefinitely at launch. Rely on ClickHouse Cloud's managed durability and backups initially; do not build a separate archival or export pipeline until retention, regulatory or recovery requirements justify one.
+
+## 14a. `usage_events`
+
+One row per priced usage increment, today from training. `balance_transactions` stays the money ledger; this table is the record of what was billed, for usage views, invoices and Metabase.
+
+| Field             | ClickHouse type                     | Rules                                        |
+| ----------------- | ----------------------------------- | -------------------------------------------- |
+| `event_id`        | String                              | Globally unique; the idempotency key         |
+| `organization_id` | UUID                                | Resolved from the workspace                  |
+| `workspace_id`    | UUID                                |                                              |
+| `product`         | LowCardinality(String)              | `training`                                   |
+| `sku`             | LowCardinality(String)              | For example `train:qwen/qwen3-8b`            |
+| `quantity`        | UInt64                              | In the SKU's unit                            |
+| `amount_nano_usd` | Int64                               | The amount posted to the ledger              |
+| `price_version`   | LowCardinality(String)              | The `price_lists.id` it was priced with      |
+| `occurred_at`     | DateTime64(6, 'UTC')                | When the usage happened; the partition month |
+| `subject_id`      | String                              | Run or eval ID                               |
+| `tags`            | Map(LowCardinality(String), String) | For example `attempt`, `recipe_kind`         |
+| `ingested_at`     | DateTime64(6, 'UTC')                | Default `now64(6)`                           |
+
+The engine is `ReplacingMergeTree` ordered by `(organization_id, workspace_id, event_id)`, so a replayed event collapses into one row; readers that need exact totals before merges group by `event_id` or use `FINAL`.
 
 # Inference event contracts
 

@@ -1959,7 +1959,8 @@ export interface components {
         | "generation_settlement_batch"
         | "openrouter_payment"
         | "operator"
-        | "stripe_invoice";
+        | "stripe_invoice"
+        | "usage_event";
       /** @description The Stripe Checkout Session, invoice, refund or dispute behind the transaction. */
       stripe_id: string | null;
       /**

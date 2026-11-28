@@ -58,6 +58,7 @@ export const BALANCE_SOURCE_TYPES = [
   "openrouter_payment",
   "operator",
   "stripe_invoice",
+  "usage_event",
 ] as const;
 export const TOP_UP_CHARGE_REASONS = ["top_up", "auto_top_up"] as const;
 export const TOP_UP_CHARGE_STATUSES = [
@@ -66,6 +67,8 @@ export const TOP_UP_CHARGE_STATUSES = [
   "failed",
 ] as const;
 export const TOP_UP_METHODS = ["card", "checkout"] as const;
+export const PRICE_LIST_PRODUCTS = ["training"] as const;
+export const PRICE_UNITS = ["token"] as const;
 
 export type OrganizationKind = (typeof ORGANIZATION_KINDS)[number];
 export type OrganizationStatus = (typeof ORGANIZATION_STATUSES)[number];
@@ -518,7 +521,7 @@ export const balanceTransactions = pgTable(
     ),
     check(
       "balance_transactions_source_type_check",
-      sql`${table.sourceType} in ('stripe_checkout_session', 'stripe_refund', 'stripe_dispute', 'generation_settlement_batch', 'openrouter_payment', 'operator', 'stripe_invoice')`,
+      sql`${table.sourceType} in ('stripe_checkout_session', 'stripe_refund', 'stripe_dispute', 'generation_settlement_batch', 'openrouter_payment', 'operator', 'stripe_invoice', 'usage_event')`,
     ),
     check(
       "balance_transactions_amount_nonzero_check",
@@ -613,5 +616,57 @@ export const topUpRequests = pgTable(
       sql`${table.method} in ('card', 'checkout')`,
     ),
     check("top_up_requests_amount_check", sql`${table.amount} > 0`),
+  ],
+);
+
+// Immutable, kept forever: a price change is a new version, and usage names the
+// version it was priced with.
+export const priceLists = pgTable(
+  "price_lists",
+  {
+    id: text("id").primaryKey(),
+    product: text("product", { enum: PRICE_LIST_PRODUCTS }).notNull(),
+    effectiveAt: timestamp("effective_at", {
+      withTimezone: true,
+      mode: "date",
+    }).notNull(),
+    placeholder: boolean("placeholder").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("price_lists_product_effective_at_unique").on(
+      table.product,
+      table.effectiveAt,
+    ),
+    check("price_lists_id_check", sql`${table.id} ~ '^pv_[a-z0-9_]{1,60}$'`),
+    check("price_lists_product_check", sql`${table.product} in ('training')`),
+  ],
+);
+
+export const priceListItems = pgTable(
+  "price_list_items",
+  {
+    priceListId: text("price_list_id")
+      .notNull()
+      .references(() => priceLists.id, { onDelete: "restrict" }),
+    sku: text("sku").notNull(),
+    unit: text("unit", { enum: PRICE_UNITS }).notNull(),
+    priceNanoUsdPerMillion: bigint("price_nano_usd_per_million", {
+      mode: "bigint",
+    }).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.priceListId, table.sku] }),
+    check(
+      "price_list_items_sku_check",
+      sql`${table.sku} ~ '^(train|inference):[a-z0-9][a-z0-9._-]*/[a-z0-9][a-z0-9._-]*$'`,
+    ),
+    check("price_list_items_unit_check", sql`${table.unit} in ('token')`),
+    check(
+      "price_list_items_price_check",
+      sql`${table.priceNanoUsdPerMillion} >= 0`,
+    ),
   ],
 );

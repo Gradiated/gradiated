@@ -281,6 +281,20 @@
       "when": 1795805317828,
       "tag": "0039_jwt_signing_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1795808803742,
+      "tag": "0040_training_price_lists",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1795808804880,
+      "tag": "0041_placeholder_training_prices",
+      "breakpoints": true
     }
   ]
 }

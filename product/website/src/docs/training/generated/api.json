@@ -7546,7 +7546,8 @@
    ],
    "properties": {
     "rule_version": {
-     "type": "string"
+     "type": "string",
+     "description": "The version of the rules that resolved the `auto` defaults (`auto@2`); a config keeps resolving the same way."
     },
     "dataset": {
      "type": "string",
@@ -7556,6 +7557,7 @@
     },
     "dataset_version": {
      "type": "integer",
+     "description": "The pinned dataset version.",
      "minimum": 0
     },
     "name": {
@@ -7568,10 +7570,12 @@
      "$ref": "RecipeKind"
     },
     "model": {
-     "type": "string"
+     "type": "string",
+     "description": "The base model trained."
     },
     "template_revision": {
-     "type": "string"
+     "type": "string",
+     "description": "The pinned chat template (`qwen3@3`); evals of the run's checkpoints use it too."
     },
     "adapter": {
      "anyOf": [
@@ -7657,21 +7661,26 @@
     },
     "lr": {
      "type": "number",
+     "description": "The resolved learning rate.",
      "exclusiveMinimum": 0
     },
     "lr_source": {
-     "type": "string"
+     "type": "string",
+     "description": "Where `lr` came from: the calibrated rule (`auto@2: calibrated for ... at batch 128, sqrt batch scaling`) or the value you passed."
     },
     "batch_size": {
      "type": "integer",
+     "description": "Training examples per optimizer step.",
      "minimum": 1
     },
     "epochs": {
      "type": "integer",
+     "description": "Passes over the training split.",
      "minimum": 1
     },
     "schedule": {
      "type": "string",
+     "description": "Learning-rate schedule after warmup.",
      "enum": [
       "linear",
       "cosine",
@@ -7679,10 +7688,12 @@
      ]
     },
     "warmup": {
-     "type": "number"
+     "type": "number",
+     "description": "The fraction of steps spent warming up the learning rate."
     },
     "train_on": {
      "type": "string",
+     "description": "Which assistant turns are trained: the last one, or every one.",
      "enum": [
       "last",
       "all_assistant"
@@ -7690,6 +7701,7 @@
     },
     "thinking": {
      "type": "string",
+     "description": "Thinking mode the records are rendered with.",
      "enum": [
       "auto",
       "on",
@@ -7697,10 +7709,12 @@
      ]
     },
     "preserve_thinking": {
-     "type": "boolean"
+     "type": "boolean",
+     "description": "Whether earlier assistant turns keep their reasoning in the prompt."
     },
     "reduction": {
      "type": "string",
+     "description": "How the loss averages: per example, then across the batch, or per token.",
      "enum": [
       "per_example",
       "per_token"
@@ -7708,6 +7722,7 @@
     },
     "select": {
      "type": "string",
+     "description": "Which checkpoint becomes the artifact: the best by the held-out metric, or the last.",
      "enum": [
       "best",
       "last"
@@ -7715,10 +7730,12 @@
     },
     "checkpoint_every_steps": {
      "type": "integer",
+     "description": "Steps between checkpoints.",
      "minimum": 1
     },
     "eval_every_steps": {
      "type": "integer",
+     "description": "Steps between held-out evaluations.",
      "minimum": 1
     },
     "optimizer": {
@@ -7726,6 +7743,7 @@
     },
     "checkpoint_ttl_days": {
      "type": "integer",
+     "description": "Days an intermediate checkpoint is kept; the best and final never expire.",
      "minimum": 1
     },
     "split": {
@@ -7774,6 +7792,7 @@
     },
     "recipe_params": {
      "type": "object",
+     "description": "The recipe's own settings (router candidates, DPO `beta`, a cartridge's context, ...).",
      "additionalProperties": {}
     },
     "checkpoint_evals": {

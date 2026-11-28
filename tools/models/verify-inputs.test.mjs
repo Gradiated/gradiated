@@ -25,7 +25,7 @@ test("trigger-only edits keep verification scoped to actual runtime inputs", () 
     ".github/workflows/model-deployment.yml",
     "product/inference/runtimes/energy/middleware.py",
   ], { triggerOnly: true }), [
-    "glm-5-3-flash-sglang", "kimi-k31-pro", "deepseek-v4-1-flash-sglang",
+    "glm-5-3-flash-sglang", "kimi-k31-pro", "deepseek-v4-1-flash-sglang", "qwen3-8b-sglang",
   ]);
   assert.deepEqual(bundlesToVerify([".github/workflows/model-deployment.yml"], { triggerOnly: true }), []);
 });
@@ -63,6 +63,7 @@ test("a bundle's own inputs verify only that bundle", () => {
   assert.deepEqual(bundlesToVerify(["product/inference/lora/manager.py"]), [
     "glm-5-3-flash-sglang",
     "deepseek-v4-1-flash-sglang",
+    "qwen3-8b-sglang",
   ]);
 });
 test("Decider runtime changes verify its isolated bundle", () => {
@@ -134,7 +135,7 @@ test("SGLang GLM bundle and helper changes verify only that runtime", () => {
   }
 });
 
-test("shared SGLang build and service changes verify GLM and DeepSeek", () => {
+test("shared SGLang build and service changes verify GLM, DeepSeek and Qwen3", () => {
   for (const input of [
     "product/inference/runtimes/glm-sglang/service.py",
     "product/inference/bundles/glm-5-3-flash-sglang/patches.json",
@@ -143,18 +144,23 @@ test("shared SGLang build and service changes verify GLM and DeepSeek", () => {
     assert.deepEqual(bundlesToVerify([input]).sort(), [
       "deepseek-v4-1-flash-sglang",
       "glm-5-3-flash-sglang",
+      "qwen3-8b-sglang",
     ]);
   }
   assert.deepEqual(
     bundlesToVerify(["product/inference/runtimes/deepseek-sglang/config.py"]),
     ["deepseek-v4-1-flash-sglang"],
   );
+  assert.deepEqual(
+    bundlesToVerify(["product/inference/runtimes/qwen3-sglang/config.py"]),
+    ["qwen3-8b-sglang"],
+  );
 });
 
 test("shared warmup changes verify GLM and Kimi runtimes", () => {
   assert.deepEqual(
     bundlesToVerify(["product/inference/runtimes/glm/warmup-supervisor.py"]),
-    ["glm-5-3-flash-sglang", "kimi-k31-pro", "deepseek-v4-1-flash-sglang"],
+    ["glm-5-3-flash-sglang", "kimi-k31-pro", "deepseek-v4-1-flash-sglang", "qwen3-8b-sglang"],
   );
 });
 
@@ -167,7 +173,7 @@ test("Kimi changes verify its isolated runtime and shared SMG fixes verify both 
     bundlesToVerify([
       "product/inference/bundles/glm-5-3-flash-sglang/smg-patches.json",
     ]),
-    ["glm-5-3-flash-sglang", "kimi-k31-pro", "deepseek-v4-1-flash-sglang"],
+    ["glm-5-3-flash-sglang", "kimi-k31-pro", "deepseek-v4-1-flash-sglang", "qwen3-8b-sglang"],
   );
 });
 
@@ -175,6 +181,6 @@ test("Kimi changes verify its isolated runtime and shared SMG fixes verify both 
 test("shared energy attribution changes verify all SGLang bundles", () => {
   assert.deepEqual(
     bundlesToVerify(["product/inference/runtimes/energy/middleware.py"]),
-    ["glm-5-3-flash-sglang", "kimi-k31-pro", "deepseek-v4-1-flash-sglang"],
+    ["glm-5-3-flash-sglang", "kimi-k31-pro", "deepseek-v4-1-flash-sglang", "qwen3-8b-sglang"],
   );
 });

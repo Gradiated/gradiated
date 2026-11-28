@@ -64,3 +64,8 @@ target "verify-deepseek-v4-1-flash-sglang" {
   inherits = ["bundle"]
   dockerfile = "bundles/deepseek-v4-1-flash-sglang/Dockerfile"
 }
+
+target "verify-qwen3-8b-sglang" {
+  inherits = ["bundle"]
+  dockerfile = "bundles/qwen3-8b-sglang/Dockerfile"
+}

@@ -295,6 +295,13 @@
       "when": 1795808804880,
       "tag": "0041_placeholder_training_prices",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1795825635099,
+      "tag": "0042_grad_workspace_state_outbox",
+      "breakpoints": true
     }
   ]
 }

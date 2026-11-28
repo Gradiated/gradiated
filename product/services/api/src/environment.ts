@@ -23,6 +23,8 @@ const ApiOnlyEnvironmentSchema = z.object({
     .transform((value) => value || undefined),
   POSTHOG_HOST: z.url().default("https://us.i.posthog.com"),
   TRAINING_ARTIFACTS_BUCKET: z.string().min(1).optional(),
+  // grad-server's internal listener, such as http://grad-internal.training.svc:8789.
+  GRAD_SERVER_URL: z.url().optional(),
   CONTENTS_BUCKET: z.string().min(1).optional(),
   METRICS_PORT: PortSchema.default(9_464),
   MCP_RESOURCE_URL: z.url().default("https://mcp.gradiated.com/mcp"),

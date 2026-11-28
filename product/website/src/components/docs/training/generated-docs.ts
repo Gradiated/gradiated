@@ -2,7 +2,7 @@ import { documents, navigation } from "../../../pages/DocsPage";
 import { ERROR_ENTRIES } from "./ErrorCodes";
 import { curlFor } from "./ApiReference";
 import { API, childrenOf, operationAnchor, typeLabel } from "./api-schema";
-import changelog from "../../../docs/training/generated/changelog.json";
+import changelog from "../../../docs/training/generated/changelog-markdown.json";
 import recorded from "../../../docs/training/generated/api-responses.json";
 
 const RECORDED = (recorded as { responses: Record<string, { body: unknown }> })

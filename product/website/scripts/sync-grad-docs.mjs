@@ -5,7 +5,7 @@
      node scripts/sync-grad-docs.mjs --grad ../../../grad
      node scripts/sync-grad-docs.mjs --grad ../../../grad --check   # fail on drift
 
-   Output: src/docs/training/generated/{api,error-codes,changelog}.json. */
+   Output: src/docs/training/generated/{api,error-codes,changelog,changelog-markdown}.json. */
 
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -268,13 +268,28 @@ const changelog = () => {
       markdown: body,
     });
   }
-  return { releases };
+  return releases;
 };
 
+const releases = changelog();
+/* The page ships the HTML to browsers; only prerender needs the Markdown. */
 const outputs = {
   "api.json": apiReference(),
   "error-codes.json": { codes: errorCodes() },
-  "changelog.json": changelog(),
+  "changelog.json": {
+    releases: releases.map(({ version, date, html }) => ({
+      version,
+      date,
+      html,
+    })),
+  },
+  "changelog-markdown.json": {
+    releases: releases.map(({ version, date, markdown }) => ({
+      version,
+      date,
+      markdown,
+    })),
+  },
 };
 
 let drift = false;

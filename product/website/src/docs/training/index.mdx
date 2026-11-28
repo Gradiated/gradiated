@@ -277,7 +277,7 @@ const run = await grad.runs
     maxCostUsd: 1,
   })
   .wait();
-await run.download("./support-router");
+await run.download("./support-router.grad.tar.gz"); // the bundle, verified against its SHA-256
 ```
 
   </DocsCodeTab>
@@ -294,7 +294,7 @@ run, _ := client.Runs.Create(ctx, grad.RunParams{
 	Recipe:     grad.RouterRecipe{Common: grad.Common{Model: "test/tiny-qwen3"}, Rubric: "resolved"},
 	MaxCostUSD: 1,
 }).Wait(ctx)
-_, _ = run.Download(ctx, "./support-router")
+_, _ = run.Download(ctx, "./support-router.grad.tar.gz") // the bundle, verified against its SHA-256
 ```
 
   </DocsCodeTab>

@@ -20,6 +20,13 @@ All you need to start is a [`Dataset`](/docs/training/trajectories/) of real pro
   - Pass `pricing={"qwen/qwen3-8b": 0.0004, ...}` (USD per request for each candidate), or include `metrics.cost_usd` on your logs. With a `Judge` rubric, the labeling eval records each call's cost at catalog prices.
   - Without prices, the router maximizes how much traffic it offloads and `cost_savings_pct` is `null`.
 
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  A `Judge` rubric labels your prompts with an eval, and evals aren't live on
+  Gradiated Cloud yet. There, pass the name of a score already on your records
+  (`rubric="task_success"`). Self-hosted, a `Judge` works once the server has an
+  inference endpoint (`GRAD_INFERENCE_BASE_URL`).
+</DocsCallout>
+
 Plan for ~500 examples per candidate model to get started (2,000+ if your prompts cover many different tasks).
 
 ## Train the router
@@ -168,7 +175,7 @@ Before deploying, check `run.eval_report`:
 
 ## Use the router
 
-The artifact is a `router_bundle`: a LoRA adapter for the backbone, a small scoring head and `router_config.json` with the candidates, prices, calibrated threshold and fallback. Download it and route requests in your own service with `transformers` and `peft`; the [artifact formats spec](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md#router_bundle) has the full reference loader:
+The artifact is a `router_bundle`: a LoRA adapter for the backbone, a small scoring head and `router_config.json` with the candidates, prices, calibrated threshold and fallback. Download it and route requests in your own service with `transformers` and `peft`; the [artifact formats spec](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md#router_bundle) has the full reference loader. Save its code blocks from [Opening a bundle](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md#opening-a-bundle), [Router and decision backbones](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md#router-and-decision-backbones) and `router_bundle`, in that order, as `router_bundle.py`:
 
 ```bash
 grad artifacts download support-router@latest --output ./support-router

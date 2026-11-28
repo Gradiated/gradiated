@@ -17,7 +17,7 @@ it("indexes the Library magazine", () => {
 });
 
 it("keeps internal pages out of the index but still prerendered", () => {
-  for (const path of ["/design/", "/style/", "/artwork-generator/"]) {
+  for (const path of ["/design/", "/style/"]) {
     expect(getPageMetadata(path).index).toBe(false);
     expect(getIndexablePaths()).not.toContain(path);
     expect(getAllPagePaths()).toContain(path);

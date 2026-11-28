@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -193,13 +194,18 @@ describe("auth_principals_v1", () => {
   });
 
   describe("grad_auth_reader", () => {
-    const asReader = async (statement: string) => {
+    const asReader = async (
+      statement: string,
+      values: unknown[] = [],
+      setup: string[] = [],
+    ) => {
       const client = await testDatabase.pool.connect();
 
       try {
         await client.query("begin");
         await client.query("set local role grad_auth_reader");
-        return await client.query(statement);
+        for (const command of setup) await client.query(command);
+        return await client.query(statement, values);
       } finally {
         await client.query("rollback");
         client.release();
@@ -210,6 +216,47 @@ describe("auth_principals_v1", () => {
       await expect(
         asReader("select count(*) from auth_principals_v1"),
       ).resolves.toMatchObject({ rowCount: 1 });
+    });
+
+    // grad's query (server/api/src/cloud/auth-view.ts), as grad sends it.
+    const gradLookup = `SELECT api_key_id::text, org_id::text, org_slug, workspace_id::text,
+            user_id::text, actor, role, status, scopes, expires_at
+       FROM auth_principals_v1 WHERE key_hash = $1 LIMIT 1`;
+
+    it("answers grad's lookup with one row of grad's types", async () => {
+      const member = await seedMember(testDatabase.database, {
+        role: "member",
+      });
+      const { id, secret } = await seedKey(member, { scopes: ["runs:read"] });
+
+      const { rows } = await asReader(gradLookup, [apiKeyDigest(secret)]);
+
+      expect(rows).toEqual([
+        {
+          api_key_id: id,
+          org_id: member.organizationId,
+          org_slug: expect.any(String),
+          workspace_id: member.workspaceId,
+          user_id: member.userId,
+          actor: `key:${id}`,
+          role: "member",
+          status: "active",
+          scopes: ["runs:read"],
+          expires_at: null,
+        },
+      ]);
+    });
+
+    // security_barrier must not stop the digest from reaching the unique index,
+    // or every lookup would scan every key.
+    it("finds the key through the digest index", async () => {
+      const { rows } = await asReader(
+        `explain (format json) ${gradLookup}`,
+        [Buffer.alloc(32)],
+        ["set local enable_seqscan = off"],
+      );
+
+      expect(JSON.stringify(rows)).toContain("api_keys_digest_unique");
     });
 
     it.each(["api_keys", "organizations", "workspaces", "users"])(
@@ -232,5 +279,33 @@ describe("auth_principals_v1", () => {
         { table: "auth_principals_v1", privilege: "SELECT" },
       ]);
     });
+  });
+
+  it("gives up on a locked api_keys table instead of queueing lookups", async () => {
+    const statements = readFileSync(
+      new URL("../migrations/0037_api_key_scopes.sql", import.meta.url),
+      "utf8",
+    ).split("--> statement-breakpoint");
+    const holder = await testDatabase.pool.connect();
+    const migrator = await testDatabase.pool.connect();
+
+    try {
+      await holder.query("begin");
+      await holder.query("lock table api_keys in access share mode");
+      await migrator.query("begin");
+      const started = Date.now();
+
+      await expect(
+        (async () => {
+          for (const statement of statements) await migrator.query(statement);
+        })(),
+      ).rejects.toThrow(/lock timeout/);
+      expect(Date.now() - started).toBeLessThan(10_000);
+    } finally {
+      await migrator.query("rollback");
+      await holder.query("rollback");
+      migrator.release();
+      holder.release();
+    }
   });
 });

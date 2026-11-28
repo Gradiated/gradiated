@@ -388,6 +388,19 @@ grad keys revoke key_3f9c0a1b2c3d4e5f60718293
 
 The [API reference](/docs/api-reference/#training-api) lists every scope.
 
+## Backup and restore
+
+grad keeps its state in two places, and you back them up together: **Postgres** (runs, jobs, datasets' versions and parts index, artifacts and pins, evals, the usage ledger, API key hashes and encrypted workspace secrets) and **the bucket** (dataset parts, checkpoints, artifact bundles, uploads). Also keep `GRAD_SECRETS_KEY` (without it workspace secrets can't be decrypted) and the admin key hash, or the KMS key.
+
+**Back up Postgres first, then the bucket.** grad writes an object before the row that names it, never overwrites one (keys are content-addressed) and deletes the row before the object, so a bucket copy taken after a database snapshot holds every object the snapshot names, except objects deleted in between. Bucket versioning closes that gap: keep noncurrent versions longer than a copy takes (7 days is plenty). A bucket copy older than the database is not consistent. Both copies can be taken live:
+
+```bash
+pg_dump -Fc "$DATABASE_URL" > grad.dump                      # 1. the database
+aws s3 sync s3://my-grad-artifacts s3://my-grad-backup/latest  # 2. then the bucket
+```
+
+To restore, stop grad, restore the database into an empty one, then the bucket, then start grad again (`helm upgrade ... --reuse-values` migrates an older backup). Everything committed before the snapshot is back, each artifact still matching its SHA-256; work after it is lost. A job that was running requeues when its lease expires and resumes from its latest checkpoint, and usage is never billed twice. The full procedure is in [docs/SELF_HOSTING.md](https://github.com/Gradiated/grad/blob/main/docs/SELF_HOSTING.md#backup-and-restore).
+
 ## Connect SDKs and CLI
 
 Point the SDK or CLI at your server with `GRADIATED_BASE_URL` (or pass `base_url` / `baseURL` directly):

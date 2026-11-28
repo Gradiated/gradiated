@@ -67,7 +67,7 @@ dataset = client.datasets.push("ticket-triage", [
 
 `DecisionModelRecipe` picks the right loss for each question type and specializes a backbone on your questions and state format. On your own server, train a Qwen3 backbone (`qwen/qwen3-0.6b` or `qwen/qwen3-1.7b`). The default, `gradiated/linden-1`, trains on Gradiated Cloud only (coming soon), because its weights aren't public:
 
-<DocsCodeTabs action={<DocsApiKeyAction />}>
+<DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python

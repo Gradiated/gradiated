@@ -30,7 +30,7 @@ Any dataset works as input: a list of plain chat records or a `.jsonl` file (`cl
 
 Every recipe comes with working defaults for the base model, split, learning rate, batch size, schedule, checkpoints and evals. Pass your dataset, an output name and the recipe. Run `--dry-run` (or `runs.plan()`) first to check your data and see the estimated cost, and set `max_cost_usd=` to cap spend. You pay a fixed price per million tokens processed, set per base model.
 
-<DocsCodeTabs action={<DocsApiKeyAction />}>
+<DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
@@ -129,7 +129,7 @@ grad train --dataset support-prod --name support-router --recipe router --max-co
   <DocsCodeTab label="cURL">
 
 ```bash
-curl https://api.gradiated.com/v1/runs \
+curl "$GRADIATED_BASE_URL/v1/runs" \
   -H "Authorization: Bearer $GRADIATED_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"dataset": "support-prod", "name": "support-router", "recipe": {"kind": "router"}, "max_cost_usd": 20}'

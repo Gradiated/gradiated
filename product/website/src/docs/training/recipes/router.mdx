@@ -26,7 +26,7 @@ Plan for ~500 examples per candidate model to get started (2,000+ if your prompt
 
 By default, `RouterRecipe` fine-tunes `qwen/qwen3-0.6b` on your prompts and scores, holds out 15% of prompts for evaluation (every response to one prompt stays on the same side), and routes to stay within a 2% quality drop of your fallback model (the best-scoring candidate unless you set `fallback=`). Replaying prompts against candidate models and judging the answers is billed as an eval, separately from the run's `max_cost_usd`. Run `client.runs.plan(...)` or `grad train ... --dry-run` first: the estimate is under `labeling`.
 
-<DocsCodeTabs action={<DocsApiKeyAction />}>
+<DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python

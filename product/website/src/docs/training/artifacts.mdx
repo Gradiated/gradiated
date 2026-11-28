@@ -127,6 +127,8 @@ An uploaded artifact has no held-out `eval_report`, because grad didn't train it
 
 `grad artifacts delete NAME@VERSION` (`client.artifacts.delete(...)`, or `art.delete()`) deletes an artifact and its bundle. On Gradiated Cloud, publishing an artifact as a model version pins it, so grad never deletes a published artifact: deleting one fails with `409 artifact_pinned`, naming the model versions that use it. Unpublish them first.
 
+Every `Artifact` lists what pins it in `pins` (`holder`, `reason`, `created_at`; `[]` when nothing does), in all four SDKs. The web UI's Artifacts page (`grad ui`) lists every artifact as `name@version` with its format, base model, provenance, size and pins, and downloads or deletes one.
+
 ## Download and serve
 
 Download an artifact to serve it on your own vLLM or SGLang servers. `grad artifacts download` checks the bundle's SHA-256 and every file against the manifest before it extracts anything:

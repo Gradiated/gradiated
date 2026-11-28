@@ -55,7 +55,7 @@ print(art.manifest["base_model_repo"], art.manifest["base_model_revision"])
 
 To pin the base weights, add `--revision` with the manifest's `base_model_revision`. A run with `merge_on_export=True` exports standalone merged weights instead, which serve with a plain `vllm serve ./fast-diff-merge`.
 
-The other recipes export small bundles on top of a base model: a router or decision head, a reward head, a cartridge's KV prefix, or a full embedding encoder. The [artifact format spec](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md) documents each one's files and config and gives a reference Python loader for it; see [What's inside](/docs/training/artifacts/#whats-inside).
+The other recipes export small bundles on top of a base model: a router or decision head, a reward head, a cartridge's KV prefix, or a full embedding encoder. The [artifact format spec](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md) documents each one's files and config and gives a reference Python loader for it; see [What's inside](/docs/training/artifacts/#what-s-inside).
 
 Handle traffic splitting and rollbacks with what you already use (feature flags, Envoy or Nginx weights, Argo Rollouts). Every artifact version is immutable, so rolling back means pointing your server at the previous version's download. Log requests and outcomes to your observability tool and [sync them](/docs/training/trajectories/#sync-from-observability-providers) into a dataset to train the next version; see [Send feedback from production](/docs/training/trajectories/#send-feedback-from-production).
 
@@ -73,7 +73,7 @@ On Gradiated Cloud you won't manage GPUs or a serving stack. You publish an arti
 
 Your app calls the same [OpenAI SDK](/docs/openai-sdk/), [Anthropic SDK](/docs/anthropic-sdk/) or [SystemOne SDK](/docs/systemone-sdk/) it already uses; only the `model` string changes. The endpoint uses the chat template and `thinking` setting the artifact was trained with, and reasoning models return their reasoning in `reasoning_content`, separate from `content`:
 
-<DocsCodeTabs action={<DocsApiKeyAction />}>
+<DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python

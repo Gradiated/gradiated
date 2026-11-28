@@ -203,7 +203,7 @@ with client.trainers.create(model="qwen/qwen3-8b") as trainer:
 
 ### Compact top-k distillation with `gather_indices`
 
-Never pull full 152k-vocabulary logits over the wire for custom distillation. Ask the teacher for `top_k=32` `TensorRef`s with `teacher.score_logprobs(rollouts, top_k=32).topk_refs`, declare `outputs = ("topk_logprobs",)` on your `CustomLoss`, and pass `gather_indices=t_refs` to `forward_backward()`. Only the matching `(T_resp, 32)` student logprobs cross the wire, and `out.teacher_topk_logprobs` is batch-fetched in a single RPC (for arbitrary intermediate-layer `TensorRef`s, use `client.tensors.fetch_batch(refs)`). The [Jensen-Shannon example](/docs/training/advanced-objectives/#jensen-shannon--skew-kl-gather_indices) is a complete, runnable loop.
+Never pull full 152k-vocabulary logits over the wire for custom distillation. Ask the teacher for `top_k=32` `TensorRef`s with `teacher.score_logprobs(rollouts, top_k=32).topk_refs`, declare `outputs = ("topk_logprobs",)` on your `CustomLoss`, and pass `gather_indices=t_refs` to `forward_backward()`. Only the matching `(T_resp, 32)` student logprobs cross the wire, and `out.teacher_topk_logprobs` is batch-fetched in a single RPC (for arbitrary intermediate-layer `TensorRef`s, use `client.tensors.fetch_batch(refs)`). The [Jensen-Shannon example](/docs/training/advanced-objectives/#jensen-shannon-skew-kl-gather-indices) is a complete, runnable loop.
 
 For multi-turn trajectories with no single prompt/response boundary, pass the `Trajectory` list straight to `ref.score_logprobs(trajectories)` and attach per-token targets with `t.with_targets(advantage=..., ref_logprobs=...)`; the returned `aligned_logprobs` already match each trajectory's `token_ids`.
 

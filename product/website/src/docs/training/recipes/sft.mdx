@@ -29,7 +29,7 @@ Use **`SFTRecipe`** when you have good examples of what the model should produce
 
 This runs as pasted. It imports 2,000 conversations from Hugging Face and trains with the defaults:
 
-<DocsCodeTabs action={<DocsApiKeyAction />}>
+<DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
@@ -69,7 +69,7 @@ To train on your own file instead, pass its path: `client.datasets.push("my-sft"
 
 Score your `Dataset` once with a [`Judge`](/docs/training/rubrics/) to keep only good examples, then train a LoRA adapter. The held-out eval split is grouped by `session_id` by default, so multi-turn conversations never leak into eval:
 
-<DocsCodeTabs action={<DocsApiKeyAction />}>
+<DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python

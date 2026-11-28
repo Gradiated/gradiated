@@ -5,7 +5,18 @@
   logs or labeled examples.
 </DocsLead>
 
-<DocsCodeTabs action={<DocsApiKeyAction />}>
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  `api.gradiated.com` doesn't serve training yet. Run these against a local
+  stack: `grad local up --dev-models`, then `export GRADIATED_PROFILE=local`
+  (see [Run it locally](#run-it-locally)). Its trainer runs on your CPU, so pass
+  `model="test/tiny-qwen3"` (`--model test/tiny-qwen3` in the CLI): the run
+  finishes in seconds, while `qwen/qwen3-8b` needs a GPU (`grad local up --gpu`)
+  and the plan warns about it. The same stack runs evals: `--dev-models` also
+  starts a CPU inference endpoint that serves `test/tiny-qwen3`, the adapters
+  you train on it and a deterministic test judge, `test/tiny-judge`.
+</DocsCallout>
+
+<DocsCodeTabs>
   <DocsCodeTab label="Fine-tune a model (60s)">
 
 ```python
@@ -88,7 +99,7 @@ _, _ = run.Download(ctx, "./support-router")
   <DocsCodeTab label="CLI">
 
 ```bash
-grad login
+grad local up --dev-models && export GRADIATED_PROFILE=local
 grad import ./support_traces.jsonl --dataset support-prod
 grad train --dataset support-prod --name support-router --recipe router --dry-run
 grad train --dataset support-prod --name support-router --recipe router --wait
@@ -97,17 +108,6 @@ grad artifacts download support-router@latest --output ./support-router
 
   </DocsCodeTab>
 </DocsCodeTabs>
-
-<DocsCallout label="Coming soon on Gradiated Cloud">
-  `api.gradiated.com` doesn't serve training yet. Run these against a local
-  stack: `grad local up --dev-models`, then `export GRADIATED_PROFILE=local`
-  (see [Run it locally](#run-it-locally)). Its trainer runs on your CPU, so pass
-  `model="test/tiny-qwen3"` (`--model test/tiny-qwen3` in the CLI): the run
-  finishes in seconds, while `qwen/qwen3-8b` needs a GPU (`grad local up --gpu`)
-  and the plan warns about it. The same stack runs evals: `--dev-models` also
-  starts a CPU inference endpoint that serves `test/tiny-qwen3`, the adapters
-  you train on it and a deterministic test judge, `test/tiny-judge`.
-</DocsCallout>
 
 The router examples train on the scores already in your traces. `support_traces.jsonl` is any OpenAI chat JSONL export with a `scores` field per record; the repository ships a synthetic one in `examples/support_traces.jsonl`.
 
@@ -186,7 +186,7 @@ go get github.com/Gradiated/grad/sdks/go@latest
   <DocsCodeTab label="Rust">
 
 ```bash
-cargo add grad-sdk --git https://github.com/Gradiated/grad --tag v0.2.0-alpha.5
+cargo add grad-sdk --git https://github.com/Gradiated/grad --tag v0.2.0-alpha.6
 ```
 
   </DocsCodeTab>
@@ -194,13 +194,13 @@ cargo add grad-sdk --git https://github.com/Gradiated/grad --tag v0.2.0-alpha.5
 
 ```bash
 brew install gradiated/tap/grad   # macOS and Linux
-# or: cargo install --locked --git https://github.com/Gradiated/grad --tag v0.2.0-alpha.5 grad-cli
+# or: cargo install --locked --git https://github.com/Gradiated/grad --tag v0.2.0-alpha.6 grad-cli
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Until 0.2.0 is out every release is a prerelease: pip, npm, `go get @latest` and Homebrew install the newest one (0.2.0-alpha.5) as they are. crates.io still has 0.2.0-alpha.3, so install the Rust crate and the CLI from the release tag with Cargo. Release binaries of the CLI are on [GitHub Releases](https://github.com/Gradiated/grad/releases). The Rust crate is published as `grad-sdk` and imported as `grad` (`use grad::Client;`). To try unreleased changes, install from the repository instead, for example `pip install "grad-sdk @ git+https://github.com/Gradiated/grad#subdirectory=sdks/python"` or `cargo install --locked --git https://github.com/Gradiated/grad grad-cli`.
+Until 0.2.0 is out every release is a prerelease: pip, npm, `go get @latest` and Homebrew install the newest one (0.2.0-alpha.6) as they are. crates.io still has 0.2.0-alpha.3, so install the Rust crate and the CLI from the release tag with Cargo. Release binaries of the CLI are on [GitHub Releases](https://github.com/Gradiated/grad/releases). The Rust crate is published as `grad-sdk` and imported as `grad` (`use grad::Client;`). To try unreleased changes, install from the repository instead, for example `pip install "grad-sdk @ git+https://github.com/Gradiated/grad#subdirectory=sdks/python"` or `cargo install --locked --git https://github.com/Gradiated/grad grad-cli`.
 
 Then start a local stack (it needs Docker with the Compose plugin) and point the CLI and SDKs at it:
 
@@ -410,9 +410,5 @@ Read https://gradiated.com/docs/training/recipes/cartridges.md:
   <a href="/docs/training/trajectories/">
     <small>Next</small>
     <strong>Trajectories</strong>
-  </a>
-  <a href="/papers/">
-    <small>One-click templates</small>
-    <strong>Paper reproductions</strong>
   </a>
 </DocsNext>

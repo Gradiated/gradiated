@@ -228,7 +228,7 @@ _, _ = client.Datasets.Push(ctx, "diff-merge-gold", []grad.Trajectory{traj})
   <DocsCodeTab label="cURL">
 
 ```bash
-curl https://api.gradiated.com/v1/datasets/diff-merge-gold/records \
+curl "$GRADIATED_BASE_URL/v1/datasets/diff-merge-gold/records" \
   -H "Authorization: Bearer $GRADIATED_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

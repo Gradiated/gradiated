@@ -1,7 +1,6 @@
 import { jobs } from "./careers";
 import { handbookPages } from "./handbook";
 import { models } from "./models";
-import { papers } from "./papers";
 import { articles, authorOf } from "./articles";
 import { ogImageFor } from "./og-pages";
 import { team } from "./team";
@@ -114,20 +113,6 @@ const pageMetadata: Record<string, PageMetadataContent> = {
       {
         title: `${model.name} on Gradiated`,
         description: model.oneLiner,
-      },
-    ]),
-  ),
-  "/papers/": {
-    title: "Paper reproductions",
-    description:
-      "Reproduce landmark post-training papers (SDFT, DAPO, Cartridges, RouteLLM) on public datasets in one click or one grad CLI command.",
-  },
-  ...Object.fromEntries(
-    papers.map((paper) => [
-      `/papers/${paper.slug}/`,
-      {
-        title: `${paper.shortTitle} reproduction on Gradiated`,
-        description: `${paper.title} (arXiv:${paper.arxivId}) in ${paper.linesOfCode} lines of grad. ${paper.oneLiner}`,
       },
     ]),
   ),

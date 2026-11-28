@@ -112,6 +112,8 @@ where digest = $1";
 
 /// `<slug>/<task>` names the task's production version and `<slug>/<task>/<version>`
 /// one version. Only tasks that claimed their name as a model resolve.
+/// `purpose` is read through `to_jsonb`, so the query also runs before the migration
+/// that adds it: the gateway app syncs independently of the API's PreSync migration.
 const ADAPTER_QUERY: &str = "\
 select case when task_versions.id is null then 'null' else json_build_object(
     'workspace_id', tasks.workspace_id,
@@ -127,7 +129,7 @@ select case when task_versions.id is null then 'null' else json_build_object(
     'format', coalesce(task_versions.adapter->>'format', 'peft_lora'),
     'num_tokens', task_versions.adapter->'num_tokens',
     'source_kind', task_versions.adapter->'source'->>'kind',
-    'eval_only', tasks.purpose = 'eval'
+    'eval_only', coalesce(to_jsonb(tasks)->>'purpose', 'serving') = 'eval'
 )::text end
 from tasks
 join workspaces on workspaces.id = tasks.workspace_id
@@ -474,6 +476,20 @@ pub enum PostgresError {
 #[cfg(test)]
 #[path = "postgres_reader_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+mod adapter_query_tests {
+    use super::ADAPTER_QUERY;
+
+    // The gateway Argo app syncs independently of the API's PreSync migration, so a
+    // new gateway can query before tasks.purpose exists. Reading it by column name
+    // would fail every adapter request on the canary.
+    #[test]
+    fn the_adapter_query_tolerates_a_missing_purpose_column() {
+        assert!(!ADAPTER_QUERY.contains("tasks.purpose"));
+        assert!(ADAPTER_QUERY.contains("to_jsonb(tasks)->>'purpose'"));
+    }
+}
 
 #[cfg(test)]
 mod connection_tests {

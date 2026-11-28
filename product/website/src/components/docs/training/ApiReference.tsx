@@ -451,15 +451,30 @@ export const DocsApiReference = (): ReactElement => {
   );
   const visible = API.operations.filter((op) => matches(op, query)).length;
 
-  /* The samples settle into the reader's language after hydration, which
-     moves everything; land a deep link on its endpoint once they have. */
+  /* The page keeps settling after hydration (the rail, the contents, the
+     samples in the reader's language); land a deep link on its endpoint
+     again once it has, unless the reader has started moving. */
   useEffect(() => {
     const anchor = window.location.hash.slice(1);
     if (!anchor) return;
-    const frame = window.requestAnimationFrame(() =>
-      document.getElementById(anchor)?.scrollIntoView(),
-    );
-    return () => window.cancelAnimationFrame(frame);
+
+    let moved = false;
+    const onIntent = () => {
+      moved = true;
+    };
+    const intents = ["wheel", "touchstart", "keydown", "mousedown"] as const;
+    intents.forEach((type) => window.addEventListener(type, onIntent));
+
+    const land = () => {
+      if (!moved) document.getElementById(anchor)?.scrollIntoView();
+    };
+    const frame = window.requestAnimationFrame(land);
+    const later = window.setTimeout(land, 1000);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(later);
+      intents.forEach((type) => window.removeEventListener(type, onIntent));
+    };
   }, []);
 
   return (

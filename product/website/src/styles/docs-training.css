@@ -2071,6 +2071,7 @@
 }
 
 .gr-root .gr-api-field-desc,
+.gr-root .gr-api-field-pattern,
 .gr-root .gr-api-field-enum {
   margin: 0.25em 0 0;
   font-size: 0.875rem;
@@ -2083,6 +2084,12 @@
   gap: 0.35em;
 }
 
+.gr-root .gr-api-field-pattern {
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.gr-root .gr-api-field-pattern code,
 .gr-root .gr-api-field-enum code {
   font-size: 0.75rem;
 }

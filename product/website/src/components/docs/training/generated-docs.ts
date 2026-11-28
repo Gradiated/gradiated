@@ -1,7 +1,13 @@
 import { documents, navigation } from "../../../pages/DocsPage";
 import { ERROR_ENTRIES } from "./ErrorCodes";
 import { curlFor } from "./ApiReference";
-import { API, childrenOf, operationAnchor, typeLabel } from "./api-schema";
+import {
+  API,
+  childrenOf,
+  operationAnchor,
+  resolve,
+  typeLabel,
+} from "./api-schema";
 import changelog from "../../../docs/training/generated/changelog-markdown.json";
 import recorded from "../../../docs/training/generated/api-responses.json";
 
@@ -25,7 +31,7 @@ const apiMarkdown = (): string =>
         ? Object.entries(body.properties)
             .map(
               ([name, schema]) =>
-                `- \`${name}\` (${typeLabel(schema)}${body.required.includes(name) ? ", required" : ""})${schema.description ? `: ${schema.description}` : ""}`,
+                `- \`${name}\` (${typeLabel(schema)}${body.required.includes(name) ? ", required" : ""}${resolve(schema).pattern ? `, matches \`${resolve(schema).pattern}\`` : ""})${schema.description ? `: ${schema.description}` : ""}`,
             )
             .join("\n")
         : "";

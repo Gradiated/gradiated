@@ -75,6 +75,11 @@ const Field = ({
       {description ? (
         <p className="gr-api-field-desc">{prose(description)}</p>
       ) : null}
+      {resolved.pattern ? (
+        <p className="gr-api-field-pattern">
+          Matches <code>{resolved.pattern}</code>
+        </p>
+      ) : null}
       {values ? (
         <p className="gr-api-field-enum">
           {values.map((value) => (

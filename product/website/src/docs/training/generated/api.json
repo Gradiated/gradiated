@@ -3412,6 +3412,7 @@
    "properties": {
     "id": {
      "type": "string",
+     "description": "Key id (`key_` and 24 hex characters).",
      "minLength": 1
     },
     "workspace_id": {
@@ -3420,16 +3421,19 @@
     },
     "name": {
      "type": "string",
+     "description": "Key name.",
      "minLength": 1,
      "maxLength": 64,
      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
     },
     "prefix": {
      "type": "string",
+     "description": "The first 12 characters of the secret, to tell keys apart.",
      "minLength": 1
     },
     "scopes": {
      "type": "array",
+     "description": "What the key may do; a `:write` scope includes its `:read`, and `admin` includes every workspace scope.",
      "items": {
       "$ref": "ApiKeyScope"
      }
@@ -3443,7 +3447,8 @@
       "string",
       "null"
      ],
-     "format": "date-time"
+     "format": "date-time",
+     "description": "When the key was revoked; null while it works."
     }
    }
   },
@@ -4359,7 +4364,8 @@
      "$ref": "ApiKey"
     },
     "secret": {
-     "type": "string"
+     "type": "string",
+     "description": "The full key (`grad_` and 48 hex characters). Shown only in this response."
     }
    }
   },
@@ -5872,6 +5878,7 @@
    "properties": {
     "id": {
      "type": "string",
+     "description": "Import job id (`imp_` and 24 hex characters).",
      "minLength": 1
     },
     "workspace_id": {
@@ -5880,6 +5887,7 @@
     },
     "dataset": {
      "type": "string",
+     "description": "The dataset the records go into.",
      "minLength": 1,
      "maxLength": 64,
      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
@@ -5889,10 +5897,12 @@
     },
     "source": {
      "type": "object",
+     "description": "Where the records come from: an upload, a Hugging Face dataset, a benchmark, or a source sync.",
      "additionalProperties": {}
     },
     "connector": {
      "type": "string",
+     "description": "The parser requested for the records (`auto` detects it from the file).",
      "enum": [
       "auto",
       "grad_trajectories",
@@ -5907,6 +5917,7 @@
     },
     "attempt": {
      "type": "integer",
+     "description": "Attempts started so far.",
      "minimum": 0
     },
     "imported_count": {
@@ -5916,10 +5927,12 @@
     },
     "dropped_count": {
      "type": "integer",
+     "description": "Rows that couldn't be imported; `drop_reasons` says why.",
      "minimum": 0
     },
     "detected_scores": {
      "type": "array",
+     "description": "Score names found on the imported records.",
      "items": {
       "type": "string"
      }
@@ -5936,13 +5949,15 @@
       "integer",
       "null"
      ],
+     "description": "The dataset version this import produced; null until then.",
      "minimum": 0
     },
     "error": {
      "type": [
       "string",
       "null"
-     ]
+     ],
+     "description": "Why the import failed; null otherwise."
     },
     "created_at": {
      "type": "string",

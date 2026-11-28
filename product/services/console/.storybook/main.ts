@@ -11,10 +11,11 @@ const config: StorybookConfig = {
     define: {
       ...config.define,
       "import.meta.env.VITE_FEATURE_FLAGS": JSON.stringify(
-        "training,explore-weights",
+        "training,explore-weights,grad-training",
       ),
       "import.meta.env.VITE_POSTHOG_KEY": "undefined",
       "import.meta.env.VITE_API_URL": "undefined",
+      "import.meta.env.VITE_GRAD_API_URL": JSON.stringify("/grad-api"),
     },
     server: { ...config.server, proxy: undefined },
   }),

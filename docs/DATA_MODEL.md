@@ -118,6 +118,20 @@ Email/password is the launch path, so the OAuth fields are initially null.
 | `created_at` | timestamptz | no   | Creation time                          |
 | `updated_at` | timestamptz | no   | Last mutation time                     |
 
+### 4a. `jwks`
+
+Signing keys of Better Auth's JWT plugin, which signs the console's training tokens (`POST /api/v1/workspaces/{workspace_id}/training-tokens`: ES256, `aud = training`, ten minutes, claims `sub = user:<id>`, `org`, `ws`, `role`) and the product's service tokens for grad's internal listener (five minutes, `sub = service:<name>`, `ws`, `scopes`). The plugin creates the first key on first use and a new one every 90 days; `GET /api/auth/jwks` publishes the public keys, including retired ones for 30 days.
+
+| Field         | Type        | Null | Rules                                            |
+| ------------- | ----------- | ---- | ------------------------------------------------ |
+| `id`          | uuid        | no   | Primary key; the JWT `kid`                       |
+| `public_key`  | text        | no   | Public JWK                                       |
+| `private_key` | text        | no   | Private JWK, encrypted with `BETTER_AUTH_SECRET` |
+| `alg`         | text        | yes  | `ES256`                                          |
+| `crv`         | text        | yes  | Curve, when the algorithm names one              |
+| `created_at`  | timestamptz | no   | Creation time                                    |
+| `expires_at`  | timestamptz | yes  | When the key stops signing                       |
+
 ## Organizations and workspaces
 
 ### 5. `organizations`
@@ -246,11 +260,51 @@ Used by direct customers and OpenRouter.
 | `expires_at`      | timestamptz | yes  | Optional expiry                                                           |
 | `revoked_at`      | timestamptz | yes  | Irreversible manual revocation                                            |
 | `hidden`          | boolean     | no   | Default false; true for playground credentials, which are not listed      |
+| `scopes`          | text[]      | yes  | Null or empty grants the creator's role in full; a list narrows it        |
 | `created_by`      | uuid        | yes  | FK `users.id`; null for system-created channels                           |
 | `created_at`      | timestamptz | no   | Creation time                                                             |
 | `updated_at`      | timestamptz | no   | Last mutation time                                                        |
 
 The raw format is `grad_<32 random bytes encoded as base64url>`. Authentication computes SHA-256 over that complete canonical string and looks up the unique digest. High-entropy keys do not need a pepper or pepper rotation. Do not store the raw key, a display prefix, last four characters or `last_used_at`; the key name and creation time identify it in the product, and last use is derived from usage. A key is valid only when `revoked_at IS NULL` and `expires_at` is either null or in the future. Rotation creates a new key and sets `revoked_at` on the old one. Hidden keys are unique per member, workspace and name (`api_keys_hidden_owner_name_unique` on `(workspace_id, created_by, name) WHERE hidden`). The console playground upserts one named Playground, and each MCP OAuth client one named `MCP <client ID>`, so clients never rotate each other's key; each request rotates the key's digest and resets a one-hour expiry. It bills and logs like any other workspace key.
+
+`scopes` narrows a key below its creator's role for the training platform; the console does not set it yet, so every key is null.
+
+### 9a. `auth_principals_v1` (view)
+
+The training platform (grad) authenticates `grad_` keys by reading this view with the login role `grad_auth_reader`, which has `SELECT` on the view and nothing else. The view is `security_barrier`, owned by the product migrations, and only gains columns; a breaking change ships `auth_principals_v2` next to it.
+
+| Column         | Type        | Rules                                                               |
+| -------------- | ----------- | ------------------------------------------------------------------- |
+| `key_hash`     | bytea       | `api_keys.digest`; the lookup key                                   |
+| `api_key_id`   | uuid        |                                                                     |
+| `workspace_id` | uuid        |                                                                     |
+| `org_id`       | uuid        |                                                                     |
+| `org_slug`     | text        | The model namespace prefix                                          |
+| `user_id`      | uuid        | The key's creator                                                   |
+| `actor`        | text        | `key:<api_key_id>`                                                  |
+| `role`         | text        | `admin` or `member`: the creator's role; verified staff are `admin` |
+| `status`       | text        | `active` or `suspended`; grad accepts only `active`                 |
+| `scopes`       | text[]      | `api_keys.scopes`                                                   |
+| `expires_at`   | timestamptz | Null for no expiry                                                  |
+
+Revoked, expired and hidden keys, and keys of non-customer organizations, have no row. `status` is `active` only while the organization is active, the workspace is not archived and the creator is an active member or verified staff, the same rules as the API's access checks. A removed member's keys therefore keep serving inference but stop working for training.
+
+### 9b. `grad_workspace_state_outbox`
+
+The newest workspace state grad has not yet confirmed, one row per workspace (migration 0042). Triggers write it in the transaction that changes the state: an organization's `status` (for its unarchived workspaces), a workspace's `archived_at`, or a workspace's deletion, including through an organization's deletion. A workspace is `suspended` while it is archived or its organization is not active, `active` otherwise, and `deleted` once its row is gone; a newer state replaces a pending one, except that nothing replaces `deleted`.
+
+| Field             | Type        | Null | Rules                                                  |
+| ----------------- | ----------- | ---- | ------------------------------------------------------ |
+| `workspace_id`    | uuid        | no   | Primary key; no FK, so it outlives a deleted workspace |
+| `state`           | text        | no   | `active`, `suspended` or `deleted`                     |
+| `generation`      | integer     | no   | Bumped on every replacement                            |
+| `attempts`        | integer     | no   | Failed sends                                           |
+| `last_error`      | text        | yes  | The last failure, such as `http 503`                   |
+| `next_attempt_at` | timestamptz | no   | When a sweep may send it next                          |
+| `created_at`      | timestamptz | no   | First queued                                           |
+| `updated_at`      | timestamptz | no   | Last replaced                                          |
+
+With `GRAD_SERVER_URL` set, every API replica sweeps it each minute: it claims one due row at a time (`FOR UPDATE SKIP LOCKED`, pushing `next_attempt_at` two minutes out), sends `PUT /internal/v1/workspaces/{ws}/state` to grad with a service JWT (`sub service:control`, `ws`, scope `workspaces:admin`), and deletes the row on a 2xx or on `409 workspace_deleted` unless a newer state arrived meanwhile. Other responses retry with backoff from one minute to 15. Without `GRAD_SERVER_URL` nothing is sent and rows stay queued.
 
 ## Model catalog
 
@@ -414,7 +468,9 @@ Immutable history of durable balance movements. This is a customer wallet ledger
 | `created_by`       | uuid        | yes  | FK `users.id`; manual credits and adjustments only                          |
 | `created_at`       | timestamptz | no   | Movement time                                                               |
 
-`(source_type, source_id)` is unique and is the idempotency boundary. Source types are `stripe_checkout_session`, `stripe_invoice`, `stripe_refund`, `stripe_dispute`, `generation_settlement_batch`, `openrouter_payment` and `operator`.
+`(source_type, source_id)` is unique and is the idempotency boundary. Source types are `stripe_checkout_session`, `stripe_invoice`, `stripe_refund`, `stripe_dispute`, `generation_settlement_batch`, `openrouter_payment`, `operator` and `usage_event`.
+
+A `usage_event` movement is one priced increment of training usage that grad pushed to the training listener (see [Training usage](#training-usage)); its `source_id` is the grad `event_id`. The gateway replays it into the operational balance like any other non-settlement movement, so admission sees training spend.
 
 A balance mutation locks the account row, inserts the immutable movement and updates `billing_accounts.balance` in one PostgreSQL transaction. Positive amounts add funds and negative amounts consume funds. Usage is aggregated from launch: every terminal generation belongs to one global settlement slot derived from its Valkey Stream ID. All organizations share that slot. For each organization with nonzero usage in the slot, the PostgreSQL settlement worker posts one `generation_settlement_batch` movement whose negative amount is the sum of its generation charges and whose `generation_count` counts those charged generations. Individual generations remain queryable in ClickHouse. An organization with only zero-charge generations produces no PostgreSQL balance transaction.
 
@@ -476,6 +532,12 @@ One charge of an organization's saved card, made through a Stripe invoice.
 An organization has at most one `pending` charge of either reason. A charge creates a draft invoice, records its ID, adds one line item, finalizes it and pays it off-session with the saved card. Each step reuses an idempotency key derived from the row ID, so a retry after a crash or a Stripe outage resumes the same invoice instead of charging twice. A paid invoice posts a `topup` with source `stripe_invoice`, and the `invoice.paid` webhook posts the same source idempotently if the charging process stops first. A decline voids the invoice and marks the row `failed`; for `auto_top_up` it also turns auto top-up off and records Stripe's reason, so a failing card is never retried automatically. Workers retry pending rows older than two minutes and resolve rows older than 23 hours by reading the invoice, before Stripe forgets the idempotency keys. An `invoice.payment_failed` webhook fails a pending row whose payment Stripe accepted and later declined.
 
 Every worker polls accounts with auto top-up enabled. A claim locks the billing account row, reads the operational Valkey balance plus any PostgreSQL credits the gateway has not applied yet, and inserts a `pending` `auto_top_up` row only when that balance is below the threshold and the organization has fewer than `AUTO_TOP_UP_MAX_PER_HOUR` auto top-ups in the last hour. Worker metrics count charges by reason and outcome, the oldest pending charge and rate-limited claims; alerts fire on declined auto top-ups, repeated charge errors, a charge pending for thirty minutes and a rate-limited organization.
+
+### 12b. Training usage
+
+`price_lists` (`id` `pv_…`, `product` `training`, `effective_at`, `placeholder`) and `price_list_items` (`price_list_id`, `sku` `train:<base model>` or `inference:<gateway model>`, `unit` `token`, `price_nano_usd_per_million`) are immutable price versions; a price change inserts a new version. The current version of a product is the latest with `effective_at <= now()`. The first training version, `pv_training_2026_11_27_placeholder`, holds made-up placeholder prices and says so with `placeholder = true`. Its `inference:` SKUs are blended prompt and completion prices that grad uses only to estimate evals and to decide which judges it allows; ingest bills only `train:` SKUs.
+
+grad calls the API's private training listener for prices, a balance check and usage ingest. Ingest checks each event's amount as `round_half_up(quantity × price / 10^6)` against the version it names, posts one `usage_event` balance transaction per nonzero event in one PostgreSQL transaction, and then inserts the events into ClickHouse `usage_events`. A replayed event posts nothing; a replay with different values is refused. Only `product = training` events with `train:` SKUs are accepted, so the eval inference that the gateway bills as generations is never billed twice.
 
 ## PostgreSQL-to-Valkey synchronization
 
@@ -675,6 +737,27 @@ The application validates the complete properties document before insertion; it 
 One TypeScript ClickHouse-ingestion consumer group reads `GenerationSettled` from Valkey. For each event it derives the global `settlement.slot_id` from the Valkey Stream ID's time bucket and settlement schema. Every organization in that time bucket receives the same slot ID; ClickHouse materializes it for chronological reconciliation. The worker issues one logical insert per generation with ClickHouse `async_insert = 1` and `wait_for_async_insert = 1`; ClickHouse combines those inserts server-side. Retries use a generation-ID-based insert deduplication token as a normal-path optimization, but billing correctness never depends on the lifetime of that token. The worker acknowledges a stream entry only after ClickHouse confirms the asynchronous insert was flushed, uses `XAUTOCLAIM` to recover abandoned pending entries, and trims only through the contiguous acknowledged watermark. That watermark is derived from the consumer group's last-delivered ID and oldest pending ID rather than stored in another database table. Do not use `ReplacingMergeTree`, lifecycle updates or `FINAL` queries for the launch schema.
 
 Do not store prompts, completions, arbitrary request JSON, credentials, private runtime URLs, or attempt arrays. One customer-visible generation can have one safe runtime retry. Generations have no TTL and are retained indefinitely at launch. Rely on ClickHouse Cloud's managed durability and backups initially; do not build a separate archival or export pipeline until retention, regulatory or recovery requirements justify one.
+
+## 14a. `usage_events`
+
+One row per priced usage increment, today from training. `balance_transactions` stays the money ledger; this table is the record of what was billed, for usage views, invoices and Metabase.
+
+| Field             | ClickHouse type                     | Rules                                        |
+| ----------------- | ----------------------------------- | -------------------------------------------- |
+| `event_id`        | String                              | Globally unique; the idempotency key         |
+| `organization_id` | UUID                                | Resolved from the workspace                  |
+| `workspace_id`    | UUID                                |                                              |
+| `product`         | LowCardinality(String)              | `training`                                   |
+| `sku`             | LowCardinality(String)              | For example `train:qwen/qwen3-8b`            |
+| `quantity`        | UInt64                              | In the SKU's unit                            |
+| `amount_nano_usd` | Int64                               | The amount posted to the ledger              |
+| `price_version`   | LowCardinality(String)              | The `price_lists.id` it was priced with      |
+| `occurred_at`     | DateTime64(6, 'UTC')                | When the usage happened; the partition month |
+| `subject_id`      | String                              | Run or eval ID                               |
+| `tags`            | Map(LowCardinality(String), String) | For example `attempt`, `recipe_kind`         |
+| `ingested_at`     | DateTime64(6, 'UTC')                | Default `now64(6)`                           |
+
+The engine is `ReplacingMergeTree` ordered by `(organization_id, workspace_id, event_id)`, so a replayed event collapses into one row; readers that need exact totals before merges group by `event_id` or use `FINAL`.
 
 # Inference event contracts
 

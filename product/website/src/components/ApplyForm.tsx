@@ -29,6 +29,50 @@ const INPUT_TYPES: Record<string, string> = {
   SocialLink: "url",
 };
 
+/** A drop zone over a transparent file input, so clicking and dropping both
+    stay native and the browser's "Choose File" button never shows. */
+const FileControl = ({
+  accept,
+  ...shared
+}: {
+  accept?: string;
+  id: string;
+  name: string;
+  required: boolean;
+}): ReactElement => {
+  const [file, setFile] = useState<string>();
+  const [over, setOver] = useState(false);
+
+  return (
+    <div
+      className="gr-apply-file"
+      data-filled={file ? true : undefined}
+      data-over={over || undefined}
+    >
+      <input
+        {...shared}
+        accept={accept}
+        className="gr-apply-file-input"
+        onChange={(event) => setFile(event.currentTarget.files?.[0]?.name)}
+        onDragEnter={() => setOver(true)}
+        onDragLeave={() => setOver(false)}
+        onDrop={() => setOver(false)}
+        type="file"
+      />
+      <span
+        aria-hidden
+        className="gr-apply-file-button gr-button gr-button--secondary gr-button--sm"
+      >
+        {file ? "Replace" : "Choose file"}
+      </span>
+      <span aria-hidden className="gr-apply-file-name">
+        {file ??
+          `or drop it here${accept ? ` · ${accept.replaceAll(".", "").replaceAll(",", ", ").toUpperCase()}` : ""}`}
+      </span>
+    </div>
+  );
+};
+
 const Control = ({ field }: { field: AshbyFormField }): ReactElement => {
   const shared = { id: field.path, name: field.path, required: field.required };
 
@@ -37,13 +81,11 @@ const Control = ({ field }: { field: AshbyFormField }): ReactElement => {
       return <textarea {...shared} className="gr-textarea" rows={6} />;
     case "File":
       return (
-        <input
-          {...shared}
-          className="gr-input"
-          type="file"
+        <FileControl
           accept={
             field.path === "_systemfield_resume" ? ".pdf,.doc,.docx" : undefined
           }
+          {...shared}
         />
       );
     case "ValueSelect":

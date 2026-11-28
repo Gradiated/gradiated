@@ -1617,7 +1617,8 @@
               "generation_settlement_batch",
               "openrouter_payment",
               "operator",
-              "stripe_invoice"
+              "stripe_invoice",
+              "usage_event"
             ]
           },
           "stripe_id": {
@@ -5673,6 +5674,24 @@
         "required": [
           "name",
           "size_bytes"
+        ]
+      },
+      "TrainingToken": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "An ES256 JWT for the training API with audience training. It names the member (sub user:<id>), organization (org), workspace (ws) and role, and is verified against the keys at /api/auth/jwks."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "token",
+          "expires_at"
         ]
       },
       "SystemOneResponse": {

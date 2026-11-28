@@ -1,13 +1,16 @@
 import { useEffect, useRef } from "react";
 import type { ReactElement } from "react";
 import { WaferField } from "../../lib/wafer-field";
+import { WORDMARK_CHIPS } from "./wordmark-chips";
 
 /**
  * The wordmark, built from wafer chips, with a shimmer band sweeping across it.
  *
- * The mark is static — assembled on load and left there. Chip geometry derives
- * from the lattice unit, so chipStep is exactly half a lattice cell and the
- * wordmark is made of the same dies as the rest of the page.
+ * The mark is static — assembled on load and left there. It is ONE drawing
+ * at every size: a fixed 126 x 14 chip grid (wordmark-chips.ts), of which
+ * only the chip's size changes with the width. Sampled from the SVG at
+ * whatever column count a width allowed, the letters were redrawn at every
+ * size, and a stem 4 chips wide at one width was 3 or 5 at the next.
  *
  * Colours come from the computed role tokens rather than being hardcoded, so
  * the palette carries through with no change here, and the background stays
@@ -55,33 +58,29 @@ const luminanceOf = (colour: string): number => {
   return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
 };
 
-/** Chip geometry as fractions of the lattice unit. */
-const CHIP_SIZE_U = 1 / 3;
-const CHIP_GAP_U = 1 / 6;
+const CHIP_COLS = WORDMARK_CHIPS[0].length;
+const CHIP_ROWS = WORDMARK_CHIPS.length;
+const BITMAP = WORDMARK_CHIPS.map((row) =>
+  [...row].map((cell) => (cell === "#" ? 1 : 0)),
+);
 
-/**
- * How many chips the mark is drawn across, at every width.
+/** Chip and gap for a width, in CSS px, at 2:1.
  *
- * This is the resolution of the image, not a size — the wordmark's thin
- * strokes need about this many columns before they resolve into letters.
- * Deriving the chip from the lattice unit alone was the bug: --u barely
- * changes between a desktop and a phone (24px to 23px), so the chip stayed
- * 8px with a 4px gap while the canvas went from 1152px wide to 387px. The mark
- * dropped from 96 columns to 32 and stopped being legible at all.
+ *  A whole number of device pixels per step when that still fills the width
+ *  to within 3%: every chip and every gap identical. Otherwise (1x screens,
+ *  phones) the step is exact and fractional, and the engine snaps each chip
+ *  onto whole pixels at one size, so only a gap moves, by one device pixel.
+ *  Whole steps alone left the mark 15% short of the footer at 1024.
  *
- * 96 is what the desktop already had, so widening the mark is not a change
- * there — a phone now gets the same picture in smaller pixels.
- */
-const CHIP_COLS = 150;
-
-/** Chip size and gap for a given width, keeping the 2:1 size-to-gap ratio.
- *
- *  `unitStep` is a CEILING rather than the answer: the chip should never be
- *  chunkier than the lattice it is aligned to, however wide the page gets. */
-const chipGeometry = (width: number, unitStep: number) => {
-  const step = Math.min(unitStep, Math.max(3, Math.floor(width / CHIP_COLS)));
-  const chipSize = Math.max(2, Math.round((step * 2) / 3));
-  return { chipSize, gap: Math.max(1, step - chipSize) };
+ *  Never wider than the host: below 3 device pixels a step (a narrow window
+ *  on a 1x screen) the chips go down to a pixel rather than the grid
+ *  overflowing the footer, since the column count no longer gives way. */
+const chipGeometry = (width: number, ratio: number) => {
+  const exact = (width * ratio) / CHIP_COLS;
+  const whole = Math.floor(exact);
+  const step = whole >= 3 && whole >= exact * 0.97 ? whole : exact;
+  const chip = Math.min(step, Math.max(1, Math.round((step * 2) / 3)));
+  return { chipSize: chip / ratio, gap: (step - chip) / ratio };
 };
 
 /**
@@ -105,10 +104,6 @@ const SHIMMER = { angle: -45, speed: 0.16, width: 0.16 };
    them, so the sweep has the engine's full positive range to climb. */
 const SHIMMER_INTENSITY = 0.85;
 
-/** Width-to-height ratio of public/brand/wordmark-angular.svg's viewBox
- *  (the new angular lockup, re-kerned at build of the asset). */
-const WORDMARK_ASPECT = 694.2 / 77;
-
 export const WordmarkField = (): ReactElement => {
   const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -119,16 +114,8 @@ export const WordmarkField = (): ReactElement => {
     if (!host || !canvas) return;
 
     const root = host.closest<HTMLElement>(".gr-root") ?? document.body;
-    const styles = getComputedStyle(root);
-    const unit = parseFloat(styles.getPropertyValue("--u")) || 24;
-    /* The lattice-derived chip, which is now the coarsest the mark may be
-       rather than the size it always is — see chipGeometry. */
-    const unitStep =
-      Math.max(2, Math.round(unit * CHIP_SIZE_U)) +
-      Math.max(1, Math.round(unit * CHIP_GAP_U));
-    const initial = chipGeometry(host.clientWidth || 1152, unitStep);
-    const chipSize = initial.chipSize;
-    const gap = initial.gap;
+    const ratio = () => window.devicePixelRatio || 1;
+    const initial = chipGeometry(host.clientWidth || 1152, ratio());
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -196,12 +183,13 @@ export const WordmarkField = (): ReactElement => {
       bgColor: null,
       // Black: screen's identity, so an unswept chip is pure gradient.
       chipColor: "#000000",
-      chipSize,
+      chipSize: initial.chipSize,
       /* Square, even though the system's containers are rounded: a chip is a
          die, not a box. The radius scale governs UI surfaces; this is
          artwork. */
       cornerRadius: 0,
-      gap,
+      gap: initial.gap,
+      snapToPixels: true,
       shading: "flat",
     });
 
@@ -231,44 +219,25 @@ export const WordmarkField = (): ReactElement => {
       field.stopShimmer();
     };
 
-    const layout = async () => {
+    const layout = () => {
       const width = host.clientWidth;
       if (width === 0) return;
 
-      /* Re-derived per layout, because it depends on the width: a narrower
-         host gets smaller chips rather than fewer of them. chipSize and gap
-         are plain properties on the engine and chipStep reads from them, so
-         assigning here is all resize() needs to pick them up. */
-      const geometry = chipGeometry(width, unitStep);
-      field.chipSize = geometry.chipSize;
-      field.gap = geometry.gap;
-      const step = geometry.chipSize + geometry.gap;
-
-      const cols = Math.max(8, Math.floor(width / step));
-      const rows = Math.max(
-        4,
-        Math.round((cols * step) / WORDMARK_ASPECT / step),
-      );
-
-      // The resize observer fires for changes that do not affect the grid;
-      // rebuilding then would restart the sweep for nothing. The step is part
-      // of the key: the same column count at a different chip size is a
-      // different picture.
-      const key = `${cols}:${rows}:${step}`;
+      // Only the chip's size follows the width; the grid never changes.
+      const geometry = chipGeometry(width, ratio());
+      const key = `${geometry.chipSize}:${geometry.gap}`;
+      // The resize observer fires for changes that do not affect the chip;
+      // rebuilding then would restart the sweep for nothing.
       if (key === geometryKey) return;
       geometryKey = key;
 
       stopShimmer();
-      // The engine owns canvas sizing: resize() sets it to cols * chipStep - gap
-      // (no trailing gap after the last chip). Setting it here as well would
-      // fight that and leave the mark a gap-width off its own grid.
-      field.setPixelRatio(window.devicePixelRatio || 1);
-      field.resize(cols, rows);
-      await field.setShapeFromImage("/brand/wordmark-angular.svg", {
-        cols,
-        mode: "alpha",
-        rows,
-      });
+      field.chipSize = geometry.chipSize;
+      field.gap = geometry.gap;
+      // The engine owns canvas sizing: resize() sets it to cols * chipStep - gap.
+      field.setPixelRatio(ratio());
+      field.resize(CHIP_COLS, CHIP_ROWS);
+      field.setShapeFromBitmap(BITMAP);
       if (disposed) return;
 
       // Straight to the assembled state: there is no entrance to play.
@@ -289,7 +258,7 @@ export const WordmarkField = (): ReactElement => {
     observer.observe(host);
 
     const resizeObserver = new ResizeObserver(() => {
-      void layout();
+      layout();
     });
     resizeObserver.observe(host);
 
@@ -313,7 +282,7 @@ export const WordmarkField = (): ReactElement => {
     };
     reduced.addEventListener("change", onReducedChange);
 
-    void layout();
+    layout();
 
     return () => {
       disposed = true;

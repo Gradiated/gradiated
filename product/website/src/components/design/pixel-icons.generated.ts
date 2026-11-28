@@ -82,6 +82,10 @@ export const PIXEL_ICONS = {
     d: "M7 1h2v1h-2zM6 2h1v1h-1zM9 2h1v1h-1zM3 3h3v1h-3zM9 3h2v1h-2zM2 4h2v1h-2zM5 4h2v1h-2zM9 4h1v1h-1zM1 5h2v1h-2zM4 5h1v1h-1zM6 5h1v1h-1zM8 5h2v1h-2zM1 6h1v1h-1zM4 6h2v1h-2zM7 6h2v1h-2zM0 7h2v1h-2zM5 7h3v1h-3zM1 8h1v1h-1zM4 8h1v1h-1zM2 9h2v1h-2z",
     grid: 11,
   },
+  calendar: {
+    d: "M1 1h9v1h-9zM1 2h3v1h-3zM7 2h3v1h-3zM1 3h9v1h-9zM1 4h2v1h-2zM8 4h2v1h-2zM1 5h1v1h-1zM9 5h1v1h-1zM1 6h1v1h-1zM9 6h1v1h-1zM1 7h1v1h-1zM9 7h1v1h-1zM1 8h2v1h-2zM8 8h2v1h-2zM1 9h9v1h-9z",
+    grid: 11,
+  },
   linkedin: {
     d: "M1 1h9v1h-9zM1 2h1v1h-1zM9 2h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM9 3h1v1h-1zM1 4h1v1h-1zM5 4h2v1h-2zM9 4h1v1h-1zM1 5h1v1h-1zM3 5h1v1h-1zM5 5h1v1h-1zM7 5h1v1h-1zM9 5h1v1h-1zM1 6h1v1h-1zM3 6h1v1h-1zM5 6h1v1h-1zM7 6h1v1h-1zM9 6h1v1h-1zM1 7h1v1h-1zM3 7h1v1h-1zM5 7h1v1h-1zM7 7h1v1h-1zM9 7h1v1h-1zM1 8h1v1h-1zM9 8h1v1h-1zM1 9h9v1h-9z",
     grid: 11,

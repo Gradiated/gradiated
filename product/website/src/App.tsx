@@ -33,7 +33,6 @@ import { SandLibraryPage } from "./pages/SandLibraryPage";
 import { SAND_TO_THOUGHT_URL } from "./urls";
 import { StylePage } from "./pages/StylePage";
 import { TrainingPage } from "./pages/TrainingPage";
-import { ArtworkGeneratorPage } from "./pages/ArtworkGeneratorPage";
 import { AboutPage } from "./pages/AboutPage";
 import { ProfilePage, TeamPage } from "./pages/TeamPages";
 import { team } from "./team";
@@ -262,14 +261,6 @@ export const AppRoutes = (): ReactElement => (
         </Shelled>
       }
       path="/training/"
-    />
-    <Route
-      element={
-        <Shelled>
-          <ArtworkGeneratorPage />
-        </Shelled>
-      }
-      path="/artwork-generator/"
     />
     <Route
       element={

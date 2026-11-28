@@ -21,6 +21,8 @@ minimumReleaseAgeExclude:
   - "@temporalio/workflow@1.25.0"
   - "body-parser@2.4.0"
   - "zod@4.6.6"
+  # First-party: Gradiated's training SDK (no dependencies), released from Gradiated/grad.
+  - "@gradiated/grad@0.2.0-alpha.4"
   # Temporal 1.25.0 carries zip 9.0.5, fixing CVE-2026-115905.
   - "@temporalio/activity@1.25.0"
   - "@temporalio/client@1.25.0"

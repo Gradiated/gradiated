@@ -42,7 +42,10 @@
   position: absolute;
   top: calc(0.6 * var(--u));
   right: calc(0.6 * var(--u));
-  padding: calc(0.35 * var(--u));
+  --button-h: 2rem;
+
+  width: var(--button-h);
+  padding: 0;
 }
 
 .gr-root .gr-name-modal-title,
@@ -81,8 +84,8 @@
 }
 
 .gr-name-modal-submit {
-  justify-content: center;
-  min-height: 3rem;
+  --button-h: 3rem;
+  --button-type: 0.8125rem;
 }
 
 .gr-name-modal-done {

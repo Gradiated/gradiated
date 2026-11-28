@@ -3,6 +3,34 @@
 The TypeScript HTTP API for the console and website. Routes are authored with
 described Zod schemas and generate the OpenAPI document and browser clients.
 
+## Training listener
+
+grad, the training platform, calls a private listener for training billing. It
+starts only when `TRAINING_INTERNAL_TOKEN` (at least 32 characters) is set and
+listens on `TRAINING_INTERNAL_HOST:TRAINING_INTERNAL_PORT` (default
+`0.0.0.0:3005`). Expose it on a ClusterIP Service only, never on the public ALB.
+Every route needs `Authorization: Bearer $TRAINING_INTERNAL_TOKEN`; during a
+rotation set the old value as `TRAINING_INTERNAL_TOKEN_PREVIOUS` until grad has
+the new one. It has no per-IP rate limit.
+
+- `GET /api/internal/v1/billing/prices?product=training[&price_version=…]`: the
+  current or named price-list version, with the version as the ETag.
+- `POST /api/internal/v1/billing/check`: a workspace and an estimate
+  (`estimated_amount_nano_usd` or `estimated_cost_usd`) → `{allowed, reason?}`.
+- `POST /api/internal/v1/billing/usage-events`: up to 500 priced training
+  events, billed once each by `event_id`.
+
+## grad workspace states
+
+With `GRAD_SERVER_URL` (grad-server's internal listener, its `INTERNAL_PORT`;
+unset by default) the API tells grad when a workspace is suspended, reinstated
+or deleted. Database triggers queue the newest state per workspace in
+`grad_workspace_state_outbox`, and each replica sends due rows every minute
+with a service JWT (`service:control`, scope `workspaces:admin`), retrying with
+backoff. Unset, nothing is sent and state changes are unaffected. Logs:
+`grad_workspace_state_sent`, `grad_workspace_state_failed` (with `reason`
+such as `http 503`) and `grad_workspace_already_deleted`.
+
 ## Engineer onboarding
 
 The console's `/onboarding?journey=post-training` steps use organization-owned routes. Each

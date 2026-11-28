@@ -12,39 +12,6 @@ export type ArtworkPreset = {
   threshold: number;
 };
 
-export const ARTWORK_SCATTERS: Array<{ label: string; value: ScatterPattern }> =
-  [
-    { label: "Orbit in", value: "orbit-in" },
-    { label: "Radial burst", value: "radial-burst" },
-    { label: "Gravity drop", value: "gravity-drop" },
-    { label: "Spiral in", value: "spiral-in" },
-    { label: "Wave rise", value: "wave-rise" },
-    { label: "Random", value: "random" },
-  ];
-
-export const ARTWORK_SOURCES = [
-  {
-    label: "Circuit · black",
-    value: "/assets/artwork-sources/circuit-black.jpg",
-  },
-  {
-    label: "Circuit · green",
-    value: "/assets/artwork-sources/circuit-green.jpg",
-  },
-  {
-    label: "Dunes · aerial",
-    value: "/assets/artwork-sources/dunes-aerial.jpg",
-  },
-  {
-    label: "Sand · ripples",
-    value: "/assets/artwork-sources/sand-ripples.jpg",
-  },
-  {
-    label: "Water · aerial",
-    value: "/assets/artwork-sources/waves-aerial.jpg",
-  },
-] as const;
-
 const palettes = {
   aegean: {
     background: "#407486",

@@ -1,0 +1,16 @@
+# Training API reference
+
+<DocsLead>
+  Every public endpoint of `grad-server`, generated from grad's
+  `spec/openapi.yaml`: its fields, an example request and response, and the SDK
+  method or CLI command that sends it in the language you picked above.
+</DocsLead>
+
+The same API runs on `grad local up`, the Helm chart and, soon, Gradiated Cloud. Set `GRADIATED_BASE_URL` to your server (`http://127.0.0.1:18787` for `grad local up`) and `GRADIATED_API_KEY` to a key; every `/v1/*` call sends it as `Authorization: Bearer <key>`. Authentication, scopes, idempotency, pagination and the error format are on the [API overview](/docs/api-reference/#training-api); every error `code` is explained in [Errors](/docs/training/errors/). A running server also serves this spec at `/openapi.json`.
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  `api.gradiated.com` doesn't serve the training API yet. Run your own with
+  `grad local up`; see [Self-hosting](/docs/training/self-hosting/).
+</DocsCallout>
+
+<DocsApiReference />

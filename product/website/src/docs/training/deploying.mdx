@@ -67,7 +67,7 @@ Handle traffic splitting and rollbacks with what you already use (feature flags,
   yourself](#serve-it-yourself).
 </DocsCallout>
 
-On Gradiated Cloud you won't manage GPUs or a serving stack. You publish an artifact (trained, [uploaded or imported](/docs/training/artifacts/#upload-or-import-an-artifact)) as a version of a model, `your-org/<name>`, from the Gradiated console or the Cloud Models API. grad itself has no deploy command: it owns the artifacts, and the inference side serves them straight from the artifact store.
+On Gradiated Cloud you won't manage GPUs or a serving stack. You publish an artifact (trained, [uploaded or imported](/docs/training/artifacts/#upload-or-import-an-artifact)) as a version of a model, `your-org/<name>`, from the Gradiated console or the Cloud Models API. grad itself has no deploy command: it owns the artifacts, and the inference side serves them straight from the artifact store. Serving starts with LoRA adapters (`peft_lora`) and cartridges; router, decision, reward and embedding bundles follow.
 
 ### Call a published model
 

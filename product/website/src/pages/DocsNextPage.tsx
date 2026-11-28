@@ -27,6 +27,8 @@ import { useRailDocNav } from "../components/design/RailShell";
 import { DocsApiKeyAction } from "../components/docs/InteractiveQuickstart";
 import { DocsModelCatalog } from "../components/docs/DocsModelCatalog";
 import { DocsPager, DocsToc } from "../components/docs/DocsPageNav";
+import { DocsSearch } from "../components/docs/DocsSearch";
+import { DocsStep, DocsSteps } from "../components/docs/DocsSteps";
 import { DocsSessionProvider } from "../components/docs/DocsSession";
 import {
   DocsLanguagePicker,
@@ -35,6 +37,9 @@ import {
   languageOfLabel,
   useDocsLanguage,
 } from "../components/docs/DocsLanguage";
+import { DocsApiReference } from "../components/docs/training/ApiReference";
+import { DocsChangelog } from "../components/docs/training/Changelog";
+import { DocsErrorCodes } from "../components/docs/training/ErrorCodes";
 import {
   DocsCallout,
   DocsCostEstimator,
@@ -139,7 +144,9 @@ const DocsPre = ({
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <pre {...props}>{children}</pre>
+      <pre tabIndex={0} {...props}>
+        {children}
+      </pre>
     </div>
   );
 };
@@ -148,7 +155,7 @@ const DocsPre = ({
    wide table is how a docs page ends up with a horizontal scrollbar on every
    screen. */
 const DocsTable = (props: ComponentPropsWithoutRef<"table">): ReactElement => (
-  <div className="gr-doc-tablewrap">
+  <div className="gr-doc-tablewrap" tabIndex={0}>
     <table {...props} />
   </div>
 );
@@ -576,7 +583,10 @@ const DocsBody = (): ReactElement => {
   );
   if (!entry) return <Navigate replace to="/docs/" />;
 
-  const [, document] = entry as [string, (typeof documents)["index"]];
+  const [, document] = entry as [
+    string,
+    (typeof documents)["index"] & { wide?: boolean },
+  ];
   const Content = document.Component;
 
   return (
@@ -595,10 +605,14 @@ const DocsBody = (): ReactElement => {
               label="Chapters"
             />
 
-            <div className="gr-doc-layout">
+            <div
+              className="gr-doc-layout"
+              data-wide={document.wide ? "true" : undefined}
+            >
               <article className="gr-doc-main gr-prose" ref={article}>
                 <div className="gr-doc-actions-row">
                   {hasSdkSamples(document.path) ? <DocsLanguagePicker /> : null}
+                  <DocsSearch />
                   <PageActions path={document.path} title={document.title} />
                 </div>
                 <Content
@@ -608,13 +622,16 @@ const DocsBody = (): ReactElement => {
                     pre: DocsPre,
                     table: DocsTable,
                     DocsApiKeyAction,
+                    DocsApiReference,
                     DocsCallout,
+                    DocsChangelog,
                     DocsCodeTab,
                     DocsCodeTabs,
                     DocsCodeVariant,
                     DocsCodeVariants,
                     DocsCostEstimator,
                     DocsDatumAnatomy,
+                    DocsErrorCodes,
                     DocsLead,
                     DocsModelCatalog,
                     DocsNext,
@@ -623,6 +640,8 @@ const DocsBody = (): ReactElement => {
                     DocsRouterFrontier,
                     DocsRunLifecycle,
                     DocsRunReplay,
+                    DocsStep,
+                    DocsSteps,
                     DocsTerminal,
                     DocsTokenMask,
                   }}

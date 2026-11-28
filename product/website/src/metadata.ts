@@ -319,6 +319,21 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Review Gradiated API endpoints, request fields, and response formats.",
   },
+  "/docs/reference/training-api/": {
+    title: "Training API reference",
+    description:
+      "Every grad-server endpoint with its fields, an example request and response, and the matching Python, TypeScript, Go, Rust or CLI call.",
+  },
+  "/docs/training/errors/": {
+    title: "Training errors",
+    description:
+      "Every error code the training API answers with, what it means and how to fix it, by area and by HTTP status.",
+  },
+  "/docs/training/changelog/": {
+    title: "Training changelog",
+    description:
+      "What changed in each grad release: server, trainer, Helm chart, the Python, TypeScript, Go and Rust SDKs and the CLI.",
+  },
   "/docs/reference/primitives/": {
     title: "Primitives reference",
     description:

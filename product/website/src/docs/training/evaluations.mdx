@@ -19,6 +19,8 @@ Every training run produces an automatic held-out `eval_report`, and you can als
   them. Run evals on a self-hosted server or on `grad local up --dev-models`.
 </DocsCallout>
 
+Self-hosted, evals call an OpenAI-compatible endpoint you run (vLLM, SGLang or any provider): set `GRAD_INFERENCE_BASE_URL` (and `GRAD_JUDGE_BASE_URL` for judges, if they're served elsewhere) on the server and the eval workers; without it, evals answer `501 inference_unavailable`. `grad local up --dev-models` sets both to its CPU endpoint. See [Self-hosting](/docs/training/self-hosting/#eval-workers).
+
 ## Evaluate a dataset with a `Rubric`
 
 Pass one or more models (catalog base models or trained [`Artifact`](/docs/training/artifacts/) refs such as `sql-agent@latest`), a held-out `Dataset`, and the same [`Rubric`](/docs/training/rubrics/) you use for training:
@@ -159,7 +161,7 @@ qwen/qwen3-32b    95.0%    [93.6%, 96.3%]  +28.6%       pass@1=93.0% pass@4=98.0
 - **`vs baseline`:** the paired difference from `baseline=` on the same tasks. `ev.summary` also holds its confidence interval. Paired comparisons need far fewer tasks than comparing two separate means.
 - **`$/1k tasks`:** model and judge cost per 1,000 tasks at current rates, so you can weigh quality against spend. `ev.summary` also has `tokens_per_task`, and `ev.summary_table()` in Python prints both.
 
-While an eval waits for a model, `ev.waiting_reason` says why: `capacity_unavailable` (a serving pool scaled to zero is starting), `rate_limited` or `inference_unavailable` (the endpoint is down). The eval keeps its place and spends no retry, and fails only if one call waits longer than `GRAD_EVAL_CAPACITY_WAIT_SECONDS` (12 minutes by default). Stored outputs are never generated or billed twice.
+While an eval waits for a model, `ev.waiting_reason` says why: `capacity_unavailable` (a serving pool scaled to zero is starting), `rate_limited` or `inference_unavailable` (the endpoint is down). With `capacity_unavailable` or `rate_limited`, calls wait in place and spend no retry; the eval fails if one call waits longer than `GRAD_EVAL_CAPACITY_WAIT_SECONDS` (12 minutes by default). With `inference_unavailable`, calls retry for up to 10 minutes, then the attempt is handed back and counts as a retry; the next attempt resumes after the outputs already stored. Stored outputs are never generated or billed twice.
 
 Use `samples=1` and `temperature=0` for a quick deterministic check. For decisions you'll act on, use at least 3–4 samples per task: single-sample scores on a few hundred tasks often move several points between runs.
 

@@ -28,7 +28,7 @@ Any dataset works as input: a list of plain chat records or a `.jsonl` file (`cl
 
 ## Start with recipe defaults
 
-Every recipe comes with working defaults for the base model, split, learning rate, batch size, schedule, checkpoints and evals. Pass your dataset, an output name and the recipe. Run `--dry-run` (or `runs.plan()`) first to check your data and see the estimated cost, and set `max_cost_usd=` to cap spend. You pay a fixed price per million tokens processed, set per base model.
+For a dataset version with more than 100,000 records, the plan reads 100,000 of them, spread over the version, and scales the counts, tokens, steps and cost to the full version (it says so in a warning); the run trains on all of them. Every recipe comes with working defaults (on a self-hosted server, pass a Qwen3 `model=` to `DecisionModelRecipe`: its default `gradiated/linden-1` trains on Gradiated Cloud only) for the base model, split, learning rate, batch size, schedule, checkpoints and evals. Pass your dataset, an output name and the recipe. Run `--dry-run` (or `runs.plan()`) first to check your data and see the estimated cost, and set `max_cost_usd=` to cap spend. You pay a fixed price per million tokens processed, set per base model.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
@@ -149,16 +149,17 @@ Before spending anything, run `--dry-run` (or `client.runs.plan()`) to check you
 
 ```text
 Plan for fast-diff-merge (sft on qwen/qwen3-8b, dataset diff-merge-prod v3)
-  records   : 11,840 usable of 14,200
-  split     : 12,780 train / 1,420 eval (by_session, 10% held out)
-  steps     : 100 (batch 128, 1 epoch)
+  records   : 14,600 usable of 16,000
+  split     : 14,400 train / 1,600 eval (by_session, 10% held out)
+  steps     : 103 (batch 128, 1 epoch)
   lr        : 5.0e-4 (auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling)
   tokens    : ~38.0M (31.0% trained)
   est. cost : $15.20 at $0.40/1M tokens
   breakdown : train $15.20 · teacher $0.00 · evals $0.00 (held-out evals during training aren't billed)
+  duration  : ~1h05m on one GPU (needs 36 GB of GPU memory)
   adapter   : kind=lora, rank=32, alpha=32, merge_on_export=false
   warnings:
-    - 2360 of 14200 records cannot be used by 'sft' and will be skipped (record has no assistant turn to train on).
+    - 1400 of 16000 records cannot be used by 'sft' and will be skipped (record has no assistant answer (an assistant turn, completion or expected_output) to train on); for example 'rec_8812'.
   Start it by re-running without --dry-run (add --wait to follow it).
 ```
 
@@ -457,7 +458,7 @@ grad artifacts inspect fast-diff-merge@2026-11-25-2 --json
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Router artifacts include a held-out cost-vs-quality Pareto curve and 95% bootstrap confidence intervals against your fallback model.
+Router eval reports include `pareto_summary`: the quality drop against your fallback model at the chosen threshold, with a 95% bootstrap confidence interval, plus the offload rate and cost savings.
 
 ## When to write a custom loop
 

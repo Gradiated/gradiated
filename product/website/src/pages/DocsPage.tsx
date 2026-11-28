@@ -12,14 +12,17 @@ import DocsOpenCode from "../docs/opencode.mdx";
 import DocsQuickstart from "../docs/quickstart.mdx";
 import DocsCliReference from "../docs/reference/cli.mdx";
 import DocsPrimitivesReference from "../docs/reference/primitives.mdx";
+import DocsTrainingApiReference from "../docs/reference/training-api.mdx";
 import DocsTrainingParametersReference from "../docs/reference/training-parameters.mdx";
 import DocsServiceTiers from "../docs/service-tiers.mdx";
 import DocsSystemOneSdk from "../docs/systemone-sdk.mdx";
 import DocsTrainingAdvancedObjectives from "../docs/training/advanced-objectives.mdx";
 import DocsTrainingArtifacts from "../docs/training/artifacts.mdx";
+import DocsTrainingChangelog from "../docs/training/changelog.mdx";
 import DocsTrainingCustomLoops from "../docs/training/custom-loops.mdx";
 import DocsTrainingDeploying from "../docs/training/deploying.mdx";
 import DocsTrainingEnvironments from "../docs/training/environments.mdx";
+import DocsTrainingErrors from "../docs/training/errors.mdx";
 import DocsTrainingEvaluations from "../docs/training/evaluations.mdx";
 import DocsTrainingModels from "../docs/training/models.mdx";
 import DocsTrainingObservability from "../docs/training/observability.mdx";
@@ -50,6 +53,8 @@ type DocsDocument = {
   title: string;
   path: string;
   Component: ComponentType<Record<string, unknown>>;
+  /** Reference pages whose samples sit beside the text need the room. */
+  wide?: boolean;
 };
 
 export const documents = {
@@ -178,6 +183,16 @@ export const documents = {
     path: "/docs/training/observability/",
     Component: DocsTrainingObservability,
   },
+  "training-errors": {
+    title: "Errors",
+    path: "/docs/training/errors/",
+    Component: DocsTrainingErrors,
+  },
+  "training-changelog": {
+    title: "Changelog",
+    path: "/docs/training/changelog/",
+    Component: DocsTrainingChangelog,
+  },
   "recipe-router": {
     title: "Model router",
     path: "/docs/training/recipes/router/",
@@ -263,6 +278,12 @@ export const documents = {
     path: "/docs/api-reference/",
     Component: DocsApiReference,
   },
+  "training-api-reference": {
+    title: "Training API",
+    path: "/docs/reference/training-api/",
+    Component: DocsTrainingApiReference,
+    wide: true,
+  },
   "primitives-reference": {
     title: "Primitives reference",
     path: "/docs/reference/primitives/",
@@ -343,6 +364,7 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
       "training-custom-loops",
       "training-advanced-objectives",
       "training-tuning-troubleshooting",
+      "training-errors",
       "training-self-hosting",
       "training-observability",
     ],
@@ -352,9 +374,11 @@ export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
     heading: "Reference",
     items: [
       "api-reference",
+      "training-api-reference",
       "primitives-reference",
       "training-parameters-reference",
       "cli-reference",
+      "training-changelog",
     ],
   },
 ];

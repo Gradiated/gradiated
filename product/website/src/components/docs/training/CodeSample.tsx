@@ -148,7 +148,8 @@ export const CodeSample = ({
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <pre>
+      {/* Focusable, so a sample that scrolls can be scrolled by keyboard. */}
+      <pre tabIndex={0}>
         <code>{highlight(code, lang)}</code>
       </pre>
     </div>

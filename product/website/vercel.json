@@ -17,6 +17,16 @@
       "destination": "/feed.xml",
       "permanent": true
     },
+    {
+      "source": "/problems/:code",
+      "destination": "/docs/training/errors/?code=:code",
+      "permanent": false
+    },
+    {
+      "source": "/problems/:code/",
+      "destination": "/docs/training/errors/?code=:code",
+      "permanent": false
+    },
     { "source": "/hardware", "destination": "/", "permanent": true },
     { "source": "/hardware/", "destination": "/", "permanent": true },
     {

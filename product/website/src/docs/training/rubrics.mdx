@@ -7,7 +7,7 @@
 A **`Rubric`** combines one or more weighted checks (a `Judge`, a `Scorer` or a built-in validator) into an overall score, the weighted mean of its items, and keeps each check's score by name. You can use it in three places:
 
 - **Evals:** pass it as `rubric=` to [`client.evals.create`](/docs/training/evaluations/) to score each model's answers on a dataset. A single `Judge`, `Scorer`, validator or plain function works too.
-- **Cleaning datasets:** score old logs once with [`dataset.score(rubric)`](/docs/training/trajectories/#score-and-filter-datasets), then filter on the scores.
+- **Cleaning datasets:** score old logs once with [`dataset.score(rubric)`](/docs/training/trajectories/#score-and-filter-datasets), then filter on the scores. Scoring with a `Judge` runs as an eval, so it needs an inference endpoint (self-hosted: `GRAD_INFERENCE_BASE_URL`); on Gradiated Cloud it is coming soon with evals.
 - **Router training:** pass a `Judge` or a `Rubric` of judges and validators as `rubric=` to [`RouterRecipe`](/docs/training/recipes/router/), or the name of a score already on your records (`rubric="task_success"`).
 
 ## Building a `Rubric`

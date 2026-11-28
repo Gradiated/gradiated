@@ -60,7 +60,7 @@ for ckpt in run.checkpoints():
 art = run.checkpoints()[-1].promote(name="fast-diff-merge")  # save a checkpoint as a versioned Artifact
 ```
 
-The best and final checkpoints never expire; other checkpoints are kept for 30 days unless you promote them. Each checkpoint remembers the settings it was trained with (base model, chat template, learning rate), so evaluations and exports reuse them automatically. If a run stops early, continue it from its latest checkpoint with `client.runs.resume("run_01J9Z2")`. Checkpoint frequency, retention and selection settings are in the [reference](/docs/reference/training-parameters/#checkpoints-and-evaluation).
+The best and final checkpoints never expire. While a run trains it keeps its last 3 checkpoints plus its best, and those expire after 30 days (`checkpoint_ttl_days`) unless you promote one. Each checkpoint remembers the settings it was trained with (base model, chat template, learning rate), so evaluations and exports reuse them automatically. If a run stops early, continue it from its latest checkpoint with `client.runs.resume("run_01J9Z2")`. Checkpoint frequency, retention and selection settings are in the [reference](/docs/reference/training-parameters/#checkpoints-and-evaluation).
 
 ## Upload or import an artifact
 

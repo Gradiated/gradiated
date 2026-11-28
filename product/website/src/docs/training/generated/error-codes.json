@@ -1,0 +1,363 @@
+{
+ "codes": {
+  "adapter_conflict": [
+   422
+  ],
+  "adapter_not_supported": [
+   422
+  ],
+  "artifact_import_not_found": [
+   404
+  ],
+  "artifact_not_found": [
+   404
+  ],
+  "artifact_not_servable": [
+   409,
+   422
+  ],
+  "artifact_pin_not_found": [
+   404
+  ],
+  "artifact_pinned": [
+   409
+  ],
+  "auth_unavailable": [
+   503
+  ],
+  "billing_denied": [
+   403
+  ],
+  "billing_unavailable": [
+   503
+  ],
+  "budget_exhausted": [
+   409
+  ],
+  "cartridge_context_required": [
+   422
+  ],
+  "checkpoint_conflict": [
+   409
+  ],
+  "checkpoint_eval_code_scorer": [
+   422
+  ],
+  "checkpoint_evals_unsupported_on_cloud": [
+   422
+  ],
+  "checkpoint_not_exportable": [
+   409
+  ],
+  "checkpoint_not_found": [
+   404
+  ],
+  "continued_training_unsupported": [
+   422
+  ],
+  "cross_site_request": [
+   403
+  ],
+  "database_unavailable": [
+   503
+  ],
+  "dataset_exists": [
+   409
+  ],
+  "dataset_not_found": [
+   404
+  ],
+  "dataset_part_missing": [
+   410
+  ],
+  "dataset_version_not_found": [
+   404,
+   422
+  ],
+  "distill_context_needs_on_policy": [
+   422
+  ],
+  "distill_teacher_is_student": [
+   422
+  ],
+  "distill_teacher_required": [
+   422
+  ],
+  "distill_teacher_unsupported": [
+   422
+  ],
+  "distill_tokenizer_mismatch": [
+   422
+  ],
+  "duplicate_checkpoint_eval": [
+   422
+  ],
+  "duplicate_scorer": [
+   422
+  ],
+  "empty_dataset": [
+   422
+  ],
+  "empty_eval": [
+   422
+  ],
+  "eval_not_awaiting_scores": [
+   409
+  ],
+  "eval_not_cancellable": [
+   409
+  ],
+  "eval_not_completed": [
+   409
+  ],
+  "eval_not_found": [
+   404
+  ],
+  "forbidden": [
+   403
+  ],
+  "format_base_mismatch": [
+   422
+  ],
+  "host_not_allowed": [
+   403
+  ],
+  "idempotency_key_invalid": [
+   422
+  ],
+  "idempotency_key_reused": [
+   422
+  ],
+  "idempotency_replay_unavailable": [
+   409
+  ],
+  "import_not_found": [
+   404
+  ],
+  "inference_error": [
+   502
+  ],
+  "inference_unavailable": [
+   501,
+   503
+  ],
+  "internal_error": [
+   500
+  ],
+  "invalid_cursor": [
+   422
+  ],
+  "invalid_filter": [
+   422
+  ],
+  "invalid_format": [
+   422
+  ],
+  "invalid_manifest": [
+   422
+  ],
+  "invalid_period": [
+   422
+  ],
+  "invalid_schedule": [
+   422
+  ],
+  "key_not_found": [
+   404
+  ],
+  "keys_managed_by_cloud": [
+   501
+  ],
+  "loss_unsupported": [
+   422
+  ],
+  "malformed_request": [
+   400
+  ],
+  "manifest_mismatch": [
+   409
+  ],
+  "model_exceeds_gpu_memory": [
+   422
+  ],
+  "name_required": [
+   422
+  ],
+  "no_usable_records": [
+   422
+  ],
+  "payload_too_large": [
+   413
+  ],
+  "pin_managed_by_cloud": [
+   403
+  ],
+  "queue_limit": [
+   429
+  ],
+  "recipe_deferred": [
+   422
+  ],
+  "recipe_not_supported_for_model": [
+   422
+  ],
+  "recipe_param_conflict": [
+   422
+  ],
+  "recipe_param_unsupported": [
+   422
+  ],
+  "records_batch_conflict": [
+   409
+  ],
+  "render_conflict": [
+   422
+  ],
+  "render_unsupported_model": [
+   422
+  ],
+  "reward_rubric_unsupported": [
+   422
+  ],
+  "reward_score_out_of_range": [
+   422
+  ],
+  "route_not_found": [
+   404
+  ],
+  "router_candidates_required": [
+   422
+  ],
+  "router_fallback_not_candidate": [
+   422
+  ],
+  "router_pricing_not_candidate": [
+   422
+  ],
+  "router_score_out_of_range": [
+   422
+  ],
+  "run_not_cancellable": [
+   409
+  ],
+  "run_not_found": [
+   404
+  ],
+  "run_not_resumable": [
+   409
+  ],
+  "run_state_changed": [
+   409
+  ],
+  "run_unbuildable": [
+   409
+  ],
+  "scorer_sandbox_unavailable": [
+   422
+  ],
+  "secret_host_invalid": [
+   422
+  ],
+  "secret_host_not_allowed": [
+   422
+  ],
+  "secret_in_use": [
+   409
+  ],
+  "secret_not_found": [
+   404,
+   422
+  ],
+  "secret_unreadable": [
+   409
+  ],
+  "secrets_unavailable": [
+   501
+  ],
+  "shutting_down": [
+   503
+  ],
+  "source_filter_invalid": [
+   422
+  ],
+  "source_filter_unsupported": [
+   422
+  ],
+  "source_host_invalid": [
+   422
+  ],
+  "source_host_required": [
+   422
+  ],
+  "source_not_found": [
+   404
+  ],
+  "source_project_required": [
+   422
+  ],
+  "source_provider_unsupported": [
+   422
+  ],
+  "source_removed": [
+   409
+  ],
+  "source_secret_required": [
+   422
+  ],
+  "source_unavailable": [
+   501
+  ],
+  "source_upstream_error": [
+   502
+  ],
+  "source_upstream_unavailable": [
+   503
+  ],
+  "storage_object_missing": [
+   500
+  ],
+  "storage_unavailable": [
+   503
+  ],
+  "store_unavailable": [
+   503
+  ],
+  "too_many_streams": [
+   429
+  ],
+  "unauthorized": [
+   401
+  ],
+  "unknown_eval_output": [
+   422
+  ],
+  "unknown_judge_model": [
+   422
+  ],
+  "unknown_model": [
+   422
+  ],
+  "unknown_scorer": [
+   422
+  ],
+  "unknown_upload": [
+   422
+  ],
+  "upload_incomplete": [
+   409
+  ],
+  "upload_integrity_error": [
+   422
+  ],
+  "validation_error": [
+   422
+  ],
+  "workspace_deleted": [
+   403,
+   409
+  ],
+  "workspace_suspended": [
+   403
+  ]
+ }
+}

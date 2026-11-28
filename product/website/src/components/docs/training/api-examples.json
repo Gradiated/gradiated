@@ -1,0 +1,162 @@
+{
+  "createApiKey": {
+    "name": "ci",
+    "scopes": ["datasets:write", "runs:write"]
+  },
+  "createDataset": {
+    "name": "support-prod"
+  },
+  "pushDatasetRecords": {
+    "records": [
+      {
+        "messages": [
+          {
+            "role": "user",
+            "content": "Where is my order #4512?"
+          },
+          {
+            "role": "assistant",
+            "content": "It shipped this morning; here is the tracking link."
+          }
+        ],
+        "scores": {
+          "resolved": 1
+        },
+        "metadata": {
+          "route": "support"
+        }
+      }
+    ]
+  },
+  "scoreDataset": {
+    "rubric": [
+      {
+        "name": "polite",
+        "kind": "regex",
+        "pattern": "thank",
+        "flags": "i"
+      }
+    ]
+  },
+  "filterDataset": {
+    "scores": {
+      "resolved": ">=0.8"
+    },
+    "name": "support-good"
+  },
+  "renderDataset": {
+    "model": "qwen/qwen3-8b",
+    "limit": 1
+  },
+  "createUpload": {
+    "purpose": "dataset_import",
+    "filename": "traces.jsonl",
+    "size_bytes": 52431,
+    "sha256": "9f2c4e1ab0d3c5e7f9a1b3c5d7e9f1a3b5c7d9e1f3a5b7c9d1e3f5a7b9c1d3e5"
+  },
+  "createDatasetImport": {
+    "source": {
+      "kind": "hf",
+      "repo": "HuggingFaceH4/ultrachat_200k",
+      "split": "train_sft",
+      "limit": 1000
+    }
+  },
+  "planRun": {
+    "dataset": "support-prod",
+    "name": "support-sft",
+    "recipe": {
+      "kind": "sft",
+      "model": "qwen/qwen3-8b"
+    },
+    "max_cost_usd": 5
+  },
+  "createRun": {
+    "dataset": "support-prod",
+    "name": "support-sft",
+    "recipe": {
+      "kind": "sft",
+      "model": "qwen/qwen3-8b"
+    },
+    "max_cost_usd": 5
+  },
+  "resumeRun": {
+    "max_cost_usd": 10
+  },
+  "promoteCheckpoint": {
+    "name": "support-sft-step-400"
+  },
+  "pinArtifact": {
+    "holder": "deploy:support-v3",
+    "reason": "serving in prod"
+  },
+  "createArtifactImport": {
+    "source": {
+      "kind": "hf",
+      "repo": "acme/support-lora",
+      "revision": "main"
+    },
+    "base_model": "qwen/qwen3-8b",
+    "name": "support-lora"
+  },
+  "planEval": {
+    "name": "sft-vs-base",
+    "models": ["support-sft@latest", "qwen/qwen3-8b"],
+    "baseline": "qwen/qwen3-8b",
+    "dataset": "support-prod",
+    "rubric": [
+      {
+        "name": "helpful",
+        "kind": "judge",
+        "model": "qwen/qwen3-32b",
+        "prompt": "Score 1 if the answer resolves the request, else 0."
+      }
+    ],
+    "limit": 200
+  },
+  "createEval": {
+    "name": "sft-vs-base",
+    "models": ["support-sft@latest", "qwen/qwen3-8b"],
+    "baseline": "qwen/qwen3-8b",
+    "dataset": "support-prod",
+    "rubric": [
+      {
+        "name": "helpful",
+        "kind": "judge",
+        "model": "qwen/qwen3-32b",
+        "prompt": "Score 1 if the answer resolves the request, else 0."
+      }
+    ],
+    "limit": 200
+  },
+  "postEvalScores": {
+    "scores": [
+      {
+        "output_id": "evout_3f9c0a1b2c3d4e5f60718293",
+        "scorer": "sql_runs",
+        "score": 1
+      }
+    ]
+  },
+  "setSecret": {
+    "name": "langfuse",
+    "value": "pk-lf-…:sk-lf-…"
+  },
+  "createDatasetSource": {
+    "provider": {
+      "kind": "langfuse",
+      "secret": "langfuse",
+      "filters": {
+        "environment": "production",
+        "has_feedback": true
+      }
+    },
+    "schedule": "*/15 * * * *"
+  },
+  "updateSource": {
+    "sample_rate": 0.5
+  },
+  "syncSource": {
+    "full": false
+  }
+}

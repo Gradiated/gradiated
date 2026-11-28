@@ -5,21 +5,88 @@
   logs or labeled examples.
 </DocsLead>
 
+`grad` is the open-source training platform behind Gradiated ([MIT, on GitHub](https://github.com/Gradiated/grad)). It runs on a laptop with Docker, on your own Kubernetes cluster and, soon, on Gradiated Cloud. The quickstart below takes you from nothing to a trained and evaluated model in about five minutes on a laptop, with no GPU.
+
 <DocsCallout label="Coming soon on Gradiated Cloud">
-  `api.gradiated.com` doesn't serve training yet. Run these against a local
-  stack: `grad local up --dev-models`, then `export GRADIATED_PROFILE=local`
-  (see [Run it locally](#run-it-locally)). Its trainer runs on your CPU, so pass
-  `model="test/tiny-qwen3"` (`--model test/tiny-qwen3` in the CLI): the run
-  finishes in seconds, while `qwen/qwen3-8b` needs a GPU (`grad local up --gpu`)
-  and the plan warns about it. The same stack runs evals: `--dev-models` also
-  starts a CPU inference endpoint that serves `test/tiny-qwen3`, the adapters
-  you train on it and a deterministic test judge, `test/tiny-judge`.
+  `api.gradiated.com` doesn't serve training yet, so the quickstart runs a stack
+  of your own. The same code runs on Gradiated Cloud once it opens; only the key
+  changes.
 </DocsCallout>
 
-<DocsCodeTabs>
-  <DocsCodeTab label="Fine-tune a model (60s)">
+## Quickstart
 
-```python
+<DocsSteps id="training-quickstart">
+<DocsStep title="Install the CLI and an SDK">
+
+The `grad` CLI runs the local stack and every training command. Install it and the SDK for your language:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```bash
+brew install gradiated/tap/grad   # the CLI, on macOS and Linux
+pip install grad-sdk
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```bash
+brew install gradiated/tap/grad   # the CLI, on macOS and Linux
+npm install @gradiated/grad
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```bash
+brew install gradiated/tap/grad   # the CLI, on macOS and Linux
+go get github.com/Gradiated/grad/sdks/go@latest
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Rust">
+
+```bash
+cargo install --locked --git https://github.com/Gradiated/grad --tag v0.2.0-alpha.7 grad-cli
+cargo add grad-sdk --git https://github.com/Gradiated/grad --tag v0.2.0-alpha.7
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+brew install gradiated/tap/grad   # macOS and Linux
+# or: cargo install --locked --git https://github.com/Gradiated/grad --tag v0.2.0-alpha.7 grad-cli
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+`grad --version` should print `grad 0.2.0-alpha.7` or later. Other ways to install are under [Install and connect](#install-and-connect).
+
+</DocsStep>
+<DocsStep title="Start a local stack">
+
+You need Docker with the Compose plugin.
+
+```bash
+grad local up --dev-models
+export GRADIATED_PROFILE=local   # the CLI and every SDK now use the local stack
+grad models list
+```
+
+`grad local up` starts PostgreSQL, S3 storage, the API, a CPU trainer and an eval worker, and saves their URL and keys in the `local` profile. `--dev-models` adds tiny, randomly initialised test models and a CPU inference endpoint, so every step below finishes in seconds: `grad models list` shows `test/tiny-qwen3` (it trains on a CPU) and `test/tiny-judge` (it scores evals) next to the Qwen catalog. The tiny models' answers are noise; they check the loop, not the model.
+
+</DocsStep>
+<DocsStep title="Fine-tune a model">
+
+Push two chat examples and fine-tune on them. The plan is free: it prints the resolved defaults, the token count and the cost before anything trains.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python title="train.py"
 from grad import Grad
 from grad.recipes import SFTRecipe
 
@@ -37,29 +104,158 @@ dataset = client.datasets.push("sql-quickstart", [
     ]},
 ])
 
-recipe = SFTRecipe(model="qwen/qwen3-8b")
+recipe = SFTRecipe(model="test/tiny-qwen3")  # qwen/qwen3-8b on a GPU
 
-# $0 preview: resolved defaults, warnings, tokens and cost
-print(client.runs.plan(dataset=dataset, name="sql-helper", recipe=recipe))
+print(client.runs.plan(dataset=dataset, name="sql-helper", recipe=recipe))  # $0 preview
 
-run = client.runs.create(dataset=dataset, name="sql-helper", recipe=recipe, max_cost_usd=5).wait()
-run.download("./sql-helper")  # LoRA weights for vLLM / SGLang
+run = client.runs.create(dataset=dataset, name="sql-helper", recipe=recipe, max_cost_usd=1).wait()
+run.download("./sql-helper")  # PEFT LoRA weights for vLLM or SGLang
 ```
 
-Two examples are enough to see the whole loop. The plan warns that they are far too few steps to train a useful model. For a real run, pass a file or a Hugging Face dataset instead of a list: `client.datasets.push("sql", "./train.jsonl")` or `client.datasets.from_hf("HuggingFaceH4/ultrachat_200k", split="train_sft")`.
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, recipes } from "@gradiated/grad";
+
+const grad = new Grad(); // reads GRADIATED_PROFILE or GRADIATED_API_KEY
+const dataset = await grad.datasets.push("sql-quickstart", [
+  {
+    messages: [
+      { role: "user", content: "Count active users from yesterday." },
+      {
+        role: "assistant",
+        content:
+          "SELECT count(*) FROM users WHERE active_at >= current_date - 1;",
+      },
+    ],
+  },
+  {
+    messages: [
+      { role: "user", content: "Total revenue by plan this month." },
+      {
+        role: "assistant",
+        content: "SELECT plan, sum(amount_usd) FROM invoices GROUP BY plan;",
+      },
+    ],
+  },
+]);
+const recipe = recipes.sft({ model: "test/tiny-qwen3" }); // qwen/qwen3-8b on a GPU
+
+console.log(await grad.runs.plan({ dataset, name: "sql-helper", recipe })); // $0 preview
+
+const run = await grad.runs
+  .create({ dataset, name: "sql-helper", recipe, maxCostUsd: 1 })
+  .wait();
+await run.download("./sql-helper.grad.tar.gz"); // the bundle, verified against its SHA-256
+```
 
   </DocsCodeTab>
-  <DocsCodeTab label="Train a router">
+  <DocsCodeTab label="Go">
+
+```go
+client := grad.NewClient() // reads GRADIATED_PROFILE or GRADIATED_API_KEY
+dataset, err := client.Datasets.Push(ctx, "sql-quickstart", []grad.Trajectory{
+	{Messages: []grad.Message{{Role: "user", Content: "Count active users from yesterday."}, {Role: "assistant", Content: "SELECT count(*) FROM users WHERE active_at >= current_date - 1;"}}},
+	{Messages: []grad.Message{{Role: "user", Content: "Total revenue by plan this month."}, {Role: "assistant", Content: "SELECT plan, sum(amount_usd) FROM invoices GROUP BY plan;"}}},
+})
+if err != nil {
+	log.Fatal(err)
+}
+params := grad.RunParams{Dataset: dataset, Name: "sql-helper", MaxCostUSD: 1,
+	Recipe: grad.SFTRecipe{Common: grad.Common{Model: "test/tiny-qwen3"}}} // qwen/qwen3-8b on a GPU
+
+plan, err := client.Runs.Plan(ctx, params) // $0 preview
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(plan)
+
+run, err := client.Runs.Create(ctx, params).Wait(ctx)
+if err != nil {
+	log.Fatal(err)
+}
+_, _ = run.Download(ctx, "./sql-helper.grad.tar.gz") // the bundle, verified against its SHA-256
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Rust">
+
+```rust
+use grad::{Client, PlanRunRequest, RecipeKind, RecipeSpec, WaitOptions};
+use serde_json::json;
+
+let client = Client::new(); // reads GRADIATED_PROFILE or GRADIATED_API_KEY
+client.datasets().push("sql-quickstart", &[
+    json!({"messages": [{"role": "user", "content": "Count active users from yesterday."}, {"role": "assistant", "content": "SELECT count(*) FROM users WHERE active_at >= current_date - 1;"}]}),
+    json!({"messages": [{"role": "user", "content": "Total revenue by plan this month."}, {"role": "assistant", "content": "SELECT plan, sum(amount_usd) FROM invoices GROUP BY plan;"}]}),
+]).await?;
+let recipe = RecipeSpec::new(RecipeKind::Sft).model("test/tiny-qwen3"); // qwen/qwen3-8b on a GPU
+let req = PlanRunRequest::new("sql-quickstart", "sql-helper", recipe).max_cost_usd(1.0);
+
+let plan = client.runs().plan(&req).await?; // $0 preview
+println!("~${:.4} for {} steps", plan.estimated_cost_usd, plan.estimated_steps);
+
+let run = client.runs().create(&req, None).await?;
+let run = client.runs().wait(&run.id, &WaitOptions::default()).await?;
+println!("{} {}", run.status, run.artifact_id.unwrap_or_default());
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+printf '%s\n' \
+  '{"messages":[{"role":"user","content":"Count active users from yesterday."},{"role":"assistant","content":"SELECT count(*) FROM users WHERE active_at >= current_date - 1;"}]}' \
+  '{"messages":[{"role":"user","content":"Total revenue by plan this month."},{"role":"assistant","content":"SELECT plan, sum(amount_usd) FROM invoices GROUP BY plan;"}]}' \
+  > sql.jsonl
+grad datasets push sql-quickstart sql.jsonl
+grad train --dataset sql-quickstart --name sql-helper --recipe sft --model test/tiny-qwen3 --dry-run
+grad train --dataset sql-quickstart --name sql-helper --recipe sft --model test/tiny-qwen3 --max-cost-usd 1 --wait
+grad artifacts download sql-helper@latest --output ./sql-helper
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+The plan warns that two examples are far too few to train a useful model; for real runs push a file (`client.datasets.push("sql", "./train.jsonl")`) or import from Hugging Face (see [SFT](/docs/training/recipes/sft/)). `--wait` follows the run in a full-screen view; this one is replayed from a recorded run:
+
+<DocsRunReplay />
+
+</DocsStep>
+<DocsStep title="Evaluate it against its base model">
+
+Score the fine-tune and its base model on the same prompts, with a judge:
+
+```bash
+curl -LO https://raw.githubusercontent.com/Gradiated/grad/main/examples/support_traces.jsonl
+grad import ./support_traces.jsonl --dataset support-prod
+grad train --dataset support-prod --name support-sft --recipe sft --model test/tiny-qwen3 --max-cost-usd 1 --wait
+printf -- '- name: overlap\n  kind: judge\n  model: test/tiny-judge\n' > rubric.yaml
+grad eval --name sft-vs-base --models support-sft@latest,test/tiny-qwen3 --dataset support-prod \
+  --rubric rubric.yaml --limit 20 --baseline test/tiny-qwen3 --wait
+```
+
+`grad eval` prints a report with each model's mean score and its difference from the baseline. The SDKs have `ev.summary_table()`, and the web UI (`grad ui`) an Evals page. [Evaluations](/docs/training/evaluations/) covers rubrics, judges and code scorers.
+
+</DocsStep>
+<DocsStep title="Train a router on your traces">
+
+A router learns which model to call per request from scores you already have. `support_traces.jsonl` is an OpenAI chat export with a `resolved` score on each record:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
 
 ```python
 from grad import Grad
 from grad.recipes import RouterRecipe
 
 client = Grad()
-dataset = client.datasets.create("support-prod")
+dataset = client.datasets.create("support-traces")
 dataset.import_file("./support_traces.jsonl").wait()
 
-run = client.runs.create(dataset=dataset, name="support-router", recipe=RouterRecipe()).wait()
+recipe = RouterRecipe(model="test/tiny-qwen3", rubric="resolved")  # default backbone: qwen/qwen3-0.6b
+run = client.runs.create(dataset=dataset, name="support-router", recipe=recipe, max_cost_usd=1).wait()
 run.download("./support-router")
 ```
 
@@ -70,13 +266,18 @@ run.download("./support-router")
 import { Grad, recipes } from "@gradiated/grad";
 
 const grad = new Grad();
-const dataset = await grad.datasets.create("support-prod");
+const dataset = await grad.datasets.create("support-traces");
 await dataset.importFile("./support_traces.jsonl").wait();
 
 const run = await grad.runs
-  .create({ dataset, name: "support-router", recipe: recipes.router() })
+  .create({
+    dataset,
+    name: "support-router",
+    recipe: recipes.router({ model: "test/tiny-qwen3", rubric: "resolved" }),
+    maxCostUsd: 1,
+  })
   .wait();
-await run.download("./support-router");
+await run.download("./support-router.grad.tar.gz"); // the bundle, verified against its SHA-256
 ```
 
   </DocsCodeTab>
@@ -84,59 +285,42 @@ await run.download("./support-router");
 
 ```go
 client := grad.NewClient()
-dataset, _ := client.Datasets.Create(ctx, "support-prod")
+dataset, _ := client.Datasets.Create(ctx, "support-traces")
 dataset.ImportFile(ctx, "./support_traces.jsonl").Wait(ctx)
 
 run, _ := client.Runs.Create(ctx, grad.RunParams{
-	Dataset: dataset,
-	Name:    "support-router",
-	Recipe:  grad.RouterRecipe{},
+	Dataset:    dataset,
+	Name:       "support-router",
+	Recipe:     grad.RouterRecipe{Common: grad.Common{Model: "test/tiny-qwen3"}, Rubric: "resolved"},
+	MaxCostUSD: 1,
 }).Wait(ctx)
-_, _ = run.Download(ctx, "./support-router")
+_, _ = run.Download(ctx, "./support-router.grad.tar.gz") // the bundle, verified against its SHA-256
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="CLI">
 
 ```bash
-grad local up --dev-models && export GRADIATED_PROFILE=local
-grad import ./support_traces.jsonl --dataset support-prod
-grad train --dataset support-prod --name support-router --recipe router --dry-run
-grad train --dataset support-prod --name support-router --recipe router --wait
+grad import ./support_traces.jsonl --dataset support-traces
+grad train --dataset support-traces --name support-router --recipe router --model test/tiny-qwen3 \
+  --rubric resolved --max-cost-usd 1 --wait
 grad artifacts download support-router@latest --output ./support-router
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
 
-The router examples train on the scores already in your traces. `support_traces.jsonl` is any OpenAI chat JSONL export with a `scores` field per record; the repository ships a synthetic one in `examples/support_traces.jsonl`.
+The run's `eval_report` compares the router with always calling the best model; [Model router](/docs/training/recipes/router/) explains the quality and cost trade-off.
 
-`--wait` follows the run in a full-screen terminal view. This one is replayed from a recorded run:
+</DocsStep>
+<DocsStep title="Serve it and go further">
 
-<DocsRunReplay />
+Every artifact downloads as standard weights. A LoRA loads into vLLM or SGLang on its base model (for a real model, start the stack with `--gpu` and train `qwen/qwen3-8b`); see [Use your trained model](#use-your-trained-model). Stop the stack with `grad local down` (add `--volumes` to delete its data).
 
-## Run it locally
+Next: bring your own traces ([Trajectories](/docs/training/trajectories/)), pick a recipe ([Recipes](/docs/training/recipes/)), or run grad on your cluster ([Self-hosting](/docs/training/self-hosting/)).
 
-The whole loop runs on a laptop with Docker: train a router and a fine-tune, then evaluate the fine-tune against its base model with a judge. `--dev-models` adds tiny, randomly initialised test models and a CPU inference endpoint for evals, so every step finishes in seconds:
-
-```bash
-grad local up --dev-models
-export GRADIATED_PROFILE=local   # the CLI and every SDK now use the local stack
-curl -LO https://raw.githubusercontent.com/Gradiated/grad/main/examples/support_traces.jsonl
-grad import ./support_traces.jsonl --dataset support-prod
-grad train --dataset support-prod --name support-router --recipe router --model test/tiny-qwen3 \
-  --rubric resolved --max-cost-usd 1 --wait
-grad artifacts download support-router@latest --output ./support-router
-
-# Eval an SFT adapter against its base on the same traces, with a judge
-grad train --dataset support-prod --name support-sft --recipe sft --model test/tiny-qwen3 --max-cost-usd 1 --wait
-printf -- '- name: overlap\n  kind: judge\n  model: test/tiny-judge\n' > rubric.yaml
-grad eval --name sft-vs-base --models support-sft@latest,test/tiny-qwen3 --dataset support-prod \
-  --rubric rubric.yaml --limit 20 --baseline test/tiny-qwen3 --wait
-grad local down                  # add --volumes to delete the data
-```
-
-`grad eval` prints the report when it finishes; the SDKs have `ev.summary_table()` and the web UI an Evals page (`grad ui`). The tiny models' answers are noise: the scores check the pipeline, not a model. For real models, start the stack with `--gpu` and use catalog ids such as `qwen/qwen3-8b`.
+</DocsStep>
+</DocsSteps>
 
 ## Where to start
 
@@ -186,7 +370,7 @@ go get github.com/Gradiated/grad/sdks/go@latest
   <DocsCodeTab label="Rust">
 
 ```bash
-cargo add grad-sdk --git https://github.com/Gradiated/grad --tag v0.2.0-alpha.6
+cargo add grad-sdk --git https://github.com/Gradiated/grad --tag v0.2.0-alpha.7
 ```
 
   </DocsCodeTab>
@@ -194,13 +378,13 @@ cargo add grad-sdk --git https://github.com/Gradiated/grad --tag v0.2.0-alpha.6
 
 ```bash
 brew install gradiated/tap/grad   # macOS and Linux
-# or: cargo install --locked --git https://github.com/Gradiated/grad --tag v0.2.0-alpha.6 grad-cli
+# or: cargo install --locked --git https://github.com/Gradiated/grad --tag v0.2.0-alpha.7 grad-cli
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Until 0.2.0 is out every release is a prerelease: pip, npm, `go get @latest` and Homebrew install the newest one (0.2.0-alpha.6) as they are. crates.io still has 0.2.0-alpha.3, so install the Rust crate and the CLI from the release tag with Cargo. Release binaries of the CLI are on [GitHub Releases](https://github.com/Gradiated/grad/releases). The Rust crate is published as `grad-sdk` and imported as `grad` (`use grad::Client;`). To try unreleased changes, install from the repository instead, for example `pip install "grad-sdk @ git+https://github.com/Gradiated/grad#subdirectory=sdks/python"` or `cargo install --locked --git https://github.com/Gradiated/grad grad-cli`.
+Until 0.2.0 is out every release is a prerelease: pip, npm, `go get @latest` and Homebrew install the newest one (0.2.0-alpha.7) as they are. crates.io still has 0.2.0-alpha.3, so install the Rust crate and the CLI from the release tag with Cargo. Release binaries of the CLI are on [GitHub Releases](https://github.com/Gradiated/grad/releases). The Rust crate is published as `grad-sdk` and imported as `grad` (`use grad::Client;`). To try unreleased changes, install from the repository instead, for example `pip install "grad-sdk @ git+https://github.com/Gradiated/grad#subdirectory=sdks/python"` or `cargo install --locked --git https://github.com/Gradiated/grad grad-cli`.
 
 Then start a local stack (it needs Docker with the Compose plugin) and point the CLI and SDKs at it:
 

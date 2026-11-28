@@ -19,7 +19,7 @@ During training, the model reads `context` + each question to see what it _would
 
 ## Train a Cartridge (`CartridgeRecipe`)
 
-Pass your model, the `context` you want to compress, and a dataset of example prompts (you can also pass `teacher=` to copy a larger Qwen3 model that shares the tokenizer, such as `qwen/qwen3-32b`):
+Pass your model, the `context` you want to compress, and a dataset of example prompts (you can also pass `teacher=` to copy a larger Qwen3 model that shares the tokenizer, such as `qwen/qwen3-14b`; the teacher loads next to the student on one GPU, so a 32B teacher doesn't fit):
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">

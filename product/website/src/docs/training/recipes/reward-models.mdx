@@ -94,7 +94,7 @@ grad train --dataset sql-preferences --name sql-verifier --recipe reward-model -
 
 - **`model`:** start with a fast 4B to 8B model (`"qwen/qwen3-8b"`). A reward model scores an output in a single forward pass, so an 8B model runs in milliseconds.
 - **`adapter`:** `adapters.LoRA(rank=32)` on the backbone by default, trained together with the scoring head. The artifact always keeps the adapter separate (`merge_on_export` doesn't apply).
-- **`rubric`:** also train on single scored answers. Pass the name of a score in `[0, 1]` already on your records (`rubric="resolved"`, or `--score resolved` in the CLI), and records that end in an assistant turn with that score train the head pointwise, next to the pairs.
+- **`rubric`:** also train on single scored answers. Pass the name of a score in `[0, 1]` already on your records (a `Judge` or validators are refused with `422 reward_rubric_unsupported`; score the records first with `dataset.score()`) (`rubric="resolved"`, or `--score resolved` in the CLI), and records that end in an assistant turn with that score train the head pointwise, next to the pairs.
 
 Pairs always stay together in the same train or eval split, and `run.artifact` is the checkpoint with the best held-out pair accuracy (`run.eval_report.preference_accuracy`; the report also has `reward_margin` and, with `rubric=`, `pointwise_brier`). Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#rewardmodelrecipe).
 

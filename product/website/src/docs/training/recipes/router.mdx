@@ -73,7 +73,7 @@ const run = await grad.runs
   .create({ dataset, name: "support-router", recipe })
   .wait();
 
-console.log(run.artifact.id, run.evalReport.paretoSummary);
+console.log(run.artifact.id, run.evalReport?.paretoSummary);
 ```
 
   </DocsCodeTab>

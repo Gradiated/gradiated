@@ -201,7 +201,7 @@ In a terminal, `grad train --wait` and `grad runs watch RUN` open a full-screen 
 
 Every run reports what it is doing as a **phase**: `queued`, `waiting_for_compute` (no worker has picked it up yet), `starting` (a worker claimed it; the event names its GPU model and memory), `loading_model`, then `training`, `evaluating` and `checkpointing` as they alternate, `uploading` and `completing`. `run.phase` and `run.phase_since` hold the current one. While a run waits for compute, `run.workers_online` counts the workers that could take it, and on Gradiated Cloud `run.autoscaling` is true while new workers start. A queued run also says why it waits: `run.queue_position` is about how many runs start before it (workers are shared fairly between workspaces, so this counts other workspaces' runs too), and `run.queue_message` is a ready line such as `Queued behind 3 runs`, `Queued: workspace concurrency limit (8 running)` (your workspace already runs as many as it may at once) or `Waiting for a GPU with ≥46 GB; online workers have 24 GB`. A workspace may have 500 queued jobs at once; creating another answers `429 queue_limit`.
 
-`run.wait()` shows this for you: a live progress line in a terminal (phase, step, loss, cost and ETA), a small display that updates itself in Jupyter, and nothing in scripts, CI or logs. Pass `progress=False` to turn it off, or `GRAD_NO_PROGRESS=1`. `grad train --wait` prints the same lines (or the full-screen view in a terminal), for example `Queued behind 3 runs — 2m 10s` or `Waiting for a GPU (0 workers online) — 2m 10s`.
+`run.wait()` shows this for you: a live progress line in a terminal (phase, step, loss, cost and ETA), a small display that updates itself in Jupyter, and nothing in scripts, CI or logs. Pass `progress=False` to turn it off, or `GRAD_NO_PROGRESS=1`. `grad train --wait` prints the same lines (or the full-screen view in a terminal), for example `Queued behind 3 runs — 2m 10s` or `Waiting for a worker (none online) — 2m 10s`.
 
 For your own display or alerting, read the typed events. Each has a stable `type` (`phase`, `metric`, `checkpoint`, `attempt`, `warning`, `log`, and `completed` last), and the stream reconnects on its own after a dropped connection without repeating events:
 
@@ -230,6 +230,7 @@ run.wait(on_event=lambda e: print(e.type, e.seq), progress=False, raise_on_failu
   <DocsCodeTab label="TypeScript">
 
 ```ts
+const run = await grad.runs.get("run_01J9X");
 for await (const event of grad.runs.events(run.id, { follow: true })) {
   if (event.type === "phase") console.log(event.phase, event.step);
   if (event.type === "attempt") console.log(event.message);
@@ -240,6 +241,10 @@ for await (const event of grad.runs.events(run.id, { follow: true })) {
   <DocsCodeTab label="Go">
 
 ```go
+run, err := client.Runs.Get(ctx, "run_01J9X")
+if err != nil {
+	return err
+}
 for ev, err := range client.Runs.Events(ctx, run.ID, grad.EventsOptions{Follow: true}) {
 	if err != nil {
 		return err
@@ -254,6 +259,9 @@ for ev, err := range client.Runs.Events(ctx, run.ID, grad.EventsOptions{Follow: 
   <DocsCodeTab label="Rust">
 
 ```rust
+use grad::RunEvent;
+
+let run = client.runs().get("run_01J9X").await?;
 let mut events = client.runs().events(&run.id, true);
 while let Some(ev) = events.next().await {
     if let RunEvent::Attempt(a) = ev? {

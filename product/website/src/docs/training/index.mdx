@@ -35,7 +35,7 @@ run = client.runs.create(dataset=dataset, name="sql-helper", recipe=recipe, max_
 run.download("./sql-helper")  # LoRA weights for vLLM / SGLang
 ```
 
-Two examples are enough to see the whole loop. The plan warns that they leave no eval split and too few steps to train a useful model. For a real run, pass a file or a Hugging Face dataset instead of a list: `client.datasets.push("sql", "./train.jsonl")` or `client.datasets.from_hf("HuggingFaceH4/ultrachat_200k", split="train_sft")`.
+Two examples are enough to see the whole loop. The plan warns that they are far too few steps to train a useful model. For a real run, pass a file or a Hugging Face dataset instead of a list: `client.datasets.push("sql", "./train.jsonl")` or `client.datasets.from_hf("HuggingFaceH4/ultrachat_200k", split="train_sft")`.
 
   </DocsCodeTab>
   <DocsCodeTab label="Train a router">
@@ -100,8 +100,11 @@ grad artifacts download support-router@latest --output ./support-router
 
 <DocsCallout label="Coming soon on Gradiated Cloud">
   `api.gradiated.com` doesn't serve training yet. Run these against a local
-  stack: `grad local up`, then `export GRADIATED_PROFILE=local` (see [Install
-  and connect](#install-and-connect)).
+  stack: `grad local up --dev-models`, then `export GRADIATED_PROFILE=local`
+  (see [Install and connect](#install-and-connect)). Its trainer runs on your
+  CPU, so pass `model="test/tiny-qwen3"` (`--model test/tiny-qwen3` in the CLI):
+  the run finishes in seconds, while `qwen/qwen3-8b` needs a GPU (`grad local up
+  --gpu`) and the plan warns about it.
 </DocsCallout>
 
 The router examples train on the scores already in your traces. `support_traces.jsonl` is any OpenAI chat JSONL export with a `scores` field per record; the repository ships a synthetic one in `examples/support_traces.jsonl`.
@@ -137,21 +140,21 @@ Every workflow in `grad` follows the same loop, whether you are training a route
   <DocsCodeTab label="Python">
 
 ```bash
-pip install --pre grad-sdk
+pip install grad-sdk
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="TypeScript">
 
 ```bash
-npm install @gradiated/grad@next
+npm install @gradiated/grad
 ```
 
   </DocsCodeTab>
   <DocsCodeTab label="Go">
 
 ```bash
-go get github.com/Gradiated/grad/sdks/go@v0.2.0-alpha.3
+go get github.com/Gradiated/grad/sdks/go@latest
 ```
 
   </DocsCodeTab>
@@ -165,13 +168,14 @@ cargo add grad-sdk@0.2.0-alpha.3
   <DocsCodeTab label="CLI">
 
 ```bash
-cargo install --locked grad-cli@0.2.0-alpha.3
+brew install gradiated/tap/grad   # macOS and Linux
+# or: cargo install --locked grad-cli@0.2.0-alpha.3
 ```
 
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Until 0.2.0 is out the packages are prereleases, so pip needs `--pre`, npm the `next` tag, and Go and Cargo the version. The Rust crate is published as `grad-sdk` and imported as `grad` (`use grad::Client;`). To try unreleased changes, install from the repository instead, for example `pip install "grad-sdk @ git+https://github.com/Gradiated/grad#subdirectory=sdks/python"` or `cargo install --locked --git https://github.com/Gradiated/grad grad-cli`.
+Until 0.2.0 is out every release is a prerelease: pip, npm, `go get @latest` and Homebrew install the newest one as they are, and Cargo needs the version. Release binaries of the CLI are on [GitHub Releases](https://github.com/Gradiated/grad/releases). The Rust crate is published as `grad-sdk` and imported as `grad` (`use grad::Client;`). To try unreleased changes, install from the repository instead, for example `pip install "grad-sdk @ git+https://github.com/Gradiated/grad#subdirectory=sdks/python"` or `cargo install --locked --git https://github.com/Gradiated/grad grad-cli`.
 
 Then start a local stack (it needs Docker with the Compose plugin) and point the CLI and SDKs at it:
 

@@ -113,6 +113,94 @@ run.download("./sql-helper")  # PEFT LoRA weights for vLLM or SGLang
 ```
 
   </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, recipes } from "@gradiated/grad";
+
+const grad = new Grad(); // reads GRADIATED_PROFILE or GRADIATED_API_KEY
+const dataset = await grad.datasets.push("sql-quickstart", [
+  {
+    messages: [
+      { role: "user", content: "Count active users from yesterday." },
+      {
+        role: "assistant",
+        content:
+          "SELECT count(*) FROM users WHERE active_at >= current_date - 1;",
+      },
+    ],
+  },
+  {
+    messages: [
+      { role: "user", content: "Total revenue by plan this month." },
+      {
+        role: "assistant",
+        content: "SELECT plan, sum(amount_usd) FROM invoices GROUP BY plan;",
+      },
+    ],
+  },
+]);
+const recipe = recipes.sft({ model: "test/tiny-qwen3" }); // qwen/qwen3-8b on a GPU
+
+console.log(await grad.runs.plan({ dataset, name: "sql-helper", recipe })); // $0 preview
+
+const run = await grad.runs
+  .create({ dataset, name: "sql-helper", recipe, maxCostUsd: 1 })
+  .wait();
+await run.download("./sql-helper.grad.tar.gz"); // the bundle, verified against its SHA-256
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+client := grad.NewClient() // reads GRADIATED_PROFILE or GRADIATED_API_KEY
+dataset, err := client.Datasets.Push(ctx, "sql-quickstart", []grad.Trajectory{
+	{Messages: []grad.Message{{Role: "user", Content: "Count active users from yesterday."}, {Role: "assistant", Content: "SELECT count(*) FROM users WHERE active_at >= current_date - 1;"}}},
+	{Messages: []grad.Message{{Role: "user", Content: "Total revenue by plan this month."}, {Role: "assistant", Content: "SELECT plan, sum(amount_usd) FROM invoices GROUP BY plan;"}}},
+})
+if err != nil {
+	log.Fatal(err)
+}
+params := grad.RunParams{Dataset: dataset, Name: "sql-helper", MaxCostUSD: 1,
+	Recipe: grad.SFTRecipe{Common: grad.Common{Model: "test/tiny-qwen3"}}} // qwen/qwen3-8b on a GPU
+
+plan, err := client.Runs.Plan(ctx, params) // $0 preview
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(plan)
+
+run, err := client.Runs.Create(ctx, params).Wait(ctx)
+if err != nil {
+	log.Fatal(err)
+}
+_, _ = run.Download(ctx, "./sql-helper.grad.tar.gz") // the bundle, verified against its SHA-256
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Rust">
+
+```rust
+use grad::{Client, PlanRunRequest, RecipeKind, RecipeSpec, WaitOptions};
+use serde_json::json;
+
+let client = Client::new(); // reads GRADIATED_PROFILE or GRADIATED_API_KEY
+client.datasets().push("sql-quickstart", &[
+    json!({"messages": [{"role": "user", "content": "Count active users from yesterday."}, {"role": "assistant", "content": "SELECT count(*) FROM users WHERE active_at >= current_date - 1;"}]}),
+    json!({"messages": [{"role": "user", "content": "Total revenue by plan this month."}, {"role": "assistant", "content": "SELECT plan, sum(amount_usd) FROM invoices GROUP BY plan;"}]}),
+]).await?;
+let recipe = RecipeSpec::new(RecipeKind::Sft).model("test/tiny-qwen3"); // qwen/qwen3-8b on a GPU
+let req = PlanRunRequest::new("sql-quickstart", "sql-helper", recipe).max_cost_usd(1.0);
+
+let plan = client.runs().plan(&req).await?; // $0 preview
+println!("~${:.4} for {} steps", plan.estimated_cost_usd, plan.estimated_steps);
+
+let run = client.runs().create(&req, None).await?;
+let run = client.runs().wait(&run.id, &WaitOptions::default()).await?;
+println!("{} {}", run.status, run.artifact_id.unwrap_or_default());
+```
+
   <DocsCodeTab label="CLI">
 
 ```bash
@@ -129,7 +217,7 @@ grad artifacts download sql-helper@latest --output ./sql-helper
   </DocsCodeTab>
 </DocsCodeTabs>
 
-The plan warns that two examples are far too few to train a useful model; for real runs push a file (`client.datasets.push("sql", "./train.jsonl")`) or import from Hugging Face ([SFT](/docs/training/recipes/sft/) has the TypeScript, Go and Rust versions). `--wait` follows the run in a full-screen view; this one is replayed from a recorded run:
+The plan warns that two examples are far too few to train a useful model; for real runs push a file (`client.datasets.push("sql", "./train.jsonl")`) or import from Hugging Face (see [SFT](/docs/training/recipes/sft/)). `--wait` follows the run in a full-screen view; this one is replayed from a recorded run:
 
 <DocsRunReplay />
 

@@ -2161,6 +2161,11 @@
   text-transform: uppercase;
 }
 
+.gr-api-sample-source {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
 .gr-api-sample-modes {
   display: inline-flex;
   padding: 2px;

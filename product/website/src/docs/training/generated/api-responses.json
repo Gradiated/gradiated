@@ -1,0 +1,1935 @@
+{
+ "server": "0.2.0-alpha.7",
+ "responses": {
+  "createApiKey": {
+   "status": 201,
+   "body": {
+    "key": {
+     "id": "key_a03e56d554584935516f81fd",
+     "workspace_id": "ws_e2e",
+     "name": "ci",
+     "prefix": "grad_d7948f4",
+     "scopes": [
+      "datasets:write",
+      "runs:write"
+     ],
+     "created_at": "2026-11-28T11:04:35.616Z",
+     "revoked_at": null
+    },
+    "secret": "grad_\u2026"
+   }
+  },
+  "createArtifactImport": {
+   "status": 202,
+   "body": {
+    "id": "imp_71a52cc514c3b2049a12f6df",
+    "workspace_id": "ws_e2e",
+    "status": "queued",
+    "name": "support-lora",
+    "base_model": "qwen/qwen3-8b",
+    "format": "peft_lora",
+    "source": {
+     "kind": "hf",
+     "upload_id": null,
+     "repo": "acme/support-lora",
+     "revision": "main"
+    },
+    "artifact_id": null,
+    "error": null,
+    "error_code": null,
+    "attempt": 0,
+    "created_at": "2026-11-28T11:04:36.119Z",
+    "updated_at": "2026-11-28T11:04:36.119Z"
+   }
+  },
+  "createDataset": {
+   "status": 201,
+   "body": {
+    "id": "ds_cd4c3100a9757c14db6f7e53",
+    "workspace_id": "ws_e2e",
+    "name": "support-prod",
+    "version": 0,
+    "record_count": 0,
+    "metadata": {},
+    "created_at": "2026-11-28T11:04:35.629Z",
+    "updated_at": "2026-11-28T11:04:35.629Z"
+   }
+  },
+  "createDatasetImport": {
+   "status": 202,
+   "body": {
+    "id": "imp_fa9a0be94b96251fb8e7797c",
+    "workspace_id": "ws_e2e",
+    "dataset": "support-prod",
+    "status": "queued",
+    "source": {
+     "kind": "hf",
+     "repo": "HuggingFaceH4/ultrachat_200k",
+     "limit": 1000,
+     "split": "train_sft",
+     "columns": {}
+    },
+    "connector": "auto",
+    "attempt": 0,
+    "imported_count": 0,
+    "dropped_count": 0,
+    "detected_scores": [],
+    "drop_reasons": [],
+    "dataset_version": null,
+    "error": null,
+    "created_at": "2026-11-28T11:04:36.013Z",
+    "updated_at": "2026-11-28T11:04:36.013Z"
+   }
+  },
+  "createDatasetSource": {
+   "status": 201,
+   "body": {
+    "id": "src_5ba5c7f81cc450544d36b62f",
+    "workspace_id": "ws_e2e",
+    "dataset": "support-prod",
+    "provider": {
+     "kind": "langfuse",
+     "host": null,
+     "secret": "langfuse",
+     "project": null,
+     "filters": {
+      "environment": [
+       "production"
+      ],
+      "has_feedback": true
+     }
+    },
+    "schedule": "*/15 * * * *",
+    "sample_rate": 1,
+    "max_records_per_sync": null,
+    "max_records_per_day": null,
+    "records_today": 0,
+    "version_interval": 900,
+    "pending_records": 0,
+    "next_sync_at": "2026-11-28T11:15:00.000Z",
+    "status": "active",
+    "paused_reason": null,
+    "last_error": null,
+    "last_error_at": null,
+    "consecutive_failures": 0,
+    "pending_full": false,
+    "last_synced_at": null,
+    "last_sync": null,
+    "created_at": "2026-11-28T11:04:36.198Z",
+    "updated_at": "2026-11-28T11:04:36.198Z"
+   }
+  },
+  "createRun": {
+   "status": 202,
+   "body": {
+    "id": "run_65fd31940655191642cea1b8",
+    "workspace_id": "ws_e2e",
+    "name": "support-sft",
+    "dataset_id": "ds_cd4c3100a9757c14db6f7e53",
+    "dataset_name": "support-prod",
+    "dataset_version": 1,
+    "recipe_kind": "sft",
+    "status": "queued",
+    "resolved_config": {
+     "lr": 0.000125,
+     "name": "support-sft",
+     "model": "qwen/qwen3-8b",
+     "split": {
+      "seed": 42,
+      "strategy": "by_session",
+      "eval_records": 0,
+      "eval_fraction": 0.1,
+      "train_records": 1
+     },
+     "epochs": 1,
+     "select": "best",
+     "warmup": 0.03,
+     "adapter": {
+      "kind": "lora",
+      "rank": 32,
+      "alpha": 32,
+      "merge_on_export": false
+     },
+     "dataset": "support-prod",
+     "schedule": "linear",
+     "thinking": "auto",
+     "train_on": "last",
+     "lr_source": "auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling",
+     "optimizer": {
+      "kind": "adamw",
+      "betas": [
+       0.9,
+       0.95
+      ],
+      "grad_clip": 1,
+      "weight_decay": 0
+     },
+     "reduction": "per_example",
+     "batch_size": 8,
+     "recipe_kind": "sft",
+     "rule_version": "auto@2",
+     "base_artifact": null,
+     "label_eval_id": null,
+     "recipe_params": {},
+     "dataset_version": 1,
+     "eval_every_steps": 1,
+     "preserve_thinking": false,
+     "template_revision": "qwen3@3",
+     "checkpoint_ttl_days": 30,
+     "checkpoint_every_steps": 1
+    },
+    "max_cost_usd": 5,
+    "price_per_million_tokens": 0.4,
+    "tokens_processed": 0,
+    "cost_usd": 0,
+    "current_step": 0,
+    "total_steps": 1,
+    "attempt": 0,
+    "max_attempts": 10,
+    "phase": "queued",
+    "phase_since": "2026-11-28T11:04:36.079Z",
+    "last_interruption": null,
+    "workers_online": 0,
+    "autoscaling": false,
+    "queue_position": 0,
+    "queue_message": null,
+    "min_gpu_memory_gb": 36,
+    "latest_metric": null,
+    "eval_report": null,
+    "checkpoint_evals": [],
+    "artifact_id": null,
+    "error": null,
+    "created_at": "2026-11-28T11:04:36.071Z",
+    "updated_at": "2026-11-28T11:04:36.071Z",
+    "finished_at": null,
+    "warnings": [
+     "The eval split is empty; eval metrics will be unavailable. Add records or raise split.eval_fraction.",
+     "1 training example at batch 8 is 1 step per epoch, below the 100 steps we recommend; consider more data, more epochs or a smaller batch_size."
+    ]
+   }
+  },
+  "createUpload": {
+   "status": 201,
+   "body": {
+    "upload_id": "9f2c4e1ab0d3c5e7f9a1b3c5d7e9f1a3b5c7d9e1f3a5b7c9d1e3f5a7b9c1d3e5",
+    "method": "PUT",
+    "url": "https://storage.example.com/grad-test/uploads/ws_e2e/9f2c4e1ab0d3c5e7f9a1b3c5d7e9f1a3b5c7d9e1f3a5b7c9d1e3f5a7b9c1d3e5?X-Amz-Algorithm=\u2026&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=\u2026&X-Amz-Date=\u2026&X-Amz-Expires=\u2026&X-Amz-Signature=\u2026&X-Amz-SignedHeaders=\u2026&x-id=PutObject",
+    "headers": {
+     "content-length": "52431",
+     "x-amz-checksum-sha256": "nyxOGrDTxef5obPF1+nxo7XH2eHzpbfJ0eP1p7nB0+U="
+    },
+    "expires_at": "2026-11-28T17:04:36.001Z"
+   }
+  },
+  "filterDataset": {
+   "status": 201,
+   "body": {
+    "id": "ds_b8332bda80b3b719e5309fcd",
+    "workspace_id": "ws_e2e",
+    "name": "support-good",
+    "version": 1,
+    "record_count": 1,
+    "metadata": {
+     "view": {
+      "filter": {
+       "scores": {
+        "resolved": ">=0.8"
+       }
+      },
+      "source": "support-prod",
+      "version": 1
+     }
+    },
+    "created_at": "2026-11-28T11:04:35.962Z",
+    "updated_at": "2026-11-28T11:04:35.970Z"
+   }
+  },
+  "getArtifact": {
+   "status": 200,
+   "body": {
+    "id": "support-sft@2026-11-28-1",
+    "workspace_id": "ws_e2e",
+    "name": "support-sft",
+    "version": "2026-11-28-1",
+    "run_id": "run_65fd31940655191642cea1b8",
+    "checkpoint_id": null,
+    "base_model": "qwen/qwen3-8b",
+    "recipe_kind": "sft",
+    "format": "reference",
+    "sha256": "22ba95a1a59fa804b1462afa6f4a8852edd069b58763c6ed46e1bf28c898f378",
+    "size_bytes": 1029,
+    "manifest": {
+     "lr": 0.000125,
+     "kind": "final",
+     "seed": 42,
+     "files": {
+      "reference_model.json": "59abd7749fec876cab4e168ea5a73ba432cbd5b568a7c8070258ec7f945b454b"
+     },
+     "format": "reference",
+     "run_id": "run_65fd31940655191642cea1b8",
+     "schema": "grad.artifact/1",
+     "select": "last",
+     "status": "completed",
+     "attempt": 1,
+     "backend": "reference",
+     "dataset": "support-prod",
+     "lr_source": "auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling",
+     "base_model": "qwen/qwen3-8b",
+     "created_by": {
+      "name": "grad-trainer",
+      "version": "0.2.0-alpha.7"
+     },
+     "deployable": false,
+     "provenance": {
+      "run_id": "run_65fd31940655191642cea1b8",
+      "source": "run"
+     },
+     "recipe_kind": "sft",
+     "total_steps": 1,
+     "rule_version": "auto@2",
+     "tokens_total": 21,
+     "base_artifact": null,
+     "selected_step": 1,
+     "format_version": 2,
+     "base_model_repo": null,
+     "dataset_version": 1,
+     "resolved_config": {
+      "lr": 0.000125,
+      "name": "support-sft",
+      "model": "qwen/qwen3-8b",
+      "split": {
+       "seed": 42,
+       "strategy": "by_session",
+       "eval_records": 0,
+       "eval_fraction": 0.1,
+       "train_records": 1
+      },
+      "epochs": 1,
+      "select": "best",
+      "warmup": 0.03,
+      "adapter": {
+       "kind": "lora",
+       "rank": 32,
+       "alpha": 32,
+       "merge_on_export": false
+      },
+      "dataset": "support-prod",
+      "schedule": "linear",
+      "thinking": "auto",
+      "train_on": "last",
+      "lr_source": "auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling",
+      "optimizer": {
+       "kind": "adamw",
+       "betas": [
+        0.9,
+        0.95
+       ],
+       "grad_clip": 1,
+       "weight_decay": 0
+      },
+      "reduction": "per_example",
+      "batch_size": 8,
+      "recipe_kind": "sft",
+      "rule_version": "auto@2",
+      "base_artifact": null,
+      "label_eval_id": null,
+      "recipe_params": {},
+      "dataset_version": 1,
+      "eval_every_steps": 1,
+      "preserve_thinking": false,
+      "template_revision": "qwen3@3",
+      "checkpoint_ttl_days": 30,
+      "checkpoint_every_steps": 1
+     },
+     "steps_completed": 1,
+     "eval_report_sha256": "782d3768b9a29b35b624e5fb6e013ad89598c2cd770421c0a5b7db8be230d56c",
+     "base_model_revision": null
+    },
+    "provenance": {
+     "source": "run",
+     "run_id": "run_65fd31940655191642cea1b8",
+     "uploader": null,
+     "uri": null
+    },
+    "eval_report": {
+     "warnings": [
+      "Reference test backend: the base model was not trained; the artifact is not deployable.",
+      "No held-out examples: eval metrics are null and select='last' was used."
+     ],
+     "best_step": null,
+     "eval_loss": null,
+     "final_step": 1,
+     "metric_mode": "min",
+     "metric_name": "eval_loss",
+     "eval_records": 0,
+     "eval_examples": 0,
+     "selected_step": 1,
+     "train_records": 1,
+     "train_examples": 1,
+     "reference_backend": true
+    },
+    "pins": [],
+    "created_at": "2026-11-28T11:04:36.470Z"
+   }
+  },
+  "getArtifactDownloadUrl": {
+   "status": 200,
+   "body": {
+    "url": "https://storage.example.com/grad-test/artifacts/ws_e2e/22ba95a1a59fa804b1462afa6f4a8852edd069b58763c6ed46e1bf28c898f378?X-Amz-Algorithm=\u2026&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=\u2026&X-Amz-Date=\u2026&X-Amz-Expires=\u2026&X-Amz-Signature=\u2026&X-Amz-SignedHeaders=\u2026&response-content-disposition=attachment%3B%20filename%3D%22support-sft-2026-11-28-1.grad.tar.gz%22%3B%20filename%2A%3DUTF-8%27%27support\u2026",
+    "expires_at": "2026-11-28T11:19:37.360Z",
+    "sha256": "22ba95a1a59fa804b1462afa6f4a8852edd069b58763c6ed46e1bf28c898f378",
+    "size_bytes": 1029,
+    "filename": "support-sft-2026-11-28-1.grad.tar.gz"
+   }
+  },
+  "getArtifactImport": {
+   "status": 200,
+   "body": {
+    "id": "imp_71a52cc514c3b2049a12f6df",
+    "workspace_id": "ws_e2e",
+    "status": "failed",
+    "name": "support-lora",
+    "base_model": "qwen/qwen3-8b",
+    "format": "peft_lora",
+    "source": {
+     "kind": "hf",
+     "upload_id": null,
+     "repo": "acme/support-lora",
+     "revision": "main"
+    },
+    "artifact_id": null,
+    "error": "Can't import 'acme/support-lora' from the Hugging Face Hub: offline mode is on (HF_HUB_OFFLINE/GRAD_OFFLINE). Download it elsewhere and use `grad artifacts upload` instead.",
+    "error_code": "source_unavailable",
+    "attempt": 1,
+    "created_at": "2026-11-28T11:04:36.119Z",
+    "updated_at": "2026-11-28T11:04:36.535Z"
+   }
+  },
+  "getDataset": {
+   "status": 200,
+   "body": {
+    "id": "ds_cd4c3100a9757c14db6f7e53",
+    "workspace_id": "ws_e2e",
+    "name": "support-prod",
+    "version": 2,
+    "record_count": 1,
+    "metadata": {},
+    "created_at": "2026-11-28T11:04:35.629Z",
+    "updated_at": "2026-11-28T11:04:36.756Z"
+   }
+  },
+  "getImport": {
+   "status": 200,
+   "body": {
+    "id": "imp_fa9a0be94b96251fb8e7797c",
+    "workspace_id": "ws_e2e",
+    "dataset": "support-prod",
+    "status": "failed",
+    "source": {
+     "kind": "hf",
+     "repo": "HuggingFaceH4/ultrachat_200k",
+     "limit": 1000,
+     "split": "train_sft",
+     "columns": {}
+    },
+    "connector": "auto",
+    "attempt": 1,
+    "imported_count": 0,
+    "dropped_count": 0,
+    "detected_scores": [],
+    "drop_reasons": [],
+    "dataset_version": null,
+    "error": "Can't load Hugging Face dataset 'HuggingFaceH4/ultrachat_200k': offline mode is on (HF_HUB_OFFLINE/GRAD_OFFLINE). Download it elsewhere and import the JSONL file instead.",
+    "created_at": "2026-11-28T11:04:36.013Z",
+    "updated_at": "2026-11-28T11:04:36.143Z"
+   }
+  },
+  "getRun": {
+   "status": 200,
+   "body": {
+    "id": "run_65fd31940655191642cea1b8",
+    "workspace_id": "ws_e2e",
+    "name": "support-sft",
+    "dataset_id": "ds_cd4c3100a9757c14db6f7e53",
+    "dataset_name": "support-prod",
+    "dataset_version": 1,
+    "recipe_kind": "sft",
+    "status": "completed",
+    "resolved_config": {
+     "lr": 0.000125,
+     "name": "support-sft",
+     "model": "qwen/qwen3-8b",
+     "split": {
+      "seed": 42,
+      "strategy": "by_session",
+      "eval_records": 0,
+      "eval_fraction": 0.1,
+      "train_records": 1
+     },
+     "epochs": 1,
+     "select": "best",
+     "warmup": 0.03,
+     "adapter": {
+      "kind": "lora",
+      "rank": 32,
+      "alpha": 32,
+      "merge_on_export": false
+     },
+     "dataset": "support-prod",
+     "schedule": "linear",
+     "thinking": "auto",
+     "train_on": "last",
+     "lr_source": "auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling",
+     "optimizer": {
+      "kind": "adamw",
+      "betas": [
+       0.9,
+       0.95
+      ],
+      "grad_clip": 1,
+      "weight_decay": 0
+     },
+     "reduction": "per_example",
+     "batch_size": 8,
+     "recipe_kind": "sft",
+     "rule_version": "auto@2",
+     "base_artifact": null,
+     "label_eval_id": null,
+     "recipe_params": {},
+     "dataset_version": 1,
+     "eval_every_steps": 1,
+     "preserve_thinking": false,
+     "template_revision": "qwen3@3",
+     "checkpoint_ttl_days": 30,
+     "checkpoint_every_steps": 1
+    },
+    "max_cost_usd": 5,
+    "price_per_million_tokens": 0.4,
+    "tokens_processed": 21,
+    "cost_usd": 8e-06,
+    "current_step": 1,
+    "total_steps": 1,
+    "attempt": 1,
+    "max_attempts": 10,
+    "phase": "completing",
+    "phase_since": "2026-11-28T11:04:36.438Z",
+    "last_interruption": null,
+    "workers_online": null,
+    "autoscaling": null,
+    "queue_position": null,
+    "queue_message": null,
+    "min_gpu_memory_gb": 36,
+    "latest_metric": {
+     "lr": 0.000125,
+     "seq": 11,
+     "loss": 0.6931471805599453,
+     "step": 1,
+     "epoch": 0,
+     "tokens": 21,
+     "attempt": 1,
+     "cost_usd": 8e-06,
+     "grad_norm": 0.7071067811865476,
+     "timestamp": "2026-11-28T11:04:36.290763Z",
+     "tokens_per_sec": 266842.34367437265
+    },
+    "eval_report": {
+     "warnings": [
+      "Reference test backend: the base model was not trained; the artifact is not deployable.",
+      "No held-out examples: eval metrics are null and select='last' was used."
+     ],
+     "best_step": null,
+     "eval_loss": null,
+     "final_step": 1,
+     "metric_mode": "min",
+     "metric_name": "eval_loss",
+     "eval_records": 0,
+     "eval_examples": 0,
+     "selected_step": 1,
+     "train_records": 1,
+     "train_examples": 1,
+     "reference_backend": true
+    },
+    "checkpoint_evals": [],
+    "artifact_id": "support-sft@2026-11-28-1",
+    "error": null,
+    "created_at": "2026-11-28T11:04:36.071Z",
+    "updated_at": "2026-11-28T11:04:36.483Z",
+    "finished_at": "2026-11-28T11:04:36.460Z"
+   }
+  },
+  "getSecret": {
+   "status": 200,
+   "body": {
+    "name": "langfuse",
+    "workspace_id": "ws_e2e",
+    "allowed_hosts": [
+     "cloud.langfuse.com",
+     "us.cloud.langfuse.com"
+    ],
+    "created_at": "2026-11-28T11:04:36.172Z",
+    "updated_at": "2026-11-28T11:04:36.172Z"
+   }
+  },
+  "getSource": {
+   "status": 200,
+   "body": {
+    "id": "src_5ba5c7f81cc450544d36b62f",
+    "workspace_id": "ws_e2e",
+    "dataset": "support-prod",
+    "provider": {
+     "kind": "langfuse",
+     "host": null,
+     "secret": "langfuse",
+     "project": null,
+     "filters": {
+      "environment": [
+       "production"
+      ],
+      "has_feedback": true
+     }
+    },
+    "schedule": "*/15 * * * *",
+    "sample_rate": 0.5,
+    "max_records_per_sync": null,
+    "max_records_per_day": null,
+    "records_today": 0,
+    "version_interval": 900,
+    "pending_records": 0,
+    "next_sync_at": "2026-11-28T11:15:00.000Z",
+    "status": "active",
+    "paused_reason": null,
+    "last_error": null,
+    "last_error_at": null,
+    "consecutive_failures": 0,
+    "pending_full": false,
+    "last_synced_at": null,
+    "last_sync": {
+     "import_id": "imp_8c131bd5b6b4ee085a96ee97",
+     "status": "running",
+     "full": false,
+     "dataset_version": null,
+     "error": null,
+     "created_at": "2026-11-28T11:04:36.231Z",
+     "finished_at": null
+    },
+    "created_at": "2026-11-28T11:04:36.198Z",
+    "updated_at": "2026-11-28T11:04:36.233Z"
+   }
+  },
+  "getUsageSummary": {
+   "status": 200,
+   "body": {
+    "from": "2026-11-01T00:00:00.000Z",
+    "to": "2026-12-01T00:00:00.000Z",
+    "cost_usd": 8e-06,
+    "tokens": 21,
+    "records": 1,
+    "by_kind": [
+     {
+      "kind": "training",
+      "cost_usd": 8e-06,
+      "tokens": 21,
+      "records": 1
+     }
+    ],
+    "top_runs": [
+     {
+      "id": "run_65fd31940655191642cea1b8",
+      "name": "support-sft",
+      "kind": "training",
+      "cost_usd": 8e-06,
+      "tokens": 21
+     }
+    ],
+    "top_evals": [],
+    "group_by": null,
+    "groups": []
+   }
+  },
+  "listApiKeys": {
+   "status": 200,
+   "body": {
+    "data": [
+     {
+      "id": "key_a03e56d554584935516f81fd",
+      "workspace_id": "ws_e2e",
+      "name": "ci",
+      "prefix": "grad_d7948f4",
+      "scopes": [
+       "datasets:write",
+       "runs:write"
+      ],
+      "created_at": "2026-11-28T11:04:35.616Z",
+      "revoked_at": null
+     }
+    ],
+    "next_cursor": null
+   }
+  },
+  "listArtifacts": {
+   "status": 200,
+   "body": {
+    "data": [
+     {
+      "id": "support-sft-step-400@2026-11-28-1",
+      "workspace_id": "ws_e2e",
+      "name": "support-sft-step-400",
+      "version": "2026-11-28-1",
+      "run_id": "run_65fd31940655191642cea1b8",
+      "checkpoint_id": "ckpt_7d40bb7700bff2ef4815299f",
+      "base_model": "qwen/qwen3-8b",
+      "recipe_kind": "sft",
+      "format": "reference",
+      "sha256": "4581446c5925664036813b8758d1331e5d0a0a01d8955ad5af83d7dd8cd7165d",
+      "size_bytes": 1343,
+      "manifest": {
+       "lr": 0.000125,
+       "seed": 42,
+       "step": 1,
+       "run_id": "run_65fd31940655191642cea1b8",
+       "schema": "grad.artifact/1",
+       "select": "best",
+       "attempt": 1,
+       "backend": "reference",
+       "manifest": {
+        "lr": 0.000125,
+        "seed": 42,
+        "format": "reference",
+        "select": "best",
+        "backend": "reference",
+        "lr_source": "auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling",
+        "base_model": "qwen/qwen3-8b",
+        "deployable": false,
+        "recipe_kind": "sft",
+        "rule_version": "auto@2",
+        "base_artifact": null,
+        "base_model_repo": null,
+        "checkpoint_step": 1,
+        "base_model_revision": null
+       },
+       "lr_source": "auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling",
+       "base_model": "qwen/qwen3-8b",
+       "deployable": false,
+       "provenance": {
+        "run_id": "run_65fd31940655191642cea1b8",
+        "source": "run"
+       },
+       "metric_mode": "min",
+       "metric_name": "eval_loss",
+       "recipe_kind": "sft",
+       "eval_metrics": null,
+       "rule_version": "auto@2",
+       "tokens_total": 21,
+       "base_artifact": null,
+       "upload_seconds": 0.015,
+       "base_model_repo": null,
+       "resolved_config": {
+        "lr": 0.000125,
+        "name": "support-sft",
+        "model": "qwen/qwen3-8b",
+        "split": {
+         "seed": 42,
+         "strategy": "by_session",
+         "eval_records": 0,
+         "eval_fraction": 0.1,
+         "train_records": 1
+        },
+        "epochs": 1,
+        "select": "best",
+        "warmup": 0.03,
+        "adapter": {
+         "kind": "lora",
+         "rank": 32,
+         "alpha": 32,
+         "merge_on_export": false
+        },
+        "dataset": "support-prod",
+        "schedule": "linear",
+        "thinking": "auto",
+        "train_on": "last",
+        "lr_source": "auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling",
+        "optimizer": {
+         "kind": "adamw",
+         "betas": [
+          0.9,
+          0.95
+         ],
+         "grad_clip": 1,
+         "weight_decay": 0
+        },
+        "reduction": "per_example",
+        "batch_size": 8,
+        "recipe_kind": "sft",
+        "rule_version": "auto@2",
+        "base_artifact": null,
+        "label_eval_id": null,
+        "recipe_params": {},
+        "dataset_version": 1,
+        "eval_every_steps": 1,
+        "preserve_thinking": false,
+        "template_revision": "qwen3@3",
+        "checkpoint_ttl_days": 30,
+        "checkpoint_every_steps": 1
+       },
+       "base_model_revision": null,
+       "promoted_from_checkpoint": "ckpt_7d40bb7700bff2ef4815299f"
+      },
+      "provenance": {
+       "source": "run",
+       "run_id": "run_65fd31940655191642cea1b8",
+       "uploader": null,
+       "uri": null
+      },
+      "eval_report": null,
+      "pins": [],
+      "created_at": "2026-11-28T11:04:37.278Z"
+     },
+     {
+      "id": "support-sft@2026-11-28-1",
+      "workspace_id": "ws_e2e",
+      "name": "support-sft",
+      "version": "2026-11-28-1",
+      "run_id": "run_65fd31940655191642cea1b8",
+      "checkpoint_id": null,
+      "base_model": "qwen/qwen3-8b",
+      "recipe_kind": "sft",
+      "format": "reference",
+      "sha256": "22ba95a1a59fa804b1462afa6f4a8852edd069b58763c6ed46e1bf28c898f378",
+      "size_bytes": 1029,
+      "manifest": {
+       "lr": 0.000125,
+       "kind": "final",
+       "seed": 42,
+       "files": {
+        "reference_model.json": "59abd7749fec876cab4e168ea5a73ba432cbd5b568a7c8070258ec7f945b454b"
+       },
+       "format": "reference",
+       "run_id": "run_65fd31940655191642cea1b8",
+       "schema": "grad.artifact/1",
+       "select": "last",
+       "status": "completed",
+       "attempt": 1,
+       "backend": "reference",
+       "dataset": "support-prod",
+       "lr_source": "auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling",
+       "base_model": "qwen/qwen3-8b",
+       "created_by": {
+        "name": "grad-trainer",
+        "version": "0.2.0-alpha.7"
+       },
+       "deployable": false,
+       "provenance": {
+        "run_id": "run_65fd31940655191642cea1b8",
+        "source": "run"
+       },
+       "recipe_kind": "sft",
+       "total_steps": 1,
+       "rule_version": "auto@2",
+       "tokens_total": 21,
+       "base_artifact": null,
+       "selected_step": 1,
+       "format_version": 2,
+       "base_model_repo": null,
+       "dataset_version": 1,
+       "resolved_config": {
+        "lr": 0.000125,
+        "name": "support-sft",
+        "model": "qwen/qwen3-8b",
+        "split": {
+         "seed": 42,
+         "strategy": "by_session",
+         "eval_records": 0,
+         "eval_fraction": 0.1,
+         "train_records": 1
+        },
+        "epochs": 1,
+        "select": "best",
+        "warmup": 0.03,
+        "adapter": {
+         "kind": "lora",
+         "rank": 32,
+         "alpha": 32,
+         "merge_on_export": false
+        },
+        "dataset": "support-prod",
+        "schedule": "linear",
+        "thinking": "auto",
+        "train_on": "last",
+        "lr_source": "auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling",
+        "optimizer": {
+         "kind": "adamw",
+         "betas": [
+          0.9,
+          0.95
+         ],
+         "grad_clip": 1,
+         "weight_decay": 0
+        },
+        "reduction": "per_example",
+        "batch_size": 8,
+        "recipe_kind": "sft",
+        "rule_version": "auto@2",
+        "base_artifact": null,
+        "label_eval_id": null,
+        "recipe_params": {},
+        "dataset_version": 1,
+        "eval_every_steps": 1,
+        "preserve_thinking": false,
+        "template_revision": "qwen3@3",
+        "checkpoint_ttl_days": 30,
+        "checkpoint_every_steps": 1
+       },
+       "steps_completed": 1,
+       "eval_report_sha256": "782d3768b9a29b35b624e5fb6e013ad89598c2cd770421c0a5b7db8be230d56c",
+       "base_model_revision": null
+      },
+      "provenance": {
+       "source": "run",
+       "run_id": "run_65fd31940655191642cea1b8",
+       "uploader": null,
+       "uri": null
+      },
+      "eval_report": {
+       "warnings": [
+        "Reference test backend: the base model was not trained; the artifact is not deployable.",
+        "No held-out examples: eval metrics are null and select='last' was used."
+       ],
+       "best_step": null,
+       "eval_loss": null,
+       "final_step": 1,
+       "metric_mode": "min",
+       "metric_name": "eval_loss",
+       "eval_records": 0,
+       "eval_examples": 0,
+       "selected_step": 1,
+       "train_records": 1,
+       "train_examples": 1,
+       "reference_backend": true
+      },
+      "pins": [],
+      "created_at": "2026-11-28T11:04:36.470Z"
+     }
+    ],
+    "next_cursor": null
+   }
+  },
+  "listBaseModels": {
+   "status": 200,
+   "body": {
+    "data": [
+     {
+      "id": "qwen/qwen3-0.6b",
+      "hf_repo": "Qwen/Qwen3-0.6B",
+      "family": "llm",
+      "adapters": [
+       "lora"
+      ],
+      "default_for": [
+       "router"
+      ],
+      "price_per_million_tokens_usd": 0.15,
+      "max_context_tokens": 32768,
+      "template_revision": "qwen3@3",
+      "calibrated_lrs": {
+       "sft": 0.0008,
+       "dpo": 3e-05,
+       "router": 0.0005,
+       "decision": 0.0005,
+       "distill": 0.0003,
+       "reward": 0.00015
+      },
+      "min_gpu_memory_gb": 8,
+      "recipes": [
+       "decision",
+       "distill"
+      ]
+     },
+     {
+      "id": "qwen/qwen3-1.7b",
+      "hf_repo": "Qwen/Qwen3-1.7B",
+      "family": "llm",
+      "adapters": [
+       "lora"
+      ],
+      "default_for": [],
+      "price_per_million_tokens_usd": 0.22,
+      "max_context_tokens": 32768,
+      "template_revision": "qwen3@3",
+      "calibrated_lrs": {
+       "sft": 0.0007,
+       "dpo": 3e-05,
+       "router": 0.0005,
+       "decision": 0.0004,
+       "distill": 0.00025,
+       "reward": 0.00012
+      },
+      "min_gpu_memory_gb": 12,
+      "recipes": [
+       "decision",
+       "distill"
+      ]
+     }
+    ]
+   }
+  },
+  "listDatasetRecords": {
+   "status": 200,
+   "body": {
+    "dataset": "support-prod",
+    "version": 2,
+    "total": 1,
+    "data": [
+     {
+      "messages": [
+       {
+        "role": "user",
+        "content": "Where is my order #4512?"
+       },
+       {
+        "role": "assistant",
+        "content": "It shipped this morning; here is the tracking link."
+       }
+      ],
+      "scores": {
+       "resolved": 1,
+       "polite": 0
+      },
+      "metadata": {
+       "route": "support"
+      },
+      "id": "rec_0918892977163ffc"
+     }
+    ],
+    "next_cursor": null
+   }
+  },
+  "listDatasets": {
+   "status": 200,
+   "body": {
+    "data": [
+     {
+      "id": "ds_b8332bda80b3b719e5309fcd",
+      "workspace_id": "ws_e2e",
+      "name": "support-good",
+      "version": 1,
+      "record_count": 1,
+      "metadata": {
+       "view": {
+        "filter": {
+         "scores": {
+          "resolved": ">=0.8"
+         }
+        },
+        "source": "support-prod",
+        "version": 1
+       }
+      },
+      "created_at": "2026-11-28T11:04:35.962Z",
+      "updated_at": "2026-11-28T11:04:35.970Z"
+     },
+     {
+      "id": "ds_cd4c3100a9757c14db6f7e53",
+      "workspace_id": "ws_e2e",
+      "name": "support-prod",
+      "version": 2,
+      "record_count": 1,
+      "metadata": {},
+      "created_at": "2026-11-28T11:04:35.629Z",
+      "updated_at": "2026-11-28T11:04:36.756Z"
+     }
+    ],
+    "next_cursor": null
+   }
+  },
+  "listEvals": {
+   "status": 200,
+   "body": {
+    "data": [
+     {
+      "id": "eval_6463e8541a39592adb50a77a",
+      "workspace_id": "ws_e2e",
+      "name": "support-prod-score",
+      "status": "completed",
+      "mode": "score",
+      "models": [
+       "record"
+      ],
+      "baseline": null,
+      "task_source": {
+       "kind": "dataset",
+       "dataset": "support-prod",
+       "version": 1
+      },
+      "rubric": [
+       {
+        "kind": "regex",
+        "name": "polite",
+        "flags": "i",
+        "weight": 1,
+        "pattern": "thank"
+       }
+      ],
+      "samples": 1,
+      "temperature": 0,
+      "max_tokens": 1,
+      "pass_threshold": 1,
+      "judge_models": [],
+      "local_scorers": [],
+      "progress": {
+       "total_outputs": 1,
+       "generated": 1,
+       "pending_local_scores": 0
+      },
+      "summary": [
+       {
+        "model": "record",
+        "tasks": 1,
+        "ci_low": 0,
+        "errors": 0,
+        "ci_high": 0,
+        "overall": 0,
+        "pass_at_k": {
+         "pass@1": 0
+        },
+        "vs_baseline": null,
+        "tokens_per_task": 0,
+        "cost_per_1k_tasks_usd": 0
+       }
+      ],
+      "total_cost_usd": 0,
+      "scored_dataset_version": 2,
+      "error": null,
+      "waiting_reason": null,
+      "created_at": "2026-11-28T11:04:35.932Z",
+      "updated_at": "2026-11-28T11:04:36.758Z",
+      "completed_at": "2026-11-28T11:04:36.758Z"
+     }
+    ],
+    "next_cursor": null
+   }
+  },
+  "listImports": {
+   "status": 200,
+   "body": {
+    "data": [
+     {
+      "id": "imp_8c131bd5b6b4ee085a96ee97",
+      "workspace_id": "ws_e2e",
+      "dataset": "support-prod",
+      "status": "running",
+      "source": {
+       "full": false,
+       "kind": "provider",
+       "provider": "langfuse",
+       "source_id": "src_5ba5c7f81cc450544d36b62f"
+      },
+      "connector": "auto",
+      "attempt": 1,
+      "imported_count": 0,
+      "dropped_count": 0,
+      "detected_scores": [],
+      "drop_reasons": [],
+      "dataset_version": null,
+      "error": null,
+      "created_at": "2026-11-28T11:04:36.231Z",
+      "updated_at": "2026-11-28T11:04:36.561Z"
+     },
+     {
+      "id": "imp_fa9a0be94b96251fb8e7797c",
+      "workspace_id": "ws_e2e",
+      "dataset": "support-prod",
+      "status": "failed",
+      "source": {
+       "kind": "hf",
+       "repo": "HuggingFaceH4/ultrachat_200k",
+       "limit": 1000,
+       "split": "train_sft",
+       "columns": {}
+      },
+      "connector": "auto",
+      "attempt": 1,
+      "imported_count": 0,
+      "dropped_count": 0,
+      "detected_scores": [],
+      "drop_reasons": [],
+      "dataset_version": null,
+      "error": "Can't load Hugging Face dataset 'HuggingFaceH4/ultrachat_200k': offline mode is on (HF_HUB_OFFLINE/GRAD_OFFLINE). Download it elsewhere and import the JSONL file instead.",
+      "created_at": "2026-11-28T11:04:36.013Z",
+      "updated_at": "2026-11-28T11:04:36.143Z"
+     }
+    ],
+    "next_cursor": null
+   }
+  },
+  "listRunCheckpoints": {
+   "status": 200,
+   "body": {
+    "data": [
+     {
+      "id": "ckpt_7d40bb7700bff2ef4815299f",
+      "workspace_id": "ws_e2e",
+      "run_id": "run_65fd31940655191642cea1b8",
+      "attempt": 1,
+      "step": 1,
+      "eval_score": null,
+      "format": "reference",
+      "sha256": "4581446c5925664036813b8758d1331e5d0a0a01d8955ad5af83d7dd8cd7165d",
+      "size_bytes": 1343,
+      "metadata": {
+       "lr": 0.000125,
+       "seed": 42,
+       "step": 1,
+       "select": "best",
+       "backend": "reference",
+       "manifest": {
+        "lr": 0.000125,
+        "seed": 42,
+        "format": "reference",
+        "select": "best",
+        "backend": "reference",
+        "lr_source": "auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling",
+        "base_model": "qwen/qwen3-8b",
+        "deployable": false,
+        "recipe_kind": "sft",
+        "rule_version": "auto@2",
+        "base_artifact": null,
+        "base_model_repo": null,
+        "checkpoint_step": 1,
+        "base_model_revision": null
+       },
+       "lr_source": "auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling",
+       "base_model": "qwen/qwen3-8b",
+       "deployable": false,
+       "metric_mode": "min",
+       "metric_name": "eval_loss",
+       "recipe_kind": "sft",
+       "eval_metrics": null,
+       "rule_version": "auto@2",
+       "tokens_total": 21,
+       "base_artifact": null,
+       "upload_seconds": 0.015,
+       "base_model_repo": null,
+       "base_model_revision": null
+      },
+      "best": false,
+      "final": true,
+      "expires_at": null,
+      "created_at": "2026-11-28T11:04:36.401Z"
+     }
+    ],
+    "next_cursor": null
+   }
+  },
+  "listRunEvents": {
+   "status": 200,
+   "body": {
+    "run_id": "run_65fd31940655191642cea1b8",
+    "status": "completed",
+    "data": [
+     {
+      "type": "phase",
+      "run_id": "run_65fd31940655191642cea1b8",
+      "seq": 1,
+      "attempt": 1,
+      "timestamp": "2026-11-28T11:04:36.079Z",
+      "phase": "queued",
+      "step": 0,
+      "workers_online": 0,
+      "autoscaling": false,
+      "queue_position": 0,
+      "message": null,
+      "gpu": null
+     },
+     {
+      "type": "warning",
+      "run_id": "run_65fd31940655191642cea1b8",
+      "seq": 2,
+      "attempt": 1,
+      "timestamp": "2026-11-28T11:04:36.082Z",
+      "step": null,
+      "message": "The eval split is empty; eval metrics will be unavailable. Add records or raise split.eval_fraction."
+     }
+    ],
+    "next_cursor": null,
+    "tail_cursor": "WzE4XQ"
+   }
+  },
+  "listRunMetrics": {
+   "status": 200,
+   "body": {
+    "run_id": "run_65fd31940655191642cea1b8",
+    "status": "completed",
+    "data": [
+     {
+      "lr": 0.000125,
+      "loss": 0.6931471805599453,
+      "step": 1,
+      "epoch": 0,
+      "tokens": 21,
+      "cost_usd": 8e-06,
+      "grad_norm": 0.7071067811865476,
+      "timestamp": "2026-11-28T11:04:36.290763Z",
+      "tokens_per_sec": 266842.34367437265,
+      "seq": 11,
+      "attempt": 1
+     }
+    ],
+    "next_cursor": null,
+    "tail_cursor": "WzExXQ"
+   }
+  },
+  "listRuns": {
+   "status": 200,
+   "body": {
+    "data": [
+     {
+      "id": "run_65fd31940655191642cea1b8",
+      "workspace_id": "ws_e2e",
+      "name": "support-sft",
+      "dataset_id": "ds_cd4c3100a9757c14db6f7e53",
+      "dataset_name": "support-prod",
+      "dataset_version": 1,
+      "recipe_kind": "sft",
+      "status": "completed",
+      "resolved_config": {
+       "lr": 0.000125,
+       "name": "support-sft",
+       "model": "qwen/qwen3-8b",
+       "split": {
+        "seed": 42,
+        "strategy": "by_session",
+        "eval_records": 0,
+        "eval_fraction": 0.1,
+        "train_records": 1
+       },
+       "epochs": 1,
+       "select": "best",
+       "warmup": 0.03,
+       "adapter": {
+        "kind": "lora",
+        "rank": 32,
+        "alpha": 32,
+        "merge_on_export": false
+       },
+       "dataset": "support-prod",
+       "schedule": "linear",
+       "thinking": "auto",
+       "train_on": "last",
+       "lr_source": "auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling",
+       "optimizer": {
+        "kind": "adamw",
+        "betas": [
+         0.9,
+         0.95
+        ],
+        "grad_clip": 1,
+        "weight_decay": 0
+       },
+       "reduction": "per_example",
+       "batch_size": 8,
+       "recipe_kind": "sft",
+       "rule_version": "auto@2",
+       "base_artifact": null,
+       "label_eval_id": null,
+       "recipe_params": {},
+       "dataset_version": 1,
+       "eval_every_steps": 1,
+       "preserve_thinking": false,
+       "template_revision": "qwen3@3",
+       "checkpoint_ttl_days": 30,
+       "checkpoint_every_steps": 1
+      },
+      "max_cost_usd": 5,
+      "price_per_million_tokens": 0.4,
+      "tokens_processed": 21,
+      "cost_usd": 8e-06,
+      "current_step": 1,
+      "total_steps": 1,
+      "attempt": 1,
+      "max_attempts": 10,
+      "phase": "completing",
+      "phase_since": "2026-11-28T11:04:36.438Z",
+      "last_interruption": null,
+      "workers_online": null,
+      "autoscaling": null,
+      "queue_position": null,
+      "queue_message": null,
+      "min_gpu_memory_gb": 36,
+      "latest_metric": {
+       "lr": 0.000125,
+       "seq": 11,
+       "loss": 0.6931471805599453,
+       "step": 1,
+       "epoch": 0,
+       "tokens": 21,
+       "attempt": 1,
+       "cost_usd": 8e-06,
+       "grad_norm": 0.7071067811865476,
+       "timestamp": "2026-11-28T11:04:36.290763Z",
+       "tokens_per_sec": 266842.34367437265
+      },
+      "eval_report": {
+       "warnings": [
+        "Reference test backend: the base model was not trained; the artifact is not deployable.",
+        "No held-out examples: eval metrics are null and select='last' was used."
+       ],
+       "best_step": null,
+       "eval_loss": null,
+       "final_step": 1,
+       "metric_mode": "min",
+       "metric_name": "eval_loss",
+       "eval_records": 0,
+       "eval_examples": 0,
+       "selected_step": 1,
+       "train_records": 1,
+       "train_examples": 1,
+       "reference_backend": true
+      },
+      "checkpoint_evals": [],
+      "artifact_id": "support-sft@2026-11-28-1",
+      "error": null,
+      "created_at": "2026-11-28T11:04:36.071Z",
+      "updated_at": "2026-11-28T11:04:36.483Z",
+      "finished_at": "2026-11-28T11:04:36.460Z"
+     }
+    ],
+    "next_cursor": null
+   }
+  },
+  "listSecrets": {
+   "status": 200,
+   "body": {
+    "data": [
+     {
+      "name": "langfuse",
+      "workspace_id": "ws_e2e",
+      "allowed_hosts": [
+       "cloud.langfuse.com",
+       "us.cloud.langfuse.com"
+      ],
+      "created_at": "2026-11-28T11:04:36.172Z",
+      "updated_at": "2026-11-28T11:04:36.172Z"
+     }
+    ],
+    "next_cursor": null
+   }
+  },
+  "listSources": {
+   "status": 200,
+   "body": {
+    "data": [
+     {
+      "id": "src_5ba5c7f81cc450544d36b62f",
+      "workspace_id": "ws_e2e",
+      "dataset": "support-prod",
+      "provider": {
+       "kind": "langfuse",
+       "host": null,
+       "secret": "langfuse",
+       "project": null,
+       "filters": {
+        "environment": [
+         "production"
+        ],
+        "has_feedback": true
+       }
+      },
+      "schedule": "*/15 * * * *",
+      "sample_rate": 0.5,
+      "max_records_per_sync": null,
+      "max_records_per_day": null,
+      "records_today": 0,
+      "version_interval": 900,
+      "pending_records": 0,
+      "next_sync_at": "2026-11-28T11:15:00.000Z",
+      "status": "active",
+      "paused_reason": null,
+      "last_error": null,
+      "last_error_at": null,
+      "consecutive_failures": 0,
+      "pending_full": false,
+      "last_synced_at": null,
+      "last_sync": {
+       "import_id": "imp_8c131bd5b6b4ee085a96ee97",
+       "status": "running",
+       "full": false,
+       "dataset_version": null,
+       "error": null,
+       "created_at": "2026-11-28T11:04:36.231Z",
+       "finished_at": null
+      },
+      "created_at": "2026-11-28T11:04:36.198Z",
+      "updated_at": "2026-11-28T11:04:36.233Z"
+     }
+    ],
+    "next_cursor": null
+   }
+  },
+  "listUsage": {
+   "status": 200,
+   "body": {
+    "data": [
+     {
+      "id": "use_1",
+      "kind": "training",
+      "ref_id": "run_65fd31940655191642cea1b8",
+      "attempt": 1,
+      "tokens_from": 0,
+      "tokens_through": 21,
+      "tokens": 21,
+      "cost_usd": 8e-06,
+      "price_version": "p_9d9f73e3537a",
+      "billed_by": "grad",
+      "idempotency_key": "run-usage:run_65fd31940655191642cea1b8:1:21",
+      "created_at": "2026-11-28T11:04:36.408Z",
+      "ref_name": "support-sft",
+      "run_id": "run_65fd31940655191642cea1b8"
+     }
+    ],
+    "next_cursor": null
+   }
+  },
+  "planRun": {
+   "status": 200,
+   "body": {
+    "resolved_config": {
+     "rule_version": "auto@2",
+     "dataset": "support-prod",
+     "dataset_version": 1,
+     "name": "support-sft",
+     "recipe_kind": "sft",
+     "model": "qwen/qwen3-8b",
+     "template_revision": "qwen3@3",
+     "adapter": {
+      "kind": "lora",
+      "rank": 32,
+      "alpha": 32,
+      "merge_on_export": false
+     },
+     "lr": 0.000125,
+     "lr_source": "auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling",
+     "batch_size": 8,
+     "epochs": 1,
+     "schedule": "linear",
+     "warmup": 0.03,
+     "train_on": "last",
+     "thinking": "auto",
+     "preserve_thinking": false,
+     "reduction": "per_example",
+     "select": "best",
+     "checkpoint_every_steps": 1,
+     "eval_every_steps": 1,
+     "optimizer": {
+      "kind": "adamw",
+      "betas": [
+       0.9,
+       0.95
+      ],
+      "weight_decay": 0,
+      "grad_clip": 1
+     },
+     "checkpoint_ttl_days": 30,
+     "split": {
+      "strategy": "by_session",
+      "eval_fraction": 0.1,
+      "seed": 42,
+      "train_records": 1,
+      "eval_records": 0
+     },
+     "label_eval_id": null,
+     "base_artifact": null,
+     "recipe_params": {}
+    },
+    "dataset_version": 1,
+    "usable_records": 1,
+    "total_records": 1,
+    "estimated_steps": 1,
+    "estimated_tokens": 33,
+    "estimated_cost_usd": 0,
+    "estimated_duration_s": 97,
+    "min_gpu_memory_gb": 36,
+    "price_per_million_tokens": 0.4,
+    "trained_token_fraction": 0.4545,
+    "labeling": null,
+    "teacher": null,
+    "cost_breakdown": {
+     "train_usd": 0,
+     "teacher_usd": 0,
+     "eval_usd": 0
+    },
+    "warnings": [
+     "The eval split is empty; eval metrics will be unavailable. Add records or raise split.eval_fraction.",
+     "1 training example at batch 8 is 1 step per epoch, below the 100 steps we recommend; consider more data, more epochs or a smaller batch_size."
+    ]
+   }
+  },
+  "promoteCheckpoint": {
+   "status": 201,
+   "body": {
+    "id": "support-sft-step-400@2026-11-28-1",
+    "workspace_id": "ws_e2e",
+    "name": "support-sft-step-400",
+    "version": "2026-11-28-1",
+    "run_id": "run_65fd31940655191642cea1b8",
+    "checkpoint_id": "ckpt_7d40bb7700bff2ef4815299f",
+    "base_model": "qwen/qwen3-8b",
+    "recipe_kind": "sft",
+    "format": "reference",
+    "sha256": "4581446c5925664036813b8758d1331e5d0a0a01d8955ad5af83d7dd8cd7165d",
+    "size_bytes": 1343,
+    "manifest": {
+     "lr": 0.000125,
+     "seed": 42,
+     "step": 1,
+     "run_id": "run_65fd31940655191642cea1b8",
+     "schema": "grad.artifact/1",
+     "select": "best",
+     "attempt": 1,
+     "backend": "reference",
+     "manifest": {
+      "lr": 0.000125,
+      "seed": 42,
+      "format": "reference",
+      "select": "best",
+      "backend": "reference",
+      "lr_source": "auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling",
+      "base_model": "qwen/qwen3-8b",
+      "deployable": false,
+      "recipe_kind": "sft",
+      "rule_version": "auto@2",
+      "base_artifact": null,
+      "base_model_repo": null,
+      "checkpoint_step": 1,
+      "base_model_revision": null
+     },
+     "lr_source": "auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling",
+     "base_model": "qwen/qwen3-8b",
+     "deployable": false,
+     "provenance": {
+      "run_id": "run_65fd31940655191642cea1b8",
+      "source": "run"
+     },
+     "metric_mode": "min",
+     "metric_name": "eval_loss",
+     "recipe_kind": "sft",
+     "eval_metrics": null,
+     "rule_version": "auto@2",
+     "tokens_total": 21,
+     "base_artifact": null,
+     "upload_seconds": 0.015,
+     "base_model_repo": null,
+     "resolved_config": {
+      "lr": 0.000125,
+      "name": "support-sft",
+      "model": "qwen/qwen3-8b",
+      "split": {
+       "seed": 42,
+       "strategy": "by_session",
+       "eval_records": 0,
+       "eval_fraction": 0.1,
+       "train_records": 1
+      },
+      "epochs": 1,
+      "select": "best",
+      "warmup": 0.03,
+      "adapter": {
+       "kind": "lora",
+       "rank": 32,
+       "alpha": 32,
+       "merge_on_export": false
+      },
+      "dataset": "support-prod",
+      "schedule": "linear",
+      "thinking": "auto",
+      "train_on": "last",
+      "lr_source": "auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling",
+      "optimizer": {
+       "kind": "adamw",
+       "betas": [
+        0.9,
+        0.95
+       ],
+       "grad_clip": 1,
+       "weight_decay": 0
+      },
+      "reduction": "per_example",
+      "batch_size": 8,
+      "recipe_kind": "sft",
+      "rule_version": "auto@2",
+      "base_artifact": null,
+      "label_eval_id": null,
+      "recipe_params": {},
+      "dataset_version": 1,
+      "eval_every_steps": 1,
+      "preserve_thinking": false,
+      "template_revision": "qwen3@3",
+      "checkpoint_ttl_days": 30,
+      "checkpoint_every_steps": 1
+     },
+     "base_model_revision": null,
+     "promoted_from_checkpoint": "ckpt_7d40bb7700bff2ef4815299f"
+    },
+    "provenance": {
+     "source": "run",
+     "run_id": "run_65fd31940655191642cea1b8",
+     "uploader": null,
+     "uri": null
+    },
+    "eval_report": null,
+    "pins": [],
+    "created_at": "2026-11-28T11:04:37.278Z"
+   }
+  },
+  "pushDatasetRecords": {
+   "status": 200,
+   "body": {
+    "id": "ds_cd4c3100a9757c14db6f7e53",
+    "workspace_id": "ws_e2e",
+    "name": "support-prod",
+    "version": 1,
+    "record_count": 1,
+    "metadata": {},
+    "created_at": "2026-11-28T11:04:35.629Z",
+    "updated_at": "2026-11-28T11:04:35.894Z"
+   }
+  },
+  "renderDataset": {
+   "status": 200,
+   "body": {
+    "dataset": "support-prod",
+    "model": "qwen/qwen3-8b",
+    "template_revision": "qwen3@3",
+    "token_counts": "estimated",
+    "examples": [
+     {
+      "record_id": "rec_0918892977163ffc",
+      "template_revision": "qwen3@3",
+      "total_tokens": 33,
+      "trained_tokens": 15,
+      "trained_fraction": 0.45454545454545453,
+      "spans": [
+       {
+        "text": "<|im_start|>user\n",
+        "trained": false,
+        "tokens": 3
+       },
+       {
+        "text": "Where is my order #4512?<|im_end|>\n",
+        "trained": false,
+        "tokens": 8
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "resumeRun": {
+   "status": 200,
+   "body": {
+    "id": "run_65fd31940655191642cea1b8",
+    "workspace_id": "ws_e2e",
+    "name": "support-sft",
+    "dataset_id": "ds_cd4c3100a9757c14db6f7e53",
+    "dataset_name": "support-prod",
+    "dataset_version": 1,
+    "recipe_kind": "sft",
+    "status": "queued",
+    "resolved_config": {
+     "lr": 0.000125,
+     "name": "support-sft",
+     "model": "qwen/qwen3-8b",
+     "split": {
+      "seed": 42,
+      "strategy": "by_session",
+      "eval_records": 0,
+      "eval_fraction": 0.1,
+      "train_records": 1
+     },
+     "epochs": 1,
+     "select": "best",
+     "warmup": 0.03,
+     "adapter": {
+      "kind": "lora",
+      "rank": 32,
+      "alpha": 32,
+      "merge_on_export": false
+     },
+     "dataset": "support-prod",
+     "schedule": "linear",
+     "thinking": "auto",
+     "train_on": "last",
+     "lr_source": "auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling",
+     "optimizer": {
+      "kind": "adamw",
+      "betas": [
+       0.9,
+       0.95
+      ],
+      "grad_clip": 1,
+      "weight_decay": 0
+     },
+     "reduction": "per_example",
+     "batch_size": 8,
+     "recipe_kind": "sft",
+     "rule_version": "auto@2",
+     "base_artifact": null,
+     "label_eval_id": null,
+     "recipe_params": {},
+     "dataset_version": 1,
+     "eval_every_steps": 1,
+     "preserve_thinking": false,
+     "template_revision": "qwen3@3",
+     "checkpoint_ttl_days": 30,
+     "checkpoint_every_steps": 1
+    },
+    "max_cost_usd": 5,
+    "price_per_million_tokens": 0.4,
+    "tokens_processed": 0,
+    "cost_usd": 0,
+    "current_step": 0,
+    "total_steps": 1,
+    "attempt": 0,
+    "max_attempts": 10,
+    "phase": "queued",
+    "phase_since": "2026-11-28T11:04:36.079Z",
+    "last_interruption": null,
+    "workers_online": 0,
+    "autoscaling": false,
+    "queue_position": 0,
+    "queue_message": null,
+    "min_gpu_memory_gb": 36,
+    "latest_metric": null,
+    "eval_report": null,
+    "checkpoint_evals": [],
+    "artifact_id": null,
+    "error": null,
+    "created_at": "2026-11-28T11:04:36.071Z",
+    "updated_at": "2026-11-28T11:04:36.071Z",
+    "finished_at": null
+   }
+  },
+  "scoreDataset": {
+   "status": 202,
+   "body": {
+    "id": "eval_6463e8541a39592adb50a77a",
+    "workspace_id": "ws_e2e",
+    "name": "support-prod-score",
+    "status": "queued",
+    "mode": "score",
+    "models": [
+     "record"
+    ],
+    "baseline": null,
+    "task_source": {
+     "kind": "dataset",
+     "dataset": "support-prod",
+     "version": 1
+    },
+    "rubric": [
+     {
+      "kind": "regex",
+      "name": "polite",
+      "flags": "i",
+      "weight": 1,
+      "pattern": "thank"
+     }
+    ],
+    "samples": 1,
+    "temperature": 0,
+    "max_tokens": 1,
+    "pass_threshold": 1,
+    "judge_models": [],
+    "local_scorers": [],
+    "progress": {
+     "total_outputs": 1,
+     "generated": 0,
+     "pending_local_scores": 0
+    },
+    "summary": [],
+    "total_cost_usd": 0,
+    "scored_dataset_version": null,
+    "error": null,
+    "waiting_reason": null,
+    "created_at": "2026-11-28T11:04:35.932Z",
+    "updated_at": "2026-11-28T11:04:35.932Z",
+    "completed_at": null
+   }
+  },
+  "setSecret": {
+   "status": 200,
+   "body": {
+    "name": "langfuse",
+    "workspace_id": "ws_e2e",
+    "allowed_hosts": [
+     "cloud.langfuse.com",
+     "us.cloud.langfuse.com"
+    ],
+    "created_at": "2026-11-28T11:04:36.172Z",
+    "updated_at": "2026-11-28T11:04:36.172Z"
+   }
+  },
+  "syncSource": {
+   "status": 202,
+   "body": {
+    "id": "imp_8c131bd5b6b4ee085a96ee97",
+    "workspace_id": "ws_e2e",
+    "dataset": "support-prod",
+    "status": "queued",
+    "source": {
+     "full": false,
+     "kind": "provider",
+     "provider": "langfuse",
+     "source_id": "src_5ba5c7f81cc450544d36b62f"
+    },
+    "connector": "auto",
+    "attempt": 0,
+    "imported_count": 0,
+    "dropped_count": 0,
+    "detected_scores": [],
+    "drop_reasons": [],
+    "dataset_version": null,
+    "error": null,
+    "created_at": "2026-11-28T11:04:36.231Z",
+    "updated_at": "2026-11-28T11:04:36.231Z"
+   }
+  },
+  "updateSource": {
+   "status": 200,
+   "body": {
+    "id": "src_5ba5c7f81cc450544d36b62f",
+    "workspace_id": "ws_e2e",
+    "dataset": "support-prod",
+    "provider": {
+     "kind": "langfuse",
+     "host": null,
+     "secret": "langfuse",
+     "project": null,
+     "filters": {
+      "environment": [
+       "production"
+      ],
+      "has_feedback": true
+     }
+    },
+    "schedule": "*/15 * * * *",
+    "sample_rate": 0.5,
+    "max_records_per_sync": null,
+    "max_records_per_day": null,
+    "records_today": 0,
+    "version_interval": 900,
+    "pending_records": 0,
+    "next_sync_at": "2026-11-28T11:15:00.000Z",
+    "status": "active",
+    "paused_reason": null,
+    "last_error": null,
+    "last_error_at": null,
+    "consecutive_failures": 0,
+    "pending_full": false,
+    "last_synced_at": null,
+    "last_sync": null,
+    "created_at": "2026-11-28T11:04:36.198Z",
+    "updated_at": "2026-11-28T11:04:36.215Z"
+   }
+  }
+ }
+}

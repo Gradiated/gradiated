@@ -3,6 +3,7 @@ import type { ReactElement, ReactNode } from "react";
 
 import { useSdkLanguage } from "../DocsLanguage";
 import { CodeSample } from "./CodeSample";
+import RECORDED_JSON from "../../../docs/training/generated/api-responses.json";
 import REQUEST_EXAMPLES_JSON from "./api-examples.json";
 import {
   API,
@@ -161,6 +162,13 @@ const ParamList = ({ params }: { params: Param[] }): ReactElement => (
    `scripts/check-docs-snippets.py --api-examples`. */
 const REQUEST_EXAMPLES: Record<string, unknown> = REQUEST_EXAMPLES_JSON;
 
+/* Responses recorded from a live grad-server by the same replay
+   (`--api-examples --capture`), redacted; the schema fills the gaps. */
+const RECORDED = RECORDED_JSON as {
+  server: string | null;
+  responses: Record<string, { status: number; body: unknown }>;
+};
+
 const bodyExample = (op: Operation): unknown =>
   REQUEST_EXAMPLES[op.id] ??
   (op.body ? example(op.body, { requiredOnly: true }) : null);
@@ -270,19 +278,32 @@ const STATUS_TEXT: Record<number, string> = {
 const ResponseSample = ({ op }: { op: Operation }): ReactElement | null => {
   const response = op.responses[0];
   if (!response) return null;
+  const recorded = RECORDED.responses[op.id];
   const json = response.contentType === "application/json" && response.schema;
+  const status = recorded?.status ?? response.status;
 
   return (
     <div className="gr-api-sample">
       <div className="gr-api-sample-head">
         <span className="gr-api-sample-title">
-          Response <span className="gr-api-status">{response.status}</span>{" "}
-          {STATUS_TEXT[response.status] ?? ""}
+          Response <span className="gr-api-status">{status}</span>{" "}
+          {STATUS_TEXT[status] ?? ""}
+        </span>
+        <span className="gr-api-sample-source">
+          {recorded
+            ? `Recorded from grad-server ${RECORDED.server ?? ""}`
+            : json
+              ? "Generated from the schema"
+              : null}
         </span>
       </div>
-      {json ? (
+      {recorded || json ? (
         <CodeSample
-          code={JSON.stringify(example(response.schema ?? {}), null, 2)}
+          code={JSON.stringify(
+            recorded ? recorded.body : example(response.schema ?? {}),
+            null,
+            2,
+          )}
           label="JSON"
           lang="json"
         />

@@ -3,6 +3,10 @@ import { ERROR_ENTRIES } from "./ErrorCodes";
 import { curlFor } from "./ApiReference";
 import { API, childrenOf, operationAnchor, typeLabel } from "./api-schema";
 import changelog from "../../../docs/training/generated/changelog.json";
+import recorded from "../../../docs/training/generated/api-responses.json";
+
+const RECORDED = (recorded as { responses: Record<string, { body: unknown }> })
+  .responses;
 
 const releaseAnchor = (version: string): string =>
   `v${version.replace(/\./g, "-")}`;
@@ -33,6 +37,16 @@ const apiMarkdown = (): string =>
         "```bash",
         curlFor(op),
         "```",
+        ...(RECORDED[op.id]
+          ? [
+              "",
+              "Response (recorded):",
+              "",
+              "```json",
+              JSON.stringify(RECORDED[op.id]?.body, null, 2),
+              "```",
+            ]
+          : []),
       ].join("\n");
     })
     .join("\n\n");

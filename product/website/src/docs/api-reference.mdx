@@ -26,7 +26,7 @@ See the [SystemOne SDK guide](/docs/systemone-sdk/) for Linden-1 examples and su
 
 ## Training API
 
-Every endpoint, with its fields, an example request and response and the SDK call that sends it, is in the generated [Training API reference](/docs/reference/training-api/).. The training API (`grad-server`) is the same everywhere it runs: `grad local up`, the Helm chart and, soon, Gradiated Cloud. Its contract is `spec/openapi.yaml`, and the Python, TypeScript, Go and Rust SDK transports are generated from it. `grad-server` listens on port 8787 by default (`grad local up` serves it at `http://127.0.0.1:18787`) and serves the live spec at `/openapi.json`.
+Every endpoint, with its fields, an example request and response and the SDK call that sends it, is in the generated [Training API reference](/docs/reference/training-api/). The training API (`grad-server`) is the same everywhere it runs: `grad local up`, the Helm chart and, soon, Gradiated Cloud. Its contract is `spec/openapi.yaml`, and the Python, TypeScript, Go and Rust SDK transports are generated from it. `grad-server` listens on port 8787 by default (`grad local up` serves it at `http://127.0.0.1:18787`) and serves the live spec at `/openapi.json`.
 
 <DocsCallout label="Coming soon on Gradiated Cloud">`api.gradiated.com` doesn't serve the training API yet. Run it yourself with `grad local up` or the Helm chart; see [Self-hosting](/docs/training/self-hosting/).</DocsCallout>
 

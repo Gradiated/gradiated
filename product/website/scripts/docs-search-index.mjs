@@ -15,6 +15,7 @@ const plain = (markdown) =>
     .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
     .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
     .replace(/[`*|>#]/g, " ")
+    .replace(/:?-{3,}:?/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 

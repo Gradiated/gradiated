@@ -27,6 +27,9 @@ pub struct PrivateAdapter {
     /// A cartridge's K: the prompt positions it occupies.
     #[serde(default)]
     pub num_tokens: Option<u64>,
+    /// `grad` for a version published from a grad artifact.
+    #[serde(default)]
+    pub source_kind: Option<String>,
 }
 
 impl PrivateAdapter {
@@ -51,6 +54,12 @@ impl PrivateAdapter {
 
     pub fn is_cartridge(&self) -> bool {
         self.format == AdapterFormat::Cartridge
+    }
+
+    /// Answers without the adapter would not be the version's, so neither the base
+    /// model nor external capacity may stand in for it.
+    pub fn fails_closed(&self) -> bool {
+        self.is_cartridge() || self.source_kind.as_deref() == Some("grad")
     }
 
     /// Prompt positions the runtime adds for this adapter, which are not billed.
@@ -104,6 +113,7 @@ mod tests {
             sha256: "a".repeat(64),
             format,
             num_tokens,
+            source_kind: None,
         }
     }
 

@@ -29,6 +29,8 @@ import {
   tasks,
   taskVersions,
   taskVersionFiles,
+  taskVersionPinReleases,
+  taskProductionChanges,
   trainingRuns,
   trainingRunEvents,
   workspaces,
@@ -44,6 +46,10 @@ import {
   VersionUpdateSchema,
 } from "./records.js";
 import { modelNameProblem } from "./model-names.js";
+import {
+  ProductionChangeRecordSchema,
+  recordProductionChange,
+} from "./production-changes.js";
 
 const RunViewSchema = RunRecordSchema.extend({
   task: TaskSchema.shape.name,
@@ -173,6 +179,7 @@ export const createTrainingStore = (database: ControlDatabase) => {
       taskId: string,
       versionId: string,
       expected: { productionVersionId: string | null; updatedAt: Date },
+      actor: string,
     ) {
       return database.transaction(async (tx) => {
         const [version] = await tx
@@ -219,22 +226,64 @@ export const createTrainingStore = (database: ControlDatabase) => {
             ),
           )
           .returning();
-        return row ? TaskRecordSchema.parse(row) : ("stale" as const);
+        if (!row) return "stale" as const;
+
+        if (expected.productionVersionId !== version.id)
+          await recordProductionChange(tx, {
+            taskId,
+            fromVersionId: expected.productionVersionId,
+            toVersionId: version.id,
+            actor,
+          });
+        return TaskRecordSchema.parse(row);
       });
     },
 
-    async setProductionVersion(taskId: string, versionId: string) {
-      const [row] = await database
-        .update(tasks)
-        .set(
-          TaskUpdateSchema.parse({
-            productionVersionId: versionId,
-            updatedAt: new Date(),
-          }),
-        )
-        .where(eq(tasks.id, UuidSchema.parse(taskId)))
-        .returning();
-      return TaskRecordSchema.parse(row);
+    async setProductionVersion(
+      taskId: string,
+      versionId: string,
+      actor: string,
+    ) {
+      return database.transaction(async (tx) => {
+        const [current] = await tx
+          .select({ productionVersionId: tasks.productionVersionId })
+          .from(tasks)
+          .where(eq(tasks.id, UuidSchema.parse(taskId)))
+          .for("update");
+        const [row] = await tx
+          .update(tasks)
+          .set(
+            TaskUpdateSchema.parse({
+              productionVersionId: versionId,
+              updatedAt: new Date(),
+            }),
+          )
+          .where(eq(tasks.id, UuidSchema.parse(taskId)))
+          .returning();
+        if (current && current.productionVersionId !== versionId)
+          await recordProductionChange(tx, {
+            taskId,
+            fromVersionId: current.productionVersionId,
+            toVersionId: versionId,
+            actor,
+          });
+
+        return TaskRecordSchema.parse(row);
+      });
+    },
+
+    async listProductionChanges(taskId: string, limit = 100) {
+      return ProductionChangeRecordSchema.array().parse(
+        await database
+          .select()
+          .from(taskProductionChanges)
+          .where(eq(taskProductionChanges.taskId, UuidSchema.parse(taskId)))
+          .orderBy(
+            desc(taskProductionChanges.createdAt),
+            desc(taskProductionChanges.id),
+          )
+          .limit(limit),
+      );
     },
 
     async listTasks(workspaceId: string) {
@@ -694,6 +743,30 @@ export const createTrainingStore = (database: ControlDatabase) => {
           .limit(1);
         if (file) return false;
 
+        // The delete cascades over published versions; their artifacts' pins
+        // are released by the same outbox as a deleted version's.
+        await tx
+          .insert(taskVersionPinReleases)
+          .select(
+            tx
+              .select({
+                versionId: taskVersions.id,
+                workspaceId: taskVersions.workspaceId,
+                artifactId:
+                  sql<string>`${taskVersions.adapter}->'source'->>'artifact_id'`.as(
+                    "artifact_id",
+                  ),
+                createdAt: sql<Date>`now()`.as("created_at"),
+              })
+              .from(taskVersions)
+              .where(
+                and(
+                  eq(taskVersions.taskId, taskId),
+                  sql`${taskVersions.adapter}->'source'->>'artifact_id' is not null`,
+                ),
+              ),
+          )
+          .onConflictDoNothing();
         await tx.delete(tasks).where(eq(tasks.id, taskId));
         return true;
       });

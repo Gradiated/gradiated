@@ -1,7 +1,9 @@
 import type { Problem } from "@gradiated/contracts";
 import {
   ControlServiceError,
+  PublishError,
   TrainingAdmissionError,
+  type PublishErrorCode,
 } from "@gradiated/control";
 import type { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
@@ -177,6 +179,13 @@ export const problems = {
   }),
 } satisfies Record<string, ProblemBody | ((...args: never[]) => ProblemBody)>;
 
+const PUBLISH_CONFLICTS = new Set<PublishErrorCode>([
+  "artifact_checksum_mismatch",
+  "model_base_mismatch",
+  "version_name_taken",
+  "version_in_production",
+]);
+
 export class ApiProblem extends Error {
   constructor(
     readonly problem: ProblemBody,
@@ -233,6 +242,14 @@ export const toApiProblem = (error: unknown): ApiProblem | undefined => {
       type: problemType(error.code),
       title: "Training cannot start",
       status: error.code === "already_training" ? 409 : 422,
+      code: error.code,
+      detail: error.message,
+    });
+  if (error instanceof PublishError)
+    return new ApiProblem({
+      type: problemType(error.code.replaceAll("_", "-")),
+      title: "The artifact cannot be published",
+      status: PUBLISH_CONFLICTS.has(error.code) ? 409 : 422,
       code: error.code,
       detail: error.message,
     });

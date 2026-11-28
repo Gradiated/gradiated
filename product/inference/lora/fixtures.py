@@ -137,3 +137,39 @@ def cartridge_model_config():
         "vocab_size": 32,
         "max_position_embeddings": 64,
     }
+
+
+GRAD_SOURCE = {
+    "kind": "grad",
+    "artifact_id": "fast-diff-merge@2026-11-26-1",
+    "artifact_source": "run",
+    "bundle": "grad.artifact/1",
+}
+
+
+def grad_bundle(files, adapter_format="peft_lora", manifest=None, extra=None):
+    """A grad.artifact/1 bundle as grad-trainer writes it: sorted, mtime 0, root members."""
+    manifest = {
+        "schema": "grad.artifact/1",
+        "kind": "final",
+        "format": adapter_format,
+        "format_version": 1,
+        "files": {
+            name: hashlib.sha256(body).hexdigest() for name, body in files.items()
+        },
+        **(manifest or {}),
+    }
+    members = {"manifest.json": json.dumps(manifest).encode(), **files, **(extra or {})}
+    output = io.BytesIO()
+    with tarfile.open(fileobj=output, mode="w:gz") as bundle:
+        for name in sorted(members):
+            member = tarfile.TarInfo(name)
+            member.mode = 0o644
+            member.size = len(members[name])
+            bundle.addfile(member, io.BytesIO(members[name]))
+    return output.getvalue()
+
+
+def adapter_files(rank=2):
+    with tarfile.open(fileobj=io.BytesIO(archive(rank)), mode="r:gz") as bundle:
+        return {member.name: bundle.extractfile(member).read() for member in bundle}

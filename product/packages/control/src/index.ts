@@ -197,6 +197,21 @@ export {
   createAdapterDownloads,
   type AdapterDownloads,
 } from "./training/downloads.js";
+export {
+  createGradArtifacts,
+  GradArtifactSchema,
+  type GradArtifact,
+  type GradArtifacts,
+} from "./training/grad.js";
+export {
+  ServingBasesSchema,
+  type ServingBases,
+  PublishError,
+  type ArtifactPublisher,
+  type PublishErrorCode,
+  type PublishResult,
+} from "./training/publish.js";
+export type { ProductionChangeRecord } from "./training/production-changes.js";
 export { ADAPTER_DEMOS, seedAdapterDemos } from "./training/adapter-demos.js";
 export {
   createAdapterHostingService,

@@ -1030,7 +1030,11 @@ export interface paths {
      */
     get: operations["listTaskVersions"];
     put?: never;
-    post?: never;
+    /**
+     * Publish an artifact as a version
+     * @description Publishes a grad artifact as a version of this model, creating the model on first publish. Callers name the model after the artifact unless they choose another name. The artifact is pinned so training never deletes it, and the version reads its bundle in place. The version is then tested on serving capacity, as promote does; it is not promoted. Publishing the same artifact again returns the existing version. 422 `format_not_servable_yet` names the formats serving supports.
+     */
+    post: operations["publishTaskVersion"];
     delete?: never;
     options?: never;
     head?: never;
@@ -1051,7 +1055,11 @@ export interface paths {
     get: operations["getTaskVersion"];
     put?: never;
     post?: never;
-    delete?: never;
+    /**
+     * Delete task version
+     * @description Deletes a version that is not in production and releases its artifact's pin. 409 when the version serves production.
+     */
+    delete: operations["deleteTaskVersion"];
     options?: never;
     head?: never;
     patch?: never;
@@ -1109,6 +1117,26 @@ export interface paths {
      * @description Summarizes how a task version's LoRA adapter changes each projection of the base model: the norm and singular values of each update and a coarse block heatmap. The first request for a version reads the whole adapter and can take several seconds; later requests are served from a cache.
      */
     get: operations["getAdapterWeights"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace_id}/tasks/{task}/production-changes": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * List production changes
+     * @description Lists the last 100 moves of the task's production pointer, newest first. Rollback promotes a change's `from_version_id`.
+     */
+    get: operations["listProductionChanges"];
     put?: never;
     post?: never;
     delete?: never;
@@ -2699,6 +2727,7 @@ export interface components {
        */
       format: "peft_lora";
       artifact_uri: string;
+      source?: components["schemas"]["GradArtifactSource"];
       sha256: string;
       size_bytes: number;
       /** @description Immutable training checkpoint declared in the adapter config, when known. */
@@ -2708,6 +2737,17 @@ export interface components {
       validated_base_model_revision?: string;
       rank: number;
     };
+    /** @description The grad artifact this version serves. Its archive is the artifact's bundle, read in place. */
+    GradArtifactSource: {
+      /** @enum {string} */
+      kind: "grad";
+      /** @description A grad artifact ID: `name@version`, such as fast-diff-merge@2026-11-26-1. */
+      artifact_id: string;
+      /** @enum {string} */
+      artifact_source: "run" | "upload" | "import";
+      /** @enum {string} */
+      bundle: "grad.artifact/1";
+    };
     CartridgeAdapter: {
       /**
        * @description discriminator enum property added by openapi-typescript
@@ -2715,6 +2755,7 @@ export interface components {
        */
       format: "cartridge";
       artifact_uri: string;
+      source?: components["schemas"]["GradArtifactSource"];
       sha256: string;
       size_bytes: number;
       /** @description Immutable training checkpoint declared in the adapter config, when known. */
@@ -3248,6 +3289,50 @@ export interface components {
       /** @description Base64 bytes, row-major. Each byte is the Frobenius norm of one block of ΔW, with 255 at heatmap_max. */
       heatmap: string;
       heatmap_max: number;
+    };
+    PublishedTaskVersion: components["schemas"]["TaskVersion"] & {
+      /** @description The serving check run after publishing. */
+      qualification: {
+        /**
+         * @description passed: the version loaded on serving capacity and is available. rejected: the runtime refused it. pending: no capacity could test it yet; promote retries.
+         * @enum {string}
+         */
+        outcome: "passed" | "rejected" | "pending";
+        detail?: string;
+      };
+    };
+    PublishTaskVersion: {
+      /** @description The grad artifact to publish in this workspace: `name@version`, or `name@latest` for its newest version. */
+      artifact: string;
+      /** @description Version name. Defaults to the artifact's version. */
+      name?: string;
+    };
+    ProductionChangeList: {
+      data: components["schemas"]["ProductionChange"][];
+    };
+    ProductionChange: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      id: string;
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      from_version_id: string | null;
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      to_version_id: string | null;
+      /** @description Who moved the pointer: `user:<id>` or `key:<id>`. */
+      actor: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      created_at: string;
     };
     PromoteVersion: {
       /** @description The version's name or ID. */
@@ -8070,6 +8155,97 @@ export interface operations {
       };
     };
   };
+  publishTaskVersion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
+        task: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: {
+      content: {
+        "application/json": components["schemas"]["PublishTaskVersion"];
+      };
+    };
+    responses: {
+      /** @description The artifact's existing version. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PublishedTaskVersion"];
+        };
+      };
+      /** @description The new version. */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["PublishedTaskVersion"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
   getTaskVersion: {
     parameters: {
       query?: never;
@@ -8093,6 +8269,84 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["TaskVersion"];
         };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  deleteTaskVersion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
+        task: string;
+        /** @description The version's name or ID. */
+        version_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The version was deleted. */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
       /** @description Authentication required. */
       401: {
@@ -8332,6 +8586,84 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["AdapterWeights"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Upload conflict or invalid adapter. */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  listProductionChanges: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        /** @description The task's name, as sent in the capture header and shown in the console. */
+        task: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Changes, newest first. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ProductionChangeList"];
         };
       };
       /** @description Authentication required. */

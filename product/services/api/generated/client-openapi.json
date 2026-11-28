@@ -3540,6 +3540,9 @@
           "artifact_uri": {
             "type": "string"
           },
+          "source": {
+            "$ref": "#/components/schemas/GradArtifactSource"
+          },
           "sha256": {
             "type": "string",
             "pattern": "^[0-9a-f]{64}$"
@@ -3576,6 +3579,43 @@
           "rank"
         ]
       },
+      "GradArtifactSource": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "grad"
+            ]
+          },
+          "artifact_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,63}@[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            "description": "A grad artifact ID: `name@version`, such as fast-diff-merge@2026-11-26-1."
+          },
+          "artifact_source": {
+            "type": "string",
+            "enum": [
+              "run",
+              "upload",
+              "import"
+            ]
+          },
+          "bundle": {
+            "type": "string",
+            "enum": [
+              "grad.artifact/1"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "artifact_id",
+          "artifact_source",
+          "bundle"
+        ],
+        "description": "The grad artifact this version serves. Its archive is the artifact's bundle, read in place."
+      },
       "CartridgeAdapter": {
         "type": "object",
         "properties": {
@@ -3587,6 +3627,9 @@
           },
           "artifact_uri": {
             "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/GradArtifactSource"
           },
           "sha256": {
             "type": "string",
@@ -5415,6 +5458,119 @@
           "heatmap_shape",
           "heatmap",
           "heatmap_max"
+        ]
+      },
+      "PublishedTaskVersion": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TaskVersion"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "qualification": {
+                "type": "object",
+                "properties": {
+                  "outcome": {
+                    "type": "string",
+                    "enum": [
+                      "passed",
+                      "rejected",
+                      "pending"
+                    ],
+                    "description": "passed: the version loaded on serving capacity and is available. rejected: the runtime refused it. pending: no capacity could test it yet; promote retries."
+                  },
+                  "detail": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "outcome"
+                ],
+                "description": "The serving check run after publishing."
+              }
+            },
+            "required": [
+              "qualification"
+            ]
+          }
+        ]
+      },
+      "PublishTaskVersion": {
+        "type": "object",
+        "properties": {
+          "artifact": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,63}@[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+            "description": "The grad artifact to publish in this workspace: `name@version`, or `name@latest` for its newest version."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$",
+            "description": "Version name. Defaults to the artifact's version."
+          }
+        },
+        "required": [
+          "artifact"
+        ],
+        "additionalProperties": false
+      },
+      "ProductionChangeList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductionChange"
+            }
+          }
+        },
+        "required": [
+          "data"
+        ]
+      },
+      "ProductionChange": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "from_version_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "to_version_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "actor": {
+            "type": "string",
+            "description": "Who moved the pointer: `user:<id>` or `key:<id>`."
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "from_version_id",
+          "to_version_id",
+          "actor",
+          "created_at"
         ]
       },
       "PromoteVersion": {
@@ -13144,6 +13300,129 @@
             }
           }
         }
+      },
+      "post": {
+        "operationId": "publishTaskVersion",
+        "summary": "Publish an artifact as a version",
+        "description": "Publishes a grad artifact as a version of this model, creating the model on first publish. Callers name the model after the artifact unless they choose another name. The artifact is pinned so training never deletes it, and the version reads its bundle in place. The version is then tested on serving capacity, as promote does; it is not promoted. Publishing the same artifact again returns the existing version. 422 `format_not_servable_yet` names the formats serving supports.",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
+            },
+            "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
+            "name": "task",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishTaskVersion"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The artifact's existing version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishedTaskVersion"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "The new version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishedTaskVersion"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}": {
@@ -13200,6 +13479,115 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteTaskVersion",
+        "summary": "Delete task version",
+        "description": "Deletes a version that is not in production and releases its artifact's pin. 409 when the version serves production.",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
+            },
+            "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
+            "name": "task",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The version's name or ID."
+            },
+            "required": true,
+            "description": "The version's name or ID.",
+            "name": "version_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The version was deleted."
           },
           "401": {
             "description": "Authentication required.",
@@ -13551,6 +13939,112 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AdapterWeights"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Upload conflict or invalid adapter.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/tasks/{task}/production-changes": {
+      "get": {
+        "operationId": "listProductionChanges",
+        "summary": "List production changes",
+        "description": "Lists the last 100 moves of the task's production pointer, newest first. Rollback promotes a change's `from_version_id`.",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "The task's name, as sent in the capture header and shown in the console."
+            },
+            "required": true,
+            "description": "The task's name, as sent in the capture header and shown in the console.",
+            "name": "task",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Changes, newest first.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductionChangeList"
                 }
               }
             }

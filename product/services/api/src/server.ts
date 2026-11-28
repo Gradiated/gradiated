@@ -28,6 +28,8 @@ import {
   createTraceService,
   createTrainingService,
   createAdapterDownloads,
+  createGradArtifacts,
+  ServingBasesSchema,
   createAdapterHostingService,
   createAdapterQualifier,
   createDeploymentStore,
@@ -218,7 +220,23 @@ const trainingEngine = createTrainingEngine(process.env);
 const artifactStorage = environment.TRAINING_ARTIFACTS_BUCKET
   ? new ObjectStorage(environment.TRAINING_ARTIFACTS_BUCKET)
   : undefined;
-const adapterDownloads = createAdapterDownloads(artifactStorage);
+const gradBundles = environment.GRAD_ARTIFACTS_BUCKET
+  ? new ObjectStorage(environment.GRAD_ARTIFACTS_BUCKET)
+  : undefined;
+const grad = environment.GRAD_SERVER_URL
+  ? createGradArtifacts({
+      baseUrl: environment.GRAD_SERVER_URL,
+      authorization: async ({ workspaceId, scopes }) =>
+        (
+          await auth.signServiceToken({
+            service: "inference",
+            workspaceId,
+            scopes,
+          })
+        ).token,
+    })
+  : undefined;
+const adapterDownloads = createAdapterDownloads(artifactStorage, gradBundles);
 
 const deploymentStore = createDeploymentStore(database);
 const qualifyAdapter = createAdapterQualifier({
@@ -232,6 +250,46 @@ const validateEvaluationModel = createEvaluationModelValidator(
   externalModels,
   catalogBilling,
 );
+
+const training = createTrainingService(
+  database,
+  contents,
+  adapterDownloads,
+  trainingEngine.engine,
+  validateEvaluationModel,
+  artifactStorage,
+  qualifyAdapter,
+  createQualificationLock(valkey),
+  // Rotating this key invalidates every public report link.
+  environment.BETTER_AUTH_SECRET,
+  {
+    ...(grad ? { grad } : {}),
+    ...(gradBundles ? { bundles: gradBundles } : {}),
+    ...(environment.GRAD_SERVING_BASES
+      ? {
+          servingBases: ServingBasesSchema.parse(
+            JSON.parse(environment.GRAD_SERVING_BASES),
+          ),
+        }
+      : {}),
+  },
+);
+// One sweep at a time: while grad is down, each call waits out its timeout.
+let releasingPins = false;
+const pinReleases = grad
+  ? setInterval(() => {
+      if (releasingPins) return;
+      releasingPins = true;
+      training.artifacts
+        .releasePendingPins()
+        .catch((error: unknown) => {
+          serviceLog("warn", "grad_pin_release_failed", { error });
+        })
+        .finally(() => {
+          releasingPins = false;
+        });
+    }, 60_000).unref()
+  : undefined;
 
 const app = createApp({
   githubInstallations:
@@ -290,18 +348,7 @@ const app = createApp({
     waitlist: createWaitlistService(database),
     workspaces: createWorkspaceApiKeyService(database, validateEvaluationModel),
     traces: createTraceService(database, contents),
-    training: createTrainingService(
-      database,
-      contents,
-      adapterDownloads,
-      trainingEngine.engine,
-      validateEvaluationModel,
-      artifactStorage,
-      qualifyAdapter,
-      createQualificationLock(valkey),
-      // Rotating this key invalidates every public report link.
-      environment.BETTER_AUTH_SECRET,
-    ),
+    training,
   },
 });
 
@@ -410,6 +457,7 @@ const release = async (dependency: string, close: () => Promise<unknown>) => {
 
 const shutdown = async (signal: NodeJS.Signals) => {
   serviceLog("info", "api_stopping", { signal });
+  clearInterval(pinReleases);
   stopWorkspaceStateSweep();
 
   await Promise.all([

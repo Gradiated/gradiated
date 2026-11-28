@@ -15,6 +15,9 @@ import {
   StartTrainingRunResponseSchema,
   StartTrainingRunSchema,
   PromoteVersionSchema,
+  ProductionChangeListSchema,
+  PublishedTaskVersionSchema,
+  PublishTaskVersionSchema,
   TaskVersionPathSchema,
   AdapterDownloadSchema,
   AdapterWeightsSchema,
@@ -266,6 +269,54 @@ const listVersions = createRoute({
   request: { params: TaskPathSchema },
   responses: {
     200: json(TaskVersionListSchema, "Versions, newest first."),
+    ...errors,
+  },
+});
+const publishVersion = createRoute({
+  method: "post",
+  path: `${base}/tasks/{task}/versions`,
+  operationId: "publishTaskVersion",
+  summary: "Publish an artifact as a version",
+  description:
+    "Publishes a grad artifact as a version of this model, creating the model on first publish. Callers name the model after the artifact unless they choose another name. The artifact is pinned so training never deletes it, and the version reads its bundle in place. The version is then tested on serving capacity, as promote does; it is not promoted. Publishing the same artifact again returns the existing version. 422 `format_not_servable_yet` names the formats serving supports.",
+  tags: ["Training"],
+  request: {
+    params: TaskPathSchema,
+    body: {
+      content: { "application/json": { schema: PublishTaskVersionSchema } },
+    },
+  },
+  responses: {
+    200: json(PublishedTaskVersionSchema, "The artifact's existing version."),
+    201: json(PublishedTaskVersionSchema, "The new version."),
+    ...errors,
+  },
+});
+const deleteVersion = createRoute({
+  method: "delete",
+  path: `${base}/tasks/{task}/versions/{version_id}`,
+  operationId: "deleteTaskVersion",
+  summary: "Delete task version",
+  description:
+    "Deletes a version that is not in production and releases its artifact's pin. 409 when the version serves production.",
+  tags: ["Training"],
+  request: { params: TaskVersionPathSchema },
+  responses: {
+    204: { description: "The version was deleted." },
+    ...errors,
+  },
+});
+const listProductionChanges = createRoute({
+  method: "get",
+  path: `${base}/tasks/{task}/production-changes`,
+  operationId: "listProductionChanges",
+  summary: "List production changes",
+  description:
+    "Lists the last 100 moves of the task's production pointer, newest first. Rollback promotes a change's `from_version_id`.",
+  tags: ["Training"],
+  request: { params: TaskPathSchema },
+  responses: {
+    200: json(ProductionChangeListSchema, "Changes, newest first."),
     ...errors,
   },
 });
@@ -800,6 +851,68 @@ export const registerTrainingRoutes = (
     // Versions never change their adapter, but membership can change.
     c.header("Cache-Control", "private, max-age=300");
     return c.json(weights, 200);
+  });
+  app.openapi(publishVersion, async (c) => {
+    const user = await requireUser(c);
+    const p = c.req.valid("param");
+    const body = c.req.valid("json");
+    const published = await training.artifacts.publish(
+      user.id,
+      p.workspace_id,
+      {
+        artifact: body.artifact,
+        task: p.task,
+        ...(body.name ? { name: body.name } : {}),
+      },
+    );
+    if (published.created)
+      c.get("analytics")?.trackWorkspace(user.id, "task_version_published", {
+        workspace_id: p.workspace_id,
+        task_id: published.task.id,
+        version_id: published.version.id,
+      });
+
+    return c.json(
+      {
+        ...versionResponse(published.task, published.version),
+        qualification: published.qualification,
+      },
+      published.created ? 201 : 200,
+    );
+  });
+  app.openapi(deleteVersion, async (c) => {
+    const user = await requireUser(c);
+    const p = c.req.valid("param");
+    await training.artifacts.deleteVersion(
+      user.id,
+      p.workspace_id,
+      p.task,
+      p.version_id,
+    );
+
+    return c.body(null, 204);
+  });
+  app.openapi(listProductionChanges, async (c) => {
+    const user = await requireUser(c);
+    const p = c.req.valid("param");
+    const changes = await training.listProductionChanges(
+      user.id,
+      p.workspace_id,
+      p.task,
+    );
+
+    return c.json(
+      {
+        data: changes.map((change) => ({
+          id: change.id,
+          from_version_id: change.fromVersionId,
+          to_version_id: change.toVersionId,
+          actor: change.actor,
+          created_at: change.createdAt.toISOString(),
+        })),
+      },
+      200,
+    );
   });
   app.openapi(promote, async (c) => {
     const user = await requireUser(c);

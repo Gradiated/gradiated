@@ -27,7 +27,7 @@ from artifacts import (
     strict_json,
     validate_tensors,
 )
-from fixtures import archive
+from fixtures import GRAD_SOURCE, adapter_files, archive, grad_bundle
 
 
 class Response(io.BytesIO):
@@ -1107,6 +1107,94 @@ class ArtifactTests(unittest.TestCase):
                 has_fused_experts(self.root)
             with self.assertRaises(ValueError):
                 validate_tensors(self.root, self.spec, {"num_hidden_layers": 2})
+
+
+class GradBundleTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+
+    def spec(self, payload):
+        return {
+            "version": {
+                "id": str(uuid.uuid4()),
+                "adapter": {
+                    "rank": 2,
+                    "size_bytes": len(payload),
+                    "sha256": hashlib.sha256(payload).hexdigest(),
+                    "source": GRAD_SOURCE,
+                },
+            },
+            "download": {"url": "https://bucket.s3.amazonaws.com/adapter"},
+        }
+
+    def materialize(self, payload, spec=None):
+        def fetch(_spec, path, _hosts):
+            path.write_bytes(payload)
+
+        return materialize(
+            spec or self.spec(payload),
+            self.root,
+            1024 * 1024,
+            set(),
+            {"num_hidden_layers": 2},
+            fetch=fetch,
+        )
+
+    def test_a_grad_bundle_loads_and_drops_its_envelope(self):
+        payload = grad_bundle(adapter_files(), extra={"eval_report.json": b"{}"}, manifest={
+            "eval_report_sha256": hashlib.sha256(b"{}").hexdigest()
+        })
+
+        spec = self.spec(payload)
+        directory, _disk, _tensors = self.materialize(payload, spec)
+
+        self.assertEqual(
+            {path.name for path in directory.iterdir()},
+            {"archive.tar.gz", "adapter_config.json", "adapter_model.safetensors", ".verified.json"},
+        )
+        again, _disk, _tensors = self.materialize(b"", spec)
+        self.assertEqual(again, directory)
+
+    def test_grad_bundles_must_match_their_manifest(self):
+        files = adapter_files()
+        cases = [
+            grad_bundle(files, manifest={"files": {"adapter_config.json": "0" * 64}}),
+            grad_bundle(files, manifest={"format_version": 3}),
+            grad_bundle(files, adapter_format="cartridge"),
+            grad_bundle(files, manifest={"kind": "run"}),
+            grad_bundle(files, extra={"eval_report.json": b"{}"}),
+            grad_bundle(files, extra={"trainer_state/optimizer.pt": b"x"}),
+            grad_bundle(files, extra={"notes.txt": b"x"}),
+            grad_bundle({"adapter_config.json": files["adapter_config.json"]}),
+        ]
+        for payload in cases:
+            with self.assertRaises(ValueError):
+                self.materialize(payload)
+        self.assertEqual(list(self.root.iterdir()), [])
+
+    def test_a_promoted_checkpoint_loads_without_its_resume_state(self):
+        files = adapter_files()
+        state = {"trainer_state/optimizer.pt": b"state"}
+        payload = grad_bundle(
+            {**files, **state},
+            manifest={"kind": "checkpoint", "format_version": 2},
+        )
+
+        directory, _disk, _tensors = self.materialize(payload)
+
+        self.assertFalse((directory / "trainer_state").exists())
+        self.assertTrue((directory / "adapter_model.safetensors").is_file())
+
+    def test_a_legacy_archive_needs_no_manifest_and_a_grad_bundle_does(self):
+        output = self.root / "out"
+        output.mkdir()
+        legacy = self.root / "legacy.tar.gz"
+        legacy.write_bytes(archive())
+        with self.assertRaisesRegex(ValueError, "Missing adapter files"):
+            extract(legacy, output, 1024 * 1024, grad=True)
+
 
 
 if __name__ == "__main__":

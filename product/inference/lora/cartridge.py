@@ -2,7 +2,7 @@ import json
 import shutil
 import struct
 
-from artifacts import file_hash, remaining, strict_json
+from artifacts import extract, file_hash, is_grad_bundle, remaining, strict_json
 
 FILE = "cartridge.safetensors"
 FORMAT = "gradiated.cartridge/1"
@@ -144,6 +144,13 @@ def slot_ids(path):
     return list(struct.unpack(f"<{len(data) // 8}q", data))
 
 
+def verified_hashes(adapter, file_sha256):
+    """A grad bundle's sha256 names the archive, so its cache also records the extracted file's."""
+    if is_grad_bundle(adapter):
+        return {FILE: file_sha256, "bundle": adapter["sha256"]}
+    return {FILE: adapter["sha256"]}
+
+
 def materialize(spec, root, max_bytes, allowed_hosts, model_config, fetch, reserve=None, deadline=None):
     """Download and verify one cartridge file; returns (directory, disk bytes)."""
     remaining(deadline)
@@ -158,7 +165,7 @@ def materialize(spec, root, max_bytes, allowed_hosts, model_config, fetch, reser
             if verification.stat().st_size > 4096:
                 raise ValueError("Oversized cache manifest")
             hashes = strict_json(verification.read_bytes())
-            if hashes != {FILE: adapter["sha256"]} or file_hash(destination / FILE, deadline) != adapter["sha256"]:
+            if hashes != verified_hashes(adapter, hashes.get(FILE)) or file_hash(destination / FILE, deadline) != hashes[FILE]:
                 raise ValueError("Cached cartridge integrity mismatch")
             if {path.name for path in destination.iterdir()} != {FILE, ".verified.json"}:
                 raise ValueError("Unexpected cached cartridge files")
@@ -178,14 +185,28 @@ def materialize(spec, root, max_bytes, allowed_hosts, model_config, fetch, reser
         if reserve:
             reserve(adapter["size_bytes"] + 4096)
         path = staging / FILE
-        fetch(spec, path, allowed_hosts)
-        if path.stat().st_size != adapter["size_bytes"] or file_hash(path, deadline) != adapter["sha256"]:
+        grad = is_grad_bundle(adapter)
+        download = staging / "archive.tar.gz" if grad else path
+        fetch(spec, download, allowed_hosts)
+        if download.stat().st_size != adapter["size_bytes"] or file_hash(download, deadline) != adapter["sha256"]:
             raise ValueError("Cartridge integrity mismatch")
+        if grad:
+            extract(
+                download,
+                staging,
+                max_bytes - adapter["size_bytes"] - 4096,
+                reserve=(lambda unpacked: reserve(adapter["size_bytes"] + unpacked + 4096)) if reserve else None,
+                deadline=deadline,
+                payload=(FILE,),
+                grad=True,
+                adapter_format="cartridge",
+            )
+            download.unlink()
         try:
             validate_file(path, adapter, model_config, deadline)
         except struct.error:
             raise ValueError("Invalid cartridge") from None
-        (staging / ".verified.json").write_text(json.dumps({FILE: adapter["sha256"]}))
+        (staging / ".verified.json").write_text(json.dumps(verified_hashes(adapter, file_hash(path, deadline))))
         disk_bytes = sum(item.stat().st_size for item in staging.iterdir())
         remaining(deadline)
         staging.rename(destination)

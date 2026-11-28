@@ -582,6 +582,7 @@ fn adapter() -> crate::PrivateAdapter {
         sha256: "a".repeat(64),
         format: crate::AdapterFormat::PeftLora,
         num_tokens: None,
+        source_kind: None,
     }
 }
 

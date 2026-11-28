@@ -49,6 +49,7 @@ export const createAdapterHostingService = (
         row.version.trainingRunId ?? row.version.id,
         adapter.size_bytes,
         adapter.sha256,
+        row.version.workspaceId,
       );
 
       return { ...row, download };

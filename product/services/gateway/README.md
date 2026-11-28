@@ -100,7 +100,10 @@ LoRA-enabled chat deployments that match the recorded base revision. When none c
 serve, or its attempt fails before output, the base model serves the request
 without the adapter: first its chat deployments, then OpenRouter if the base model
 is mapped. The response keeps the version slug and base prices; settlement records
-the base release, or OpenRouter, as what served. A pinned request does not degrade. Each
+the base release, or OpenRouter, as what served. A pinned request does not degrade,
+and neither does a cartridge or a version published from a grad artifact
+(`adapter.source.kind = "grad"`): with no matching LoRA deployment they answer
+`model_unavailable`. Each
 attempt sends a normal completion request through the existing authenticated ingress,
 using the immutable internal model name `<workspace_uuid>/<resolved_version_slug>`.
 The runtime client has no adapter preparation call or cache state. SGLang's

@@ -71,6 +71,37 @@ it.each([
   expect(send).not.toHaveBeenCalled();
   expect(sign).not.toHaveBeenCalled();
 });
+it("signs a grad artifact bundle at the key grad resolved, inside its workspace only", async () => {
+  const workspace = "0198ae50-94d8-7d4d-a8be-9f9b44b8c775";
+  const downloads = createAdapterDownloads(
+    new ObjectStorage("artifacts"),
+    new ObjectStorage("grad-training"),
+  );
+
+  for (const key of [
+    `artifacts/${workspace}/${sha}`,
+    `ws/${workspace}/jobs/job_1/1/${sha}`,
+  ]) {
+    await downloads.sign(`s3://grad-training/${key}`, run, 123, sha, workspace);
+    expect(send.mock.lastCall![0].input).toMatchObject({
+      Bucket: "grad-training",
+      Key: key,
+    });
+  }
+
+  const bundle = `s3://grad-training/artifacts/${workspace}/${sha}`;
+  for (const [candidate, scope] of [
+    [bundle, run],
+    [`s3://grad-training/artifacts/${run}/${sha}`, workspace],
+    [`s3://grad-training/artifacts/${workspace}/../${run}/${sha}`, workspace],
+    [`s3://grad-training/datasets/${workspace}/${sha}`, workspace],
+    [bundle.replace("grad-training", "artifacts"), workspace],
+  ] as const)
+    await expect(
+      downloads.sign(candidate, run, 123, sha, scope),
+    ).rejects.toThrow("unavailable");
+  expect(send).toHaveBeenCalledTimes(2);
+});
 it("signs a cartridge file under its version", async () => {
   const cartridge = `s3://artifacts/cartridges/${run}/${sha}/cartridge.safetensors`;
   await createAdapterDownloads(new ObjectStorage("artifacts")).sign(

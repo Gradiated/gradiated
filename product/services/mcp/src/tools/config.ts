@@ -37,6 +37,8 @@ const CREDENTIALS = "Credential management stays in the console.";
 const TRAINING = "Training runs and evaluations are managed in the console.";
 const STAFF = "Staff only.";
 const UPLOAD = "Needs a direct file upload outside MCP.";
+const ARTIFACTS =
+  "Publishing grad artifacts belongs to the grad SDKs and the console.";
 const DOWNLOAD =
   "Returns a signed download link for a file a model cannot read.";
 const INFERENCE = "call_model covers inference.";
@@ -131,6 +133,9 @@ export const TOOL_CONFIG: Record<OperationId, ToolConfig> = {
     title: "Promote task version",
     arguments: { task: TASK, version_id: VERSION },
   },
+  publishTaskVersion: { enabled: false, reason: ARTIFACTS },
+  listProductionChanges: { enabled: false, reason: ARTIFACTS },
+  deleteTaskVersion: { enabled: false, reason: ARTIFACTS },
   listTaskVersionFiles: {
     enabled: true,
     name: "list_task_version_files",

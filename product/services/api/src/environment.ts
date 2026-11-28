@@ -23,8 +23,14 @@ const ApiOnlyEnvironmentSchema = z.object({
     .transform((value) => value || undefined),
   POSTHOG_HOST: z.url().default("https://us.i.posthog.com"),
   TRAINING_ARTIFACTS_BUCKET: z.string().min(1).optional(),
+  // grad's bucket; the API reads only the release keys grad's resolve names.
+  GRAD_ARTIFACTS_BUCKET: z.string().min(1).optional(),
   // grad-server's internal listener, such as http://grad-internal.training.svc:8789.
   GRAD_SERVER_URL: z.url().optional(),
+  // JSON map from grad's base model ID to the serving base that hosts its
+  // adapters: {"qwen/qwen3-8b": {"model_id", "repository", "revision"}}. Bases
+  // not listed fall back to the catalog's training profiles.
+  GRAD_SERVING_BASES: z.string().min(2).optional(),
   CONTENTS_BUCKET: z.string().min(1).optional(),
   METRICS_PORT: PortSchema.default(9_464),
   MCP_RESOURCE_URL: z.url().default("https://mcp.gradiated.com/mcp"),

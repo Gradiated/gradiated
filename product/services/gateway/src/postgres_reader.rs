@@ -125,7 +125,8 @@ select case when task_versions.id is null then 'null' else json_build_object(
     'base_model_revision', coalesce(task_versions.adapter->>'validated_base_model_revision', task_versions.adapter->>'base_model_revision', ''),
     'sha256', task_versions.adapter->>'sha256',
     'format', coalesce(task_versions.adapter->>'format', 'peft_lora'),
-    'num_tokens', task_versions.adapter->'num_tokens'
+    'num_tokens', task_versions.adapter->'num_tokens',
+    'source_kind', task_versions.adapter->'source'->>'kind'
 )::text end
 from tasks
 join workspaces on workspaces.id = tasks.workspace_id

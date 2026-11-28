@@ -4,10 +4,13 @@ import { curlFor } from "./ApiReference";
 import {
   API,
   childrenOf,
+  enumValues,
   operationAnchor,
   resolve,
   typeLabel,
+  variantsOf,
 } from "./api-schema";
+import type { Schema } from "./api-schema";
 import changelog from "../../../docs/training/generated/changelog-markdown.json";
 import recorded from "../../../docs/training/generated/api-responses.json";
 
@@ -16,6 +19,97 @@ const RECORDED = (recorded as { responses: Record<string, { body: unknown }> })
 
 const releaseAnchor = (version: string): string =>
   `v${version.replace(/\./g, "-")}`;
+
+/* One field as a Markdown list item; inline objects and unions list their
+   own fields indented below it, and named types point at "Schemas". */
+const fieldLines = (
+  name: string,
+  schema: Schema,
+  required: boolean,
+  depth: number,
+): string[] => {
+  const resolved = resolve(schema);
+  const values = enumValues(schema);
+  const pad = "  ".repeat(depth);
+  const extra = [
+    required ? "required" : null,
+    resolved.pattern ? `matches \`${resolved.pattern}\`` : null,
+    values
+      ? `one of ${values.map((v) => `\`${JSON.stringify(v)}\``).join(", ")}`
+      : null,
+  ].filter(Boolean);
+  const description = schema.description ?? resolved.description;
+  const lines = [
+    `${pad}- \`${name}\` (${[typeLabel(schema), ...extra].join(", ")})${description ? `: ${description}` : ""}`,
+  ];
+  if (depth > 3 || schema.$ref) return lines;
+
+  const target =
+    resolved.items && !resolved.items.$ref ? resolve(resolved.items) : resolved;
+  if (target.properties && !resolved.items?.$ref) {
+    const required = new Set(target.required ?? []);
+    for (const [child, value] of Object.entries(target.properties)) {
+      lines.push(...fieldLines(child, value, required.has(child), depth + 1));
+    }
+  }
+  for (const variant of values ? [] : variantsOf(schema)) {
+    if (variant.$ref) continue;
+    const shape = childrenOf(variant);
+    if (!shape) continue;
+    lines.push(`${pad}  - one shape:`);
+    for (const [child, value] of Object.entries(shape.properties)) {
+      lines.push(
+        ...fieldLines(child, value, shape.required.includes(child), depth + 2),
+      );
+    }
+  }
+  return lines;
+};
+
+const schemasMarkdown = (): string =>
+  [
+    "## Schemas",
+    "",
+    "Every named type the endpoints above use, with all of its fields.",
+    ...Object.entries(API.schemas).map(([name, schema]) => {
+      const shape = childrenOf(schema);
+      const variants = variantsOf(schema);
+      const values = enumValues(schema);
+      const body = shape
+        ? Object.entries(shape.properties).flatMap(([field, value]) =>
+            fieldLines(field, value, shape.required.includes(field), 0),
+          )
+        : values
+          ? [
+              `One of ${values.map((v) => `\`${JSON.stringify(v)}\``).join(", ")}.`,
+            ]
+          : variants.length
+            ? variants.flatMap((variant, index) => {
+                const part = childrenOf(variant);
+                return [
+                  `- shape ${index + 1}: ${typeLabel(variant)}`,
+                  ...(part && !variant.$ref
+                    ? Object.entries(part.properties).flatMap(
+                        ([field, value]) =>
+                          fieldLines(
+                            field,
+                            value,
+                            part.required.includes(field),
+                            1,
+                          ),
+                      )
+                    : []),
+                ];
+              })
+            : [typeLabel(schema)];
+      return [
+        `### ${name}`,
+        "",
+        ...(schema.description ? [schema.description, ""] : []),
+        ...body,
+      ].join("\n");
+    }),
+  ].join("\n\n");
 
 const apiMarkdown = (): string =>
   API.operations
@@ -29,9 +123,8 @@ const apiMarkdown = (): string =>
         .join("\n");
       const fields = body
         ? Object.entries(body.properties)
-            .map(
-              ([name, schema]) =>
-                `- \`${name}\` (${typeLabel(schema)}${body.required.includes(name) ? ", required" : ""}${resolve(schema).pattern ? `, matches \`${resolve(schema).pattern}\`` : ""})${schema.description ? `: ${schema.description}` : ""}`,
+            .flatMap(([name, schema]) =>
+              fieldLines(name, schema, body.required.includes(name), 0),
             )
             .join("\n")
         : "";
@@ -62,6 +155,7 @@ const apiMarkdown = (): string =>
           : []),
       ].join("\n");
     })
+    .concat(schemasMarkdown())
     .join("\n\n");
 
 const errorsMarkdown = (): string =>

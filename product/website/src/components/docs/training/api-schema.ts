@@ -110,9 +110,16 @@ export const typeLabel = (schema: Schema): string => {
   );
 
   if (resolved.const !== undefined) return JSON.stringify(resolved.const);
-  if (resolved.enum) return name ?? "enum";
+  if (resolved.enum) {
+    return (
+      name ??
+      (resolved.enum.length === 1 ? JSON.stringify(resolved.enum[0]) : "enum")
+    );
+  }
   if (variants.length === 1 && variants[0]) return typeLabel(variants[0]);
-  if (variants.length > 1) return name ?? "one of";
+  if (variants.length > 1) {
+    return name ?? variants.map((variant) => typeLabel(variant)).join(" or ");
+  }
 
   const own = types(resolved).filter((type) => type !== "null");
   if (own.includes("array")) {

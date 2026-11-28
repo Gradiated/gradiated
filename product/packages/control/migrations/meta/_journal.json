@@ -260,6 +260,20 @@
       "when": 1795195802407,
       "tag": "0036_organization_models",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1795804954193,
+      "tag": "0037_api_key_scopes",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1795804958545,
+      "tag": "0038_auth_principals_v1",
+      "breakpoints": true
     }
   ]
 }

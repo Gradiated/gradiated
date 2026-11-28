@@ -1998,7 +1998,7 @@
   gap: var(--u);
 }
 
-@container (min-width: 50rem) {
+@container (min-width: 45rem) {
   .gr-api-grid {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: calc(1.5 * var(--u));

@@ -204,7 +204,11 @@ export type PlanEstimate = {
 };
 
 export const estimatePlan = (input: PlanInput): PlanEstimate => {
-  const evalRecords = Math.round(input.records * input.evalFraction);
+  // Like the planner's split, at least one record always trains.
+  const evalRecords = Math.min(
+    Math.round(input.records * input.evalFraction),
+    Math.max(input.records - 1, 0),
+  );
   const trainRecords = Math.max(input.records - evalRecords, 1);
   const steps = Math.max(
     1,

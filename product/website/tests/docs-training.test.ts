@@ -133,6 +133,21 @@ describe("estimatePlan", () => {
     expect(plan.warnings[1]).toContain("status stopped_budget");
   });
 
+  it("never holds out more records than exist", () => {
+    const plan = estimatePlan({
+      records: 1,
+      tokensPerRecord: 100,
+      epochs: 1,
+      batchSize: 1,
+      evalFraction: 0.5,
+      price: 1,
+      maxCostUsd: null,
+    });
+
+    expect(plan.evalRecords + plan.trainRecords).toBe(1);
+    expect(plan.trainRecords).toBe(1);
+  });
+
   it("formats money like the CLI", () => {
     expect(usd(0.165)).toBe("$0.17");
     expect(usd(0.0096)).toBe("$0.0096");

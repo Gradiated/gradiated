@@ -28,7 +28,7 @@ Any dataset works as input: a list of plain chat records or a `.jsonl` file (`cl
 
 ## Start with recipe defaults
 
-Every recipe comes with working defaults (on a self-hosted server, pass a Qwen3 `model=` to `DecisionModelRecipe`: its default `gradiated/linden-1` trains on Gradiated Cloud only) for the base model, split, learning rate, batch size, schedule, checkpoints and evals. Pass your dataset, an output name and the recipe. Run `--dry-run` (or `runs.plan()`) first to check your data and see the estimated cost, and set `max_cost_usd=` to cap spend. You pay a fixed price per million tokens processed, set per base model.
+For a dataset version with more than 100,000 records, the plan reads 100,000 of them, spread over the version, and scales the counts, tokens, steps and cost to the full version (it says so in a warning); the run trains on all of them. Every recipe comes with working defaults (on a self-hosted server, pass a Qwen3 `model=` to `DecisionModelRecipe`: its default `gradiated/linden-1` trains on Gradiated Cloud only) for the base model, split, learning rate, batch size, schedule, checkpoints and evals. Pass your dataset, an output name and the recipe. Run `--dry-run` (or `runs.plan()`) first to check your data and see the estimated cost, and set `max_cost_usd=` to cap spend. You pay a fixed price per million tokens processed, set per base model.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">

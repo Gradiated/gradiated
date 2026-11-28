@@ -86,7 +86,7 @@ A source feeds exactly one dataset; a dataset can have several sources, and dele
 | `POST`   | `/v1/runs/plan`                   | Dry run at $0: resolve recipe defaults, check the data and estimate tokens and cost.                                                                                            |
 | `POST`   | `/v1/runs`                        | Create and queue a training run. The run pins the dataset version.                                                                                                              |
 | `GET`    | `/v1/runs` / `/v1/runs/{id}`      | List runs, newest first, or get one (status, `resolved_config`, `eval_report`, `artifact_id`).                                                                                  |
-| `GET`    | `/v1/runs/{id}/metrics`           | Step metrics as JSON pages, or a live SSE stream with `Accept: text/event-stream`.                                                                                              |
+| `GET`    | `/v1/runs/{id}/metrics`           | Step metrics as JSON pages (`after_step`, `tail_cursor`). To follow a run live, stream `/v1/runs/{id}/events`, whose `metric` events carry the points.                          |
 | `GET`    | `/v1/runs/{id}/events`            | Lifecycle events (phases, metrics, checkpoints, attempts, warnings) as JSON pages, or SSE with `Accept: text/event-stream` (the event name is its `type`; a final `completed`). |
 | `POST`   | `/v1/runs/{id}/cancel`            | Cancel a run. A running attempt is stopped and billed.                                                                                                                          |
 | `POST`   | `/v1/runs/{id}/resume`            | Resume a stopped, failed or cancelled run from its latest checkpoint.                                                                                                           |
@@ -189,7 +189,7 @@ List endpoints take `limit` and `cursor` and return `{"data": [...], "next_curso
 | `/v1/datasets/{name}/records`                   | 100     | 1000    |
 | `/v1/runs/{id}/metrics`, `/v1/runs/{id}/events` | 1000    | 5000    |
 
-`/v1/runs/{id}/metrics` also returns `tail_cursor`, the position after the newest point so far. Pass it back as `cursor` to poll for points written later. The SSE stream sends one `metric` event per point (event id = `seq`) and a final `status` event with the finished run; reconnect with `Last-Event-ID` to resume.
+`/v1/runs/{id}/metrics` also returns `tail_cursor`, the position after the newest point so far. Pass it back as `cursor` to poll for points written later. For a live view, `GET /v1/runs/{id}/events` with `Accept: text/event-stream` sends every event as it happens (event name = its `type`, event id = `seq`, a final `completed`); reconnect with `Last-Event-ID` to resume. The SDKs' `metrics(follow=True)` reads that stream.
 
 ### Errors
 

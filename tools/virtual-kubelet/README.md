@@ -767,6 +767,63 @@ gradctl gpu lease status
   only if the `GpuHost` is unchanged since it was read, so two holders cannot
   both acquire it.
 
+#### grad as a tenant (draft, off by default)
+
+grad's training workers borrow idle hosts through the same leases, under the
+holder `grad`, which only the operator writes (`src/grad.ts`). `GRAD_ENABLED`
+is `false` by default; turned off, the operator leases nothing to grad and
+hands back what grad holds.
+
+- **Demand.** The operator reads `max(grad_jobs_open{kind="train"})`
+  (claimable plus running train jobs) from `GRAD_PROMETHEUS_URL`; one v0 job
+  needs one GPU of at least 80 GB, so `GRAD_GPU_PRODUCTS` takes only such
+  products. A query with no samples means grad is down, not idle, so leases
+  are held as they are. When demand exceeds the GPUs on grad's hosts for two
+  minutes, the operator writes a preemptible 24-hour request for one spare
+  host: Ready, in the pool, with no pods, of a product in `GRAD_GPU_PRODUCTS`,
+  that no pending model replica would take, and whose loss leaves
+  `GRAD_BUFFER_GPUS` free GPUs on the other in-pool hosts of its product. One lease is in flight
+  at a time, up to `GRAD_MAX_HOSTS`. A host whose GPUs the open jobs have not
+  needed for fifteen minutes is handed back, the newest first.
+- **Wiped on every switch.** A lease to `grad` re-images the drained host
+  before Hold hands it over, and its return re-images it again. A grad lease
+  that fails after asking for the re-image keeps the host cordoned and held,
+  so the return wipes it again.
+- **Trainers.** On a host held by grad, the operator mints a token through
+  grad's internal API (`POST {GRAD_INTERNAL_URL}/internal/v1/worker-tokens`,
+  kinds `train`, bound to the host and the lease `<instance>.<lease since ms>`,
+  expiring with the lease) and calls the host agent's `train_start`. The agent
+  runs one worker per GPU from the `grad-trainer` release pinned in
+  `runtimes.json` (`GRAD_TRAINER_RUNTIME`; a release names its
+  `docker.io/gradiated/grad-trainer:<version>-gpu@sha256:…` source image), as
+  the runtime user in its own cgroup, with `GRAD_SERVER_URL` and
+  `GRAD_WORKER_TOKEN` from the request and nothing else from it, and
+  `GRAD_WORKER_ID=<instance>`, the host the token is bound to (grad answers
+  any other worker ID with `403 worker_host_mismatch`). The token lives only in
+  the trainers' environment, never on disk; it expires with the lease, so it
+  is never rotated. Trainers that exit are started again, under a new token,
+  at most every five minutes. The `grad-trainer` release must be 0.2.0-alpha.4
+  or later, the first whose worker reads `GRAD_WORKER_TOKEN`. The agent refuses `train_start` beside a pod or a GPU
+  compute process, and pod creation while trainers are recorded. Trainer
+  operations carry the management key and no controller epoch, since trainers
+  are not pods.
+- **Inference first.** A model replica the scheduler has found no node for
+  reclaims a grad host it fits 30 seconds after the last rollout finished,
+  instead of the ten minutes a person's lease waits, unless a host already
+  returning will take it. The operator removes grad's request and sends
+  `train_stop` at once; the return then starts with `TrainStop`, which waits
+  for the trainers to checkpoint, requeue and exit, or for
+  `GRAD_DRAIN_GRACE_SECONDS` (default 90, after which the agent kills them),
+  revokes the lease's tokens (`DELETE …/worker-tokens/<lease>`) and continues
+  as any return. A failed revocation is counted, not waited on: the token
+  existed only on the wiped host and expires with the lease. The return itself
+  still waits for any rollout already running.
+- **Metrics.** `gradiated_gpu_fleet_grad_demand_jobs`,
+  `gradiated_gpu_fleet_grad_gpus{state="leasing|leased|returning"}` and
+  `gradiated_gpu_fleet_grad_events_total` (`requested`, `reclaimed`,
+  `released`, `trainers_started`, `trainer_start_failed`,
+  `token_revoke_failed`).
+
 The host keeps its management key across the return. A holder with root could
 read it, so rotate it by hand after leasing a host that ran untrusted code;
 rotating it automatically needs `secretsmanager:PutSecretValue` for the

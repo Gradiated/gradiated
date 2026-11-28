@@ -18,6 +18,8 @@ described in [Leasing a host](../../../tools/virtual-kubelet/README.md#leasing-a
    RunPod volume are refused.
 2. Request it for the time you need, with a purpose a teammate would understand:
    `gradctl gpu lease acquire <instance> --hours 6 --purpose "..." --holder <agent or person>`.
+   Never use the holder `grad`: the gpu-fleet operator writes and removes
+   those leases for grad's training workers.
    Leases are preemptible by default: if a model needs the host, the operator
    takes it back and wipes it with no warning. Add `--no-preempt` only for work
    that cannot lose the host, such as a run without checkpoints, and say why in

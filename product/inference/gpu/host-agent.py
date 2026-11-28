@@ -106,6 +106,53 @@ def gpu_pool(config):
     return config.get("gpu_uuids") or [config["gpu_uuid"]]
 
 
+# grad-trainer workers are not pods. The gpu-fleet operator starts one per GPU
+# on a host it leased to grad and wiped, with train_start; they never run
+# beside a pod, and a pod is never admitted beside them.
+TRAINER_STATE = "trainers.json"
+TRAINER_ENVIRONMENT = {"GRAD_SERVER_URL", "GRAD_WORKER_TOKEN"}
+GRAD_TRAINER_SOURCE = re.compile(r"docker\.io/gradiated/grad-trainer:[0-9A-Za-z][0-9A-Za-z._-]*-gpu@sha256:[0-9a-f]{64}")
+
+
+def trainer_profile(config, digest):
+    """The grad-trainer release the catalogue pins under digest."""
+    if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest):
+        raise ValueError("A pinned grad-trainer release is required")
+    profile = config.get("runtimes", {}).get(digest)
+    if not profile or profile.get("kind") != "grad-trainer" or not profile.get("image", "").endswith("@sha256:" + digest):
+        raise ValueError("Unsupported grad-trainer release")
+    if not GRAD_TRAINER_SOURCE.fullmatch(profile.get("source_image", "")):
+        raise ValueError("A grad-trainer release must name its pinned docker.io/gradiated/grad-trainer GPU image")
+    if profile.get("environment"):
+        raise ValueError("grad-trainer takes its environment only from train_start")
+    return profile
+
+
+def trainer_environment(environment):
+    # Exactly these two, so a request cannot point the trainer at other code,
+    # libraries or credentials.
+    if (not isinstance(environment, dict) or set(environment) != TRAINER_ENVIRONMENT
+            or any(not isinstance(value, str) for value in environment.values())):
+        raise ValueError("grad-trainer takes exactly GRAD_SERVER_URL and GRAD_WORKER_TOKEN")
+    if not re.fullmatch(r"https?://[A-Za-z0-9.-]+(:[0-9]{1,5})?/?", environment["GRAD_SERVER_URL"]):
+        raise ValueError("GRAD_SERVER_URL must be an http or https origin")
+    if not re.fullmatch(r"gradwt_[A-Za-z0-9_-]{16,256}", environment["GRAD_WORKER_TOKEN"]):
+        raise ValueError("GRAD_WORKER_TOKEN must be a grad lease token")
+    return environment
+
+
+def gpus_busy(devices):
+    active = subprocess.run(
+        ["nvidia-smi", f"--id={','.join(devices)}", "--query-compute-apps=pid", "--format=csv,noheader"],
+        capture_output=True, text=True, check=True, timeout=10,
+    ).stdout.strip()
+    return bool(active and active != "No running processes found")
+
+
+def trainer_cgroup(index):
+    return CGROUP / "gradiated-pods" / f"trainer-{int(index)}"
+
+
 def runtime_profile(config, pod):
     image = pod["spec"]["containers"][0]["image"]
     digest = image.rsplit("@sha256:", 1)[-1]
@@ -123,6 +170,8 @@ def runtime_profile(config, pod):
     profile = profiles.get(digest)
     if not profile or profile["image"] != image:
         raise ValueError("Unsupported runtime release")
+    if profile.get("kind") == "grad-trainer":
+        raise ValueError("grad-trainer runs only through train_start, never as a pod")
     active_requests = profile.get("active_requests")
     if "active_requests" in profile and (type(active_requests) is not int or not 1 <= active_requests <= 4096):
         raise ValueError("Runtime active_requests must be an integer from 1 to 4096")
@@ -693,6 +742,134 @@ class Agent:
                 stdin=subprocess.DEVNULL, stdout=output, stderr=subprocess.STDOUT,
                 start_new_session=True)
 
+    def trainer_state(self):
+        path = self.root / TRAINER_STATE
+        return json.loads(path.read_text()) if path.exists() else None
+
+    def trainer_staged(self, runtime):
+        try:
+            bundle = runtime_bundle(trainer_profile(self.config, runtime))
+        except (ValueError, KeyError):
+            return None
+        marker = self.root / "bundles" / bundle / ".bundle-sha256"
+        if marker.is_file() and not marker.is_symlink() and marker.read_text().strip() == bundle:
+            return self.root / "bundles" / bundle
+
+    def train_status(self, runtime=None):
+        staged = runtime is not None and self.trainer_staged(runtime) is not None
+        state = self.trainer_state()
+        if not state:
+            return {"lease_id": None, "staged": staged, "workers": []}
+        stopping = state.get("stopping", False)
+        return {"lease_id": state["lease_id"], "staged": staged, "workers": [
+            {"gpu": worker["gpu"],
+             "state": ("draining" if stopping else "running") if alive(worker["process"]) else "exited"}
+            for worker in state["workers"]]}
+
+    def train_start(self, body):
+        lease_id = body.get("lease_id")
+        if not isinstance(lease_id, str) or not re.fullmatch(r"[A-Za-z0-9._:-]{1,128}", lease_id):
+            raise ValueError("Invalid lease ID")
+        profile = trainer_profile(self.config, body.get("runtime"))
+        environment = trainer_environment(body.get("environment"))
+        state = self.trainer_state()
+        if state and state["lease_id"] != lease_id:
+            raise ValueError("Trainers of another lease hold the host")
+        if state and state.get("stopping"):
+            raise ValueError("The host's trainers are stopping")
+        # Never both: no pod, admitted, running or draining, holds the host.
+        if self.states() or any((path / "cgroup.procs").read_text().strip()
+                                for path in (CGROUP / "gradiated-pods").glob("*")
+                                if path.is_dir() and not path.name.startswith("trainer-")):
+            raise ValueError("A pod holds the host; trainers never run beside one")
+        bundle = self.trainer_staged(body["runtime"])
+        if bundle is None:
+            raise RuntimeStaging("The grad-trainer bundle is still being staged")
+        workers = {worker["gpu"]: worker for worker in (state or {}).get("workers", [])}
+        missing = [gpu for gpu in gpu_pool(self.config) if not alive(workers.get(gpu, {}).get("process"))]
+        if missing and gpus_busy(missing):
+            raise ValueError("GPU already has a compute process")
+        for gpu in missing:
+            workers[gpu] = self.spawn_trainer(gpu_pool(self.config).index(gpu), gpu, bundle, profile, environment)
+        atomic_json(self.root / TRAINER_STATE, {"lease_id": lease_id, "runtime": body["runtime"],
+                                                 "workers": [workers[gpu] for gpu in gpu_pool(self.config)]})
+        return self.train_status(body["runtime"])
+
+    def spawn_trainer(self, index, gpu, bundle, profile, environment):
+        account = pwd.getpwnam("runtime")
+        scratch = self.root / "trainers"
+        for directory in (scratch, scratch / "cache", scratch / str(index)):
+            directory.mkdir(mode=0o700, exist_ok=True)
+            os.chown(directory, account.pw_uid, account.pw_gid)
+        group = trainer_cgroup(index)
+        group.mkdir(exist_ok=True)
+        (group / "cpu.max").write_text(f"{int(profile['cpu']) * 100000} 100000")
+        (group / "memory.max").write_text(str(int(profile["memory"].removesuffix("Gi")) * 1024 ** 3))
+        (group / "memory.swap.max").write_text("0")
+        (group / "pids.max").write_text("8192")
+        work = scratch / str(index)
+        trainer_env = {
+            "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+            "HOME": str(work), "XDG_CACHE_HOME": str(scratch / "cache"),
+            "HF_HOME": str(scratch / "cache" / "huggingface"), "GRAD_WORKDIR": str(work),
+            "NVIDIA_VISIBLE_DEVICES": gpu, "CUDA_VISIBLE_DEVICES": gpu,
+            # grad binds the lease token to this host: a claim's worker_id must
+            # be the host ID, to which the worker appends its own random suffix.
+            "GRAD_WORKER_ID": self.config['instance_id'], "GRAD_WORKER_KINDS": "train",
+            "GRADIATED_RUNTIME_ROOT": str(bundle), "PYTHONDONTWRITEBYTECODE": "1",
+            **environment,
+        }
+        # The token reaches the trainer only through its environment, never
+        # through a file or the state the agent keeps.
+        with (self.root / f"trainer-{index}.log").open("ab") as output:
+            process = subprocess.Popen([sys.executable, '-B', __file__, 'trainer', str(index)],
+                env=trainer_env, stdin=subprocess.DEVNULL, stdout=output,
+                stderr=subprocess.STDOUT, start_new_session=True)
+        self.children[f"trainer-{index}"] = process
+        return {"gpu": gpu, "process": owner(process)}
+
+    def train_stop(self, grace):
+        if type(grace) is not int or not 1 <= grace <= 600:
+            raise ValueError("grace_seconds must be an integer from 1 to 600")
+        state = self.trainer_state()
+        if not state:
+            return {"stopping": False}
+        if not state.get("stopping"):
+            state["stopping"] = True
+            state["stop_deadline"] = time.time() + grace
+            atomic_json(self.root / TRAINER_STATE, state)
+            for worker in state["workers"]:
+                owned_signal(worker["process"], signal.SIGTERM)
+            threading.Thread(target=self.finish_trainers, daemon=True).start()
+        return {"stopping": True}
+
+    def finish_trainers(self):
+        # SIGTERM lets each trainer save a checkpoint and requeue its job; what
+        # is left at the deadline is killed, and nothing it wrote is kept.
+        state = self.trainer_state()
+        if not state:
+            return
+        processes = [worker["process"] for worker in state["workers"]]
+        while any(alive(process) for process in processes) and time.time() < state["stop_deadline"]:
+            time.sleep(1)
+        for process in processes:
+            owned_signal(process, signal.SIGKILL)
+        for index in range(len(state["workers"])):
+            group = trainer_cgroup(index)
+            if group.exists():
+                if (group / "cgroup.procs").read_text().strip():
+                    (group / "cgroup.kill").write_text("1")
+                    deadline = time.monotonic() + 5
+                    while (group / "cgroup.procs").read_text().strip() and time.monotonic() < deadline:
+                        time.sleep(.1)
+                if (group / "cgroup.procs").read_text().strip():
+                    raise RuntimeError("Trainer cgroup is occupied; GPU claim retained")
+                group.rmdir()
+        shutil.rmtree(self.root / "trainers", ignore_errors=True)
+        with self.lock:
+            (self.root / TRAINER_STATE).unlink(missing_ok=True)
+            sync_directory(self.root)
+
     def validate(self, pod):
         uid = str(uuid.UUID(pod["metadata"]["uid"]))
         spec = pod["spec"]
@@ -833,6 +1010,14 @@ class Agent:
                 return {'instance_id': self.config['instance_id'], 'epoch': fence['epoch'], **host_version(self.root)}
             if operation == 'fence':
                 return {'epoch': fence['epoch']}
+            # The gpu-fleet operator, which holds no controller epoch, drives
+            # trainers; they are never pods, so they cannot race the controller.
+            if operation == 'train_status':
+                return self.train_status(body.get('runtime'))
+            if operation == 'train_start':
+                return self.train_start(body)
+            if operation == 'train_stop':
+                return self.train_stop(body.get('grace_seconds'))
             if operation == 'claim':
                 term = str(uuid.UUID(body['term']))
                 if fence.get('term') == term:
@@ -867,6 +1052,8 @@ class Agent:
             directory = self.root / "pods" / uid
             path = directory / "state.json"
             if operation == "create":
+                if (self.root / TRAINER_STATE).exists():
+                    raise ValueError("Trainers hold the host; pods never run beside them")
                 image = body["pod"]["spec"]["containers"][0]["image"]
                 digest = image.rsplit("@sha256:", 1)[-1]
                 if digest not in self.config.get("runtimes", {}):
@@ -1063,6 +1250,8 @@ def serve():
     for state in agent.states():
         if state.get("draining"):
             threading.Thread(target=agent.drain, args=(state["pod"]["metadata"]["uid"],), daemon=True).start()
+    if (agent.trainer_state() or {}).get("stopping"):
+        threading.Thread(target=agent.finish_trainers, daemon=True).start()
     token = Path(config["token_file"]).read_text().strip()
 
     server = ThreadingHTTPServer(("127.0.0.1", 8887), handler_for(agent, token))
@@ -1122,6 +1311,13 @@ if __name__ == "__main__":
         os.execv("/usr/bin/setpriv", ["setpriv", "--reuid=desmond", "--regid=desmond", "--init-groups",
                  "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs", "--pdeathsig=clear",
                  "nginx", "-c", str(ROOT / "nginx.conf"), "-g", "daemon off;"])
+    elif len(sys.argv) == 3 and sys.argv[1] == "trainer":
+        # Join the trainer's cgroup as root, then become the runtime user.
+        (trainer_cgroup(sys.argv[2]) / "cgroup.procs").write_text(str(os.getpid()))
+        root = os.environ["GRADIATED_RUNTIME_ROOT"]
+        os.execve("/usr/bin/setpriv", ["setpriv", "--reuid=runtime", "--regid=runtime", "--init-groups",
+                  "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs", "--pdeathsig=clear",
+                  f"{root}/entrypoint"], dict(os.environ))
     elif len(sys.argv) == 3 and sys.argv[1] == "task":
         stopping = threading.Event()
         signal.signal(signal.SIGTERM, lambda *_: stopping.set())

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# The host agent sets these, and only GRAD_SERVER_URL and GRAD_WORKER_TOKEN
+# come from the operator's request.
+root=${GRADIATED_RUNTIME_ROOT:?The host agent must set the bundle directory}
+: "${GRAD_SERVER_URL:?}" "${GRAD_WORKER_TOKEN:?}" "${CUDA_VISIBLE_DEVICES:?}"
+export PYTHONHOME="$root/python" PYTHONPATH="$root/site-packages" PYTHONUNBUFFERED=1 \
+  PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True HF_HUB_DISABLE_PROGRESS_BARS=1
+# SIGTERM reaches the worker directly: it checkpoints, requeues its job and exits.
+exec "$root/python/bin/python3.12" -c 'from grad_trainer.worker import main; main()'

@@ -43,6 +43,7 @@ import {
   createWaitlistService,
   createWorkspaceApiKeyService,
   createWorkspaceStore,
+  startGradWorkspaceStateSweep,
   parseClickHouseRuntimeEnvironment,
 } from "@gradiated/control";
 import { createValkeyClient } from "@gradiated/valkey";
@@ -373,6 +374,21 @@ const trainingInternalServer = environment.TRAINING_INTERNAL_TOKEN
     })
   : undefined;
 
+// Tells grad when a workspace is suspended, reinstated or deleted.
+const stopWorkspaceStateSweep = startGradWorkspaceStateSweep({
+  database,
+  baseUrl: environment.GRAD_SERVER_URL,
+  authorization: async ({ workspaceId, scopes }) =>
+    (
+      await auth.signServiceToken({
+        service: "control",
+        workspaceId,
+        scopes,
+      })
+    ).token,
+  log: serviceLog,
+});
+
 serviceLog("info", "api_started");
 if (profilingServer) serviceLog("info", "private_telemetry_started");
 
@@ -394,6 +410,7 @@ const release = async (dependency: string, close: () => Promise<unknown>) => {
 
 const shutdown = async (signal: NodeJS.Signals) => {
   serviceLog("info", "api_stopping", { signal });
+  stopWorkspaceStateSweep();
 
   await Promise.all([
     release("http", () => closeServer(server)),

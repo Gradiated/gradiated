@@ -57,7 +57,7 @@ Or fetch `GET /v1/base-models` on your server: each entry lists its `recipes`, `
 
 ## Model retirement
 
-Base models get replaced as better open models ship. When we retire one, you get at least 90 days' notice, and nothing you trained stops working without warning:
+Base models get replaced as better open models ship. When we retire one, you get notice ahead of the retirement date, and nothing you trained stops working without warning:
 
 - **Notice:** the retirement date and a named replacement are announced in the changelog and by email.
 - **New runs:** you can start runs on a retiring model until its retirement date. After that, `runs.plan()` rejects the model.

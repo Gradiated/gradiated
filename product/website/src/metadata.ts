@@ -65,11 +65,6 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Open-model inference priced for the latency your workload requires.",
   },
-  "/artwork-generator/": {
-    title: "Artwork generator",
-    description: "Create Gradiated wafer-field artwork from a motif or image.",
-    index: false,
-  },
   "/library/sand-to-thought/": {
     title: "Sand to Thought",
     description:

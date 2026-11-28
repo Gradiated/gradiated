@@ -3,7 +3,7 @@ import type { ReactElement, ReactNode } from "react";
 import type { StoryCover } from "./Story";
 import { Arrow } from "./icons";
 import { PixelIcon } from "./PixelIcon";
-import { useRailBack } from "./RailShell";
+import { fadeWhileMore, useRailBack } from "./RailShell";
 import { SectionFab } from "./SectionFab";
 import { WaferArtwork } from "./WaferArtwork";
 
@@ -139,7 +139,7 @@ export const Reading = ({
   return (
     <article className="gr-read" data-article={id}>
       <div className="gr-read-grid" data-focus={focus || undefined}>
-        <aside className="gr-read-side">
+        <aside className="gr-read-side" ref={fadeWhileMore}>
           <span
             aria-hidden
             className="gr-read-cover"

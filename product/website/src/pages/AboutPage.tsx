@@ -32,6 +32,7 @@ const COLLAGE: CollageLayer[] = [
   {
     drift: 0.2,
     file: "hero-poster.webp",
+    fill: { by: "width", x: "left", y: "bottom" },
     from: { r: -4, x: -6, y: 12 },
     left: 0,
     top: 1642,
@@ -40,6 +41,7 @@ const COLLAGE: CollageLayer[] = [
   {
     drift: 0.3,
     file: "hero-map.webp",
+    fill: { by: "height", x: "right", y: "top" },
     from: { r: 3, x: 4, y: -8 },
     left: 1486,
     top: 0,
@@ -48,6 +50,7 @@ const COLLAGE: CollageLayer[] = [
   {
     drift: 0.12,
     file: "hero-paper.webp",
+    fill: { by: "width", x: "left", y: "bottom" },
     from: { r: -2, x: -3, y: 16 },
     left: 0,
     top: 1170,
@@ -56,6 +59,7 @@ const COLLAGE: CollageLayer[] = [
   {
     drift: 0.05,
     file: "hero-photo.webp",
+    fill: { by: "height", share: 0.62, x: "right", y: "bottom" },
     from: { r: 1.5, x: 7, y: 2 },
     left: 1178,
     top: 8,
@@ -110,82 +114,8 @@ const useReveal = () => {
   return { ref, state };
 };
 
-const useSteps = () => {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const track = ref.current;
-    const grid = track?.querySelector<HTMLElement>(".gr-features");
-    if (!track || !grid) return;
-
-    const items = [...grid.children] as HTMLElement[];
-    const motion = matchMedia("(prefers-reduced-motion: reduce)");
-    let travel = 0;
-    let frame = 0;
-    let width = 0;
-
-    const update = () => {
-      frame = 0;
-      if (!travel) return;
-
-      const top = parseFloat(getComputedStyle(grid).top) || 0;
-      const progress = (top - track.getBoundingClientRect().top) / travel;
-      track.style.setProperty(
-        "--steps",
-        String(Math.min(Math.max(progress, 0), 1)),
-      );
-    };
-
-    const measure = () => {
-      track.removeAttribute("data-steps");
-      track.style.removeProperty("height");
-      travel = 0;
-
-      const columns = getComputedStyle(grid).gridTemplateColumns.split(" ");
-      if (motion.matches || columns.length < items.length) return;
-
-      const gap = parseFloat(getComputedStyle(grid).rowGap) || 0;
-      let offset = 0;
-      items.forEach((item, index) => {
-        item.style.setProperty("--step", `${offset}px`);
-        offset += item.offsetHeight + gap;
-        if (index === items.length - 2) travel = offset;
-      });
-
-      track.dataset.steps = "";
-      track.style.height = `${grid.offsetHeight + travel}px`;
-      update();
-    };
-
-    const onScroll = () => {
-      frame ||= requestAnimationFrame(update);
-    };
-
-    // Height changes are this hook's own doing; only a new width re-measures.
-    const observer = new ResizeObserver(([entry]) => {
-      if (entry.contentRect.width === width) return;
-
-      width = entry.contentRect.width;
-      measure();
-    });
-    observer.observe(track);
-    motion.addEventListener("change", measure);
-    addEventListener("scroll", onScroll, { passive: true });
-
-    return () => {
-      observer.disconnect();
-      motion.removeEventListener("change", measure);
-      removeEventListener("scroll", onScroll);
-      cancelAnimationFrame(frame);
-    };
-  }, []);
-
-  return ref;
-};
-
 export const AboutPage = (): ReactElement => {
   const dies = useReveal();
-  const steps = useSteps();
 
   return (
     <Substrate>
@@ -219,16 +149,14 @@ export const AboutPage = (): ReactElement => {
               <Arrow />
             </a>
             <a className="gr-button gr-button--secondary" href="/careers/">
-              Join our team
+              Join us
               <Arrow />
             </a>
           </div>
         </CollageHero>
 
         <Module className="gr-module--about-why" index={1}>
-          <div className="gr-about-steps" ref={steps}>
-            <Features items={PRINCIPLES} />
-          </div>
+          <Features items={PRINCIPLES} />
         </Module>
 
         <Module className="gr-module--about-team" index={2}>

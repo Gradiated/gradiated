@@ -1,4 +1,4 @@
-import { accounts, sessions, users, verifications } from "./auth.js";
+import { accounts, jwks, sessions, users, verifications } from "./auth.js";
 import {
   oauthAccessTokens,
   oauthClientAssertions,
@@ -15,6 +15,7 @@ export const betterAuthSchema = {
   session: sessions,
   account: accounts,
   verification: verifications,
+  jwks,
   oauthClient: oauthClients,
   oauthResource: oauthResources,
   oauthClientResource: oauthClientResources,

@@ -23,6 +23,7 @@ export type OperationId =
   | "createStaffOrganization"
   | "createTaskVersionFile"
   | "createTopUp"
+  | "createTrainingToken"
   | "createWorkspace"
   | "deleteTaskVersionFile"
   | "deleteWorkspace"

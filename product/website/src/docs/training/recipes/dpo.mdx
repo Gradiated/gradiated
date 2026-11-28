@@ -1,0 +1,210 @@
+# Preference tuning (DPO)
+
+<DocsLead>
+  Teach a model which answers you prefer by showing it pairs of good and bad
+  examples.
+</DocsLead>
+
+Use **`DPORecipe`** after [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) when your model already knows the right format but still makes recurring mistakes (like cutting off code, being too wordy, or picking the wrong tool arguments). Showing it **chosen** vs. **rejected** pairs steers it away from those patterns.
+
+## What data you need
+
+- **Minimum volume:** 300–1,000 preference pairs for narrow failure modes; 2,000+ for general style and quality alignment.
+- **Format:** the simplest form is one record per pair, with the shared prompt and both answers as chat messages (the same shape as `trl` preference datasets). Pairs always stay together in the same train or eval split.
+
+```json
+{
+  "prompt": [{ "role": "user", "content": "Merge this diff." }],
+  "chosen": [{ "role": "assistant", "content": "clean merged code..." }],
+  "rejected": [
+    { "role": "assistant", "content": "truncated code with syntax error..." }
+  ]
+}
+```
+
+A record whose `expected_output` corrects its logged answer (a correction synced from LangSmith, Braintrust or Langfuse) is a pair on its own: the correction is chosen and the logged answer rejected. Datasets in TRL's implicit-prompt format, where `chosen` and `rejected` are whole conversations with no `prompt`, work too: their shared opening turns become the prompt.
+
+If your pairs come from production [trajectories](/docs/training/trajectories/), store each side as its own trajectory with a shared `group_id` and `role: "chosen"` or `role: "rejected"`:
+
+```json
+[
+  {
+    "schema": "grad.trajectory/1",
+    "group_id": "pair_19",
+    "role": "chosen",
+    "input": {
+      "messages": [{ "role": "user", "content": "Merge this diff." }]
+    },
+    "output": {
+      "turns": [{ "role": "assistant", "content": "clean merged code..." }]
+    }
+  },
+  {
+    "schema": "grad.trajectory/1",
+    "group_id": "pair_19",
+    "role": "rejected",
+    "input": {
+      "messages": [{ "role": "user", "content": "Merge this diff." }]
+    },
+    "output": {
+      "turns": [
+        {
+          "role": "assistant",
+          "content": "truncated code with syntax error..."
+        }
+      ]
+    }
+  }
+]
+```
+
+## Try it on a public dataset
+
+This runs as pasted. It imports 2,000 preference pairs from Hugging Face and runs DPO with the defaults on top of the base model:
+
+```python
+from grad import Grad
+from grad.recipes import DPORecipe
+
+client = Grad()
+prefs = client.datasets.from_hf(
+    "trl-lib/ultrafeedback_binarized",
+    split="train",
+    chosen="chosen",
+    rejected="rejected",
+    limit=2000,
+)
+
+run = client.runs.create(
+    dataset=prefs,
+    name="ultrafeedback-dpo",
+    recipe=DPORecipe(model="qwen/qwen3-8b"),
+).wait()
+print(run.artifact.id, run.eval_report)
+```
+
+In practice you'll usually run DPO on a model you've already fine-tuned with SFT, as below.
+
+## Train with `DPORecipe`
+
+Pass an existing SFT [`Artifact`](/docs/training/artifacts/) as `model=`, or run SFT first, wait for it, and pass `sft.artifact`:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="From an SFT artifact">
+
+```python
+from grad import Grad
+from grad.recipes import DPORecipe
+
+client = Grad()
+sft_art = client.artifacts.get("fast-diff-merge@latest")
+prefs = client.datasets.get("diff-merge-preferences")
+
+dpo = client.runs.create(
+    dataset=prefs,
+    name="fast-diff-merge",
+    recipe=DPORecipe(model=sft_art),  # continues training the SFT adapter
+).wait()
+
+print(dpo.artifact.id, dpo.eval_report)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="SFT, then DPO">
+
+```python
+from grad import Grad
+from grad.recipes import DPORecipe, SFTRecipe
+
+client = Grad()
+
+sft = client.runs.create(
+    dataset=client.datasets.get("diff-merge-gold"),
+    name="fast-diff-merge",
+    recipe=SFTRecipe(model="qwen/qwen3-8b"),
+).wait()
+print(sft.eval_report)  # check SFT before continuing
+
+dpo = client.runs.create(
+    dataset=client.datasets.get("diff-merge-preferences"),
+    name="fast-diff-merge",
+    recipe=DPORecipe(model=sft.artifact),
+).wait()
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, recipes } from "@gradiated/grad";
+
+const grad = new Grad();
+const sftArt = await grad.artifacts.get("fast-diff-merge@latest");
+const prefs = await grad.datasets.get("diff-merge-preferences");
+
+const dpo = await grad.runs
+  .create({
+    dataset: prefs,
+    name: "fast-diff-merge",
+    recipe: recipes.dpo({ model: sftArt }),
+  })
+  .wait();
+
+console.log(dpo.artifact.id, dpo.evalReport);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad train --dataset diff-merge-preferences --name fast-diff-merge --recipe dpo --model fast-diff-merge@latest --wait
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+### When to use SFT vs. DPO vs. RL
+
+- **Start with [SFT](/docs/training/recipes/sft/)** when the model doesn't follow your format, schema, or style yet and you have examples of good answers.
+- **Follow with DPO (`DPORecipe`)** when the model mostly works but keeps repeating specific mistakes you can show as `(chosen, rejected)` pairs.
+- **Move to [RL (`GRPORecipe`)](/docs/training/recipes/rl-agents/)**, which is coming soon, when you can grade answers automatically with tests, validators, or a judge and want the model to discover better solutions on its own.
+
+### Parameters you might change
+
+- **`loss=losses.DPO(beta=...)`:** `beta` is `0.1` by default. Higher (`0.2`–`0.5`) stays closer to your starting model; lower (`0.05`) pushes harder away from rejected patterns.
+- **`lr_scale`:** DPO's learning rate is set automatically and is much lower than SFT's. If held-out preference accuracy climbs fast but your format breaks, pass `lr_scale=0.5`.
+
+When `model=` is an SFT artifact, DPO keeps training that same LoRA adapter (same rank and alpha), and the starting checkpoint is the reference model, so you never load one yourself. The artifact must be a PEFT LoRA adapter, not a merged export. DPO itself always exports a PEFT LoRA adapter (`merge_on_export` applies to SFT and distillation). Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#dporecipe).
+
+## Serve it
+
+Download the updated [`Artifact`](/docs/training/artifacts/) and load the LoRA adapter on your own vLLM or SGLang server:
+
+```bash
+grad artifacts download fast-diff-merge@latest --output ./fast-diff-merge
+vllm serve Qwen/Qwen3-8B --enable-lora --max-lora-rank 32 --lora-modules fast-diff-merge=./fast-diff-merge
+```
+
+See [Deploying](/docs/training/deploying/) for SGLang and merged weights.
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Hosted deployments aren't live yet. Until they are, download the artifact and
+  [serve it yourself](/docs/training/deploying/#serve-it-yourself).
+</DocsCallout>
+
+On Gradiated Cloud, you'll [publish it](/docs/training/deploying/#host-on-gradiated-cloud) as a model version from the console or the Models API and call `"your-org/fast-diff-merge"` through the OpenAI or Anthropic SDK.
+
+## Want more control?
+
+Custom PyTorch losses (`losses.CustomLoss`, like SimPO, ORPO, or KTO) are coming soon with [Custom loops](/docs/training/custom-loops/) and [Advanced objectives](/docs/training/advanced-objectives/).
+
+<DocsNext>
+  <a href="/docs/training/recipes/rl-agents/">
+    <small>Next guide</small>
+    <strong>RL for agents</strong>
+  </a>
+  <a href="/docs/training/recipes/sft/">
+    <small>Previous</small>
+    <strong>Supervised fine-tuning (SFT)</strong>
+  </a>
+</DocsNext>

@@ -13,3 +13,9 @@ This endpoint also returns output limits, streaming support, and supported param
 Each model's `properties.type` identifies its inference interface: `chat` for text generation or `decision` for typed question scoring. Filter on `properties.type === "chat"` when building a Chat Completions model list.
 
 Each model's `properties.supported_uses` lists what it can be used for. Only models that include `serving` accept inference requests; the catalog also lists training bases that you can fine-tune but not call directly.
+
+## Training
+
+Training with managed [recipes](/docs/training/recipes/) follows the same token-metered model as inference: each base model has a fixed price per million tokens processed, listed in `grad models list`. Training on Gradiated Cloud is coming soon; see [Supported models](/docs/training/models/#usage-and-billing).
+
+Run `grad train --dry-run` or `client.runs.plan()` before starting a managed run to preview `estimated_tokens`, `estimated_cost_usd` and `estimated_duration_s` at `$0`.

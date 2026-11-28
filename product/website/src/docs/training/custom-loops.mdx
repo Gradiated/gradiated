@@ -1,0 +1,393 @@
+# Custom loops
+
+<DocsLead>
+  Write your own Python training loop when you are building a new training
+  algorithm.
+</DocsLead>
+
+<DocsCallout label="Coming soon" tone="warn">
+  The `Trainer` API, custom losses and `artifacts.merge` are coming soon, and so
+  is everything else on this page. Today, train with a
+  [recipe](/docs/training/recipes/).
+</DocsCallout>
+
+Most teams never need this page. A managed [recipe](/docs/training/recipes/) handles SFT, DPO, distillation, and RL, including multi-turn agent RL with `GRPORecipe(env=...)` against any [`Environment`](/docs/training/environments/). Recipes also pick the learning rate, checkpoint automatically, and keep running after you close your laptop. Use the `Trainer` when you want to change the algorithm itself: a new loss, a new advantage estimator, or a schedule a recipe doesn't offer.
+
+Custom loops drive the remote `Trainer` and `Artifact` APIs from any machine (your laptop, CI, or an orchestrator) with the same adapters, losses, and optimizers the recipes use. The standard `grad-sdk` package covers every built-in loss. To write your own loss in PyTorch (a [`CustomLoss`](#example-2-custom-objectives-with-customloss), where your code computes the loss locally while Gradiated's GPUs run the forward and backward passes), you'll install the SDK's `torch` extra (`grad-sdk[torch]`).
+
+## Mental model
+
+- **`Trainer`** owns mutable weights and optimizer state on the server. Open it in a `with client.trainers.create(model=..., adapter=...) as trainer:` block so the session closes cleanly on exit or error. Training is billed at a fixed price **per million tokens processed**.
+- **`trainer.snapshot()`** returns an immutable, ephemeral [**`Artifact`**](/docs/training/artifacts/) pointing at the current weights. Call `sample()`, `score_logprobs()`, `infer_batch()`, or `embed()` on it while training continues.
+- **`trainer.export(name=...)`** writes a versioned `.grad` [**`Artifact`**](/docs/training/artifacts/) ready to [deploy on Gradiated Cloud or download for vLLM / SGLang](/docs/training/deploying/).
+
+### Calls return futures, results come back once
+
+With the sync client (`Grad`), every `Trainer` call such as `forward_backward()` or `optim_step()` returns a `Future` immediately and is queued on the server in the order you made it. Call `.result()` only when you need the value. Submitting `optim_step()` before reading the `forward_backward()` result lets the server run forward, backward, and the weight update back-to-back with no idle network round trip:
+
+<DocsPipelineSchematic />
+
+```python
+from grad import Grad, Record, losses, optim
+
+client = Grad()
+batch = [
+    Record(messages=[
+        {"role": "user", "content": "Translate 'good morning' to French."},
+        {"role": "assistant", "content": "Bonjour."},
+    ]),
+]
+
+with client.trainers.create(model="qwen/qwen3-8b") as trainer:
+    fb = trainer.forward_backward(batch, loss=losses.CrossEntropy())  # queued, returns a Future
+    trainer.optim_step(optim.AdamW(lr=5e-4))                          # queued right behind it
+    print(fb.result().loss)                                           # waits once
+```
+
+Errors raise where you read the result (`.result()`), not where you make the call, so a bad batch surfaces on the line that reads its loss. Each result's `metrics` include `tokens` and `cost_usd` for that call, and `trainer.usage()` returns the running totals for the session. Leaving the `with` block closes the session and records how it ended (`completed`, `failed` or `interrupted`), so the console never shows a crashed session as still running.
+
+## How tokens and masks line up
+
+Every training example is stored as a list of `token_ids` of length `T` (covering the prompt, tool outputs, and assistant responses). Each per-token field on a `Record` or `Trajectory` (`loss_mask`, `turn_ids`, `sampling_logprobs`, `ref_logprobs`, `advantages`, and `out.logprobs`) has the **exact same length `T`**, so index `i` always refers to the same token everywhere:
+
+- **`loss_mask[i] = 0.0`** means the model sees token `i` as context (a user prompt or tool output), but training does not update weights on it.
+- **`loss_mask[i] = 1.0`** means the model generated token `i` and training updates weights on it (predicting `tokens[i]` given `tokens[0..i-1]`).
+- **`turn_ids[i]`** tracks which assistant turn generated token `i` in a multi-turn conversation.
+
+<DocsDatumAnatomy />
+
+You don't have to build or shift these arrays by hand: `Record(messages=...)`, `Artifact.sample()`, `Artifact.score_logprobs()`, and [`Trajectory.append_env_tokens()`](/docs/reference/primitives/) keep every array aligned automatically.
+
+### Chat templates and assistant-only masking
+
+Pass `Record(messages=..., tools=...)` directly to `trainer.forward_backward()`. The trainer renders its model's exact chat template from the pinned tokenizer and attaches an assistant-only `loss_mask` (`0.0` on system, user, and tool turns; `1.0` on assistant turns) on the server. `train_on="last"` (train only the final assistant turn) and `thinking="auto" | "on" | "off"` work the same way they do on recipes. Preview the exact tokens and mask with `grad render` before you train (see [Tuning & troubleshooting](/docs/training/tuning-troubleshooting/)).
+
+```python
+from grad import Record
+
+record = Record(
+    messages=[
+        {"role": "system", "content": "You are a concise SQL assistant."},
+        {"role": "user", "content": "Count active users from yesterday."},
+        {"role": "assistant", "content": "SELECT count(*) FROM users WHERE active_at >= current_date - 1;"},
+    ],
+    tools=[
+        {
+            "type": "function",
+            "function": {
+                "name": "run_sql",
+                "description": "Run a read-only SQL query.",
+                "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
+            },
+        }
+    ],
+)
+```
+
+## Example 1: Multi-turn GRPO loop
+
+This loop runs a calculator-tool agent on GSM8K in a built-in [`environments.Tools`](/docs/training/environments/) environment, computes group-normalized advantages with `grad.with_advantages()` (skipping groups where every attempt got the same score), updates LoRA weights with `losses.GRPO`, and exports an artifact. `GRPORecipe(env=env)` runs this same loop for you; write it yourself only when you want to change a step. See [Advanced objectives](/docs/training/advanced-objectives/) to swap in DAPO, Dr. GRPO (`advantages.GroupMean()`), RLOO (`advantages.RLOO()`), async masked GRPO, or sequence-level GSPO.
+
+```python
+import itertools
+
+import grad
+from grad import Grad, Rubric, Scorer, advantages, environments, losses, optim, validators
+
+client = Grad()
+tasks = client.datasets.from_hf(
+    "openai/gsm8k", subset="main", split="train", prompt="question", answer="answer"
+)
+
+def calculator(expression: str) -> str:
+    """Evaluate an arithmetic expression such as '12 * (3 + 4)' and return the result."""
+    if not set(expression) <= set("0123456789+-*/(). ") or "**" in expression:
+        return "error: use only numbers, spaces and + - * / ( )"
+    return str(eval(expression))
+
+env = environments.Tools(
+    [calculator],
+    tasks=tasks,
+    rubric=Rubric([Scorer("correct", fn=validators.NumericMatch(field="answer"))]),
+    max_turns=6,
+)
+
+with client.trainers.create(model="qwen/qwen3-8b") as trainer:
+    for step, task_batch in enumerate(itertools.islice(tasks.batches(32), 100)):
+        groups = env.rollout_groups(
+            artifact=trainer.snapshot(),
+            tasks=task_batch,
+            group_size=8,
+            max_new_tokens=1024,
+            max_concurrency=64,
+        )
+
+        # Group-normalize rewards with an AdvantageEstimator (GroupStd | GroupMean | RLOO | custom)
+        batch = grad.with_advantages(groups, advantage=advantages.GroupStd(), skip_zero_var=True)
+
+        # Queue both calls before reading results so they run back-to-back.
+        fb = trainer.forward_backward(batch, loss=losses.GRPO(clip_low=0.2, clip_high=0.28))
+        trainer.optim_step(optim.AdamW(lr=5e-5))
+
+        metrics = fb.result()
+        print(f"step={step} loss={metrics.loss:.4f} grad_norm={metrics.metrics['grad_norm']:.3f}")
+
+    artifact = trainer.export(name="gsm8k-calculator-grpo")
+    print(artifact.id)
+```
+
+<DocsCallout label="Built-in RL numerics diagnostics" tone="tip">
+  On every `losses.GRPO`, `losses.CISPO`, or `losses.ImportanceSampling` step,
+  `fb.result().metrics` reports `kl_sample_train` and `sample_train_max_diff`,
+  comparing the sampler's exact `sampling_logprobs` against the trainer's
+  recomputed logprobs so you spot off-policy staleness or tokenizer mismatches
+  immediately. It also reports `truncation_rate`, the share of attempts that hit
+  `max_new_tokens`.
+</DocsCallout>
+
+Passing an empty `batch` list (when every group in a batch has identical rewards) is a safe no-op.
+
+<DocsCallout label="Choosing a learning rate" tone="tip">
+  `optim.AdamW()` defaults to `lr="auto"`, which resolves from the trainer's
+  base model, adapter, and the loss in the preceding `forward_backward()`. The
+  examples on this page pass explicit numbers so you can see them. Typical
+  values at `qwen/qwen3-8b` with `LoRA(rank=32)`: SFT `5e-4`, RL `5e-5`, DPO
+  `2e-5`. See [Tuning &
+  troubleshooting](/docs/training/tuning-troubleshooting/).
+</DocsCallout>
+
+## Example 2: Custom objectives with CustomLoss
+
+You do not need a separate API method or a server-side enum to test a new objective. Subclass `losses.CustomLoss` (declaring which `outputs` you need and implementing `compute(self, records, out)`), and pass it to the **exact same `trainer.forward_backward(records, loss=...)`**, or inject it into any `Recipe`.
+
+Under the hood, `Trainer` fetches only the declared differentiable outputs from `/forward`, pre-populates aligned PyTorch views (`out.masks` with `mask[0] == 0.0`, `out.sampling_logprobs`, `out.ref_logprobs`, `out.advantages`, `out.turn_ids`, and auto-batched `out.teacher_topk_logprobs`), runs `compute()` locally, and sends exact gradients back to `/backward-surrogate`. No untrusted user code runs on GPU workers, and gradients match native PyTorch `.backward()` bit-for-bit.
+
+Here is reference-free SimPO using `PreferencePair` (no manual `group_id` or `role` strings needed), `grad.by_group()`, and `grad.masked_mean()`:
+
+```python
+import torch
+import torch.nn.functional as F
+import grad
+from grad import Grad, PreferencePair, losses, optim
+
+class SimPOLoss(losses.CustomLoss):
+    outputs = ("logprobs",)
+
+    def __init__(self, beta: float = 2.0, gamma: float = 0.5):
+        self.beta = beta
+        self.gamma = gamma
+
+    def compute(self, records, out) -> torch.Tensor:
+        terms = []
+        for g in grad.by_group(records, out):
+            c, r = g["chosen"], g["rejected"]
+            margin = grad.masked_mean(c.logprobs, c.mask) - grad.masked_mean(r.logprobs, r.mask)
+            terms.append(-F.logsigmoid(self.beta * margin - self.gamma))
+        return torch.stack(terms).mean()
+
+client = Grad()
+
+pairs = [
+    PreferencePair(
+        prompt=[{"role": "user", "content": "Explain tail latency in one sentence."}],
+        chosen="Tail latency is the response time of the slowest few percent of requests.",
+        rejected="Latency is when computers wait a long time for packets to arrive.",
+    ),
+]
+
+with client.trainers.create(model="qwen/qwen3-8b") as trainer:
+    fb = trainer.forward_backward(pairs, loss=SimPOLoss(beta=2.0, gamma=0.5))
+    trainer.optim_step(optim.AdamW(lr=2e-5))
+    print(fb.result().loss)
+```
+
+### Compact top-k distillation with `gather_indices`
+
+Never pull full 152k-vocabulary logits over the wire for custom distillation. Ask the teacher for `top_k=32` `TensorRef`s with `teacher.score_logprobs(rollouts, top_k=32).topk_refs`, declare `outputs = ("topk_logprobs",)` on your `CustomLoss`, and pass `gather_indices=t_refs` to `forward_backward()`. Only the matching `(T_resp, 32)` student logprobs cross the wire, and `out.teacher_topk_logprobs` is batch-fetched in a single RPC (for arbitrary intermediate-layer `TensorRef`s, use `client.tensors.fetch_batch(refs)`). The [Jensen-Shannon example](/docs/training/advanced-objectives/#jensen-shannon-skew-kl-gather-indices) is a complete, runnable loop.
+
+For multi-turn trajectories with no single prompt/response boundary, pass the `Trajectory` list straight to `ref.score_logprobs(trajectories)` and attach per-token targets with `t.with_targets(advantage=..., ref_logprobs=...)`; the returned `aligned_logprobs` already match each trajectory's `token_ids`.
+
+### Checkpoints, resume, and stage transitions
+
+- **Automatic checkpoints:** pass `autosave_every=50` to `client.trainers.create(...)` to save weights, optimizer moments, and the step count every 50 optimizer steps. Managed recipes checkpoint automatically.
+- **Manual checkpoints:** call `trainer.save_state(name=...)` at any point, and restore everything with `client.trainers.resume(ckpt)`.
+- **Stage transitions (`SFT → DPO`, `SFT → GRPO`):** pass the previous stage's `Artifact` as `model=` to start from those weights with a fresh optimizer.
+
+```python
+from grad import Grad, Record, losses, optim
+
+client = Grad()
+records = [
+    Record(messages=[
+        {"role": "user", "content": "Name a prime number between 10 and 20."},
+        {"role": "assistant", "content": "13"},
+    ]),
+]
+
+with client.trainers.create(
+    model="qwen/qwen3-8b",
+    autosave_every=50,
+) as trainer:
+    trainer.forward_backward(records, loss=losses.CrossEntropy())
+    trainer.optim_step(optim.AdamW(lr=5e-4)).result()
+    ckpt = trainer.save_state(name="primes-step-1")
+    sft_art = trainer.export(name="primes-sft")
+
+# Resume the exact same run (weights + optimizer moments + step count):
+with client.trainers.resume(ckpt) as resumed:
+    print(resumed.step)
+
+# Or start a fresh stage from exported weights (fresh optimizer):
+with client.trainers.create(model=sft_art) as grpo_trainer:
+    print(grpo_trainer.model)
+```
+
+<DocsCallout label="Session timeouts, W&B logging, and debugging" tone="tip">
+  Open `Trainer` sessions close automatically after 30 minutes of inactivity
+  (you are never billed while idle), so set `autosave_every=` on long loops. See
+  [Tuning & troubleshooting](/docs/training/tuning-troubleshooting/) for crash
+  recovery, W&B / MLflow logging, and fixing KL spikes or flat RL rewards.
+</DocsCallout>
+
+### Gradient accumulation, LR schedules, and held-out eval
+
+Because `forward_backward()` accumulates gradients on the trainer until `optim_step()` runs, multi-microbatch accumulation and a per-step schedule are a few lines. This example uses linear warmup then linear decay, the same schedule recipes use by default:
+
+```python
+import itertools
+from grad import Grad, losses, optim
+
+client = Grad()
+train = client.datasets.from_hf("HuggingFaceH4/ultrachat_200k", split="train_sft", messages="messages")
+val = client.datasets.from_hf("HuggingFaceH4/ultrachat_200k", split="test_sft", messages="messages")
+val_records = next(val.batches(256))
+
+total_steps, accum = 200, 4
+max_lr, warmup = 5e-4, int(0.03 * total_steps)
+
+def linear_lr(step: int) -> float:
+    if step < warmup:
+        return max_lr * (step + 1) / warmup
+    return max_lr * (total_steps - step) / (total_steps - warmup)
+
+microbatches = train.batches(32)
+
+with client.trainers.create(model="qwen/qwen3-8b") as trainer:
+    for step in range(total_steps):
+        # Accumulate 4 microbatches of 32 (an effective batch of 128) before one optimizer update
+        futs = [
+            trainer.forward_backward(mb, loss=losses.CrossEntropy())
+            for mb in itertools.islice(microbatches, accum)
+        ]
+        trainer.optim_step(optim.AdamW(lr=linear_lr(step)))
+        mean_loss = sum(f.result().loss for f in futs) / len(futs)
+
+        if step % 20 == 0:
+            # Held-out eval without retaining autograd graphs on the GPU
+            eval_out = trainer.evaluate(val_records, outputs=("logprobs",)).result()
+            print(f"step={step} train_loss={mean_loss:.4f} eval_loss={eval_out.loss:.4f}")
+```
+
+### Multimodal (VLM and audio) inputs
+
+Attach image or audio `MediaRef`s directly on a `Record`. The trainer handles model-specific vision/audio preprocessing and special-token expansion on the server, so you never need a client-side image processor. Image training needs an image-capable base model such as `z-ai/glm-5.3-flash` (in preview; see [Supported models](/docs/training/models/)):
+
+```python
+from grad import MediaRef, Record
+
+img = MediaRef.image("s3://my-bucket/screens/checkout_step2.png")
+vlm_record = Record(
+    messages=[
+        {"role": "user", "content": "What button should the user click to complete checkout?"},
+        {"role": "assistant", "content": "Click 'Pay $49.00' in the bottom-right panel."},
+    ],
+    media=[img],
+)
+```
+
+## Example 3: Multi-stage heads, differential LRs, and weight merges
+
+- **Freeze Stage-1 heads in Stage 2:** set `trainable=False` on `heads.Linear(...)`.
+- **Differential learning rates (e.g. LoRA+):** pass `param_groups=[optim.ParamGroup(target=..., lr=...)]` to `optim.AdamW` targeting a declared head or adapter group directly (never fragile internal module paths).
+- **Continual learning anchor (L2-SP / EWC):** pass `weight_anchor=optim.WeightAnchor(...)`.
+- **Zero-train-token weight merging:** combine checkpoints with `client.artifacts.merge()` and a typed `mergers.*` strategy (`mergers.TIES`, `mergers.Linear`, `mergers.DARE`, `mergers.SLERP`).
+
+```python
+from grad import Grad, Record, adapters, heads, losses, mergers, optim
+
+client = Grad()
+stage1 = client.artifacts.get("reward-model@stage1")
+gate_head = heads.Linear(dim=1, trainable=True)
+
+records = [
+    Record(messages=[{"role": "user", "content": "Refund my last order, it arrived broken."}], scalar=1.0),
+    Record(messages=[{"role": "user", "content": "What are your opening hours?"}], scalar=0.0),
+]
+
+with client.trainers.create(
+    model=stage1,
+    adapter=adapters.FrozenHead(),
+    heads={
+        "attrs": heads.Linear(dim=5, trainable=False),
+        "gate": gate_head,
+    },
+) as trainer:
+    trainer.forward_backward(records, loss=losses.BCEWithLogits(head="gate"))
+    trainer.optim_step(
+        optim.AdamW(
+            param_groups=[optim.ParamGroup(target=gate_head, lr=5e-3)],
+            weight_anchor=optim.WeightAnchor(artifact=stage1, strength=0.01),
+        )
+    ).result()
+
+coder = client.artifacts.get("coder@v4")
+reasoner = client.artifacts.get("reasoner@v2")
+
+merged = client.artifacts.merge(
+    name="assistant-merged",
+    artifacts=[(coder, 0.6), (reasoner, 0.4)],
+    merger=mergers.TIES(density=0.5),
+)
+```
+
+Routers, linear probes, and steering vectors that don't need SGD can be solved in one `trainer.fit_batch()` call; see [Advanced solvers](/docs/training/advanced-objectives/#advanced-solvers).
+
+## Reference tables
+
+### Built-in `losses.*` classes
+
+| Class                                                                     | Use it for                                                                                                                                                                                      |
+| ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `losses.CrossEntropy(heads=...)`                                          | Next-token SFT respecting `loss_mask`; optionally pass `heads={"k1": HeadCE(shift=2, weight=0.8), ...}` for server-side Medusa / multi-token prediction without sending vocab logits over HTTP. |
+| `losses.BCEWithLogits(head=...)`                                          | Binary or multi-label head classification.                                                                                                                                                      |
+| `losses.OrdinalBCE()`                                                     | Ordered tier classification (`low < medium < high`).                                                                                                                                            |
+| `losses.L2Logistic()`                                                     | Regularized logistic heads.                                                                                                                                                                     |
+| `losses.DPO(beta=0.1)`                                                    | Paired preference optimization (`group_id` + `chosen` / `rejected`).                                                                                                                            |
+| `losses.ImportanceSampling(kl_coef=0.0)`                                  | Unclipped importance-weighted policy gradient for on-policy or lightly off-policy RL.                                                                                                           |
+| `losses.GRPO(clip_low=0.2, clip_high=0.28, mask_ratio=None, kl_coef=0.0)` | Clipped policy-gradient RL with optional KL penalty. The default RL loss; set `mask_ratio=(0.5, 2.0)` when rollouts lag the trainer.                                                            |
+| `losses.CISPO(clip_low=0.2, clip_high=0.28)`                              | Stop-gradient clipped importance sampling. Can be unstable on stale rollouts; for async loops use `losses.GRPO(..., mask_ratio=(0.5, 2.0))`.                                                    |
+| `losses.ReverseKLDistill()`                                               | Token-level reverse-KL distillation against `ref_logprobs`.                                                                                                                                     |
+| `losses.TopKKLDistill(top_k=32)`                                          | Distillation against `teacher_topk` (`TensorRef` or multi-teacher weighted list).                                                                                                               |
+| `losses.InfoNCE(temp=0.05)`                                               | Contrastive embedding training (`anchor` / `positive` / `negative`).                                                                                                                            |
+| `losses.BCESparsePositions(head="prm")`                                   | Token-level or step-level heads at explicit `positions` (PRMs, prompt compression).                                                                                                             |
+| `losses.CustomLoss`                                                       | Write your own loss formula locally in PyTorch while Gradiated's GPUs run the model forward and backward passes.                                                                                |
+
+### Adapters
+
+| Class                              | What gets trained                                                                                                                                                                                                                                         |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `adapters.LoRA(rank=32, alpha=32)` | Low-rank adapters plus any trainable `heads`. The default. `alpha` stays fixed at 32 when you change `rank`, so the right learning rate doesn't move. Ranks 8–16 are enough for RL and small datasets; SFT on more than 50k records benefits from 64–128. |
+| `adapters.FrozenHead()`            | Backbone frozen; trains only attached `heads`.                                                                                                                                                                                                            |
+
+DoRA, QLoRA, prefix tuning (`PrefixKV`, used by Cartridges), LoReFT, EAGLE-3 draft heads, and partial unfreezing are covered in [Advanced adapters](/docs/training/advanced-objectives/#advanced-adapters).
+
+<DocsNext>
+  <a href="/docs/training/advanced-objectives/">
+    <small>Next</small>
+    <strong>Advanced objectives</strong>
+  </a>
+  <a href="/docs/training/artifacts/">
+    <small>Outputs</small>
+    <strong>Artifacts</strong>
+  </a>
+</DocsNext>

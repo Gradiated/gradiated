@@ -1,0 +1,678 @@
+# Trajectories
+
+<DocsLead>
+  Store your production logs, labeled examples, and agent runs in a `Dataset` so
+  any recipe can train on them.
+</DocsLead>
+
+A **trajectory** is a single recorded run: the input messages, what the model answered, any tool calls it made, and how well it did. You can fill a `Dataset` in five ways:
+
+1. **Plain chat records** pushed from code or a JSONL file, in the same `{"messages": [...]}` format as OpenAI fine-tuning files.
+2. **Hugging Face datasets**, imported by name.
+3. **Automatic capture** from the Gradiated gateway, through the built-in `gradiated` source (coming soon on Gradiated Cloud).
+4. **File import** from Parquet or JSONL trace exports.
+5. **Scheduled sync** from your observability provider.
+
+## Start from chat messages
+
+If you have conversations, you already have training data. Push plain chat records, one per example. The final assistant turn is the training target, and everything before it is the prompt. You don't need IDs, wrappers, or a schema:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+dataset = client.datasets.push("support-sft", [
+    {"messages": [
+        {"role": "user", "content": "How do I reset my password?"},
+        {"role": "assistant", "content": "Go to Settings → Security → Reset password, then check your email for the link."},
+    ]},
+    {"messages": [
+        {"role": "system", "content": "You are a concise billing assistant."},
+        {"role": "user", "content": "Can I get an invoice for last month?"},
+        {"role": "assistant", "content": "Yes. Open Billing → Invoices and click Download next to October."},
+    ]},
+])
+print(dataset.count())
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+
+const dataset = await grad.datasets.push("support-sft", [
+  {
+    messages: [
+      { role: "user", content: "How do I reset my password?" },
+      {
+        role: "assistant",
+        content:
+          "Go to Settings → Security → Reset password, then check your email for the link.",
+      },
+    ],
+  },
+]);
+console.log(await dataset.count());
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+# Upload and parse an OpenAI chat fine-tuning file (keys grad doesn't use are dropped)
+grad import ./train.jsonl --dataset support-sft
+
+# Or send records as they are (every line must use the record keys below)
+grad datasets push support-sft ./train.jsonl
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+`client.datasets.push(name, ...)` creates the dataset if it doesn't exist and appends otherwise. It accepts a list of dicts, a list of `Trajectory` objects, or a path to a `.jsonl`, `.json` or `.parquet` file. The format is detected automatically, so OpenAI chat fine-tuning files and `grad.trajectory/1` exports both work. Each record can also carry these optional keys:
+
+- **`"tools"`:** the tool definitions available in that conversation, in OpenAI function format. Assistant `tool_calls` and `tool` messages train as you'd expect.
+- **`"session_id"`:** groups records from the same conversation so they always land on the same side of the train/eval split. One is generated per record if you leave it out.
+- **`"scores"`:** any outcome you already know, such as `{"tests_passed": 1.0}`.
+- **`"timestamp"`:** when the conversation happened (ISO 8601). Synced records carry one; set it yourself if you want to filter pushed records by date.
+
+`push` with a list sends records as they are, and the server rejects keys it doesn't know (put your own fields under `"metadata"`). A file path goes through the importer, which drops them instead. OpenAI's per-message `weight` isn't read: mark a turn `"train": false` to keep it out of the loss, or `"train": true` to train an earlier assistant turn.
+
+By default only the final assistant turn is trained. To train on every assistant turn of a multi-turn agent trace, pass `train_on="all_assistant"` to the recipe. Run `grad render <dataset> --model qwen/qwen3-8b` to see exactly which tokens will be trained; the other chat-template settings are in the [reference](/docs/reference/training-parameters/#data-and-chat-templates).
+
+## Import a Hugging Face dataset
+
+Import any public or gated dataset from the Hugging Face Hub by name. The trainer worker downloads it, so nothing lands on your machine. If the dataset already has a `messages` column, nothing else is needed:
+
+```python
+from grad import Grad
+
+client = Grad()
+
+chats = client.datasets.from_hf("HuggingFaceH4/ultrachat_200k", split="train_sft")
+print(chats.count())
+```
+
+For other layouts, map columns onto the fields a recipe needs:
+
+| Training data                         | Column mapping                                          |
+| ------------------------------------- | ------------------------------------------------------- |
+| **Chat (SFT)**                        | `messages="messages"` (the default)                     |
+| **Prompt and completion (SFT)**       | `prompt="question", completion="answer"`                |
+| **Preferences (DPO)**                 | `prompt="prompt", chosen="chosen", rejected="rejected"` |
+| **Tasks with a known answer (evals)** | `prompt="question", answer="answer"`                    |
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+math = client.datasets.from_hf(
+    "openai/gsm8k",
+    subset="main",
+    split="train",
+    prompt="question",
+    answer="answer",
+)
+
+prefs = client.datasets.from_hf(
+    "trl-lib/ultrafeedback_binarized",
+    split="train",
+    chosen="chosen",
+    rejected="rejected",
+)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+const math = await grad.datasets.fromHf("openai/gsm8k", {
+  subset: "main",
+  split: "train",
+  prompt: "question",
+  answer: "answer",
+});
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+math, err := client.Datasets.FromHF(ctx, "openai/gsm8k", grad.HFOptions{
+	Subset: "main", Split: "train", Prompt: "question", Answer: "answer",
+})
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad datasets import hf openai/gsm8k --config main --split train \
+  --column prompt=question --column answer=answer
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+`answer` becomes the record's `expected_output` and `completion` its answer turn. `limit=` imports only the first N rows. For gated or private datasets, store your Hugging Face token once with `grad secrets set hf-token` and pass `secret=client.secrets.get("hf-token")` (CLI: `--secret hf-token`).
+
+## Push trajectories with metadata
+
+When you need more than messages, such as a target that isn't the last turn, per-record scores, or cost data for a [router](/docs/training/recipes/router/), push `Trajectory` objects. `Trajectory.from_messages(...)` builds one from plain messages, and the last assistant turn stays the training target:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, Trajectory
+
+client = Grad()
+
+traj = Trajectory.from_messages(
+    [
+        {"role": "user", "content": "Merge these two diffs into one patch."},
+        {"role": "assistant", "content": "--- a/app.py\n+++ b/app.py\n@@ -1 +1 @@\n-print('hi')\n+print('hello')"},
+    ],
+    session_id="pr_481",
+)
+traj.scores["tests_passed"] = 1.0
+
+client.datasets.push("diff-merge-gold", [traj])
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, Trajectory } from "@gradiated/grad";
+
+const grad = new Grad();
+
+const traj = Trajectory.fromMessages(
+  [
+    { role: "user", content: "Merge these two diffs into one patch." },
+    {
+      role: "assistant",
+      content:
+        "--- a/app.py\n+++ b/app.py\n@@ -1 +1 @@\n-print('hi')\n+print('hello')",
+    },
+  ],
+  { sessionId: "pr_481" },
+);
+traj.scores.tests_passed = 1.0;
+
+await grad.datasets.push("diff-merge-gold", [traj]);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+traj := grad.TrajectoryFromMessages([]grad.Message{
+	{Role: "user", Content: "Merge these two diffs into one patch."},
+	{Role: "assistant", Content: "--- a/app.py\n+++ b/app.py\n@@ -1 +1 @@\n-print('hi')\n+print('hello')"},
+}, grad.WithSessionID("pr_481"))
+traj.Scores["tests_passed"] = 1.0
+
+_, _ = client.Datasets.Push(ctx, "diff-merge-gold", []grad.Trajectory{traj})
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl "$GRADIATED_BASE_URL/v1/datasets/diff-merge-gold/records" \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "records": [{
+      "session_id": "pr_481",
+      "messages": [
+        {"role": "user", "content": "Merge these two diffs into one patch."},
+        {"role": "assistant", "content": "..."}
+      ],
+      "scores": {"tests_passed": 1.0}
+    }]
+  }'
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## Import from files
+
+Upload JSONL, JSON or Parquet exports into a `Dataset`. Gradiated detects common formats (OpenAI chat JSONL, `grad.trajectory/1`, OpenTelemetry, Langfuse, Braintrust, etc.) and maps messages, tool calls, sessions, model names and scores automatically. Token counts and costs aren't extracted from provider exports; a router that needs `metrics.cost_usd` reads it from native records, or prices candidates with `pricing=`. Pass `--format` only if you want to pick a parser yourself.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+dataset = client.datasets.create("support-prod")
+
+job = dataset.import_file("./traces.parquet").wait()
+
+print(job.imported_count, job.dropped_count, job.detected_scores)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+const dataset = await grad.datasets.create("support-prod");
+
+const job = await dataset.importFile("./traces.parquet").wait();
+
+console.log(job.importedCount, job.droppedCount, job.detectedScores);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+dataset, _ := client.Datasets.Create(ctx, "support-prod")
+job, _ := dataset.ImportFile(ctx, "./traces.parquet").Wait(ctx)
+fmt.Println(job.ImportedCount, job.DetectedScores)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad import ./traces.parquet --dataset support-prod
+
+# Or pin a specific parser explicitly:
+grad import ./traces.parquet --format otel --dataset support-prod --json
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+The import result lists how many trajectories were parsed, how many were dropped, and every `scores` key detected in the file so you can check target coverage before training.
+
+## Score and filter datasets
+
+Filter a `Dataset` by field to get a new view of it. Field filters run on the server and call no model, so re-running one with a new threshold costs nothing:
+
+```python
+from grad import Grad
+
+client = Grad()
+dataset = client.datasets.get("support-prod")
+
+recent_good = dataset.filter(scores={"resolved": ">=0.8"}, created_after="2026-11-01")
+print(recent_good.count())
+```
+
+A score condition is an operator (`>=`, `<=`, `>`, `<`, `==`, `!=`) and a number; a record without that score doesn't match. `metadata={"env": "prod"}` matches metadata fields exactly, and `created_after` / `created_before` compare the record `timestamp` (a record without one never matches). The view is saved as a dataset named `<dataset>-f-<hash>` (pass `name=` to choose one), so you can train or evaluate on it like any other dataset, and the same filter on the same version returns the same view.
+
+If you want to filter by something a human or LLM needs to judge (like "did the assistant answer accurately?"), score the dataset once with a [`Judge`](/docs/training/rubrics/). `dataset.score(...)` grades each record's own answer on the server, skips records that already have every score, and saves the results to `trajectory.scores` in the dataset's next version, so you can tweak thresholds or reuse the scores across runs without paying again. It is billed like an [evaluation](/docs/training/evaluations/): judge tokens at the judge model's catalog price, and validators and regexes for free:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, Judge
+
+client = Grad()
+dataset = client.datasets.get("support-prod")
+
+# Score once (server-side, persisted into `trajectory.scores["resolved"]`)
+judge = Judge(
+    name="resolved",
+    model="{{SONNET_MODEL}}",
+    prompt="Did the assistant accurately resolve the user's request without hallucinating?",
+)
+scored = dataset.score(judge).wait()
+
+# Filter on the stored score (server-side, $0 to re-run with a new threshold)
+passing = scored.filter(scores={"resolved": ">=0.8"})
+print(passing.count())
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```typescript
+import { Grad, Judge } from "@gradiated/grad";
+
+const grad = new Grad();
+const dataset = await grad.datasets.get("support-prod");
+
+const judge = new Judge({
+  name: "resolved",
+  model: "{{SONNET_MODEL}}",
+  prompt:
+    "Did the assistant accurately resolve the user's request without hallucinating?",
+});
+const scored = await dataset.score(judge).wait();
+
+const passing = await scored.filter({ scores: { resolved: ">=0.8" } });
+console.log(passing.recordCount);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+dataset, _ := client.Datasets.Get(ctx, "support-prod")
+judge := grad.Judge{Name: "resolved", Model: "{{SONNET_MODEL}}",
+	Prompt: "Did the assistant accurately resolve the user's request without hallucinating?"}
+scored, _ := dataset.Score(ctx, grad.Rubric{judge}, grad.ScoreOptions{}).Wait(ctx)
+
+passing, _ := scored.Filter(ctx, grad.FilterOptions{Scores: map[string]string{"resolved": ">=0.8"}})
+fmt.Println(passing.RecordCount)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+cat > judge.yaml <<'YAML'
+- name: resolved
+  kind: judge
+  model: {{SONNET_MODEL}}
+  prompt: Did the assistant accurately resolve the user's request without hallucinating?
+YAML
+grad datasets score support-prod --rubric judge.yaml --wait
+grad datasets filter support-prod --score 'resolved>=0.8'
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+A scoring job is an eval with `mode: "score"`: `scored = dataset.score(...)` returns before it finishes, and its progress and cost are visible with `grad eval status <id>`. Python `Scorer` functions work too; `.wait()` runs them on your machine, like an eval's local scorers. Records need an `id` to receive scores (`push` and imports assign one).
+
+For logic a field filter can't express, pass any Python function `(Trajectory) -> bool`. The SDK streams the dataset to your machine, runs the function there once, and saves the selected IDs as a server-side view. Training on the view doesn't need your machine afterwards:
+
+```python
+from grad import Grad
+
+client = Grad()
+dataset = client.datasets.get("support-prod")
+
+short_chats = dataset.filter(lambda t: len(t.input.messages) <= 6)
+print(short_chats.count())
+```
+
+## Sync from observability providers
+
+Connect an observability tool to a `Dataset` to pull in new traces and scores on a schedule. Save your provider key once as a workspace secret (`grad secrets set langfuse-prod`, or `client.secrets.set(name, value)`) and pass it via `client.secrets.get(...)`: the value is encrypted on the server and never returned, so raw keys never end up in code, datasets or artifacts. A secret only goes to the hosts it allows: by default the public hosts of the supported providers, Hugging Face and W&B. For a self-hosted tool, name its host when you store the key (`grad secrets set phoenix-prod --allowed-host phoenix.internal.example`, or `allowed_hosts=[...]`). Naming a secret in a source, import or run logger needs the `secrets:read` scope. A source feeds one dataset; a dataset can have several sources.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, sources
+
+client = Grad()
+dataset = client.datasets.get("support-prod")
+secret = client.secrets.get("langfuse-prod")
+
+source = dataset.add_source(
+    provider=sources.Langfuse(
+        host="https://cloud.langfuse.com",
+        secret=secret,
+    ),
+    schedule="*/15 * * * *",
+)
+
+source.sync()
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, sources } from "@gradiated/grad";
+
+const grad = new Grad();
+const dataset = await grad.datasets.get("support-prod");
+const secret = await grad.secrets.get("langfuse-prod");
+
+const source = await dataset.addSource({
+  provider: sources.langfuse({
+    host: "https://cloud.langfuse.com",
+    secret,
+  }),
+  schedule: "*/15 * * * *",
+});
+
+await source.sync();
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+dataset, _ := client.Datasets.Get(ctx, "support-prod")
+secret, _ := client.Secrets.Get(ctx, "langfuse-prod")
+
+source, _ := dataset.AddSource(ctx, grad.SourceParams{
+	Provider: grad.LangfuseSource{Host: "https://cloud.langfuse.com", Secret: secret},
+	Schedule: "*/15 * * * *",
+})
+_ = source.Sync(ctx)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+# Store the key once (read from stdin): PUBLIC_KEY:SECRET_KEY for Langfuse
+grad secrets set langfuse-prod
+
+grad sources add langfuse \
+  --dataset support-prod \
+  --host https://cloud.langfuse.com \
+  --secret langfuse-prod \
+  --schedule "*/15 * * * *"
+
+grad sources sync src_01J9X --wait
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+### How syncing works
+
+- **Incremental.** Each sync fetches traces added since the last one, plus scores and corrections added to traces it already has, so late feedback still lands. Records are matched by the provider's trace ID and the latest score wins.
+- **A little behind.** Traces younger than 10 minutes wait for the next sync, because providers take a few minutes to expose new data. New feedback lands with the next sync; edits to feedback from the last hour are picked up within 15 minutes (each provider page says how it finds them), and older edits need a full sync.
+- **Versioned.** Syncs add dataset versions: a scheduled sync at most every `version_interval` (15 minutes by default), a sync you start yourself at once; see [Versions](/docs/training/integrations/#versions). Old versions never change, so a run keeps training on the version it pinned.
+- **Filtered.** `filters`, `sample_rate` and record caps choose which traces a source syncs; see [Choose which traces sync](/docs/training/integrations/#choose-which-traces-sync).
+- **A sync is an import job.** `source.sync()` returns the sync's import job without waiting; call `.wait()` on it to block until it lands (`grad sources sync ID --wait`, with `--timeout SECS`). A sync already in progress is returned, never a second one.
+- **Rebuildable.** `grad sources sync ID --full` (or `source.sync(full=True)`) rebuilds the dataset from the provider as a new version, for when scores were edited long ago or you changed the mapping.
+- **Files are snapshots.** Records from `grad import` or `dataset.import_file(...)` never get later feedback. Use a source for the feedback loop.
+- **One dataset per source.** A source feeds exactly one dataset; a dataset can have several sources, for example Langfuse for one app and PostHog for another. Deleting a dataset deletes its sources; `grad sources remove ID` disconnects a source and keeps the dataset.
+- **At most once a minute.** A schedule is a five-field UTC cron (no `@hourly`-style names), so the most often it can fire is `* * * * *`; a missed tick runs once at the next one and never back-fills. A `sync` within a minute of the last sync's start returns that sync instead of starting another (the API adds a `Retry-After` header), so repeating or retrying it is safe. A full sync you ask for while an incremental one runs starts as soon as that one ends.
+- **Counts.** A dataset's `record_count` is the number of merged records: score updates fold into the records they belong to, and a full sync restarts the count. Pushing the same records again is a no-op: a record without an `id` gets one from a hash of its content, and a batch already pushed to the dataset returns the current version instead of adding one, even when the same push arrives twice at once. `grad import` of a file the dataset already imported returns that import.
+
+### When a sync fails
+
+A failed sync leaves the dataset and its watermark as they were, so the next sync reads the same window again. It never holds up other sources or training runs. The source records what went wrong:
+
+- `status` is `active` or `paused`; `last_error` and `last_error_at` hold the last failure (provider keys are redacted), and `consecutive_failures` counts failures since the last success. A successful sync clears all three.
+- A scheduled source backs off while it fails: each failure doubles the wait before the next scheduled sync, up to an hour, but never syncs more often than its schedule.
+- After 10 failures in a row the source is paused and its schedule stops firing; `paused_reason` says why. Running `grad sources sync ID` or storing a new key with `grad secrets set NAME` resumes it.
+
+`grad sources list` shows each source's status and last error:
+
+```bash
+grad sources list
+# id         dataset       provider  schedule      status            last sync      synced   last error
+# src_01J9X  support-prod  langfuse  */15 * * * *  active (2 failed)  failed         12:00    langfuse: 401 Unauthorized
+```
+
+### On Gradiated Cloud
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  The gateway's trace capture and the built-in `gradiated` source aren't live
+  yet: creating or syncing a `gradiated` source answers `501
+  source_unavailable`. Until they are, sync from your observability tool.
+</DocsCallout>
+
+On Gradiated Cloud, the gateway records every request and its feedback, so you don't need an observability tool. Connect them with the built-in `gradiated` source: `grad sources add gradiated --dataset support-prod --schedule "0 * * * *"`.
+
+### Supported providers
+
+| Provider                      | File import `--format` | Sync with `grad sources add`     | Guide                                                           |
+| ----------------------------- | ---------------------- | -------------------------------- | --------------------------------------------------------------- |
+| Gradiated Cloud (coming soon) | `gradiated`            | `gradiated`                      | [Integrations](/docs/training/integrations/)                    |
+| Langfuse                      | `langfuse`             | `langfuse`                       | [Langfuse](/docs/training/integrations/langfuse/)               |
+| LangSmith                     | `langsmith`            | `langsmith`                      | [LangSmith](/docs/training/integrations/langsmith/)             |
+| Braintrust                    | `braintrust`           | `braintrust`                     | [Braintrust](/docs/training/integrations/braintrust/)           |
+| PostHog                       | `posthog`              | `posthog`                        | [PostHog](/docs/training/integrations/posthog/)                 |
+| Arize Phoenix (OpenInference) | `otel`                 | `phoenix`                        | [Arize Phoenix](/docs/training/integrations/phoenix/)           |
+| OpenAI chat fine-tuning       | `openai_chat`          | none (`dataset.push()`)          |                                                                 |
+| Native schema                 | `grad_trajectories`    | none (`dataset.push()`)          |                                                                 |
+| Hugging Face Hub              | none                   | none (`grad datasets import hf`) | [Import a Hugging Face dataset](#import-a-hugging-face-dataset) |
+
+Braintrust and PostHog sources also need `project` (the Braintrust project id or name, the numeric PostHog project id); LangSmith and Phoenix take an optional one (default `default`). File imports accept JSONL, JSON and Parquet. Any OpenTelemetry GenAI export imports with `--format otel`.
+
+## Send feedback from production
+
+grad has no feedback API of its own. Send scores and corrections to the tool that already holds your traces, using its own SDK, and a source brings them into the next dataset version. Tag each trace with the model and version that produced it, so you can train on, or filter out, a specific rollout.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Langfuse">
+
+```python
+from langfuse import Langfuse, propagate_attributes
+
+langfuse = Langfuse(release="support-bot@2026-11-27")  # or set LANGFUSE_RELEASE
+
+with langfuse.start_as_current_observation(as_type="span", name="answer", version="v42"):
+    with propagate_attributes(session_id="sess_42", user_id="user_7", metadata={"model": "your-org/support-sft"}):
+        trace_id = langfuse.get_current_trace_id()
+        ...  # call the model
+
+# Later, when the user rates the answer:
+langfuse.create_score(trace_id=trace_id, name="resolved", value=1.0, comment="Fixed my invoice")
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="LangSmith">
+
+```python
+from langsmith import Client, traceable
+from langsmith.run_helpers import get_current_run_tree
+
+@traceable(name="answer", metadata={"model": "your-org/support-sft", "version": "v42"}, tags=["prod"])
+def answer(question: str) -> tuple[str, str]:
+    reply = ...  # call the model
+    return reply, str(get_current_run_tree().id)
+
+reply, run_id = answer("Where is invoice #9941?")
+
+# Later: a score, or a correction with the right answer
+Client().create_feedback(run_id, key="resolved", score=0, correction={"outputs": {"answer": "It is in Billing > Invoices."}})
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Braintrust">
+
+```ts
+import { initLogger } from "braintrust";
+
+const logger = initLogger({ projectName: "support-bot" });
+
+const spanId = await logger.traced(async (span) => {
+  const reply = "..."; // call the model
+  span.log({
+    output: reply,
+    metadata: { model: "your-org/support-sft", version: "v42" },
+  });
+  return span.id;
+});
+
+// Later: a score, and the expected answer as a correction
+logger.logFeedback({
+  id: spanId,
+  scores: { resolved: 0 },
+  expected: "It is in Billing > Invoices.",
+  comment: "Wrong menu",
+});
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Phoenix">
+
+```python
+from phoenix.otel import using_attributes
+from opentelemetry.trace import format_span_id, get_current_span
+from phoenix.client import Client
+
+with using_attributes(session_id="sess_42", user_id="user_7", metadata={"model": "your-org/support-sft", "version": "v42"}):
+    ...  # call the model (inside an instrumented span)
+    span_id = format_span_id(get_current_span().get_span_context().span_id)
+
+# Later: annotate the span with the user's rating
+Client().spans.add_span_annotation(
+    span_id=span_id, annotation_name="resolved", annotator_kind="HUMAN", label="thumbs-up", score=1
+)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="PostHog">
+
+```python
+from posthog import Posthog
+
+posthog = Posthog("<ph_project_api_key>", host="https://us.i.posthog.com")
+
+# The generation, tagged with its trace ID, model and version
+posthog.capture(
+    distinct_id="user_7",
+    event="$ai_generation",
+    properties={"$ai_trace_id": trace_id, "$ai_model": "your-org/support-sft", "model_version": "v42"},
+)
+
+# Later: a thumbs survey response tied to the same trace (1 = up, 2 = down)
+posthog.capture(
+    distinct_id="user_7",
+    event="survey sent",
+    properties={"$survey_id": survey_id, f"$survey_response_{question_id}": 1, "$ai_trace_id": trace_id},
+)
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Each [integration guide](/docs/training/integrations/) shows how the provider's fields map onto records and how to filter what you train on.
+
+## What to include in your data
+
+Every record needs `messages` (or `input.messages`). Beyond that, include only the fields your recipe uses:
+
+| If you are training...                     | Also include                                                                                                                                                                                                                                                                                                |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Fine-tune (`SFTRecipe`)**                | Nothing else: the final assistant message is the target. When a record has `expected_output` (a gold answer, or a correction synced from LangSmith, Braintrust or Langfuse), that is the target instead and replaces the logged final answer. Records without a prompt (a user or system turn) don't train. |
+| **Decision model (`DecisionModelRecipe`)** | `expected_output` (the target label)                                                                                                                                                                                                                                                                        |
+| **Model router (`RouterRecipe`)**          | Optional `metadata.model`, `scores`, and `metrics.cost_usd` (or pass a `Judge` and `models=` to score and compare automatically)                                                                                                                                                                            |
+| **Preference alignment (`DPORecipe`)**     | `chosen` and `rejected` completions for the same prompt, or paired records sharing a `group_id` with `role="chosen"` and `role="rejected"`                                                                                                                                                                  |
+| **Multi-turn conversations**               | `session_id` so turns from the same conversation stay together across train and eval splits                                                                                                                                                                                                                 |
+
+Need images, audio, tools, or the full JSON field list? See the [Primitives reference](/docs/reference/primitives/).
+
+<DocsNext>
+  <a href="/docs/training/recipes/">
+    <small>Next</small>
+    <strong>Recipes</strong>
+  </a>
+  <a href="/docs/training/rubrics/">
+    <small>Grading</small>
+    <strong>Rubrics</strong>
+  </a>
+</DocsNext>

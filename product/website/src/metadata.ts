@@ -164,10 +164,175 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     title: "Claude Code",
     description: "Connect Claude Code to the Gradiated API.",
   },
+  "/docs/training/": {
+    title: "Training overview",
+    description:
+      "Train routers, decision models, and fine-tuned models from your production logs or test environments.",
+  },
+  "/docs/training/trajectories/": {
+    title: "Trajectories",
+    description:
+      "Store production logs, labeled examples, and agent runs in a Gradiated Dataset from files, code, or observability tools.",
+  },
+  "/docs/training/recipes/": {
+    title: "Training recipes",
+    description:
+      "Pick a recipe, check the cost with a dry run, and train routers, decision models, fine-tunes, cartridges and embedding models.",
+  },
+  "/docs/training/rubrics/": {
+    title: "Rubrics",
+    description:
+      "Score model outputs with Python checks, validators, or an LLM judge.",
+  },
+  "/docs/training/environments/": {
+    title: "Environments",
+    description:
+      "Coming soon: run your agent against your own tools, databases, Harbor tasks, or Docker containers during reinforcement learning.",
+  },
+  "/docs/training/evaluations/": {
+    title: "Evaluations",
+    description:
+      "Compare base models and trained artifacts side by side on the same dataset and Rubric before you ship.",
+  },
+  "/docs/training/artifacts/": {
+    title: "Artifacts",
+    description:
+      "Inspect, download, and deploy versioned .grad model artifacts saved by training runs.",
+  },
+  "/docs/training/deploying/": {
+    title: "Deploying",
+    description:
+      "Host trained artifacts on Gradiated Cloud, or download standard weights to run on your own vLLM or SGLang servers.",
+  },
+  "/docs/training/models/": {
+    title: "Supported training models",
+    description:
+      "See which base models you can fine-tune, what each size is best at, and how token-based training billing works.",
+  },
+  "/docs/training/custom-loops/": {
+    title: "Custom training loops",
+    description:
+      "Coming soon: write your own Python training loop on Gradiated Trainer and Artifact when a built-in recipe isn't flexible enough.",
+  },
+  "/docs/training/advanced-objectives/": {
+    title: "Advanced objectives",
+    description:
+      "Coming soon: custom PyTorch losses and specialized training patterns built on Trainer and CustomLoss.",
+  },
+  "/docs/training/tuning-troubleshooting/": {
+    title: "Tuning & troubleshooting",
+    description:
+      "Practical defaults for learning rates, LoRA rank, spend caps, crash recovery, and fixing common SFT and DPO failure modes.",
+  },
+  "/docs/training/self-hosting/": {
+    title: "Self-hosting grad",
+    description:
+      "Run Gradiated on your laptop with Docker Compose or in your own Kubernetes cluster with Helm.",
+  },
+  "/docs/training/observability/": {
+    title: "Observability for self-hosted grad",
+    description:
+      "Prometheus metrics, the grad Grafana dashboard, warning-level alerts and JSON logs for a self-hosted training server.",
+  },
+  "/docs/training/recipes/router/": {
+    title: "Model router guide",
+    description:
+      "Send each request to the cheapest model that still meets your quality bar.",
+  },
+  "/docs/training/recipes/decision-model/": {
+    title: "Decision models guide",
+    description:
+      "Train your own fast decision model for categories, yes/no checks, or ordered ratings.",
+  },
+  "/docs/training/recipes/sft/": {
+    title: "Supervised fine-tuning (SFT) guide",
+    description:
+      "Fine-tune an open model on examples of the exact outputs you want with SFTRecipe.",
+  },
+  "/docs/training/recipes/dpo/": {
+    title: "Preference tuning (DPO) guide",
+    description:
+      "Teach a model which answers you prefer using pairs of good and bad examples with DPORecipe.",
+  },
+  "/docs/training/recipes/rl-agents/": {
+    title: "RL for agents guide",
+    description:
+      "Coming soon: train a model with reinforcement learning by grading its answers with code or another model.",
+  },
+  "/docs/training/recipes/traces-to-environments/": {
+    title: "Traces to environments guide",
+    description:
+      "Coming soon: turn existing production logs into an RL environment, starting simple and adding containers only when you need them.",
+  },
+  "/docs/training/recipes/distillation/": {
+    title: "Model distillation guide",
+    description:
+      "Train a small, fast model to copy a larger one using your own prompts with DistillRecipe.",
+  },
+  "/docs/training/recipes/cartridges/": {
+    title: "Context Cartridges guide",
+    description:
+      "Turn a long, repeated prompt or doc set into a small add-on you don't have to resend on every request.",
+  },
+  "/docs/training/recipes/reward-models/": {
+    title: "Reward models guide",
+    description:
+      "Train a small model to score how good another model's answers are with RewardModelRecipe.",
+  },
+  "/docs/training/recipes/embeddings/": {
+    title: "Embeddings guide",
+    description:
+      "Fine-tune an embedding model on your own docs and codebase for better search.",
+  },
+  "/docs/training/integrations/": {
+    title: "Trace integrations",
+    description:
+      "Sync traces, scores and corrections from Langfuse, LangSmith, Braintrust, PostHog, Arize Phoenix or the Gradiated gateway into versioned datasets.",
+  },
+  "/docs/training/integrations/langfuse/": {
+    title: "Langfuse integration",
+    description:
+      "Sync Langfuse traces and scores into a Gradiated dataset, and send production feedback with Langfuse scores.",
+  },
+  "/docs/training/integrations/langsmith/": {
+    title: "LangSmith integration",
+    description:
+      "Sync LangSmith runs, feedback and corrections into a Gradiated dataset.",
+  },
+  "/docs/training/integrations/braintrust/": {
+    title: "Braintrust integration",
+    description:
+      "Sync Braintrust logs, scores and expected answers into a Gradiated dataset.",
+  },
+  "/docs/training/integrations/posthog/": {
+    title: "PostHog integration",
+    description:
+      "Sync PostHog LLM analytics traces and user feedback into a Gradiated dataset.",
+  },
+  "/docs/training/integrations/phoenix/": {
+    title: "Arize Phoenix integration",
+    description:
+      "Sync Arize Phoenix (OpenInference) traces and span annotations into a Gradiated dataset.",
+  },
   "/docs/api-reference/": {
     title: "API reference",
     description:
       "Review Gradiated API endpoints, request fields, and response formats.",
+  },
+  "/docs/reference/primitives/": {
+    title: "Primitives reference",
+    description:
+      "Reference for the core objects and JSON schemas used across the Gradiated SDKs and API.",
+  },
+  "/docs/reference/training-parameters/": {
+    title: "Training parameters reference",
+    description:
+      'Every training setting, its default, and how the "auto" defaults are chosen. You rarely need to set any of them.',
+  },
+  "/docs/reference/cli/": {
+    title: "CLI reference",
+    description:
+      "Every grad command and its main flags, configuration precedence, the --json envelope and exit codes.",
   },
   "/privacy/": {
     title: "Privacy",

@@ -1,0 +1,414 @@
+# Training overview
+
+<DocsLead>
+  Train routers, decision models, and fine-tuned models from your production
+  logs or labeled examples.
+</DocsLead>
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  `api.gradiated.com` doesn't serve training yet. Run these against a local
+  stack: `grad local up --dev-models`, then `export GRADIATED_PROFILE=local`
+  (see [Run it locally](#run-it-locally)). Its trainer runs on your CPU, so pass
+  `model="test/tiny-qwen3"` (`--model test/tiny-qwen3` in the CLI): the run
+  finishes in seconds, while `qwen/qwen3-8b` needs a GPU (`grad local up --gpu`)
+  and the plan warns about it. The same stack runs evals: `--dev-models` also
+  starts a CPU inference endpoint that serves `test/tiny-qwen3`, the adapters
+  you train on it and a deterministic test judge, `test/tiny-judge`.
+</DocsCallout>
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Fine-tune a model (60s)">
+
+```python
+from grad import Grad
+from grad.recipes import SFTRecipe
+
+client = Grad()  # reads GRADIATED_PROFILE or GRADIATED_API_KEY
+
+# Plain chat records (the OpenAI fine-tuning format). The last assistant turn is what the model learns.
+dataset = client.datasets.push("sql-quickstart", [
+    {"messages": [
+        {"role": "user", "content": "Count active users from yesterday."},
+        {"role": "assistant", "content": "SELECT count(*) FROM users WHERE active_at >= current_date - 1;"},
+    ]},
+    {"messages": [
+        {"role": "user", "content": "Total revenue by plan this month."},
+        {"role": "assistant", "content": "SELECT plan, sum(amount_usd) FROM invoices WHERE created_at >= date_trunc('month', current_date) GROUP BY plan;"},
+    ]},
+])
+
+recipe = SFTRecipe(model="qwen/qwen3-8b")
+
+# $0 preview: resolved defaults, warnings, tokens and cost
+print(client.runs.plan(dataset=dataset, name="sql-helper", recipe=recipe))
+
+run = client.runs.create(dataset=dataset, name="sql-helper", recipe=recipe, max_cost_usd=5).wait()
+run.download("./sql-helper")  # LoRA weights for vLLM / SGLang
+```
+
+Two examples are enough to see the whole loop. The plan warns that they are far too few steps to train a useful model. For a real run, pass a file or a Hugging Face dataset instead of a list: `client.datasets.push("sql", "./train.jsonl")` or `client.datasets.from_hf("HuggingFaceH4/ultrachat_200k", split="train_sft")`.
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Train a router">
+
+```python
+from grad import Grad
+from grad.recipes import RouterRecipe
+
+client = Grad()
+dataset = client.datasets.create("support-prod")
+dataset.import_file("./support_traces.jsonl").wait()
+
+run = client.runs.create(dataset=dataset, name="support-router", recipe=RouterRecipe()).wait()
+run.download("./support-router")
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, recipes } from "@gradiated/grad";
+
+const grad = new Grad();
+const dataset = await grad.datasets.create("support-prod");
+await dataset.importFile("./support_traces.jsonl").wait();
+
+const run = await grad.runs
+  .create({ dataset, name: "support-router", recipe: recipes.router() })
+  .wait();
+await run.download("./support-router");
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+client := grad.NewClient()
+dataset, _ := client.Datasets.Create(ctx, "support-prod")
+dataset.ImportFile(ctx, "./support_traces.jsonl").Wait(ctx)
+
+run, _ := client.Runs.Create(ctx, grad.RunParams{
+	Dataset: dataset,
+	Name:    "support-router",
+	Recipe:  grad.RouterRecipe{},
+}).Wait(ctx)
+_, _ = run.Download(ctx, "./support-router")
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad local up --dev-models && export GRADIATED_PROFILE=local
+grad import ./support_traces.jsonl --dataset support-prod
+grad train --dataset support-prod --name support-router --recipe router --dry-run
+grad train --dataset support-prod --name support-router --recipe router --wait
+grad artifacts download support-router@latest --output ./support-router
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+The router examples train on the scores already in your traces. `support_traces.jsonl` is any OpenAI chat JSONL export with a `scores` field per record; the repository ships a synthetic one in `examples/support_traces.jsonl`.
+
+`--wait` follows the run in a full-screen terminal view. This one is replayed from a recorded run:
+
+<DocsRunReplay />
+
+## Run it locally
+
+The whole loop runs on a laptop with Docker: train a router and a fine-tune, then evaluate the fine-tune against its base model with a judge. `--dev-models` adds tiny, randomly initialised test models and a CPU inference endpoint for evals, so every step finishes in seconds:
+
+```bash
+grad local up --dev-models
+export GRADIATED_PROFILE=local   # the CLI and every SDK now use the local stack
+curl -LO https://raw.githubusercontent.com/Gradiated/grad/main/examples/support_traces.jsonl
+grad import ./support_traces.jsonl --dataset support-prod
+grad train --dataset support-prod --name support-router --recipe router --model test/tiny-qwen3 \
+  --rubric resolved --max-cost-usd 1 --wait
+grad artifacts download support-router@latest --output ./support-router
+
+# Eval an SFT adapter against its base on the same traces, with a judge
+grad train --dataset support-prod --name support-sft --recipe sft --model test/tiny-qwen3 --max-cost-usd 1 --wait
+printf -- '- name: overlap\n  kind: judge\n  model: test/tiny-judge\n' > rubric.yaml
+grad eval --name sft-vs-base --models support-sft@latest,test/tiny-qwen3 --dataset support-prod \
+  --rubric rubric.yaml --limit 20 --baseline test/tiny-qwen3 --wait
+grad local down                  # add --volumes to delete the data
+```
+
+`grad eval` prints the report when it finishes; the SDKs have `ev.summary_table()` and the web UI an Evals page (`grad ui`). The tiny models' answers are noise: the scores check the pipeline, not a model. For real models, start the stack with `--gpu` and use catalog ids such as `qwen/qwen3-8b`.
+
+## Where to start
+
+| If you are...                                                                                       | Recommended path                                                                                                           |
+| --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **Shipping a product feature** (lower LLM spend, fine-tune a smaller model, compress a long prompt) | [Trajectories](/docs/training/trajectories/) → [Recipes](/docs/training/recipes/) → [Deploying](/docs/training/deploying/) |
+| **Comparing models or writing graders** (LLM judges, validators, Python scorers)                    | [Rubrics](/docs/training/rubrics/) → [Evaluations](/docs/training/evaluations/)                                            |
+
+See [Supported models](/docs/training/models/) for trainable base models, the GPU memory each needs, and how token billing works.
+
+## Pick a starting point
+
+<DocsRecipeFinder />
+
+## From traces to a served model
+
+Every workflow in `grad` follows the same loop, whether you are training a router or fine-tuning on multi-turn agent traces. Step through it:
+
+<DocsRunLifecycle />
+
+## Install and connect
+
+`grad` is open source under the MIT license, at [github.com/Gradiated/grad](https://github.com/Gradiated/grad). Install the SDK for your language and the `grad` CLI:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```bash
+pip install grad-sdk
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```bash
+npm install @gradiated/grad
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```bash
+go get github.com/Gradiated/grad/sdks/go@latest
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Rust">
+
+```bash
+cargo add grad-sdk --git https://github.com/Gradiated/grad --tag v0.2.0-alpha.6
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+brew install gradiated/tap/grad   # macOS and Linux
+# or: cargo install --locked --git https://github.com/Gradiated/grad --tag v0.2.0-alpha.6 grad-cli
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Until 0.2.0 is out every release is a prerelease: pip, npm, `go get @latest` and Homebrew install the newest one (0.2.0-alpha.6) as they are. crates.io still has 0.2.0-alpha.3, so install the Rust crate and the CLI from the release tag with Cargo. Release binaries of the CLI are on [GitHub Releases](https://github.com/Gradiated/grad/releases). The Rust crate is published as `grad-sdk` and imported as `grad` (`use grad::Client;`). To try unreleased changes, install from the repository instead, for example `pip install "grad-sdk @ git+https://github.com/Gradiated/grad#subdirectory=sdks/python"` or `cargo install --locked --git https://github.com/Gradiated/grad grad-cli`.
+
+Then start a local stack (it needs Docker with the Compose plugin) and point the CLI and SDKs at it:
+
+```bash
+grad local up           # --dev-models adds tiny test models; --build builds the images from your checkout
+export GRADIATED_PROFILE=local
+grad models list
+```
+
+`grad local up` saves its URL and keys in the `local` profile of `~/.config/gradiated/config.json`, and `GRADIATED_PROFILE=local` selects it in the CLI and every SDK. See [Self-hosting](/docs/training/self-hosting/) for the local stack's options, GPUs and the Kubernetes Helm chart.
+
+For any other server, run `grad login` (it saves the key in the `default` profile) or set `GRADIATED_BASE_URL` and `GRADIATED_API_KEY`. Without either, the SDKs connect to `https://api.gradiated.com`. You can also pass both directly:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+import os
+from grad import Grad
+
+client = Grad(base_url=os.environ["GRADIATED_BASE_URL"], api_key=os.environ["GRADIATED_API_KEY"])
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad({
+  baseURL: process.env.GRADIATED_BASE_URL,
+  apiKey: process.env.GRADIATED_API_KEY,
+});
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+client := grad.NewClient(
+	grad.WithBaseURL(os.Getenv("GRADIATED_BASE_URL")),
+	grad.WithAPIKey(os.Getenv("GRADIATED_API_KEY")),
+)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Rust">
+
+```rust
+let client = grad::Client::new()
+    .with_base_url(std::env::var("GRADIATED_BASE_URL")?)
+    .with_api_key(std::env::var("GRADIATED_API_KEY")?);
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+The precedence is the same everywhere: explicit arguments, then `GRADIATED_PROFILE`, then the `GRADIATED_*` variables, then the `default` profile. `grad config show` prints the base URL and profile the CLI resolved, and where the key came from.
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Training on Gradiated Cloud, with an API key from the
+  [quickstart](/docs/quickstart/) and no servers to run, isn't open yet.
+  `api.gradiated.com` serves inference today; point the SDKs at a local or
+  self-hosted server for training.
+</DocsCallout>
+
+### Versioning and deprecations
+
+The SDKs follow semantic versioning, so upgrading within a major version shouldn't break your code:
+
+- **Patch releases only fix bugs.**
+- **Renamed APIs keep their old name for at least two minor releases**, with a `DeprecationWarning` that names the replacement. Removed CLI commands print what replaced them.
+- **Release notes always have New, Deprecated and Breaking sections**, with a migration example for every breaking change.
+- **Changes to how `"auto"` defaults resolve are versioned**, so an existing run config keeps training the same way.
+
+Base model retirement follows its own notice policy; see [Model retirement](/docs/training/models/#model-retirement).
+
+## Use your trained model
+
+Download the artifact and serve it with the inference stack you already run. A LoRA loads into vLLM or SGLang on its base model, and your app calls it through any OpenAI-compatible client:
+
+```bash
+grad artifacts download sql-helper@latest --output ./sql-helper
+vllm serve Qwen/Qwen3-8B --enable-lora --max-lora-rank 32 --lora-modules sql-helper=./sql-helper
+```
+
+```python
+from openai import OpenAI
+
+oai = OpenAI(base_url="http://localhost:8000/v1", api_key="unused")
+reply = oai.chat.completions.create(
+    model="sql-helper",
+    messages=[{"role": "user", "content": "Count active users from yesterday."}],
+)
+print(reply.choices[0].message.content)
+```
+
+Routers, decision models, cartridges, reward models and embedding models export their own bundles; [Deploying](/docs/training/deploying/#serve-it-yourself) shows how to load each one.
+
+To improve the next version, log outcomes (thumbs up, tests passed, a human fix) to the observability tool you already trace requests with. A [source](/docs/training/trajectories/#send-feedback-from-production) syncs the traces and their latest scores into a new dataset version.
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Publishing an artifact as a model version on Gradiated Cloud (from the
+  console or the Models API) will serve it as `your-org/<name>`, callable from
+  the OpenAI, Anthropic or SystemOne SDK, with rollback and trace capture
+  built in. Until then, serve it yourself as above.
+</DocsCallout>
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python (OpenAI SDK)">
+
+```python
+import os
+from openai import OpenAI
+
+oai = OpenAI(base_url="https://api.gradiated.com/v1", api_key=os.environ["GRADIATED_API_KEY"])
+
+reply = oai.chat.completions.create(
+    model="your-org/sql-helper",
+    messages=[{"role": "user", "content": "Count active users from yesterday."}],
+)
+print(reply.choices[0].message.content)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl https://api.gradiated.com/v1/chat/completions \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "your-org/support-router",
+    "messages": [{"role": "user", "content": "Where is invoice #9941?"}]
+  }'
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## Two ways to train
+
+Start with a built-in `Recipe` and its defaults. Learning rate, batch size and schedule are calibrated for each base model, and the dry run prints every resolved value. When you need more control, override a single piece (like the loss function or dataset split).
+
+| Mode                                             | How it works                                                                                                                                                                   | When to use it                                                                                                                                           |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [**Recipes**](/docs/training/recipes/)           | Pick a recipe (`SFTRecipe`, `DPORecipe`, `RouterRecipe`, `DecisionModelRecipe`, `CartridgeRecipe`, `EmbeddingRecipe`, `DistillRecipe`, `RewardModelRecipe`), or run from YAML. | Almost always. You get calibrated defaults, held-out evaluations, automatic checkpoints, and can swap individual pieces without writing a training loop. |
+| [**Custom loops**](/docs/training/custom-loops/) | Coming soon: call `Trainer` directly in Python with built-in losses or your own PyTorch `CustomLoss`.                                                                          | You are building a new algorithm: a custom research loop, multi-trainer setup, replay buffer, or rollout logic a recipe can't express.                   |
+
+[RL agents](/docs/training/recipes/rl-agents/) are coming soon. [Distillation](/docs/training/recipes/distillation/) and [reward models](/docs/training/recipes/reward-models/) are recipes too. To train in stages, wait for the first run and pass its artifact to the next recipe: `DPORecipe(model=sft.artifact)`.
+
+You can export the full resolved config of any run as YAML (`grad runs inspect <run_id> --yaml > recipe.yaml`) to check it into Git.
+
+<DocsCallout label="Metered per token" tone="tip">
+  Every base model has a fixed price per million tokens processed, and
+  `runs.plan()` prices a run for $0 before it starts (`grad usage` lists what
+  each one cost). Start with the simplest option that proves value: a router or
+  decision model trains quickly, then move up to fine-tuning once you have a
+  baseline.
+</DocsCallout>
+
+## Using with coding agents
+
+Every docs page includes a **Copy** menu (**Copy page** as raw Markdown or **Copy prompt** for coding agents) in the top right, and every page is served as plain Markdown at `<url>.md`, indexed in [`/llms.txt`](/llms.txt) and `/llms-full.txt`.
+
+The CLI is designed for non-interactive agent loops: pass `--json` to any `grad` command for a single JSON envelope on stdout, and run `--dry-run --json` (or `client.runs.plan(...)`) to validate dataset coverage and estimate tokens and cost before starting a run.
+
+### Starter prompts to paste into Claude Code, Codex, or Cursor
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Model router">
+
+```text
+Read https://gradiated.com/docs/training/recipes/router.md and integrate a Gradiated model router into this codebase:
+1. Find where we call LLMs and inspect how we log or store completed requests and outcomes.
+2. Push or import historical traces into a Gradiated dataset using GRADIATED_API_KEY from env.
+3. Run `grad train --dataset <name> --name <router> --recipe router --dry-run --json` first and fix any data warnings.
+4. Train the router, verify `eval_report.pareto_summary.quality_drop_ci95` stays inside 2%, and download it with `grad artifacts download <router>@latest`.
+5. Load the router bundle in our serving path (see https://gradiated.com/docs/training/deploying.md), send outcomes to our observability tool, and connect it with `grad sources add` so the next sync picks them up.
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Fine-tune (SFT & DPO)">
+
+```text
+Read https://gradiated.com/docs/training/recipes/sft.md (and https://gradiated.com/docs/training/recipes/dpo.md) and set up a fine-tuning pipeline for our task:
+1. Export verified passing examples as plain chat records (`{"messages": [...]}`, last assistant turn is the target) and push them with `client.datasets.push(name, records_or_jsonl_path)`.
+2. Configure `SFTRecipe(model="qwen/qwen3-8b")` with its defaults. For a DPO stage, wait for the SFT run (`sft = client.runs.create(...).wait()`) and train `DPORecipe(model=sft.artifact)` on preference pairs. Don't hand-set `lr`; the default `lr="auto"` is calibrated per model.
+3. Run `grad render <dataset> --model qwen/qwen3-8b --limit 3` to check the chat template and loss mask, then `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json` and fix every warning.
+4. Start the run with `max_cost_usd=` set, download the LoRA with `run.download(path)` for vLLM/SGLang, and send human fixes to our observability tool as corrections so the next sync picks them up.
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Cartridge">
+
+```text
+Read https://gradiated.com/docs/training/recipes/cartridges.md:
+1. Identify the long system prompts or reference documents we repeat on every request.
+2. Configure `CartridgeRecipe(context=Context.from_file("./context.md"))` to compress that static context into a trained prefix.
+3. Validate with `client.runs.plan(...)` or `grad train -f recipe.yaml --dry-run --json`, run training, compare `eval_report` against the baseline, and download the cartridge with `grad artifacts download`.
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+<DocsNext>
+  <a href="/docs/training/trajectories/">
+    <small>Next</small>
+    <strong>Trajectories</strong>
+  </a>
+</DocsNext>

@@ -1,0 +1,187 @@
+# Langfuse
+
+<DocsLead>
+  Sync Langfuse traces and their scores into a dataset, and keep training on
+  what users actually rated.
+</DocsLead>
+
+## What syncs
+
+Each Langfuse trace becomes one record: its input and output become `messages`, and every numeric or boolean score on the trace (from the SDK, the API, annotation queues or LLM-as-a-judge evaluators) becomes an entry in `scores`. A `CORRECTION` score becomes `expected_output`; categorical and text scores aren't synced.
+
+| Langfuse                           | grad record                            |
+| ---------------------------------- | -------------------------------------- |
+| Trace ID                           | `id` (the merge key for late scores)   |
+| Trace input / output               | `messages`                             |
+| Scores (`name` → `value`)          | `scores`                               |
+| `CORRECTION` score                 | `expected_output`                      |
+| `sessionId`                        | `session_id`                           |
+| `userId`                           | `metadata.user_id`                     |
+| `release`, `version`               | `metadata.release`, `metadata.version` |
+| Tags                               | `metadata.tags`                        |
+| Trace `metadata` (such as `model`) | `metadata`                             |
+
+## Tag traces with the model and version
+
+Set the release once on the client (or with `LANGFUSE_RELEASE`), and attach the version, session and model to each trace:
+
+```python
+from langfuse import Langfuse, propagate_attributes
+
+langfuse = Langfuse(release="support-bot@2026-11-27")
+
+with langfuse.start_as_current_observation(as_type="span", name="answer", version="v42"):
+    with propagate_attributes(
+        session_id="sess_42",
+        user_id="user_7",
+        metadata={"model": "your-org/support-sft"},
+    ):
+        trace_id = langfuse.get_current_trace_id()
+        ...  # call the model
+```
+
+## Send feedback from production
+
+Score the trace when you learn the outcome, from the SDK:
+
+```python
+langfuse.create_score(trace_id=trace_id, name="resolved", value=1.0, comment="Fixed my invoice")
+```
+
+Or from any backend with `POST /api/public/scores`, authenticated with the project's public key and secret key:
+
+```bash
+curl -X POST https://cloud.langfuse.com/api/public/scores \
+  -u "$LANGFUSE_PUBLIC_KEY:$LANGFUSE_SECRET_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"traceId": "trace_123", "name": "resolved", "value": 1}'
+```
+
+Scores added later are picked up by the next sync (see [How syncing works](#how-syncing-works)).
+
+## Connect it to grad
+
+Store the key once as a workspace secret (it reads the value from stdin and never returns it), then add a source to a dataset. The schedule is a cron expression; leave it out to sync only when you ask.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad secrets set langfuse-prod   # paste PUBLIC_KEY:SECRET_KEY (pk-lf-...:sk-lf-...)
+
+grad sources add langfuse \
+  --dataset support-prod \
+  --host https://cloud.langfuse.com \
+  --secret langfuse-prod \
+  --schedule "*/30 * * * *"
+
+grad sources list
+grad sources sync src_01J9X
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, sources
+
+client = Grad()
+dataset = client.datasets.get("support-prod")
+
+source = dataset.add_source(
+    provider=sources.Langfuse(
+        host="https://cloud.langfuse.com",
+        secret=client.secrets.get("langfuse-prod"),
+    ),
+    schedule="*/30 * * * *",
+)
+source.sync()
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, sources } from "@gradiated/grad";
+
+const grad = new Grad();
+const dataset = await grad.datasets.get("support-prod");
+
+const source = await dataset.addSource({
+  provider: sources.langfuse({
+    host: "https://cloud.langfuse.com",
+    secret: await grad.secrets.get("langfuse-prod"),
+  }),
+  schedule: "*/30 * * * *",
+});
+await source.sync();
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+dataset, _ := client.Datasets.Get(ctx, "support-prod")
+secret, _ := client.Secrets.Get(ctx, "langfuse-prod")
+
+source, _ := dataset.AddSource(ctx, grad.SourceParams{
+	Provider: grad.LangfuseSource{Host: "https://cloud.langfuse.com", Secret: secret},
+	Schedule: "*/30 * * * *",
+})
+_ = source.Sync(ctx)
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## How syncing works
+
+Each sync is incremental: it pulls traces added since the last sync, plus scores and corrections added to traces it already has, so feedback that arrives days later still counts. Records are matched by the provider's trace ID and the latest score wins. Traces younger than 10 minutes wait for the next sync, because providers take a few minutes to expose new data. New scores on any trace, however old, land with the next sync. An edit that keeps a score's timestamp is picked up within 15 minutes if the score is from the last hour; older edits need a full sync.
+
+Syncs add dataset versions (a scheduled one at most every `version_interval`, 15 minutes by default; see [Versions](/docs/training/integrations/#versions)). Old versions never change, so a run keeps the exact data it pinned. If you edit old scores or change the mapping, `grad sources sync src_01J9X --full` (or `source.sync(full=True)`) rebuilds the dataset from the provider as a new version.
+
+`source.sync()` returns the import job (call `.wait()` to block), or the sync already in progress; on the CLI, add `--wait`. A source syncs at most once a minute, and one that keeps failing backs off and then pauses; see [When a sync fails](/docs/training/trajectories/#when-a-sync-fails).
+
+A one-off `grad import` of an exported file is a snapshot: it never gets later feedback. Use a source for the feedback loop.
+
+## Filter what syncs
+
+Every source takes the [shared filters, `sample_rate` and record caps](/docs/training/integrations/#choose-which-traces-sync). grad sends `tags`, `environment`, `version`, `name` (the trace name), `user_id`, `session_id`, `metadata` and `from`/`to` to Langfuse's observations API; `model` and `release` are matched after fetching.
+
+## Choose what to train on
+
+Records keep the provider's scores in `scores` and its model and version tags in `metadata`, so you can pick a slice before training. A filter runs on the server, costs nothing to re-run, and saves the slice as its own dataset:
+
+```python
+from grad import Grad
+
+client = Grad()
+good = client.datasets.get("support-prod").filter(
+    scores={"resolved": ">=1"},
+    metadata={"version": "v42"},
+    name="support-prod-v42-good",
+)
+print(good.count())
+```
+
+A [router](/docs/training/recipes/router/) can use the raw dataset as is: it learns from every score, good and bad.
+
+## Keys and hosts
+
+- **Key:** a project API key pair. Store it as one secret, `PUBLIC_KEY:SECRET_KEY` (`pk-lf-...:sk-lf-...`). Langfuse keys are scoped to one project, so add one source per project.
+- **Hosts:** `https://cloud.langfuse.com` (EU, the default), `https://us.cloud.langfuse.com` (US), or your self-hosted Langfuse URL. grad reads root observations (`/api/public/v2/observations`) and v3 scores, so a self-hosted Langfuse needs v4 or later. Hosts must be public `https://` URLs; for a server on a private network, see [Private hosts](#private-hosts).
+
+### Private hosts
+
+Sync workers only call public `https://` hosts, so a provider key can't be pointed at an internal service by mistake. To sync from a provider on your own network, list its address range in `GRAD_SOURCES_EGRESS_ALLOW` (comma-separated CIDRs, such as `10.20.0.0/16`) on the import workers; plain `http://` is then allowed to those addresses too. Store the key with that host too (`grad secrets set NAME --allowed-host HOST`, or `allowed_hosts=[...]`): a secret only goes to the public provider hosts unless it names others. On Helm, set it in `workers.import.env` and allow the range in `networkPolicy.workerEgress` (see [Self-hosting](/docs/training/self-hosting/)).
+
+<DocsNext>
+  <a href="/docs/training/integrations/">
+    <small>Integrations</small>
+    <strong>All sources</strong>
+  </a>
+  <a href="/docs/training/recipes/">
+    <small>Next</small>
+    <strong>Recipes</strong>
+  </a>
+</DocsNext>

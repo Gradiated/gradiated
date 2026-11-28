@@ -1,0 +1,479 @@
+# Self-hosting
+
+<DocsLead>
+  Run the grad training API and trainer workers on your laptop with Docker
+  Compose or in your own Kubernetes cluster with Helm.
+</DocsLead>
+
+A self-hosted server runs the whole **training, evaluation and dataset platform** inside your own network, so prompts, traces and trained weights never leave it. It needs only PostgreSQL 17 and an S3-compatible bucket (AWS S3, SeaweedFS, MinIO, R2); there is no local-disk mode. Completed runs write versioned [`Artifact`](/docs/training/artifacts/) bundles to your bucket, ready to serve on your own vLLM or SGLang cluster.
+
+The same SDK code runs against every server; only the base URL and key change.
+
+## Local development (Docker Compose)
+
+Start a local training stack in one command with the `grad` CLI ([install it](/docs/training/#install-and-connect) first; it needs Docker with the Compose plugin):
+
+```bash
+# CPU stack: datasets, imports, evals, and small local runs
+grad local up
+
+# GPU stack (requires the NVIDIA Container Toolkit): adds the CUDA trainer worker
+grad local up --gpu
+
+# Add Prometheus and Grafana with the grad dashboards
+grad local up --observability
+
+# Or build the images from a checkout instead of pulling them
+grad local up --build
+
+# Add tiny test models to try every recipe on a laptop in seconds
+grad local up --dev-models
+```
+
+`grad local up` starts Postgres, the API and web UI on `http://127.0.0.1:18787` (loopback only), a CPU trainer worker, an eval worker and SeaweedFS as its S3 store, set up like the Helm chart: a one-shot `migrate` service applies migrations first, and the server uses the same `S3_*` settings. Artifacts, uploads and the Hugging Face cache live in Docker volumes, so they survive restarts. The S3 key is generated on the first `grad local up` and kept with the other local keys; the store's S3 API listens on `127.0.0.1:18786` (`GRAD_S3_PORT`), because `grad import` uploads files to it from your machine.
+
+If a default port is busy, `grad local up` moves to a free one in 18790-18809 and says so; a port you chose (`--port`, `GRAD_PORT`, `GRAD_GRAFANA_PORT`, `GRAD_PROMETHEUS_PORT`) fails with exit 2 instead. The `local` profile follows the real port, so the CLI, the SDKs and `grad ui` do too, and `grad local status` prints the URLs.
+
+`--dev-models` registers `test/tiny-qwen3`, `test/tiny-qwen3-teacher` and `test/tiny-bert`, whose random weights the CPU trainer builds on first use. Every recipe runs on them, but they learn nothing useful: their artifacts are marked `test_only`.
+
+`--dev-models` also starts `grad-dev-inference`, a CPU OpenAI-compatible endpoint, and points the API's and the eval worker's `GRAD_INFERENCE_BASE_URL` and `GRAD_JUDGE_BASE_URL` at it, so evals, `dataset.score()` with judges and distillation's teacher answers work with no flags. It serves `test/tiny-qwen3` and `test/tiny-qwen3-teacher` by id, LoRA and merged artifacts trained on them by artifact id (`name@version`, downloaded from the server with the `local` profile's key), and the judge `test/tiny-judge`, which scores the word-overlap F1 of an answer with the reference answer (1 for any non-empty answer when there is none). Anything else (a catalog model such as `qwen/qwen3-8b`, a router or encoder artifact, a checkpoint id from recipe `evals=`) is refused with `404 model_not_found` or `400 model_not_supported`, which the eval records as that output's error. It generates one completion at a time (the eval worker runs `EVAL_CONCURRENCY=2` there), at most 64 new tokens in a 512-token context, and isn't published on a host port. To eval against your own server instead, export `GRAD_INFERENCE_BASE_URL` (and `GRAD_JUDGE_BASE_URL`, `GRAD_JUDGE_MODELS_JSON`) before `grad local up --dev-models`: what your shell sets wins.
+
+```bash
+printf -- '- name: overlap\n  kind: judge\n  model: test/tiny-judge\n' > rubric.yaml
+grad eval --name sft-vs-base --models support-sft@latest,test/tiny-qwen3 --dataset support-prod \
+  --rubric rubric.yaml --limit 20 --baseline test/tiny-qwen3 --wait
+```
+
+It pulls `docker.io/gradiated/grad-server` and `docker.io/gradiated/grad-trainer` first, so a moving tag stays current. A released `grad` binary pulls the images tagged with its own version, and one built from a checkout pulls `main`; `--image-tag` picks another (`sha-abc1234`, `0.3.0`):
+
+| Image                                                                                        | Platforms                | Tags                                                 |
+| -------------------------------------------------------------------------------------------- | ------------------------ | ---------------------------------------------------- |
+| [`docker.io/gradiated/grad-server`](https://hub.docker.com/r/gradiated/grad-server)          | linux/amd64, linux/arm64 | `X.Y.Z`, `latest`, `main`, `sha-<7>`                 |
+| [`docker.io/gradiated/grad-trainer`](https://hub.docker.com/r/gradiated/grad-trainer) (CPU)  | linux/amd64, linux/arm64 | `X.Y.Z`, `latest`, `main`, `sha-<7>`                 |
+| [`docker.io/gradiated/grad-trainer`](https://hub.docker.com/r/gradiated/grad-trainer) (CUDA) | linux/amd64              | `X.Y.Z-gpu`, `latest-gpu`, `main-gpu`, `sha-<7>-gpu` |
+
+Every push to `main` publishes `main` and `sha-<7>`; each release publishes `X.Y.Z` and moves `latest`. Every image carries an SBOM and a provenance attestation. GHCR mirrors every tag at `ghcr.io/gradiated/grad-server` and `ghcr.io/gradiated/grad-trainer` (same build, same digests). `GRAD_SERVER_IMAGE`, `GRAD_TRAINER_IMAGE` and `GRAD_TRAINER_GPU_IMAGE` point at the mirror or your own images and skip the pull. If the pull is refused (`image_pull_denied`), run `docker logout` or `docker login` and retry, use the GHCR mirror, or `--build`. Inside a grad checkout, a refused pull or a missing tag builds from the checkout instead and says so.
+
+Authentication is on. The first run generates an admin key, a trainer key and the key that encrypts workspace secrets, and saves them in the `local` CLI profile, so point the CLI and SDKs at it with:
+
+```bash
+export GRADIATED_PROFILE=local
+grad models list
+```
+
+- `grad local status` shows container status and API health.
+- `grad local logs [SERVICE] --follow` prints logs (`grad-server`, `grad-eval-worker`, `grad-trainer`, `grad-dev-inference`, `postgres`, `seaweedfs` or `migrate`). grad's own services log JSON lines.
+- `grad local down` stops the stack and keeps its data (add `--volumes` to delete it); `grad local reset` deletes the local data and keys so the next `grad local up` starts fresh.
+- `--file` swaps in your own compose file, or layers overrides on top when repeated (`GRAD_COMPOSE_FILE=a.yml:b.yml` does the same). `GRAD_POSTGRES_MEMORY`, `GRAD_S3_MEMORY`, `GRAD_SERVER_MEMORY`, `GRAD_TRAINER_MEMORY` and `GRAD_DEV_INFERENCE_MEMORY` cap the containers' memory (default `1g`, `512m`, `1g`, `8g` and `1g`).
+
+The CPU trainer is for trying the workflow: the dev models (`--dev-models`, such as `test/tiny-qwen3`) and encoders train in seconds to minutes. A base model sized for a GPU, such as `qwen/qwen3-8b`, would download in full and crawl, so while only CPU workers are online the plan warns and suggests `--gpu` or a dev model.
+
+The trainer also runs imports and source syncs. To sync from a provider on your own machine, such as a local Langfuse on port 3000, start the stack with the Docker bridge allowed (`GRAD_SOURCES_EGRESS_ALLOW=172.16.0.0/12 grad local up`; private addresses are refused otherwise), let the secret go there (`grad secrets set langfuse-local --allowed-host host.docker.internal:3000`) and add the source with `--host http://host.docker.internal:3000`. The provider must listen on more than loopback.
+
+Evals and `Judge` scoring call models through an OpenAI-compatible endpoint. The stack runs them on its own [eval worker](#eval-workers) (`grad-eval-worker`), not in `grad-server`. With `--dev-models` they work out of the box on `grad-dev-inference`. For real models, set `GRAD_INFERENCE_BASE_URL` (and `GRAD_INFERENCE_API_KEY`) before `grad local up`, for example a vLLM server's `/v1` URL that the containers can reach. `GRAD_JUDGE_BASE_URL` and `GRAD_JUDGE_API_KEY` send judge calls somewhere else, and `GRAD_JUDGE_MODELS_JSON` prices judge models beyond the catalog. `GRAD_EVAL_CONCURRENCY` (8) sets how many model calls the eval worker makes at once, and `GRAD_EVAL_WORKER_MEMORY` caps it (`512m`).
+
+Running `server/docker-compose.yml` with plain `docker compose` defaults to `AUTH_MODE=none` for development. To turn authentication on there, export `GRAD_AUTH_MODE=api_key`, `GRAD_ADMIN_API_KEY_HASH` (the SHA-256 hex of your admin key), `GRAD_TRAINER_API_KEY` and `GRAD_SECRETS_KEY` (`openssl rand -base64 32`) first.
+
+## Web UI
+
+Every `grad-server` also serves a web UI at `/` for watching training, much like the Temporal UI for workflows. After `grad local up` it is at `http://127.0.0.1:18787/`, and `grad ui` opens it in your browser already signed in with your CLI profile:
+
+```bash
+grad --profile local ui           # the runs list
+grad --profile local ui run_01J9X # one run
+grad ui --no-open                 # print the URL instead
+```
+
+- **Runs**: status, phase, recipe, model, dataset version, cost against the cap and age, filtered by status or name.
+- **A run**: status, phase and attempt N/M, live loss and eval-loss, learning-rate, throughput and cost-versus-cap charts, the event timeline (phases, interruptions, resumes, warnings, checkpoints), checkpoints with a **Promote** button, the recipe's eval report, the artifact with its download command, the resolved config, and **Cancel** and **Resume**.
+- **Datasets**: versions, records with their merged scores, sources with their last sync status and error and a **Sync** button, and recent imports.
+- **Evals**: scores with 95% confidence intervals, pass@k, the delta against the baseline, and failures.
+- **Usage**: the billing ledger with totals.
+- **Health**: server readiness, the training and import worker pools and the queue.
+
+It is dark by default; the sun/moon button in the sidebar switches to a light theme, remembered per browser.
+
+The UI calls only the public `/v1` API with the viewer's key, so it shows exactly what that key can read through the SDKs. With `AUTH_MODE=none` there is no login; otherwise paste an API key. The key stays in that browser tab's `sessionStorage` (never a cookie or `localStorage`) and is forgotten when the tab closes; `grad ui` hands it over once in the URL fragment, which browsers never send to the server. A tab that is already signed in keeps its key and ignores a `#key=` link, so a link can't switch you into another workspace. Pages are served with a strict Content-Security-Policy and can't be framed.
+
+The UI is on by default. Set `UI_ENABLED=false` (Helm: `ui.enabled: false`) to serve only the API. It needs no extra port or exposure: it shares the API's address, so keep the server on loopback or behind your ingress as before.
+
+## Production Kubernetes (Helm)
+
+The chart in `server/helm/grad` runs two or more API replicas, a migrations Job and two pull-based worker pools on your own Postgres and S3 bucket. Nothing sits in front of your production traffic.
+
+Install it from a checkout (the first release also publishes it as `oci://ghcr.io/gradiated/charts/grad`) with the [values below](#minimal-values-yaml):
+
+```bash
+git clone https://github.com/Gradiated/grad
+helm upgrade --install grad ./grad/server/helm/grad \
+  --namespace grad --create-namespace \
+  -f values.yaml
+```
+
+The chart creates the Secret every pod reads (`<release>-grad`) and generates what you leave out: `GRAD_SECRETS_KEY`, an admin API key and, with `workers.auth: static`, one worker key per pool, scoped to that pool's job kinds. Generated keys are kept across upgrades, and the Secret survives `helm uninstall`, so a reinstall still reads your workspace secrets. Read the admin key with:
+
+```bash
+kubectl -n grad get secret grad-grad -o jsonpath='{.data.admin-api-key}' | base64 -d
+```
+
+To manage the Secret yourself (External Secrets, sealed-secrets), set `secrets.create: false` and `secrets.existingSecret` to its name. Every key except `database-url` is optional:
+
+| Key                                          | Used by               | Purpose                                                                                                                                                                            |
+| -------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `database-url`                               | API, migrations Job   | PostgreSQL 17 connection string (required).                                                                                                                                        |
+| `admin-api-key-hash`                         | API                   | SHA-256 hex of the bootstrap admin key. The API refuses to start in `api_key` mode without it.                                                                                     |
+| `trainer-api-key`                            | API, workers          | `workers.auth: static` only: one key for every worker pool.                                                                                                                        |
+| `trainer-keys-json`                          | API                   | `workers.auth: static` only: per-pool worker keys scoped by job kind (`TRAINER_KEYS_JSON`); point each `workers.<name>.apiKeySecretKey` at the Secret key holding that pool's key. |
+| `secrets-key`                                | API                   | `GRAD_SECRETS_KEY`, which encrypts workspace secrets (provider keys, HF tokens). Without it, secrets and sources answer `501`.                                                     |
+| `inference-api-key`, `judge-api-key`         | eval workers          | Keys for `evals.inferenceBaseUrl` and `evals.judgeBaseUrl`.                                                                                                                        |
+| `metrics-token`                              | API, Prometheus, KEDA | Bearer token for `/metrics` with `metrics.requireToken`.                                                                                                                           |
+| `aws-access-key-id`, `aws-secret-access-key` | API                   | Static S3 keys (SeaweedFS, MinIO, R2). Leave them out with EKS Pod Identity or IRSA.                                                                                               |
+
+Keys from older versions of this guide (`secret`, `database`, `auth`, `trainer`, `judge`, `api.deployMode`, `models.mirrorUri`, `keda.minReplicaCount`) fail the render with the name of their replacement.
+
+The chart pins the image tags of its own version (`0.2.0-alpha.6`, `0.2.0-alpha.6-gpu` for the GPU workers). To run unreleased code, set `api.image.tag`, `workers.import.image.tag` and `workers.train.image.tag` to `main` (`main-gpu` for the GPU workers) or a `sha-<7>` build.
+
+### Minimal `values.yaml`
+
+```yaml
+# values.yaml
+secrets:
+  databaseUrl: postgres://grad:...@postgres.internal.example:5432/grad # required
+
+storage:
+  s3Bucket: my-org-grad-artifacts # required
+  s3Region: us-east-1
+
+evals:
+  inferenceBaseUrl: https://vllm.internal.example/v1
+
+workers:
+  train:
+    gpuCount: 1
+    nodeSelector:
+      accelerator: nvidia-h100
+    tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+
+# Scale GPU workers to zero between runs (needs KEDA in the cluster)
+keda:
+  enabled: true
+  trigger: metrics-api # read the queue from grad-server; the default `prometheus` needs keda.prometheus.serverAddress
+  workers:
+    train: { minReplicaCount: 0, maxReplicaCount: 4 }
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: grad.internal.example
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: grad-tls
+      hosts:
+        - grad.internal.example
+```
+
+What the chart installs:
+
+- **Migrations** run once per install and upgrade in a Helm hook Job. The API replicas start with `MIGRATE_ON_BOOT=false` and refuse a database with pending migrations.
+- **API:** `api.replicaCount` (2) replicas with health probes and a PodDisruptionBudget. Extra server settings go in `api.env`. `api.internalPort` turns on the [internal listener](#server-configuration) (`INTERNAL_PORT`) on its own ClusterIP Service, `<release>-internal`, which the Ingress never routes to.
+- **Worker authentication** (`workers.auth`): with `kubernetes`, the default, each pool runs as its own ServiceAccount (`<release>-train-worker`, `<release>-import-worker`) and mounts a projected token for audience `grad` that the kubelet refreshes; grad-server checks it with the TokenReview API and may do nothing else in the cluster. There is no worker key to store or rotate. `static` generates one key per pool instead. See [Worker authentication](#worker-authentication).
+- **Training priority:** pools with `lowPriority: true` (`workers.train` by default) run under the PriorityClass `<release>-training-low` (value -10, `preemptionPolicy: Never`), so your own workloads, such as inference, preempt training and training never preempts them. A preempted worker checkpoints and its run resumes elsewhere. PriorityClasses are cluster-wide: with several releases, create it in one (`trainingPriorityClass.create: false` and the same `name` in the others), or turn it off with `trainingPriorityClass.enabled: false`.
+- **Workers:** `workers.train` claims only training jobs and requests `gpuCount` GPUs. `workers.import` is a small CPU pool for imports and source syncs, the only jobs that carry workspace secrets, so GPU pods never see a provider key, and for evals: a pool whose `kinds` include `eval` runs a `grad-eval-worker` container (the `grad-server` image) beside its trainer. Workers drain on SIGTERM: the current attempt is released, billed, requeued and resumed from its latest checkpoint (an eval resumes after the outputs already stored).
+- **KEDA** (`keda.enabled`) scales each worker pool on its open jobs, queued and running, so a scale-down never strands a run mid-training. It reads them from Prometheus (`grad_jobs_open`, `keda.prometheus.serverAddress`) or, with `keda.trigger: metrics-api`, from grad-server's `/metrics/queue`; neither needs database credentials. With KEDA on and a pool that takes `train` jobs, the chart sets `GRAD_WORKER_AUTOSCALING`, so a queued run says a worker is starting; otherwise it says `Waiting for a worker (none online)`. `api.workerAutoscaling` (`true` or `false`) overrides that.
+- **NetworkPolicies** (`networkPolicy.enabled`) let only this release's workers and `networkPolicy.apiIngressFrom` reach the API (and only `networkPolicy.internalIngressFrom` reach `api.internalPort`), and limit worker egress to DNS, the API and `networkPolicy.workerEgress` (HTTPS to public addresses by default). Add an in-cluster inference or judge endpoint to `networkPolicy.inferenceEgress`.
+
+The values you are most likely to set (see `server/helm/grad/values.yaml` for all of them):
+
+| Value                                                            | Default                               | Notes                                                                                                                                                                                                                                                                                                                                       |
+| ---------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `secrets.create`                                                 | `true`                                | Create and fill the Secret; set `secrets.databaseUrl` (required), and optionally `adminApiKeyHash`, `secretsKey`, `inferenceApiKey`, `judgeApiKey`, `metricsToken`, `awsAccessKeyId`, `awsSecretAccessKey`. With `false`, name your own in `secrets.existingSecret`.                                                                        |
+| `storage.s3Bucket`, `storage.s3Region`, `storage.s3Endpoint`     | required, `us-east-1`, none           | The bucket; set the endpoint for an S3-compatible store (path-style).                                                                                                                                                                                                                                                                       |
+| `database.caBundle`                                              | none                                  | A PEM CA bundle (`configMap.name` of a ConfigMap you create, or `pem` inline), mounted as `PGSSLROOTCERT` into the API and the migrations Job: every Postgres connection then verifies the server certificate and hostname (`verify-full`). For RDS and Aurora, use the AWS global bundle and the instance or cluster endpoint as the host. |
+| `storage.s3PublicEndpoint`                                       | none                                  | The address clients outside the cluster reach the store at, if it differs (file uploads use it).                                                                                                                                                                                                                                            |
+| `api.replicaCount`                                               | `2`                                   | Also `api.image.*`, `api.authMode` (`api_key`), `api.defaultWorkspaceId`, `api.env`, `api.queue` (per-workspace caps), `api.internalPort` (off), `api.workerAutoscaling` (from `keda.enabled`), `api.resources`, scheduling and `api.podDisruptionBudget`.                                                                                  |
+| `workers.train`                                                  | 1 replica, 1 GPU, kinds `[train]`     | `gpuCount`, `replicaCount`, `image.tag`, `env`, `nodeSelector`, `tolerations`, `affinity`, `resources`, `terminationGracePeriodSeconds` (300).                                                                                                                                                                                              |
+| `workers.import`                                                 | 1 CPU replica, kinds `[import, eval]` | Imports, source syncs and evals, with the same keys as `workers.train`. A GPU pool refuses kind `eval`.                                                                                                                                                                                                                                     |
+| `workerDefaults`                                                 | `docker.io/gradiated/grad-trainer`    | `image.repository`, `apiKeySecretKey` (`workers.auth: static` with your own Secret; per pool `workers.<name>.apiKeySecretKey`), `pollIntervalSeconds`, `leaseSeconds`.                                                                                                                                                                      |
+| `workers.auth`                                                   | `kubernetes`                          | `kubernetes` (service-account tokens and TokenReview) or `static` (generated worker keys).                                                                                                                                                                                                                                                  |
+| `trainingPriorityClass.*`                                        | on, `<release>-training-low`, -10     | `enabled`, `create`, `name`, `value`; each pool's `lowPriority` (train: `true`) opts it in.                                                                                                                                                                                                                                                 |
+| `evals.inferenceBaseUrl`, `evals.judgeBaseUrl`                   | none                                  | OpenAI-compatible endpoints the eval workers call for evals and `Judge` items. Without the first, evals answer `501 inference_unavailable`. Also `evals.concurrency` (8) and `evals.workerResources`.                                                                                                                                       |
+| `models.mirror`                                                  | none                                  | Weights mirror, `s3://bucket/prefix` or a directory (`GRAD_MODELS_MIRROR`).                                                                                                                                                                                                                                                                 |
+| `keda.enabled`, `keda.trigger`                                   | `false`, `prometheus`                 | `keda.workers.<pool>.{minReplicaCount,maxReplicaCount}` (train 0 to 8, import 1 to 4), `targetOpenJobs`, `pollingInterval`, `cooldownPeriod`, `keda.prometheus.serverAddress`.                                                                                                                                                              |
+| `metrics.*`                                                      | on, ports 9464 and 9465               | See [Monitoring](#monitoring).                                                                                                                                                                                                                                                                                                              |
+| `migrations.enabled`                                             | `true`                                | Migrations in a pre-install and pre-upgrade hook Job.                                                                                                                                                                                                                                                                                       |
+| `networkPolicy.enabled`                                          | `false`                               | `apiIngressFrom`, `internalIngressFrom`, `workerEgress`, `inferenceEgress`.                                                                                                                                                                                                                                                                 |
+| `ui.enabled`                                                     | `true`                                | The [web UI](#web-ui) at `/`.                                                                                                                                                                                                                                                                                                               |
+| `ingress.*`                                                      | off                                   | `className`, `annotations`, `hosts`, `tls`.                                                                                                                                                                                                                                                                                                 |
+| `serviceAccount.annotations`, `workerServiceAccount.annotations` | none                                  | IRSA or Workload Identity for S3 (EKS Pod Identity needs none).                                                                                                                                                                                                                                                                             |
+
+`storage.s3Bucket` is required: the chart refuses to render without it, because replicas and workers share files through presigned S3 URLs. Give the API access to the bucket through its ServiceAccount (`serviceAccount.annotations`; EKS Pod Identity needs none) or the static keys above, and set `storage.s3Endpoint` for MinIO, R2 or another S3-compatible store. Everything in the bucket is written once and never overwritten: dataset versions as gzip-compressed JSONL parts (`.jsonl.gz`), checkpoints and artifacts as `.grad.tar.gz` bundles.
+
+### Monitoring
+
+grad-server serves Prometheus metrics on `metrics.port` (9464) and each worker on `metrics.workerPort` (9465). The chart can add ServiceMonitor and PodMonitor objects, a PrometheusRule with warning-level alerts and the "grad / Training platform" Grafana dashboard. [Observability](/docs/training/observability/) lists the metrics, the alerts, the dashboard's sections and the log format.
+
+### Private VPC and air-gapped setup
+
+To keep container pulls, base model downloads and `Judge` calls inside your VPC:
+
+```yaml
+# Mirror docker.io/gradiated/grad-server and grad-trainer to your internal registry
+api:
+  image:
+    repository: 123456789012.dkr.ecr.us-east-1.amazonaws.com/gradiated/grad-server
+workerDefaults:
+  image:
+    repository: 123456789012.dkr.ecr.us-east-1.amazonaws.com/gradiated/grad-trainer
+
+# Load base models and cartridge teachers from your bucket instead of Hugging Face
+models:
+  mirror: s3://my-org-approved-models/
+
+# Send Judge calls to your internal OpenAI-compatible gateway
+evals:
+  judgeBaseUrl: https://llm-gateway.internal.example/v1
+```
+
+The mirror holds one directory per model (`<mirror>/<model id>/`). Training, including [cartridge](/docs/training/recipes/cartridges/) teachers, loads weights from it onto your trainer GPUs, so it never needs an external call. To sync from an observability tool on a private address, set `workers.import.env.GRAD_SOURCES_EGRESS_ALLOW` to its CIDR and allow it in `networkPolicy.workerEgress`.
+
+## Server configuration
+
+The chart and `grad local up` set these for you. Set them yourself when you run `grad-server` another way:
+
+| Variable                                                   | Default                    | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                             | required                   | PostgreSQL 17 connection string (on AWS: RDS or Aurora for PostgreSQL 17). Migrations run on their own connection with no statement timeout, so a long one never fails the boot. A request waits at most 5 s for a connection and a statement 30 s; a connection a failover left dead fails within 35 s and is dropped. Meanwhile the API answers `503 database_unavailable` with `Retry-After: 1`.                                                                                                                                                                     |
+| `HOST`, `PORT`                                             | `127.0.0.1`, `8787`        | Bind a non-loopback `HOST` explicitly (the containers use `0.0.0.0`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `MIGRATE_ON_BOOT`                                          | `true`                     | Runs pending migrations at boot under an advisory lock. With `false` the server refuses to start while one is pending; run `node dist/main.js migrate` first.                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `AUTH_MODE`                                                | `api_key`                  | `api_key` requires `ADMIN_API_KEY_HASH`. `none` turns authentication off and is for local development only: it refuses a non-loopback `HOST` unless `AUTH_MODE_NONE_ALLOW_REMOTE=true`, and refuses requests whose `Host` is a public DNS name (`403 host_not_allowed`, against DNS rebinding) and cross-site browser requests from origins outside `GRAD_CORS_ORIGINS` (`403 cross_site_request`), so a web page you visit can't drive it. Loopback, IP-literal, single-label (compose service) and `.local`/`.internal`/`.svc` names and link navigations still work. |
+| `ADMIN_API_KEY_HASH`                                       | none                       | SHA-256 hex of the bootstrap admin key.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `TRAINER_API_KEY` or `TRAINER_API_KEY_HASH`                | none                       | `static` worker auth: one key for workers of every job kind.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `TRAINER_KEYS_JSON`                                        | none                       | `static` worker auth: keys scoped by job kind, `[{"label": "h100-01", "sha256": "<hex>", "kinds": ["train"]}]`. Kinds are `train`, `import` and `eval`. Give GPU hosts `train` only, so provider secrets reach only `import` workers.                                                                                                                                                                                                                                                                                                                                   |
+| `GRAD_WORKER_AUTH`                                         | `static`                   | How workers authenticate: a comma-separated list of `static`, `kubernetes` and `lease`, tried in order. See [Worker authentication](#worker-authentication).                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `GRAD_WORKER_K8S_SERVICE_ACCOUNTS`                         | none                       | `kubernetes` mode (required there): service account to job kinds, `{"grad/grad-train-worker": ["train"], "grad/grad-import-worker": ["import", "eval"]}`. Other accounts are refused.                                                                                                                                                                                                                                                                                                                                                                                   |
+| `GRAD_ORCHESTRATOR_KEYS_JSON`                              | none                       | `lease` mode: who may mint lease tokens, `[{"label": "fleet", "sha256": "<hex>", "kinds": ["train"]}]`. Accepted only on `INTERNAL_PORT`.                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `INTERNAL_PORT`                                            | off                        | Serve the internal routes on this port, never on `PORT`. Each route group is mounted only when it's configured, otherwise 404: lease-token minting and revocation (`lease` in `GRAD_WORKER_AUTH` plus `GRAD_ORCHESTRATOR_KEYS_JSON`), and Gradiated Cloud's own routes (`AUTH_MODE=cloud`). The server refuses to start with it set and neither configured. It binds the same `HOST`, so firewall it to its callers; Helm: `api.internalPort`.                                                                                                                          |
+| `GRAD_SECRETS_KEY`                                         | none                       | 32 random bytes, base64, that encrypt workspace secrets. Without it, `/v1/secrets` and every provider source answer `501 secrets_unavailable`.                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `GRAD_SECRETS_KMS_KEY_ID`                                  | none                       | An AWS KMS key id, ARN or alias. Workspace secrets then use envelope encryption under it, and values sealed by a local key (keep it in `GRAD_SECRETS_KEYS_OLD` meanwhile) move onto KMS in the background. The server role needs `kms:GenerateDataKey`, `kms:Decrypt` and `kms:ReEncrypt*`.                                                                                                                                                                                                                                                                             |
+| `GRAD_SECRETS_KEYS_OLD`                                    | none                       | Comma-separated retired keys, still accepted for reading after you rotate `GRAD_SECRETS_KEY`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `S3_BUCKET`, `S3_REGION`, `S3_ENDPOINT`                    | required, AWS defaults     | Object storage for uploads, datasets, checkpoints and artifacts: AWS S3, or set the endpoint for SeaweedFS, MinIO, R2 or another S3-compatible store.                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `S3_PUBLIC_ENDPOINT`                                       | `S3_ENDPOINT`              | The address SDK clients reach the store at, when it differs (`grad local up` sets `http://127.0.0.1:18786`).                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `GRAD_INFERENCE_BASE_URL`, `GRAD_JUDGE_BASE_URL`           | none, the inference URL    | The endpoints your [eval workers](#eval-workers) call. grad-server makes no model calls; it only checks the URL is set, so without it evals answer `501 inference_unavailable`. Their API keys go to the eval workers. The unprefixed `INFERENCE_*` and `JUDGE_*` names are no longer read.                                                                                                                                                                                                                                                                             |
+| `MAX_ATTEMPTS`                                             | `10`                       | Attempts per job that may end without a result (a crash, a lost worker) before the run fails with the last error.                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `MAX_PREEMPTIONS`                                          | `20`                       | Attempts in a row that may end because their worker's compute was reclaimed (SIGTERM or a termination notice). They don't count toward `MAX_ATTEMPTS`, and a reclaimed attempt that saved a checkpoint starts the count again, so a long run on spot GPUs keeps going as long as it makes progress.                                                                                                                                                                                                                                                                     |
+| `GRAD_MAX_RUNNING_PER_WORKSPACE_TRAIN`, `_IMPORT`, `_EVAL` | `8` each                   | Jobs of that kind one workspace may run at once. Past it, that workspace's next jobs wait in the queue (its runs say `Queued: workspace concurrency limit (8 running)`) while other workspaces' jobs go on. See [Fair queue](#fair-queue).                                                                                                                                                                                                                                                                                                                              |
+| `GRAD_MAX_QUEUED_PER_WORKSPACE`                            | `500`                      | Queued jobs (runs, imports and evals together) one workspace may have. Past it, creating another answers `429 queue_limit`. Scheduled source syncs don't count against it.                                                                                                                                                                                                                                                                                                                                                                                              |
+| `GRAD_WORKER_AUTOSCALING`                                  | `false`                    | Train workers scale from zero (KEDA), so a waiting run says a worker is starting instead of `Waiting for a worker (none online)`. The Helm chart sets it when `keda.enabled` and a pool takes `train` jobs; `api.workerAutoscaling` overrides it.                                                                                                                                                                                                                                                                                                                       |
+| `JOB_EVENT_RETENTION_DAYS`                                 | `90`                       | Days run metrics and events are kept.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `ORPHAN_BLOB_DAYS`                                         | `7`                        | Days a job blob nothing references (a checkpoint a crashed worker uploaded but never registered) is kept before maintenance deletes it.                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `SSE_POLL_MS`                                              | `2000`                     | Run event streams share one reader per replica: it fetches new events when Postgres notifies it (LISTEN on a connection of its own) and re-reads every followed run this often in case a notification was missed. Behind a transaction-pooling PgBouncer notifications never arrive, so streams lag by up to this interval.                                                                                                                                                                                                                                             |
+| `DEFAULT_WORKSPACE_ID`                                     | `local`                    | The workspace the bootstrap admin key acts in.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `METRICS_ENABLED`, `METRICS_PORT`, `METRICS_TOKEN`         | `true`, the API port, none | Prometheus metrics at `/metrics` (and the queue depth at `/metrics/queue`). Set `METRICS_PORT` to keep them off the API port, and `METRICS_TOKEN` to require a bearer token.                                                                                                                                                                                                                                                                                                                                                                                            |
+| `GRAD_CORS_ORIGINS`                                        | none (CORS off)            | Browser origins allowed to call `/v1` cross-origin, comma-separated exact origins (`https://console.example.com`; `http` only for localhost). Bearer tokens only, never cookies. Browser uploads also need a CORS rule on the bucket.                                                                                                                                                                                                                                                                                                                                   |
+| `UI_ENABLED`                                               | `true`                     | Serve the [web UI](#web-ui) at `/`. Off by default with `AUTH_MODE=cloud`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `GRAD_EXTRA_MODELS_JSON`                                   | none                       | JSON array that adds or overrides models in the trainable catalog. Ids match case-insensitively; an optional `serving_id` is the exact id Gradiated Cloud's gateway serves the model under (default: its `hf_repo`, else its id as written).                                                                                                                                                                                                                                                                                                                            |
+| `GRAD_JUDGE_MODELS_JSON`                                   | none                       | Judge models beyond the catalog, with prices: `[{"id": "anthropic/claude-sonnet-5-5", "price_per_million_tokens_usd": 3}]`. A `Judge` must name a catalog model, one of these, or an artifact of the eval's workspace; anything else is `422 unknown_judge_model`.                                                                                                                                                                                                                                                                                                      |
+
+The API answers `GET /health/live` and `GET /health/ready` (ready once Postgres answers) for probes. Every other path outside `/v1` that a browser opens returns the web UI. JSON request bodies are capped at 32 MiB (`413 payload_too_large`), and each replica reads at most two bodies over 1 MiB at once while the rest wait; files go through presigned uploads instead. When object storage is unreachable, times out or answers 5xx, the API answers `503 storage_unavailable` with `Retry-After: 1`, which the SDKs retry.
+
+0.2.0-alpha.5 stopped reading `USAGE_FLUSH_TOKENS`, `USAGE_FLUSH_SECONDS`, `WAITING_FOR_COMPUTE_SECONDS`, `SOURCE_VERSION_INTERVAL_SECONDS`, `SOURCE_VERSION_MAX_RECORDS` and `GRAD_CLOUD_JWT_AUDIENCE`. Their values are fixed at the old defaults: a usage row every 1M tokens or 5 minutes, 30 s, a source version every 15 minutes or 100,000 records, and audience `training`. Remove them from your configuration.
+
+### Trainer workers
+
+Workers are plain processes (the `grad-trainer` command from `server/trainer`, or the `grad-trainer` image) that pull jobs from the API, so you can run them on any machine that reaches it, including GPU hosts outside the cluster:
+
+| Variable                                                           | Default         | Notes                                                                                                                                                                                                                                                              |
+| ------------------------------------------------------------------ | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GRAD_SERVER_URL`                                                  | required        | The API's URL.                                                                                                                                                                                                                                                     |
+| `GRAD_WORKER_TOKEN`, `GRAD_WORKER_TOKEN_FILE`, `TRAINER_API_KEY`   | required (one)  | The worker's token, tried in that order: a value, a file re-read on every request (so a rotated token needs no restart), or a static key. See [Worker authentication](#worker-authentication).                                                                     |
+| `GRAD_WORKER_KINDS`                                                | `train,import`  | Which jobs to claim. Run GPU hosts with `train` only; imports and source syncs (`import`) need no GPU.                                                                                                                                                             |
+| `GRAD_WORKER_ID`                                                   | hostname, PID   | A name prefix for logs. Each process adds a random suffix, so a restarted worker takes a new attempt.                                                                                                                                                              |
+| `GRAD_MODEL_PATHS`                                                 | none            | JSON map of model ID to a local directory or Hugging Face repo. `gradiated/linden-1` weights aren't public and must come from here.                                                                                                                                |
+| `GRAD_MODELS_MIRROR`, `GRAD_MODELS_CACHE`                          | none            | A directory or `s3://` prefix holding `<mirror>/<model id>/`, and where downloaded weights are cached.                                                                                                                                                             |
+| `GRAD_OFFLINE` (or `HF_HUB_OFFLINE`)                               | off             | Never download from Hugging Face; a missing model fails with `model_unavailable`.                                                                                                                                                                                  |
+| `GRAD_SOURCES_EGRESS_ALLOW`, `GRAD_SOURCES_EGRESS_DENY`            | none            | Source syncs only reach public `https` hosts. Allow private CIDRs here (for a self-hosted Langfuse or Phoenix), or deny more.                                                                                                                                      |
+| `GRAD_WORKER_METRICS_PORT`                                         | off             | Serve the worker's Prometheus metrics (`grad_trainer_*`: phase, step time, tokens/s, GPU use, checkpoint and upload times) on this port.                                                                                                                           |
+| `GRAD_SOURCES_SETTLE_SECONDS`                                      | `600`           | How old a provider's new traces must be before a sync reads them, so late spans and scores land first.                                                                                                                                                             |
+| `GRAD_SOURCES_RESCAN_SECONDS`, `GRAD_SOURCES_RESCAN_EVERY_SECONDS` | `3600`, `900`   | How far back a sync re-reads feedback for edits, and how often (Phoenix: `GRAD_SOURCES_PHOENIX_RESCAN_SECONDS`, 7 days).                                                                                                                                           |
+| `GRAD_SOURCES_<PROVIDER>_REQUESTS_PER_MINUTE`                      | the provider's  | Raise a provider's request rate for a bigger plan (Langfuse's default is the Hobby tier's 30; Pro allows 1000).                                                                                                                                                    |
+| `GRAD_IMPORT_PART_RECORDS`, `GRAD_IMPORT_PART_BYTES`               | `50000`, 64 MiB | Imports and syncs upload dataset parts of this size straight to object storage; grad-server never carries the records.                                                                                                                                             |
+| `GRAD_RECLAIM_GRACE_SECONDS`                                       | `25`            | On SIGTERM the worker saves a checkpoint of the current step if the next step and a checkpoint fit in this time, then hands the run back. The grace is enforced: a save still uploading when it ends is dropped, and the run resumes from its previous checkpoint. |
+| `GRAD_TERMINATION_NOTICE`                                          | off             | `aws`: also poll the EC2 instance metadata for a termination notice (IMDSv2) and treat it like SIGTERM, with the notice's lead time.                                                                                                                               |
+| `GRAD_WORKER_GPU`                                                  | detected        | The GPU the worker reports with each claim (`nvidia-smi` by default): `none`, or JSON `{"name": "NVIDIA H100 80GB HBM3", "memory_gb": 80}`. Its `memory_gb` decides which runs it gets (see [Fair queue](#fair-queue)), and runs show the name at `starting`.      |
+
+### Eval workers
+
+Evals, `dataset.score()`, router labelling, distillation's teacher answers and checkpoint evals run on eval workers, not in grad-server, so an API deploy or restart never interrupts one. An eval worker is the `grad-server` image started as `node dist/main.js worker --kinds eval`. It claims eval jobs like a trainer worker claims runs, calls your endpoints, runs the validators and regexes, and posts the outputs in batches; grad-server stores each output once, prices it, bills it and aggregates the eval. Code scorers still run in your SDK process. A worker that stops on SIGTERM hands its eval back, and one that dies loses its lease: either way the next attempt picks up after the outputs already stored, and nothing is billed twice.
+
+| Variable                                                           | Default                | Notes                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------------------------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GRAD_SERVER_URL`, `GRAD_WORKER_TOKEN(_FILE)` or `TRAINER_API_KEY` | required               | The API's URL and a worker token that may claim `eval` jobs, read like a trainer's. Eval jobs carry no workspace secrets.                                                                                                                                                                                                                                    |
+| `GRAD_INFERENCE_BASE_URL`, `GRAD_INFERENCE_API_KEY`                | none                   | OpenAI-compatible endpoint, with LoRA modules named by artifact ID. Every call carries `X-Grad-Workspace`, because artifact IDs are unique only per workspace. With `grad local up --dev-models`, unset base URLs default to `grad-dev-inference`.                                                                                                           |
+| `GRAD_JUDGE_BASE_URL`, `GRAD_JUDGE_API_KEY`                        | the inference endpoint | Endpoint for `Judge` rubric items.                                                                                                                                                                                                                                                                                                                           |
+| `EVAL_CONCURRENCY`                                                 | `8`                    | Model calls in flight per worker.                                                                                                                                                                                                                                                                                                                            |
+| `GRAD_EVAL_CAPACITY_WAIT_SECONDS`                                  | `720`                  | How long one model call waits in place for capacity (`503 capacity_unavailable`, such as a serving pool scaled to zero) or a full rate limit (429 past the client's retries), honouring `Retry-After` (at most 5 minutes per sleep), before the eval fails with that error. The wait keeps the lease and spends no attempt; the eval shows `waiting_reason`. |
+| `GRAD_WORKER_ID`, `GRAD_LEASE_SECONDS`                             | hostname, `180`        | A name prefix for logs (each process adds a random suffix) and the lease length.                                                                                                                                                                                                                                                                             |
+
+Without `GRAD_INFERENCE_BASE_URL` an eval worker still runs `dataset.score()` with validators, regexes and code scorers. Its model and judge call counts reach grad-server's `/metrics` with each batch, so it needs no scrape.
+
+### Fair queue
+
+Runs, imports and evals wait in one queue in Postgres, shared fairly between workspaces. When a worker asks for a job, grad-server picks the workspace with the fewest running jobs of that kind (ties go to the one whose next job has waited longest), then that workspace's oldest job the worker can run. So a workspace that queues 50 runs doesn't hold up another workspace's 2: with 4 workers, both of the small workspace's runs start in the first round. The pick is one transaction that stays correct with many API replicas and workers, and takes about 5 ms with 10,000 queued jobs across 100 workspaces.
+
+- **Caps per workspace.** At most `GRAD_MAX_RUNNING_PER_WORKSPACE_TRAIN`, `_IMPORT` and `_EVAL` jobs (8 each) of a workspace run at once; its next ones wait. At most `GRAD_MAX_QUEUED_PER_WORKSPACE` (500) jobs may be queued, and creating another run, import or eval answers `429 queue_limit` (the SDKs raise their rate-limit error with that code). In Helm, set them under `api.queue` (`maxRunningPerWorkspace.{train,import,eval}`, `maxQueuedPerWorkspace`). Jobs held back by a cap don't count toward `grad_jobs_open`, so they don't scale up workers.
+- **GPU fit.** A GPU worker sends its GPU memory with each claim and only gets runs whose `min_gpu_memory_gb` (from the run's plan, also on `run.min_gpu_memory_gb`) fits. CPU workers aren't filtered. A run that no online worker can fit stays queued and says so, and `grad_jobs_unfit` counts such runs.
+- **Why a run waits.** A queued run carries `queue_position` (about how many runs start before it, including other workspaces' fair share) and `queue_message`: `Queued behind 3 runs`, `Queued: workspace concurrency limit (8 running)`, or `Waiting for a GPU with ≥46 GB; online workers have 24 GB`. `grad train`, `run.wait()` and the web UI show it. `grad_job_fair_share_wait_seconds` is the longest any workspace's next job has waited, and `grad_queue_limit_rejections_total` counts `429`s.
+
+### Worker authentication
+
+Workers send a bearer token with every request of the worker protocol (`/v1/trainer-jobs/*`). It isn't a workspace key: it only lets a worker claim jobs of some kinds, and `admin` never implies it. `GRAD_WORKER_AUTH` picks the modes grad-server accepts, tried in order:
+
+| Mode               | The token                                                                                                                                                                                                                                        | Use it for                                    |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
+| `static` (default) | A key whose SHA-256 is in `TRAINER_KEYS_JSON` (with its kinds) or is `TRAINER_API_KEY(_HASH)` (every kind). Keys never expire: to rotate one, add the new hash, restart the workers with the new key, then remove the old hash.                  | `grad local up`, Docker Compose, a few VMs    |
+| `kubernetes`       | The pod's projected service-account token for audience `grad`. grad-server checks it with the TokenReview API and maps the service account to kinds with `GRAD_WORKER_K8S_SERVICE_ACCOUNTS`. A token lives an hour and the kubelet refreshes it. | Helm (the chart's default)                    |
+| `lease`            | A `gradwt_` token an orchestrator mints for one host and lease on `INTERNAL_PORT`. It is limited to some kinds and a GPU size and expires with the lease.                                                                                        | A system that lends hosts to grad for a while |
+
+- **kubernetes.** Only a token shaped like a JWT for audience `grad`, a mapped service account and a future `exp` is sent for review, so static keys and stray JWTs never leave grad-server. At most 8 reviews per replica run at once; past that, and when the Kubernetes API is down, workers get `503 worker_auth_unavailable` and retry. A review is reused for up to 60 seconds, so a deleted worker pod's token stops working within a minute while the Kubernetes API is up. When it's down or saturated, a token reviewed in the last 15 minutes keeps working (never past its `exp`), so an API-server outage doesn't stop running workers. Anyone who can create pods or `serviceaccounts/token` in the release namespace can get a worker token: keep that permission to the people who run grad.
+- **lease.** The orchestrator authenticates with a key from `GRAD_ORCHESTRATOR_KEYS_JSON`, which only `INTERNAL_PORT` accepts. That port binds the same `HOST` as the API, so firewall it to the orchestrator (the Helm chart never exposes it).
+
+```http
+POST /internal/v1/worker-tokens
+Authorization: Bearer <orchestrator key>
+{"host_id": "gpu-host-17", "lease_id": "lease-8c1f", "kinds": ["train"], "gpu_memory_gb": 80, "expires_at": "2026-11-28T06:00:00Z"}
+
+DELETE /internal/v1/worker-tokens/lease-8c1f
+```
+
+The token is returned once and expires at most 7 days ahead; to extend a lease, mint a new token for the same host and lease and write it to the worker's `GRAD_WORKER_TOKEN_FILE`. Start the worker with `GRAD_WORKER_ID=<host_id>`: a claim from another host gets `403 worker_host_mismatch`, and one reporting more GPU memory than the token allows `403 gpu_memory_exceeds_token`. A lease belongs to its orchestrator, host and lease together, so another orchestrator's token for the same `lease_id` can't touch it. Lease tokens are checked on every request, never cached, so revoking one (after the worker has drained) takes effect at once.
+
+### Authentication and API keys
+
+Self-hosted authentication is local to your cluster (it never calls Gradiated Cloud) and uses the same `GRADIATED_API_KEY` variable and `Authorization: Bearer` header:
+
+- **Local dev (`grad local up`):** authentication is on, with keys generated into the `local` profile.
+- **Kubernetes:** use the admin key the chart generated (or the one whose hash you set in `secrets.adminApiKeyHash`), or mint scoped per-pipeline keys. They're stored as SHA-256 hashes in your Postgres:
+
+```bash
+export GRADIATED_BASE_URL=https://grad.internal.example
+export GRADIATED_API_KEY="$MY_ADMIN_KEY"
+
+# Mint a least-privilege key for nightly training jobs
+grad keys create --name ci-nightly --scopes datasets:write,runs:write,artifacts:read
+
+# Or an artifacts-only key for your vLLM / SGLang deployment pipeline
+grad keys create --name inference-cd --scopes artifacts:read
+
+grad keys list
+grad keys revoke key_3f9c0a1b2c3d4e5f60718293
+```
+
+The [API reference](/docs/api-reference/#training-api) lists every scope.
+
+## Connect SDKs and CLI
+
+Point the SDK or CLI at your server with `GRADIATED_BASE_URL` (or pass `base_url` / `baseURL` directly):
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+import os
+from grad import Grad
+
+# Or set GRADIATED_BASE_URL=https://grad.internal.example in your environment
+client = Grad(
+    base_url="https://grad.internal.example",
+    api_key=os.environ["GRADIATED_API_KEY"],
+)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad({
+  baseURL: "https://grad.internal.example",
+  apiKey: process.env.GRADIATED_API_KEY,
+});
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+package main
+
+import (
+	"os"
+
+	grad "github.com/Gradiated/grad/sdks/go"
+)
+
+func main() {
+	client := grad.NewClient(
+		grad.WithBaseURL("https://grad.internal.example"),
+		grad.WithAPIKey(os.Getenv("GRADIATED_API_KEY")),
+	)
+	_ = client
+}
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+export GRADIATED_BASE_URL=https://grad.internal.example
+export GRADIATED_API_KEY=grad_...
+
+grad artifacts download fast-diff-merge@latest --output ./adapter
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl https://grad.internal.example/v1/artifacts \
+  -H "Authorization: Bearer $GRADIATED_API_KEY"
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## Self-hosted vs. Gradiated Cloud
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  The Gradiated Cloud column describes the hosted service, which isn't open yet.
+  Everything in the self-hosted column works today.
+</DocsCallout>
+
+Gradiated Cloud runs this same `grad-server` as its training plane. Its settings (`AUTH_MODE=cloud`, `BILLING_MODE=cloud` and the `GRAD_CLOUD_*` variables) are in [`docs/CLOUD_MODE.md`](https://github.com/Gradiated/grad/blob/main/docs/CLOUD_MODE.md); a self-hosted server never needs them.
+
+Self-hosting gives you the complete training and evaluation platform inside your VPC and keeps your existing production inference stack (vLLM, SGLang, Envoy, Argo Rollouts). Gradiated Cloud adds managed training at a fixed price per million tokens, and hosted serving, on top:
+
+| Capability                       | Self-hosted (Docker / Helm)                                                 | Gradiated Cloud                                                           |
+| -------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Datasets, imports and trace sync | Included (your Postgres and S3)                                             | Included (managed)                                                        |
+| Recipes, rubrics and evals       | Included (runs on your GPUs, scales to zero)                                | Included (pay per million tokens; evals coming soon)                      |
+| Artifacts                        | Written to your S3; upload or import your own; serve on your vLLM or SGLang | Downloadable anytime, or publish as a model version                       |
+| Production serving               | Your vLLM or SGLang, behind your own gateway and feature flags              | Built in (published model versions + OpenAI/Anthropic/SystemOne SDK)      |
+| Trace capture                    | Sync from Langfuse, LangSmith, Braintrust, PostHog or Phoenix               | Recorded by the gateway, synced with the `gradiated` source (coming soon) |
+
+<DocsNext>
+  <a href="/docs/training/">
+    <small>Overview</small>
+    <strong>Training overview</strong>
+  </a>
+  <a href="/docs/training/deploying/">
+    <small>Serving</small>
+    <strong>Deploying</strong>
+  </a>
+</DocsNext>

@@ -1,0 +1,333 @@
+# Evaluations
+
+<DocsLead>
+  Compare base models and trained artifacts side by side using the same Rubric
+  before you ship.
+</DocsLead>
+
+Every training run produces an automatic held-out `eval_report`, and you can also run standalone evaluations anytime with **`client.evals.create(...)`** or **`grad eval`**. Use standalone evals to:
+
+- **Measure your baseline before training:** see how `"qwen/qwen3-8b"` compares against a larger model such as `"qwen/qwen3-32b"` on your exact tasks before spending tokens on training.
+- **Compare checkpoints apples-to-apples:** score a base model, an SFT artifact, a DPO artifact and a larger base model on the same held-out dataset.
+- **Catch regressions:** evaluate on a public benchmark next to your own tasks so a fine-tune that wins on your data doesn't quietly lose general ability.
+- **Mine hard examples:** export failing predictions directly into a new [`Dataset`](/docs/training/trajectories/) for your next training run.
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Evals on Gradiated Cloud aren't live yet: `evals.plan`, `evals.create` and
+  `grad eval` answer `501 inference_unavailable` ("Evals aren't available on
+  Gradiated Cloud yet"). Training, datasets and artifact downloads work without
+  them. Run evals on a self-hosted server or on `grad local up --dev-models`.
+</DocsCallout>
+
+## Evaluate a dataset with a `Rubric`
+
+Pass one or more models (catalog base models or trained [`Artifact`](/docs/training/artifacts/) refs such as `sql-agent@latest`), a held-out `Dataset`, and the same [`Rubric`](/docs/training/rubrics/) you use for training:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, Judge, Rubric, Scorer, validators
+
+client = Grad()
+eval_ds = client.datasets.get("sql-eval-holdout")
+
+rubric = Rubric([
+    Scorer("is_select", weight=0.3, fn=validators.Regex(r"^\s*(SELECT|WITH)\b", flags="i")),
+    Judge(
+        name="correct_query",
+        model="{{SONNET_MODEL}}",
+        prompt="Verify the SQL answers the user's question accurately without hallucinated columns.",
+        weight=0.7,
+    ),
+])
+
+ev = client.evals.create(
+    name="sql-baseline-vs-sft",
+    models=["qwen/qwen3-8b", "sql-agent@latest", "qwen/qwen3-32b"],
+    dataset=eval_ds,
+    rubric=rubric,
+    samples=4,          # attempts per task, for pass@k and tighter error bars
+    temperature=0.7,
+    baseline="qwen/qwen3-8b",
+).wait()
+
+print(ev.summary_table())
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, Judge, Rubric, Scorer, validators } from "@gradiated/grad";
+
+const grad = new Grad();
+const evalDs = await grad.datasets.get("sql-eval-holdout");
+
+const rubric = new Rubric([
+  new Scorer("is_select", {
+    weight: 0.3,
+    fn: validators.regex("^\\s*(SELECT|WITH)\\b", { flags: "i" }),
+  }),
+  new Judge({
+    name: "correct_query",
+    model: "{{SONNET_MODEL}}",
+    prompt:
+      "Verify the SQL answers the user's question accurately without hallucinated columns.",
+    weight: 0.7,
+  }),
+]);
+
+const ev = await grad.evals
+  .create({
+    name: "sql-baseline-vs-sft",
+    models: ["qwen/qwen3-8b", "sql-agent@latest", "qwen/qwen3-32b"],
+    dataset: evalDs,
+    rubric,
+    samples: 4,
+    temperature: 0.7,
+    baseline: "qwen/qwen3-8b",
+  })
+  .wait();
+
+console.log(ev.summaryTable());
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+cat > rubric.yaml <<'EOF'
+- name: is_select
+  kind: regex
+  pattern: '^\s*(SELECT|WITH)\b'
+  flags: i
+  weight: 0.3
+- name: correct_query
+  kind: judge
+  model: "{{SONNET_MODEL}}"
+  prompt: Verify the SQL answers the user's question accurately without hallucinated columns.
+  weight: 0.7
+EOF
+
+grad eval \
+  --name sql-baseline-vs-sft \
+  --models qwen/qwen3-8b,sql-agent@latest,qwen/qwen3-32b \
+  --dataset sql-eval-holdout \
+  --rubric ./rubric.yaml \
+  --samples 4 --temperature 0.7 \
+  --baseline qwen/qwen3-8b \
+  --wait
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+The CLI takes rubric files in YAML or JSON with `regex`, `validator`, and `judge` items. `Scorer` functions run in your own process, so use the Python, TypeScript or Go SDK for those.
+
+<DocsCallout label="Try it locally" tone="tip">
+  On `grad local up --dev-models`, evals run on the stack's CPU inference
+  endpoint with no extra setup. Use `test/tiny-qwen3` (and
+  `test/tiny-qwen3-teacher` as the "larger" model) instead of the Qwen catalog
+  models, artifacts you trained on them (`sql-agent@latest`), and
+  `test/tiny-judge` as the judge: it scores the word overlap of the answer with
+  the reference answer, deterministically. Checkpoint evals during training
+  (`evals=`) aren't served locally: their evals record an error per output, so
+  evaluate `run.artifact` after the run instead.
+</DocsCallout>
+
+<DocsTerminal
+  title="Side-by-side evaluation summary"
+  command="grad eval --models qwen/qwen3-8b,sql-agent@latest,qwen/qwen3-32b --dataset sql-eval-holdout --rubric ./rubric.yaml --samples 4 --temperature 0.7 --baseline qwen/qwen3-8b --wait"
+>
+
+```text
+Eval eval_5b2e8c0d41f7a9e3c6d10b28 queued; waiting for results
+Eval sql-baseline-vs-sft (eval_5b2e8c0d41f7a9e3c6d10b28): completed  · 4 samples/task · threshold 0.5 · cost $4.31
+MODEL             OVERALL  95% CI          VS BASELINE  PASS@K                     TASKS  ERRORS  $/1K TASKS
+qwen/qwen3-8b     66.4%    [63.1%, 69.6%]  -            pass@1=61.2% pass@4=78.0%  400    0       $0.21
+sql-agent@latest  94.0%    [92.4%, 95.5%]  +27.6%       pass@1=91.8% pass@4=97.5%  400    0       $0.20
+qwen/qwen3-32b    95.0%    [93.6%, 96.3%]  +28.6%       pass@1=93.0% pass@4=98.0%  400    0       $0.84
+```
+
+</DocsTerminal>
+
+### Reading the report
+
+- **`overall` and `95% CI`:** the mean rubric score with a 95% bootstrap confidence interval over tasks. If two models' intervals overlap heavily, you don't have a winner yet: add tasks or samples.
+- **`pass@k`:** the share of tasks where at least one of `k` attempts counted as passing (see `pass_threshold` in the [reference](/docs/reference/training-parameters/#evaluations)). Reported for `k=1` and `k=samples`. A big gap between pass@1 and pass@4 means the model can solve the task but isn't reliable yet.
+- **`vs baseline`:** the paired difference from `baseline=` on the same tasks. `ev.summary` also holds its confidence interval. Paired comparisons need far fewer tasks than comparing two separate means.
+- **`$/1k tasks`:** model and judge cost per 1,000 tasks at current rates, so you can weigh quality against spend. `ev.summary` also has `tokens_per_task`, and `ev.summary_table()` in Python prints both.
+
+While an eval waits for a model, `ev.waiting_reason` says why: `capacity_unavailable` (a serving pool scaled to zero is starting), `rate_limited` or `inference_unavailable` (the endpoint is down). The eval keeps its place and spends no retry, and fails only if one call waits longer than `GRAD_EVAL_CAPACITY_WAIT_SECONDS` (12 minutes by default). Stored outputs are never generated or billed twice.
+
+Use `samples=1` and `temperature=0` for a quick deterministic check. For decisions you'll act on, use at least 3–4 samples per task: single-sample scores on a few hundred tasks often move several points between runs.
+
+`client.evals.plan(...)` (or `grad eval plan`) takes the same arguments and returns the task count, model and judge calls, and `estimated_cost_usd` for $0. Evals are billed for their model and judge calls at catalog prices, and `ev.total_cost_usd` shows the final cost.
+
+## Check for regressions with standard benchmarks
+
+Fine-tuning on a narrow task can cost general ability, such as math or broad knowledge. Run standard benchmarks alongside your own tasks to catch it. `client.datasets.from_benchmark(...)` imports one as a dataset from Hugging Face at a pinned revision, with fixed prompts and an answer check, so results are comparable across runs:
+
+| Benchmark         | Measures                                                   | Answer check                    |
+| ----------------- | ---------------------------------------------------------- | ------------------------------- |
+| `"gsm8k"`         | Grade-school math word problems (1,319 test problems)      | The final number matches        |
+| `"mmlu"`          | Broad knowledge across 57 subjects (14,042 questions)      | The chosen letter matches (A–D) |
+| `"mmlu_pro"`      | Harder knowledge and reasoning across 14 subjects (12,032) | The chosen letter matches (A–J) |
+| `"arc_challenge"` | Grade-school science questions (1,172)                     | The chosen letter matches       |
+
+An eval on a benchmark dataset without a `rubric=` uses the benchmark's own answer check, a server-side validator (`final_number` or `choice`):
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+
+gsm8k = client.datasets.from_benchmark("gsm8k", limit=200)
+
+ev = client.evals.create(
+    name="sql-agent-regressions",
+    models=["qwen/qwen3-8b", "sql-agent@latest"],
+    dataset=gsm8k,
+    baseline="qwen/qwen3-8b",
+).wait()
+
+print(ev.summary_table())
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```typescript
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+const gsm8k = await grad.datasets.fromBenchmark("gsm8k", { limit: 200 });
+
+const ev = await grad.evals
+  .create({
+    name: "sql-agent-regressions",
+    models: ["qwen/qwen3-8b", "sql-agent@latest"],
+    dataset: gsm8k,
+    baseline: "qwen/qwen3-8b",
+  })
+  .wait();
+console.log(ev.summaryTable());
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad datasets import benchmark gsm8k --limit 200
+grad eval --models qwen/qwen3-8b,sql-agent@latest --dataset gsm8k-200 --baseline qwen/qwen3-8b --wait
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+`limit=` imports the first N problems of the pinned revision (the same ones every time), which is enough to spot a regression of a few points without paying for the full benchmark; the dataset is named `gsm8k-200` (or `gsm8k` without a limit, or `name=`). Import the benchmark once and reuse the dataset, so every comparison scores the same problems. For any other public benchmark, import it with [`datasets.from_hf`](/docs/training/trajectories/) and pass your own `rubric=`.
+
+## Evaluate during training
+
+Every recipe evaluates on its held-out split as it trains, and `run.artifact` is the checkpoint with the best eval score. `eval_every` sets how often (`"auto"` evaluates every 25% of the run, at most every 20 steps; or pass a number of optimizer steps). Every eval step is also a checkpoint:
+
+```python
+from grad import Grad
+from grad.recipes import SFTRecipe
+
+client = Grad()
+
+run = client.runs.create(
+    dataset=client.datasets.get("support-sft"),
+    name="support-sft",
+    recipe=SFTRecipe(model="qwen/qwen3-8b", eval_every=50),
+).wait()
+
+print(run.eval_report)
+```
+
+Add `evals=` to also score each checkpoint on other datasets while the run trains, so you see a regression while the run is still going instead of after it finishes. Each entry is a dataset, a benchmark, or an `EvalSpec` with its own rubric:
+
+```python
+from grad import EvalSpec, Grad, validators
+from grad.recipes import SFTRecipe
+
+client = Grad()
+gsm8k = client.datasets.from_benchmark("gsm8k", limit=200)
+
+run = client.runs.create(
+    dataset=client.datasets.get("support-sft"),
+    name="support-sft",
+    recipe=SFTRecipe(
+        model="qwen/qwen3-8b",
+        evals=[gsm8k, EvalSpec("sql-eval-holdout", rubric=validators.Regex("^SELECT"), limit=100)],
+    ),
+).wait()
+
+for result in run.checkpoint_evals:
+    print(result["step"], result["name"], result["status"], result["score"])
+```
+
+Each checkpoint eval runs on an eval worker against the checkpoint (your inference endpoint serves it under its checkpoint id) and is billed like any eval; the dry run estimates the cost per checkpoint. The results are also in the run's `checkpoint_eval:<name>` job events and in `run.eval_report["checkpoint_evals"]` when the run finishes. Code scorers can't run during training, so run those in an eval on `run.artifact` afterwards.
+
+<DocsCallout label="Not on Gradiated Cloud">
+  Gradiated Cloud serves published artifacts, not checkpoints, so it refuses
+  checkpoint evals: planning or creating a run with `evals=` answers `422
+  checkpoint_evals_unsupported_on_cloud`. Evaluate `run.artifact` after training
+  instead. The held-out `eval_report` every run produces is unaffected.
+</DocsCallout>
+
+## Turn eval failures into your next training dataset
+
+Every completed evaluation stores per-task outputs and scores. Filter to the examples where a model fell short and save them straight into a [`Dataset`](/docs/training/trajectories/) for targeted SFT or DPO:
+
+```python
+from grad import Grad, Judge
+
+client = Grad()
+
+# Evaluate on a staging sample, not the holdout
+staging_ev = client.evals.create(
+    name="sql-staging-mining",
+    models=["sql-agent@latest"],
+    dataset=client.datasets.get("sql-staging-sample"),
+    rubric=Judge(
+        name="correct_query",
+        model="{{SONNET_MODEL}}",
+        prompt="Verify the SQL answers the user's question accurately without hallucinated columns.",
+    ),
+).wait()
+
+# Save tasks where the current artifact scored below 0.8
+failures = staging_ev.failures(model="sql-agent@latest", threshold=0.8)
+if failures:
+    hard_cases = failures.to_dataset("sql-hard-cases")
+    print(f"Saved {hard_cases.count()} failing examples for the next training round")
+else:
+    print("No task scored below 0.8")
+```
+
+`failures(...)` is a list of the failing results, empty when every task passed; `to_dataset(name)` on an empty list raises a `ValueError` rather than create an empty dataset.
+
+<DocsCallout label="Keep an untouched holdout set" tone="tip">
+  Never train on your evaluation holdout dataset. Use `ev.failures(...)` on a
+  separate staging or production sample dataset to mine hard examples, and keep
+  `sql-eval-holdout` strictly for apples-to-apples comparisons across versions.
+</DocsCallout>
+
+Evaluating multi-turn agents in an [`Environment`](/docs/training/environments/) is coming soon.
+
+<DocsNext>
+  <a href="/docs/training/artifacts/">
+    <small>Next</small>
+    <strong>Artifacts</strong>
+  </a>
+  <a href="/docs/training/rubrics/">
+    <small>Scoring</small>
+    <strong>Rubrics</strong>
+  </a>
+</DocsNext>

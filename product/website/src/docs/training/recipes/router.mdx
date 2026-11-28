@@ -1,0 +1,245 @@
+# Model router
+
+<DocsLead>
+  Send each request to the cheapest model that still meets your quality bar.
+</DocsLead>
+
+A model router looks at each incoming prompt and predicts how likely each candidate model is to succeed. At runtime, it picks the cheapest model that still meets your quality bar.
+
+## What data you need
+
+All you need to start is a [`Dataset`](/docs/training/trajectories/) of real prompts (`input.messages`):
+
+- **How the router compares models:**
+  - **Already logging multiple models?** If your logs include responses from both cheap and strong models (in `metadata.model`), Gradiated trains directly on them.
+  - **Only logging one model so far?** Pass `models=[...]` to `RouterRecipe` (for example, a small and a large Qwen3 model) together with a `Judge` rubric. Gradiated replays your logged prompts against the candidate models in a labeling eval and scores each answer before training. Candidates must be catalog models or artifacts from your workspace that the inference endpoint serves.
+- **How quality is scored:**
+  - **No scores yet?** Pass a [`Judge`](/docs/training/rubrics/) with a plain-English prompt (or a `Rubric` of judges and validators) and Gradiated grades each response for you.
+  - **Already have scores in your logs?** Pass the score name (`rubric="task_success"`) to reuse them directly. You need the name when a record carries more than one score. Python scorer functions in training recipes are [coming soon](/docs/training/recipes/#where-your-code-runs).
+- **Request cost (optional):**
+  - Pass `pricing={"qwen/qwen3-8b": 0.0004, ...}` (USD per request for each candidate), or include `metrics.cost_usd` on your logs. With a `Judge` rubric, the labeling eval records each call's cost at catalog prices.
+  - Without prices, the router maximizes how much traffic it offloads and `cost_savings_pct` is `null`.
+
+Plan for ~500 examples per candidate model to get started (2,000+ if your prompts cover many different tasks).
+
+## Train the router
+
+By default, `RouterRecipe` fine-tunes `qwen/qwen3-0.6b` on your prompts and scores, holds out 15% of prompts for evaluation (every response to one prompt stays on the same side), and routes to stay within a 2% quality drop of your fallback model (the best-scoring candidate unless you set `fallback=`). Replaying prompts against candidate models and judging the answers is billed as an eval, separately from the run's `max_cost_usd`. Run `client.runs.plan(...)` or `grad train ... --dry-run` first: the estimate is under `labeling`.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, Judge
+from grad.recipes import RouterRecipe
+
+client = Grad()
+dataset = client.datasets.get("support-traces")
+
+recipe = RouterRecipe(
+    models=["qwen/qwen3-8b", "qwen/qwen3-32b"],
+    rubric=Judge(
+        name="resolved",
+        model="{{SONNET_MODEL}}",
+        prompt="Did the assistant solve the user's issue accurately?",
+    ),
+)
+
+run = client.runs.create(dataset=dataset, name="support-router", recipe=recipe).wait()
+
+print(run.artifact.id)
+print(run.eval_report.pareto_summary)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, Judge, recipes } from "@gradiated/grad";
+
+const grad = new Grad();
+const dataset = await grad.datasets.get("support-traces");
+
+const recipe = recipes.router({
+  models: ["qwen/qwen3-8b", "qwen/qwen3-32b"],
+  rubric: new Judge({
+    name: "resolved",
+    model: "{{SONNET_MODEL}}",
+    prompt: "Did the assistant solve the user's issue accurately?",
+  }),
+});
+
+const run = await grad.runs
+  .create({ dataset, name: "support-router", recipe })
+  .wait();
+
+console.log(run.artifact.id, run.evalReport?.paretoSummary);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+client := grad.NewClient()
+ctx := context.Background()
+dataset, _ := client.Datasets.Get(ctx, "support-traces")
+
+run, _ := client.Runs.Create(ctx, grad.RunParams{
+	Dataset: dataset,
+	Name:    "support-router",
+	Recipe: grad.RouterRecipe{
+		Models: []string{"qwen/qwen3-8b", "qwen/qwen3-32b"},
+		Rubric: grad.Judge{
+			Name:   "resolved",
+			Model:  "{{SONNET_MODEL}}",
+			Prompt: "Did the assistant solve the user's issue accurately?",
+		},
+	},
+}).Wait(ctx)
+fmt.Println(run.Artifact.ID, run.EvalReport.ParetoSummary)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI (YAML)">
+
+```yaml
+# support-router.yaml
+dataset: support-traces
+name: support-router
+recipe: router
+models: [qwen/qwen3-8b, "qwen/qwen3-32b"]
+rubric:
+  - name: resolved
+    kind: judge
+    model: "{{SONNET_MODEL}}"
+    prompt: "Did the assistant solve the user's issue accurately?"
+```
+
+```bash
+grad train -f support-router.yaml --dry-run   # $0 estimate, including the labeling eval
+grad train -f support-router.yaml --wait
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+### When to use a router vs. fine-tuning vs. distillation
+
+- **Start with a router (`RouterRecipe`)** when a cheap model already handles most of your requests well and you only need a frontier model for the hard ones. It's the fastest way to cut LLM spend without training a new generator.
+- **Use [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/)** when no cheap model is good enough on its own yet and you want to teach a small model to handle the task directly, or use [distillation](/docs/training/recipes/distillation/) to copy a larger model on your prompts.
+- **Combine them** once you have a fine-tuned 8B model by putting it alongside a frontier model in your router. Frontier candidates need responses you already logged and scored (`rubric="<score name>"`): a `Judge` labeling eval can only replay prompts against catalog models and your artifacts.
+
+### Parameters you might change
+
+- **`models`:** the candidate models to route between. With a `Judge` rubric, Gradiated replays your prompts against them. If your logs already include scored responses from multiple models in `metadata.model`, you can leave `models` out.
+- **`rubric`:** how quality is measured. Pass a [`Judge`](/docs/training/rubrics/) with a prompt if your logs don't have scores yet, a `Rubric` of judges and validators, or an existing score name (`"task_success"`).
+- **`max_quality_drop`:** how much quality you'll trade for cost savings compared with your fallback model (`0.02`, or 2%, by default). The routing threshold is picked at this operating point on held-out data.
+- **`pricing`:** USD per request for each candidate. It overrides `metrics.cost_usd` from your logs.
+
+Every other setting, including the router backbone (`qwen/qwen3-0.6b`, or `qwen/qwen3-1.7b`), the eval split and the `fallback` model, has a default; see the [training parameters reference](/docs/reference/training-parameters/#routerrecipe).
+
+## Read the evaluation report
+
+Before deploying, check `run.eval_report`:
+
+```json
+{
+  "eval_records": 480,
+  "fallback_model": "qwen/qwen3-32b",
+  "fallback_quality": 0.912,
+  "pareto_summary": {
+    "target_max_drop": 0.02,
+    "routed_quality": 0.904,
+    "quality_drop": 0.008,
+    "quality_drop_ci95": [-0.004, 0.019],
+    "offload_rate": 0.64,
+    "cost_savings_pct": 0.57,
+    "ece": 0.018
+  }
+}
+```
+
+- **`cost_savings_pct`:** how much less you'll spend compared to sending every request to your fallback model while staying within `max_quality_drop`.
+- **`quality_drop` and `quality_drop_ci95`:** the estimated quality difference vs. your fallback model, plus a low-to-high range showing how sure we are. Look at the high end of that range: if it's larger than the drop you're okay with, add more examples to your dataset before shipping.
+- **`ece`:** how closely the router's predicted success rates match what actually happened on held-out examples (aim for under `0.05`).
+- **`routes_any_traffic`:** `false` when no threshold met your quality bar, so the router sends everything to the fallback model. Add data or loosen `max_quality_drop` before you ship it.
+
+<DocsRouterFrontier />
+
+## Use the router
+
+The artifact is a `router_bundle`: a LoRA adapter for the backbone, a small scoring head and `router_config.json` with the candidates, prices, calibrated threshold and fallback. Download it and route requests in your own service with `transformers` and `peft`; the [artifact formats spec](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md#router_bundle) has the full reference loader:
+
+```bash
+grad artifacts download support-router@latest --output ./support-router
+```
+
+```python
+from router_bundle import Router  # the reference loader from the artifact formats spec
+
+router = Router("./support-router")
+messages = [{"role": "user", "content": "Where is invoice #9941?"}]
+
+model = router.route(messages)  # e.g. "qwen/qwen3-8b"; call it with your own provider client
+print(router.probabilities(messages))  # calibrated success probability per candidate
+```
+
+The router picks the first candidate in `route_order` (cheapest first) whose probability clears `threshold`, and the fallback model otherwise.
+
+To retrain on live outcomes, record whether each routed request worked (ticket resolved, thumbs up) in your observability tool and [sync it](/docs/training/trajectories/#send-feedback-from-production) into the router's dataset.
+
+### Host it on Gradiated Cloud
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Hosted deployments aren't live yet. Until they are, download the router bundle
+  and route requests in your own service as shown above.
+</DocsCallout>
+
+On Gradiated Cloud, you'll [publish it](/docs/training/deploying/#host-on-gradiated-cloud) as a model version from the console or the Models API (with a `fallback` model) and call it by name through the [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/): the gateway routes each request to the chosen model.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+import os
+from openai import OpenAI
+
+oai = OpenAI(base_url="https://api.gradiated.com/v1", api_key=os.environ["GRADIATED_API_KEY"])
+reply = oai.chat.completions.create(
+    model="your-org/support-router",
+    messages=[{"role": "user", "content": "Where is invoice #9941?"}],
+)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl https://api.gradiated.com/v1/chat/completions \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "your-org/support-router",
+    "messages": [{"role": "user", "content": "Where is invoice #9941?"}]
+  }'
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+See [Deploying](/docs/training/deploying/) for updates and rollbacks.
+
+## Want more control?
+
+Custom routing logic and custom losses are coming soon with [Custom loops](/docs/training/custom-loops/).
+
+<DocsNext>
+  <a href="/docs/training/recipes/decision-model/">
+    <small>Next guide</small>
+    <strong>Decision models</strong>
+  </a>
+  <a href="/docs/training/deploying/">
+    <small>Serving</small>
+    <strong>Deploying</strong>
+  </a>
+</DocsNext>

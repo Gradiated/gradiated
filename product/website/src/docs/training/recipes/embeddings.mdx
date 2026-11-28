@@ -1,0 +1,143 @@
+# Embeddings
+
+<DocsLead>
+  Fine-tune an embedding model on your own docs and codebase for better search.
+</DocsLead>
+
+General-purpose embedding models often miss internal acronyms, product names, and custom schemas. Fine-tuning a small encoder with **`EmbeddingRecipe`** on your own query/document pairs teaches it those terms, and the model stays small enough to embed queries in milliseconds. The eval report shows the held-out top-10 hit rate (`recall_at_10`) before and after, so you can see the gain on your own data.
+
+## What data you need
+
+Each training example is a triplet with three parts:
+
+- **`query`:** what a user (or agent) searched for.
+- **`positive`:** the doc or code snippet that actually answers the query.
+- **`negatives`:** one or more wrong docs that look similar to the right one, so the model learns to rank the right doc above them.
+
+Aim for **1,000–5,000 triplets** in a [`Dataset`](/docs/training/trajectories/). Push them as plain records (a `.jsonl` path with the same keys works too, and `grad.Triplet(...)` is available if you want type checking):
+
+```python
+from grad import Grad
+
+client = Grad()
+dataset = client.datasets.push("docs-retrieval-triplets", [
+    {
+        "query": "how do I rotate my api key?",
+        "positive": "To rotate an existing API key, open Settings > API Keys and click Regenerate.",
+        "negatives": [
+            "To create your first API key, open Settings > API Keys and click New Key.",
+            "API keys are scoped to a single workspace and can be revoked at any time.",
+        ],
+    },
+])
+```
+
+**Why wrong docs should be close misses:** if the query is _"rotate my api key"_ and the negative is _"Pricing FAQ"_, any base model already knows those are unrelated and learns almost nothing. Pulling close-but-wrong results from your current search or RAG pipeline (like _"create an API key"_ when the user asked to _rotate_ one) teaches the model the exact distinctions it currently gets wrong. If you only have `(query, positive)` pairs to start, you can omit `negatives` and `EmbeddingRecipe` will use other docs in the same batch as negatives, though adding real close-miss negatives improves ranking quality further.
+
+## Train with `EmbeddingRecipe`
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+from grad.recipes import EmbeddingRecipe
+
+client = Grad()
+dataset = client.datasets.get("docs-retrieval-triplets")
+
+run = client.runs.create(
+    dataset=dataset,
+    name="docs-embedder",
+    recipe=EmbeddingRecipe(),  # manages its own encoder, baai/bge-small-en-v1.5
+).wait()
+
+print(run.artifact.id, run.eval_report)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, recipes } from "@gradiated/grad";
+
+const grad = new Grad();
+const dataset = await grad.datasets.get("docs-retrieval-triplets");
+
+const run = await grad.runs
+  .create({
+    dataset,
+    name: "docs-embedder",
+    recipe: recipes.embedding(),
+  })
+  .wait();
+
+console.log(run.artifact.id, run.evalReport);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad train --dataset docs-retrieval-triplets --name docs-embedder --recipe embedding --wait
+grad artifacts download docs-embedder@latest --output ./docs-embedder
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+### When to use embeddings vs. decision models vs. Cartridges
+
+- **Use `EmbeddingRecipe`** when you search or retrieve across thousands or millions of documents (RAG, code search, semantic deduplication) and general-purpose embeddings miss your domain terms.
+- **Use a [Decision model](/docs/training/recipes/decision-model/)** when you want a direct answer (a category, yes/no probability, or score) rather than nearest-neighbor search.
+- **Use [Context Cartridges](/docs/training/recipes/cartridges/)** when your docs fit in the model's context window and are mostly static, so you can skip retrieval and bake them straight into a small KV prefix.
+
+### Parameters you might change
+
+- **`loss=losses.InfoNCE(temp=...)`:** pulls matching `(query, positive)` pairs together and pushes `negatives` apart. `temp` is `0.05` by default; lower it (to `0.03`) to sharpen rankings when wrong docs are very similar to the right one.
+- **`pool`:** `pooling.Mean()` (the default) averages the token vectors; `pooling.CLS()` uses the first token's vector.
+- **`model`:** leave it out to use the recipe-managed encoder, `baai/bge-small-en-v1.5`. `grad models list --recipe embedding` shows any other encoders your server offers.
+
+The recipe trains every weight of the encoder (they're small enough that this beats LoRA), and `run.artifact` is the checkpoint with the best held-out top-10 hit rate. Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#embeddingrecipe).
+
+## Download and embed
+
+The artifact is a standard transformers model directory with the sentence-transformers pooling and normalization files, so you can download it and load it with `SentenceTransformer`. Vectors are L2-normalized and use the trained pooling:
+
+```python
+from grad import Grad
+
+client = Grad()
+client.artifacts.download("docs-embedder@latest", "./docs-embedder", format="files")
+```
+
+```python
+from sentence_transformers import SentenceTransformer
+
+model = SentenceTransformer("./docs-embedder")
+vectors = model.encode(["rotate api keys"])
+```
+
+Without sentence-transformers, read `grad_embedding.json` for the pooling and sequence length and embed with `transformers` directly; the [artifact formats spec](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md#encoder_safetensors) has the reference loader.
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Hosted embedding endpoints aren't live yet. Until they are, download the
+  encoder and embed in your own service as shown above.
+</DocsCallout>
+
+On Gradiated Cloud, you'll [publish it](/docs/training/deploying/#host-on-gradiated-cloud) as a model version from the console or the Models API and embed through the OpenAI SDK's `embeddings.create(model="your-org/docs-embedder", ...)`.
+
+## Want more control?
+
+Custom loss functions, embeddings you can truncate to smaller sizes, and rerankers that score query/doc pairs directly are coming soon with [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
+
+<DocsNext>
+  <a href="/docs/training/custom-loops/">
+    <small>Advanced</small>
+    <strong>Custom loops</strong>
+  </a>
+  <a href="/docs/training/deploying/">
+    <small>Deploy</small>
+    <strong>Deploying</strong>
+  </a>
+</DocsNext>

@@ -1,0 +1,311 @@
+# Environments
+
+<DocsLead>
+  Give your agent tools, databases, or containers to work in during
+  reinforcement learning and evaluation.
+</DocsLead>
+
+<DocsCallout label="Coming soon" tone="warn">
+  Environments, `grad env serve` and environment evals are coming soon. The
+  SDK's environment types work locally, but nothing on this page trains or
+  evaluates yet. Today you train and evaluate on
+  [datasets](/docs/training/trajectories/).
+</DocsCallout>
+
+An environment is where an agent attempts a task: it receives the model's tool calls, runs them, returns the results, and scores the finished attempt with a [`Rubric`](/docs/training/rubrics/). Pass one to the managed recipe with `GRPORecipe(env=env)` (single-turn or multi-turn, no training loop to write), to [`client.evals.create(...)`](/docs/training/evaluations/), or to `env.rollout_groups(...)` in a [custom loop](/docs/training/custom-loops/).
+
+Built-in environments run on Gradiated's sandboxes. Environments you write in Python are packaged and run in an isolated sandbox too, or on your own machines when containers, seed data, or credentials have to stay in your network. See [Where your code runs](/docs/training/recipes/#where-your-code-runs) and [Run rollouts on your own machines](#run-rollouts-on-your-own-machines).
+
+## Pick a starting point
+
+| You have                                                                 | Use                                                                      | Effort          |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------ | --------------- |
+| A few Python functions the agent should call                             | [`environments.Tools`](#tools-from-python-functions)                     | Minutes         |
+| An MCP server                                                            | [`environments.MCP`](#other-built-in-environments)                       | Minutes         |
+| A Prime Intellect `verifiers` environment                                | [`environments.from_verifiers`](#prime-intellect-verifiers-environments) | Minutes         |
+| Harbor / Terminal-Bench task folders, or a CLI agent such as Claude Code | [`environments.Harbor`](#harbor-and-agent-harnesses)                     | Hours           |
+| Live state such as Postgres, an internal API, or a Compose stack         | [A custom `Environment`](#writing-a-custom-environment)                  | Hours           |
+| Production logs, but no environment yet                                  | [Traces to environments](/docs/training/recipes/traces-to-environments/) | Minutes to days |
+
+## `Task`, `Environment`, and `Rubric`
+
+| Concept                                 | What it does                                                                                                                                                                                                                                                                                             | How they fit together                        |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| **`Task`**                              | One problem to solve: `id`, starting `messages` and `tools`, `seed` data (commit SHA, DB fixture, or Harbor task path), optional `expected` answer, and `timeout_s`. Any [`Dataset`](/docs/training/trajectories/) of prompts works as a task list, and `Task.from_trajectory(t)` builds one from a log. | You pass many `Task`s to a run.              |
+| **`Environment[H]`**                    | Starts an isolated sandbox for a `Task` (`setup`), runs the agent's tool calls (`step`), and scores the attempt while the sandbox is still up (`evaluate`, which defaults to your `Rubric`).                                                                                                             | One `Environment` runs thousands of `Task`s. |
+| **[`Rubric`](/docs/training/rubrics/)** | Grades the attempt with `Scorer`s, `Judge`s, `StatefulScorer`s, or `GroupScorer`s and writes results into `trajectory.scores`.                                                                                                                                                                           | Passed to the `Environment` with `rubric=`.  |
+
+## Tools from Python functions
+
+The quickest way to train a tool-using agent. Pass plain typed Python functions; each function's signature and docstring become the tool's JSON schema. The model calls tools as many times as it needs (up to `max_turns`), then answers, and the `Rubric` grades the answer:
+
+```python
+from grad import Grad, Rubric, Scorer, environments, validators
+from grad.recipes import GRPORecipe
+
+client = Grad()
+tasks = client.datasets.from_hf(
+    "openai/gsm8k", subset="main", split="train", prompt="question", answer="answer"
+)
+
+def calculator(expression: str) -> str:
+    """Evaluate an arithmetic expression such as '12 * (3 + 4)' and return the result."""
+    if not set(expression) <= set("0123456789+-*/(). ") or "**" in expression:
+        return "error: use only numbers, spaces and + - * / ( )"
+    return str(eval(expression))
+
+env = environments.Tools(
+    [calculator],
+    tasks=tasks,
+    rubric=Rubric([Scorer("correct", fn=validators.NumericMatch(field="answer"))]),
+    max_turns=6,
+)
+
+# Try it before training: 4 tasks, 2 attempts each, against the base model.
+for traj in env.rollout_groups(artifact="qwen/qwen3-4b", tasks=tasks.take(4), group_size=2)[0]:
+    print(traj.scores, traj.text[-200:])
+
+run = client.runs.create(
+    dataset=tasks,
+    name="gsm8k-calculator",
+    recipe=GRPORecipe(model="qwen/qwen3-4b", env=env),
+).wait()
+```
+
+Tool return values go back to the model as context and are never trained on. With an empty tool list it is a single-turn prompt-and-answer environment. For a system prompt or third-party packages your tools import, see the [`environments.Tools` reference](/docs/reference/training-parameters/#environments).
+
+## Harbor and agent harnesses
+
+Load Harbor task folders (`instruction.md`, `task.toml`, `environment/Dockerfile`, `tests/test.sh`, and optional `solution/solve.sh`) straight into `Task` objects. `environments.Harbor` starts a fresh container for each attempt, keeps `tests/` hidden until scoring so the model can't read them, writes test results into `trajectory.scores`, and can check every reference solution before you pay for training:
+
+```python
+from grad import Grad, environments
+from grad.recipes import GRPORecipe
+
+client = Grad()
+tasks = environments.Harbor.load_tasks("./harbor-tasks/")
+env = environments.Harbor(agent="claude-code", max_turns=40)  # scored by each task's tests/test.sh
+
+# Run every task's solution/solve.sh and check the tests fail before it and pass after it.
+verified = env.verify_oracles(tasks, require_initial_fail=True)
+print(f"Kept {len(verified)}/{len(tasks)} tasks")
+
+run = client.runs.create(
+    dataset=verified,
+    name="repo-agent",
+    recipe=GRPORecipe(model="qwen/qwen3-32b", env=env),
+).wait()
+```
+
+`agent=` picks which agent loop drives the model inside the container:
+
+| `agent=`           | Runs                                                                     |
+| ------------------ | ------------------------------------------------------------------------ |
+| `"default"`        | Gradiated's minimal shell-and-edit loop.                                 |
+| `"claude-code"`    | Claude Code, with `ANTHROPIC_BASE_URL` pointed at the training snapshot. |
+| `"codex"`          | OpenAI Codex CLI, with its base URL pointed at the training snapshot.    |
+| `"opencode"`       | OpenCode.                                                                |
+| `"mini-swe-agent"` | mini-SWE-agent.                                                          |
+
+Train in the harness you will deploy in. A model's tool-call habits, context management, and stopping behaviour are shaped by the agent loop it trained under, so a model trained under `"default"` often does worse when you later run it inside Claude Code than one trained under `"claude-code"`. Pass `rubric=` to add `Judge` or code checks on top of each task's tests.
+
+## Prime Intellect `verifiers` environments
+
+`environments.from_verifiers(...)` runs environments built with Prime Intellect's open-source [`verifiers`](https://github.com/PrimeIntellect-ai/verifiers) library (the `verifiers.v1` API), including environments published on the Environments Hub. Their rewards become `Rubric` scores, their tools become tools, and their harness choice maps onto `agent=`:
+
+```python
+from grad import Grad, environments
+from grad.recipes import GRPORecipe
+
+client = Grad()
+
+# An Environments Hub package, pinned to a version. Installed and run in Gradiated's sandbox.
+env = environments.from_verifiers("primeintellect/gsm8k@0.2.1")
+
+run = client.runs.create(
+    dataset=env.tasks,
+    name="gsm8k-verifiers",
+    recipe=GRPORecipe(model="qwen/qwen3-4b", env=env),
+).wait()
+```
+
+Pass the environment's own arguments as keywords, such as `environments.from_verifiers("owner/env@1.0.0", difficulty="hard")`. You can also pass a `verifiers.v1` environment object you built locally; it is packaged like any other Python code.
+
+Run `grad env check primeintellect/gsm8k@0.2.1` to confirm a Hub package works before you train. Each package runs with the `verifiers` version it pins, inside its own sandbox, so your local install doesn't matter.
+
+Environments written for the old v0 API (`vf.load_environment("name")`, `vf.SingleTurnEnv`, `vf.ToolEnv`) were removed upstream in verifiers 0.4.0 and can't run, and many older Hub packages still use it. For those, port the reward function to a [`Rubric`](/docs/training/rubrics/) and the tools to [`environments.Tools`](#tools-from-python-functions); both are usually a few lines.
+
+## Other built-in environments
+
+| Environment                                        | Use it for                                                                                                                                                                                            |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`environments.MCP(url=...)`**                    | Expose every tool on a Model Context Protocol server to the model. A remote MCP URL runs from Gradiated's side; a local server command (`environments.MCP(command=[...])`) is packaged with your run. |
+| **`environments.DockerCompose(compose_file=...)`** | Multi-container stacks (Postgres, Redis, API) with a warm pool and fast template-database resets.                                                                                                     |
+| **`environments.from_gym(make_env)`**              | Any Gymnasium environment (`reset` → `setup`, `step` → `step`, `close` → `teardown`).                                                                                                                 |
+
+## Writing a custom `Environment`
+
+When an agent changes live state (writing to Postgres, calling an internal API, or editing files), each parallel attempt needs its own isolated sandbox and reliable cleanup. Subclass `Environment` and implement two methods; the other two have sensible defaults:
+
+1. **`setup(task, rollout_id)`** _(required)_: start or borrow an isolated sandbox, seed its initial state, and return a handle.
+2. **`step(handle, action)`** _(required)_: run the model's turn and return `Observation(text=..., done=...)`. Tool calls arrive already parsed in `action.tool_calls` (a list of `ToolCall(name, arguments)`); `action.text` holds any plain-text answer.
+3. **`evaluate(handle, trajectory)`** _(optional)_: by default, scores the finished attempt with `self.rubric` **while the sandbox is still up**, passing `handle` as `state` so `StatefulScorer` checks can query Postgres, Redis, or your API. Override it only for custom scoring.
+4. **`teardown(handle)`** _(optional)_: stop containers or reset the database. It always runs, even after a timeout or crash.
+
+```python
+import subprocess
+from dataclasses import dataclass
+
+import httpx
+from grad import Environment, Observation, Rubric, StatefulScorer, Task
+
+@dataclass
+class ComposeHandle:
+    project: str
+    api_url: str
+
+class AppComposeEnv(Environment[ComposeHandle]):
+    compose_file = "docker-compose.yml"
+
+    def setup(self, task: Task, rollout_id: str) -> ComposeHandle:
+        project = f"grad_{rollout_id}"
+        compose = ["docker", "compose", "-p", project, "-f", self.compose_file]
+        subprocess.run([*compose, "up", "-d", "--wait"], check=True)
+        subprocess.run([*compose, "exec", "-T", "api", "./seed.sh", task.seed["fixture_id"]], check=True)
+        port = subprocess.run(
+            [*compose, "port", "api", "8080"], check=True, capture_output=True, text=True
+        ).stdout.strip().rsplit(":", 1)[1]
+        return ComposeHandle(project=project, api_url=f"http://127.0.0.1:{port}")
+
+    def step(self, handle: ComposeHandle, action) -> Observation:
+        if not action.tool_calls:
+            return Observation(done=True)  # the model answered in plain text
+        results = [
+            httpx.post(f"{handle.api_url}/tools/{call.name}", json=call.arguments, timeout=30).text
+            for call in action.tool_calls
+        ]
+        return Observation(text="\n".join(results), done=False)
+
+    def teardown(self, handle: ComposeHandle) -> None:
+        subprocess.run(
+            ["docker", "compose", "-p", handle.project, "-f", self.compose_file, "down", "-v"],
+            check=False,
+        )
+
+def ticket_closed(traj, handle: ComposeHandle) -> float:
+    ticket = httpx.get(f"{handle.api_url}/tickets/{traj.metadata['ticket_id']}").json()
+    return 1.0 if ticket["status"] == "closed" else 0.0
+
+env = AppComposeEnv(rubric=Rubric([StatefulScorer("ticket_closed", fn=ticket_closed)]))
+```
+
+Declare the model's tools on each `Task` (`Task(messages=..., tools=[...])`) or once on the class with a `tools = [...]` attribute. Because this environment starts Docker containers, run it on your own machines with [`grad env serve`](#run-rollouts-on-your-own-machines) rather than packaging it.
+
+<DocsCallout label="Tool outputs are never trained on" tone="tip">
+  Return plain text from `step()` with `Observation(text=...)`. Gradiated feeds
+  it back to the model as context for the next turn and excludes it from
+  training updates, with no local tokenizer or manual masking.
+</DocsCallout>
+
+### Faster resets with a warm pool
+
+Cold-starting `docker compose up` per attempt works for small runs, but a warm pool is 10–50x faster during RL:
+
+- Boot `N` stacks once (matching `max_concurrency`) and lease a slot in `setup()`.
+- Restore Postgres from a pre-seeded template database (`DROP DATABASE app; CREATE DATABASE app TEMPLATE seed_v1;`) and flush Redis, typically in under 50 ms.
+- Return the slot to the pool in `teardown()`.
+
+`environments.DockerCompose` does all three for you.
+
+## Run rollouts on your own machines
+
+When containers, seed data, or internal credentials must stay inside your network, keep the training loop managed and run only the rollouts yourself. `grad env serve` starts rollout workers that connect **outbound** to Gradiated (no inbound ports), pull tasks, call the training snapshot, and send back scored trajectories:
+
+```bash
+# my_env.py defines `env = AppComposeEnv(rubric=...)`
+grad env serve my_env:env --name support-app --concurrency 32
+```
+
+```python
+from grad import Grad, environments
+from grad.recipes import GRPORecipe
+
+client = Grad()
+tasks = client.datasets.get("support-app-tasks")
+
+run = client.runs.create(
+    dataset=tasks,
+    name="support-agent",
+    recipe=GRPORecipe(model="qwen/qwen3-8b", env=environments.Remote("support-app")),
+).wait()
+```
+
+The run pauses while no worker is connected and resumes when one reconnects. Run several `grad env serve` processes (for example, one per Kubernetes node) to scale; each one takes `--concurrency` attempts at a time.
+
+## Plug in an existing agent
+
+Already have an agent built on the OpenAI or Anthropic SDK, LangGraph, or your own loop? Point it at a training snapshot. Every model call runs against the current weights and is recorded as a `Trajectory`, so there is no rewrite:
+
+```python
+from grad import Grad
+from openai import OpenAI
+
+client = Grad()
+
+with client.trainers.create(model="qwen/qwen3-8b") as trainer:
+    snap = trainer.snapshot()
+
+    with snap.openai_client() as (oai, recorder):
+        res = oai.chat.completions.create(
+            model=snap.id,
+            messages=[{"role": "user", "content": "List three causes of a 502 error."}],
+        )
+
+    traj = recorder.to_trajectory(scores={"reward": 1.0 if "upstream" in res.choices[0].message.content else 0.0})
+    print(traj.scores, len(traj.token_ids))
+```
+
+- **Anthropic SDK agents:** use `snap.anthropic_client()` the same way.
+- **CLI agents (Claude Code, Codex, OpenCode):** set `ANTHROPIC_BASE_URL=snap.anthropic_base_url` or `OPENAI_BASE_URL=snap.openai_base_url` in the agent's environment. Calls are recorded against the snapshot's API key. For Harbor tasks, `environments.Harbor(agent=...)` does this for you.
+
+## Running rollouts directly
+
+Run `env.rollout_groups()` against a base model (`"qwen/qwen3-8b"`) for a quick check, or against `trainer.snapshot()` inside a [custom loop](/docs/training/custom-loops/):
+
+```python
+from grad import Grad, Rubric, Scorer, environments, validators
+
+client = Grad()
+tasks = client.datasets.from_hf(
+    "openai/gsm8k", subset="main", split="test", prompt="question", answer="answer"
+)
+env = environments.Tools(
+    [], tasks=tasks, rubric=Rubric([Scorer("correct", fn=validators.NumericMatch(field="answer"))])
+)
+
+groups = env.rollout_groups(
+    artifact="qwen/qwen3-8b",
+    tasks=tasks.take(16),
+    group_size=8,
+    max_concurrency=32,
+    timeout_s=60,
+)
+print(sum(t.scores["correct"] for g in groups for t in g) / sum(len(g) for g in groups))
+```
+
+Every run handles three things automatically:
+
+- **Tool outputs are never trained on:** tool responses and retrieved docs are excluded from training updates so the model only learns from its own tokens.
+- **Concurrency limits:** `max_concurrency` caps how many sandboxes run at once. For 32+ parallel Docker or Harbor containers on your own machines, run `grad env serve` on a cloud VM or Kubernetes node rather than a laptop.
+- **Timeout cleanup:** attempts that hit `timeout_s` are cancelled, get a score of `0.0`, and still run `teardown()`.
+
+<DocsNext>
+  <a href="/docs/training/evaluations/">
+    <small>Next</small>
+    <strong>Evaluations</strong>
+  </a>
+  <a href="/docs/training/recipes/traces-to-environments/">
+    <small>Recipe guide</small>
+    <strong>Traces to environments</strong>
+  </a>
+</DocsNext>

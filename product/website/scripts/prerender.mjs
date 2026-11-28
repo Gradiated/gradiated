@@ -1,8 +1,12 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { renderFeed } from "./feed.mjs";
+
+const require = createRequire(import.meta.url);
+const { substituteDocModels } = require("./docs-models.cjs");
 
 const websiteRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outputRoot = join(websiteRoot, "dist");
@@ -103,7 +107,7 @@ const stripTags = (value) =>
     .trim();
 
 const toPortableMarkdown = (source) =>
-  source
+  substituteDocModels(source)
     .replace(
       /<DocsLead>\s*([\s\S]*?)\s*<\/DocsLead>/g,
       (_match, content) => `${content.replace(/^ {2}/gm, "").trim()}\n`,
@@ -127,25 +131,47 @@ const toPortableMarkdown = (source) =>
       (_match, href, label) => `[${stripTags(label)}](${href})`,
     )
     .replace(
+      /<DocsCallout(?:\s+[^>]*label="([^"]+)"[^>]*)?>\s*([\s\S]*?)\s*<\/DocsCallout>/g,
+      (_match, label, content) =>
+        `> **${label || "Note"}:** ${content.trim().replace(/\n/g, "\n> ")}\n`,
+    )
+    .replace(
+      /<DocsTerminal(?:\s+[^>]*command="([^"]+)"[^>]*)?>\s*([\s\S]*?)\s*<\/DocsTerminal>/g,
+      (_match, command, content) =>
+        `${command ? `\`\`\`bash\n${command}\n\`\`\`\n\n` : ""}${content.trim()}\n`,
+    )
+    .replace(
       /<DocsModelCatalog\s*\/>/g,
       "[View the live model catalog](https://api.gradiated.com/api/v1/models)",
     )
     .replace(/<DocsApiKeyAction\s*\/>/g, "")
+    .replace(
+      /<Docs(?:RunLifecycle|RecipeFinder|CostEstimator|TokenMask|RunReplay|RouterFrontier|PipelineSchematic|DatumAnatomy)(?:\s[^>]*)?\s*\/>/g,
+      "",
+    )
     .replace(/<\/?Docs[A-Za-z]+(?:\s[^>]*)?>/g, "")
     .replace(/^[ \t]+$/gm, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim()
     .concat("\n");
 
+const resolveDocsMdxPath = async (path) => {
+  const docsRoot = join(websiteRoot, "src", "docs");
+  if (path === "/docs/") return join(docsRoot, "index.mdx");
+  const rel = path.replace(/^\/docs\//, "").replace(/\/$/, "");
+  const nestedIndex = join(docsRoot, rel, "index.mdx");
+  try {
+    await readFile(nestedIndex, "utf8");
+    return nestedIndex;
+  } catch {
+    return join(docsRoot, `${rel}.mdx`);
+  }
+};
+
 const docsPages = pages.filter(({ path }) => path.startsWith("/docs/"));
 const markdownPages = await Promise.all(
   docsPages.map(async ({ path }) => {
-    const slug =
-      path === "/docs/" ? "index" : path.split("/").filter(Boolean).at(-1);
-    const source = await readFile(
-      join(websiteRoot, "src", "docs", `${slug}.mdx`),
-      "utf8",
-    );
+    const source = await readFile(await resolveDocsMdxPath(path), "utf8");
     return {
       content: toPortableMarkdown(source),
       path:

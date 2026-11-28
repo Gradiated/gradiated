@@ -1,0 +1,129 @@
+# Model distillation
+
+<DocsLead>
+  Train a small, fast model to copy a larger one using your own prompts.
+</DocsLead>
+
+If you just fine-tune a small model on saved outputs from a big model, it can go off the rails as soon as it starts writing its own slightly different wording. **`DistillRecipe`** fixes that by training on-policy: the small **student** generates answers to your prompts, and the larger **teacher** scores those exact tokens so the student learns to recover from its own mistakes.
+
+## What data you need
+
+- **Only prompts:** you don't need labeled answers; 1,000–5,000 real prompts are enough. Plain chat records (`{"messages": [...]}` ending in a user turn), Hugging Face datasets via `client.datasets.from_hf(...)`, or imported [trajectories](/docs/training/trajectories/) all work. Any assistant turns at the end are ignored, because the student writes its own.
+- **A teacher model:** a larger catalog model that shares the student's tokenizer (such as `"qwen/qwen3-14b"` for a Qwen3-4B student). With `rollout=OffPolicy()`, the teacher can be any catalog model, or a fine-tuned `.grad` [`Artifact`](/docs/training/artifacts/) you trained earlier, as long as your inference endpoint serves it.
+
+## Train with `DistillRecipe`
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+from grad.recipes import DistillRecipe
+
+client = Grad()
+dataset = client.datasets.get("support-prompts")  # pushed or imported earlier
+
+run = client.runs.create(
+    dataset=dataset,
+    name="support-4b-distilled",
+    recipe=DistillRecipe(model="qwen/qwen3-4b", teacher="qwen/qwen3-14b"),
+).wait()
+
+print(run.artifact.id, run.eval_report)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, recipes } from "@gradiated/grad";
+
+const grad = new Grad();
+const dataset = await grad.datasets.get("support-prompts");
+
+const run = await grad.runs
+  .create({
+    dataset,
+    name: "support-4b-distilled",
+    recipe: recipes.distill({
+      model: "qwen/qwen3-4b",
+      teacher: "qwen/qwen3-14b",
+    }),
+  })
+  .wait();
+
+console.log(run.artifact.id, run.evalReport);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI (YAML)">
+
+```yaml
+# distill-4b.yaml
+dataset: support-prompts
+name: support-4b-distilled
+recipe: distill
+model: qwen/qwen3-4b
+teacher: qwen/qwen3-14b
+```
+
+```bash
+grad train -f distill-4b.yaml --wait
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+### Parameters you might change
+
+- **`teacher`:** the stronger model you want to copy. On-policy it must be a catalog model, and the trainer loads it next to the student on one GPU: a 4B student with a 14B teacher fits on an 80 GB GPU, while a 32B teacher doesn't. Use `rollout=OffPolicy()` for a larger teacher.
+- **`rollout`:** `OnPolicy(max_new_tokens="auto")` by default: the student writes an answer to each prompt and the teacher grades those exact tokens. `"auto"` sizes the answers from the assistant turns already in your records (256 tokens when there are none). Pass `rollout=OffPolicy()` to have the teacher answer each prompt once instead; the student then trains on those answers.
+- **`loss`:** on-policy, the student matches the teacher's top 32 next-token probabilities at every answer token (`losses.TopKKLDistill(top_k=32)`), which captures almost all the signal. Off-policy it trains on the teacher's answers with `losses.CrossEntropy()`.
+- **`context`:** a [`Context`](/docs/reference/primitives/) the teacher reads before every prompt and the student doesn't, so the student learns to answer as if it had read it (on-policy only). With `context=`, the teacher can be the student's own base model. Training sequences are capped at 8,192 tokens, so the context, the prompt and `max_new_tokens` must fit in that together; a longer one fails the run with the record ID.
+
+**Teacher and student must share a tokenizer** for on-policy distillation (the Qwen3 family does). For a larger teacher, or an `Artifact` you trained, pass `rollout=OffPolicy()`: before training, the server has the teacher answer each prompt through your inference endpoint in a labeling eval, billed as an eval, and the student learns those answers. Off-policy answers are up to 1,024 tokens by default (`OffPolicy(max_new_tokens=...)`).
+
+```python
+from grad.recipes import DistillRecipe, OffPolicy
+
+recipe = DistillRecipe(model="qwen/qwen3-4b", teacher="qwen/qwen3-32b", rollout=OffPolicy(max_new_tokens=512))
+```
+
+Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#distillrecipe). Add `--dry-run` to `grad train` (or call `client.runs.plan(...)`) to see the cost estimate before you start. On-policy runs show the teacher's scoring tokens at the teacher's price in `plan.teacher`, and they're included in the total. Off-policy runs show the teacher's answers in `plan.labeling`.
+
+## When to use distillation vs. SFT vs. Cartridges
+
+- **`DistillRecipe`:** you have a strong, slow model (like a 14B model, or a 32B model or your own artifact with `OffPolicy()`) and want a small 4B–8B model to match it on your prompts, with no labeled answers required.
+- **[`SFTRecipe`](/docs/training/recipes/sft/):** you already have verified gold answers (or human-edited outputs) you want the model to copy directly.
+- **[`CartridgeRecipe`](/docs/training/recipes/cartridges/):** you don't want to change the model's general behavior; you just want to stop resending the same long docs or system prompt on every request.
+
+## Serve it
+
+Distilled checkpoints export as standard `.grad` [`Artifact`](/docs/training/artifacts/)s: a LoRA adapter on the student's base model (`format: "peft_lora"`, or merged weights with `adapters.LoRA(merge_on_export=True)`). `run.artifact` is the checkpoint with the lowest held-out KL to the teacher (the lowest held-out loss off-policy), and `run.eval_report` shows `eval_kl` next to `base_kl`, the untrained student's. Download it and serve it on vLLM or SGLang:
+
+```bash
+grad artifacts download support-4b-distilled@latest --output ./support-4b-distilled
+vllm serve Qwen/Qwen3-4B --enable-lora --max-lora-rank 32 --lora-modules support-4b-distilled=./support-4b-distilled
+```
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Hosted deployments aren't live yet. Until they are, download the artifact and
+  [serve it yourself](/docs/training/deploying/#serve-it-yourself).
+</DocsCallout>
+
+On Gradiated Cloud, you'll [publish it](/docs/training/deploying/#host-on-gradiated-cloud) as a model version from the console or the Models API and call `"your-org/support-4b-distilled"` through the OpenAI or Anthropic SDK.
+
+## Want more control?
+
+Custom distillation losses (like Jensen-Shannon / GKD or Skew KL) and Self-Distillation Fine-Tuning (SDFT) are coming soon with [Advanced objectives](/docs/training/advanced-objectives/) and [Custom loops](/docs/training/custom-loops/).
+
+<DocsNext>
+  <a href="/docs/training/recipes/cartridges/">
+    <small>Next guide</small>
+    <strong>Context Cartridges</strong>
+  </a>
+  <a href="/docs/training/recipes/reward-models/">
+    <small>Verifiers</small>
+    <strong>Reward models</strong>
+  </a>
+</DocsNext>

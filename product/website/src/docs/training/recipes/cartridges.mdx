@@ -1,0 +1,130 @@
+# Context Cartridges
+
+<DocsLead>
+  Turn a long, repeated prompt or doc set into a small add-on you don't have to
+  resend on every request.
+</DocsLead>
+
+If every request sends the same long block of runbooks, product docs, or compliance rules, you pay to re-read that text over and over and wait longer for the first token.
+
+## How a Cartridge works
+
+A Cartridge shrinks a long system prompt or large block of background context into a tiny **precomputed memory** (a small KV cache) that plugs into your model:
+
+1. **`context`** is the text you want the model to know without resending it every time: your entire system prompt, instructions and examples, or large chunks of docs and runbooks (`Context.from_text(...)` or `Context.from_file(...)`). The model reads the whole context with each question during training, so the context plus a question must fit in its context window (32,768 tokens for the Qwen3 models).
+2. **`dataset`** is 500–2,000 real questions or tasks that depend on that context, as plain chat records ending in a user turn (`{"messages": [...]}`), with no labeled answers needed.
+3. **`num_tokens`** is how small to compress that context. The default is `256` virtual tokens; try `512` or `1024` for very large contexts.
+
+During training, the model reads `context` + each question to see what it _would_ answer with the full text, and trains the Cartridge to give the same answer **without** sending `context` in the prompt.
+
+## Train a Cartridge (`CartridgeRecipe`)
+
+Pass your model, the `context` you want to compress, and a dataset of example prompts (you can also pass `teacher=` to copy a larger Qwen3 model that shares the tokenizer, such as `qwen/qwen3-32b`):
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Context, Grad
+from grad.recipes import CartridgeRecipe
+
+client = Grad()
+dataset = client.datasets.get("api-docs-qa-prompts")  # pushed or imported earlier
+
+recipe = CartridgeRecipe(
+    model="qwen/qwen3-8b",
+    context=Context.from_file("./api-docs-bundle.md"),  # or Context.from_text(...)
+)
+
+run = client.runs.create(dataset=dataset, name="api-docs-cartridge", recipe=recipe).wait()
+
+print(run.artifact.id, run.eval_report)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Context, Grad, recipes } from "@gradiated/grad";
+
+const grad = new Grad();
+const dataset = await grad.datasets.get("api-docs-qa-prompts");
+
+const run = await grad.runs
+  .create({
+    dataset,
+    name: "api-docs-cartridge",
+    recipe: recipes.cartridge({
+      model: "qwen/qwen3-8b",
+      context: Context.fromFile("./api-docs-bundle.md"),
+    }),
+  })
+  .wait();
+
+console.log(run.artifact.id, run.evalReport);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI (YAML)">
+
+```yaml
+# cartridge-docs.yaml
+dataset: api-docs-qa-prompts
+name: api-docs-cartridge
+recipe: cartridge
+model: qwen/qwen3-8b
+context:
+  file: ./api-docs-bundle.md
+```
+
+```bash
+grad train -f cartridge-docs.yaml --wait
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## Serve it
+
+Cartridges export as standard [`Artifact`](/docs/training/artifacts/)s: `cartridge.safetensors` holds the learned prefix (`num_tokens` input embeddings), and `manifest.json` names the base model. At inference the embeddings replace reserved slot tokens at the start of the system prompt, so you send only the user question. Download it and serve it with `transformers` on the base model; the [artifact formats spec](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md#cartridge) describes the slot layout and has a reference loader:
+
+```bash
+grad artifacts download api-docs-cartridge@latest --output ./api-docs-cartridge
+```
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Hosted deployments aren't live yet. Until they are, download the cartridge and
+  serve it with the reference loader.
+</DocsCallout>
+
+On Gradiated Cloud, you'll [publish it](/docs/training/deploying/#host-on-gradiated-cloud) as a model version from the console or the Models API, and call `"your-org/api-docs-cartridge"` through the OpenAI or Anthropic SDK with only the user question.
+
+### Parameters you might change
+
+- **`num_tokens`:** `256` by default (16 to 4,096). Increase it (to `512` or `1024`) for very large contexts, and check `kl_reduction` in `eval_report`: the share of the gap between the no-context model and the full-context model that the Cartridge closes.
+- **`teacher`:** defaults to the same model as `model=` reading the full context. Pass a larger Qwen3 model (same tokenizer) if you also want to distill from a stronger teacher.
+- **`max_new_tokens`:** how long the teacher's answer to each prompt is during training (`256` by default).
+- **`loss`:** the student matches the teacher's top 20 next-token probabilities by default. Pass `losses.TopKKLDistill(top_k=...)` with an explicit `top_k` to match more of the teacher's distribution.
+
+Cartridges need a much higher learning rate than LoRA adapters, and `lr="auto"` handles that for you. Training cost grows with the context: the teacher reads the full context with every prompt, and those tokens are billed. `run.artifact` is the checkpoint whose answers are closest to the full-context model on held-out prompts. Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#cartridgerecipe).
+
+## When to use Cartridges vs. distillation vs. RAG
+
+- **Use `CartridgeRecipe`** whenever you have a long system prompt, instructions, or large chunk of reference docs you don't want to resend on every request.
+- **Use [Model distillation](/docs/training/recipes/distillation/) (`DistillRecipe`)** when you want a smaller model to imitate a bigger teacher model overall, or to bake a prompt straight into a LoRA fine-tune with `context=`.
+- **Use RAG ([Embeddings](/docs/training/recipes/embeddings/))** when your knowledge base changes every minute or has millions of documents. Cartridges work best for context that fits in the model's window and stays mostly stable.
+
+## Want more control?
+
+Custom distillation losses and multi-document prefix initialization are coming soon with [Custom loops](/docs/training/custom-loops/) and [Advanced objectives](/docs/training/advanced-objectives/).
+
+<DocsNext>
+  <a href="/docs/training/recipes/reward-models/">
+    <small>Next guide</small>
+    <strong>Reward models</strong>
+  </a>
+  <a href="/docs/training/recipes/distillation/">
+    <small>Related</small>
+    <strong>Model distillation</strong>
+  </a>
+</DocsNext>

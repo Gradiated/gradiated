@@ -1,0 +1,119 @@
+# Supported training models
+
+<DocsLead>
+  See which base models you can fine-tune, what each size is best at, how much
+  GPU memory it needs, and how token-based billing works.
+</DocsLead>
+
+Pass any model ID as a plain lowercase string (such as `"qwen/qwen3-8b"`) to a [`Recipe`](/docs/training/recipes/). You can also pass an SFT or DPO [`Artifact`](/docs/training/artifacts/) to `SFTRecipe` or `DPORecipe` to continue training from an earlier stage (for example, `SFT -> DPO`).
+
+## Trainable base models
+
+These tables mirror the live catalog. `grad models list` is the source of truth, so check it if anything here looks out of date.
+
+Training runs on a single GPU in v0, so every base below is sized for one 80 GB GPU (an H100 or A100 80 GB). The GPU memory column is `min_gpu_memory_gb` in `grad models list`: the peak measured on an H100 for SFT at the recipe defaults (LoRA rank 32, gradient checkpointing on), plus headroom. `runs.plan()` shows what a run needs and refuses one that doesn't fit a single 80 GB GPU (`model_exceeds_gpu_memory`).
+
+| Model ID          | Best for                                                           | Adapters        | GPU memory  | Notes                                                                                                                                            |
+| ----------------- | ------------------------------------------------------------------ | --------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `qwen/qwen3-0.6b` | Model routers, fast classifiers, latency-critical SFT              | LoRA            | 8 GB        | Default backbone for `RouterRecipe`.                                                                                                             |
+| `qwen/qwen3-1.7b` | Lightweight extraction, formatting, high-volume structured outputs | LoRA            | 12 GB       | Good balance of speed and instruction following.                                                                                                 |
+| `qwen/qwen3-4b`   | Fast assistants, narrow coding and SQL helpers                     | LoRA, Cartridge | 20 GB       | Smallest model that supports Cartridges; default student for `DistillRecipe`.                                                                    |
+| `qwen/qwen3-8b`   | General SFT, DPO and Cartridges                                    | LoRA, Cartridge | 36 GB       | Default for SFT, DPO, Cartridge and reward-model runs.                                                                                           |
+| `qwen/qwen3-14b`  | Harder reasoning, multi-step tool use, domain synthesis            | LoRA, Cartridge | 56 GB       | Largest base that trains on one 80 GB GPU.                                                                                                       |
+| `qwen/qwen3-32b`  | Teacher, judge and eval candidate                                  | none in v0      | not trained | Peaks at about 77 GiB, too close to 80 GB to promise, so v0 doesn't train it. Use it as an off-policy distillation teacher, judge or eval model. |
+
+All Qwen3 models are hybrid thinking models. Recipes render their chat template with `thinking="auto"` by default; see [Chat templates and loss masks](/docs/training/tuning-troubleshooting/#chat-templates-and-loss-masks).
+
+Multimodal (image + text) fine-tuning, DeepSeek MoE training and multi-GPU training are coming soon.
+
+### Recipe-managed backbones
+
+Some recipes pick their own backbone, so you don't pass these as `model=` to `SFTRecipe` or `DPORecipe`:
+
+| Model ID                 | Used by               | Notes                                                                                                                                                                                          |
+| ------------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gradiated/linden-1`     | `DecisionModelRecipe` | The default decision-model backbone (`Choice`, `Noul`, `Score`). Its weights aren't public, so self-hosted trainers need them in `GRAD_MODEL_PATHS`; otherwise pass `model="qwen/qwen3-0.6b"`. |
+| `baai/bge-small-en-v1.5` | `EmbeddingRecipe`     | Domain search and RAG embeddings; full fine-tuning of a 33M-parameter encoder.                                                                                                                 |
+
+### Querying the live catalog
+
+Check the exact list of trainable models and their context limits at any time via the CLI or API:
+
+```bash
+grad models list
+grad models list --recipe sft
+```
+
+Or fetch `GET /v1/base-models` on your server: each entry lists its `recipes`, `adapters`, `max_context_tokens`, `hf_repo` and `price_per_million_tokens_usd`. `client.models.list()` returns the same list in every SDK.
+
+<DocsCallout label="Self-hosting custom Hugging Face checkpoints" tone="tip">
+  When [self-hosting](/docs/training/self-hosting/) `grad` in your own VPC, you
+  can register other compatible Hugging Face models, including internal
+  pretrained checkpoints, with the API server's `GRAD_EXTRA_MODELS_JSON`
+  setting. Trainers load weights from Hugging Face, from `GRAD_MODEL_PATHS` (a
+  JSON map of model ID to a local directory or Hugging Face repo), or from your
+  `models.mirror` bucket in air-gapped installs.
+</DocsCallout>
+
+## Model retirement
+
+Base models get replaced as better open models ship. When we retire one, you get notice ahead of the retirement date, and nothing you trained stops working without warning:
+
+- **Notice:** the retirement date and a named replacement are announced in the changelog and by email.
+- **New runs:** you can start runs on a retiring model until its retirement date. After that, `runs.plan()` rejects the model.
+- **Your artifacts:** trained weights stay downloadable as PEFT adapters for as long as you keep them, so you can always serve them yourself with vLLM or SGLang.
+- **Your next version:** retrain on the replacement with the same recipe and data, then [serve the new artifact](/docs/training/deploying/).
+- **Recipe defaults:** when you leave out `model=`, the run uses the current default, and the dry run says which one. Export the config with `grad runs inspect <run> --yaml` to pin the exact model.
+
+## Judge and comparison models
+
+[`Judge`](/docs/training/rubrics/) items and [evaluations](/docs/training/evaluations/) call models through the OpenAI-compatible endpoint the server is configured with (`GRAD_INFERENCE_BASE_URL` and `GRAD_JUDGE_BASE_URL` on a [self-hosted](/docs/training/self-hosting/#eval-workers) server's eval workers). Every judge call is priced and billed, so a judge must be one of:
+
+- a catalog model, at its catalog price;
+- a judge model the server lists with a price (self-hosted: `GRAD_JUDGE_MODELS_JSON`, such as a frontier model behind your gateway);
+- a chat model `Artifact` from your own workspace, priced at its base model and loaded on your inference endpoint.
+
+Anything else is `422 unknown_judge_model`. A model you only compare in an eval follows the same rule.
+
+## Usage and billing
+
+Every run and eval records what it processed in a usage ledger as it goes: a row every million tokens or five minutes, at each checkpoint, and when an attempt ends, priced at the catalog's per-million-token rate. A resumed run is billed for the tokens it processes from its checkpoint on, never again for the steps before it.
+
+- **Zero-cost pre-flight estimate:** run `grad train --dry-run` or `client.runs.plan(...)` to see `estimated_tokens`, `estimated_cost_usd`, `estimated_duration_s` (on one H100, excluding queueing) and `min_gpu_memory_gb` before you start. The token estimate errs high, by about 15% for English chat, so the run usually costs a little less than planned.
+- **Spend cap:** pass `max_cost_usd=` on any run. It stops cleanly with status `stopped_budget` and saves a checkpoint when the cap is reached; resume it with a higher cap.
+- **Checkpoint retention:** the best and final checkpoints of every run never expire; other checkpoints expire after 30 days unless you promote them.
+- **The ledger:** `grad usage` totals this month by kind (training, eval, scoring, labeling, teacher) with the top runs and evals; `grad usage list` (or `client.usage.list()`) lists the billed rows, newest first, with their run or eval, attempt, tokens and cost. On Gradiated Cloud, eval rows say `billed_by: gateway`: the gateway bills them with your inference usage.
+
+```bash
+grad train --dataset support-sft --name support-sft --recipe sft --dry-run
+grad train --dataset support-sft --name support-sft --recipe sft --wait
+grad usage
+grad usage list --run support-sft
+```
+
+Estimate a run before you plan it. The arithmetic is the planner's; the token count is yours:
+
+<DocsCostEstimator />
+
+A self-hosted server keeps the same ledger at catalog prices so you can see what each run would have cost; it charges nothing.
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Training on Gradiated Cloud, at a fixed price per million tokens for each base
+  model, isn't open yet. Until it is, run the same code against a [local or
+  self-hosted server](/docs/training/self-hosting/). On Cloud, a run whose
+  workspace runs out of balance will stop with `stopped_balance` and resume
+  after a top-up without raising `max_cost_usd`.
+</DocsCallout>
+
+For per-token rates and service tiers, see [Models and pricing](/docs/models-pricing/).
+
+<DocsNext>
+  <a href="/docs/training/tuning-troubleshooting/">
+    <small>Practical guide</small>
+    <strong>Tuning &amp; troubleshooting</strong>
+  </a>
+  <a href="/docs/models-pricing/">
+    <small>Rates</small>
+    <strong>Models and pricing</strong>
+  </a>
+</DocsNext>

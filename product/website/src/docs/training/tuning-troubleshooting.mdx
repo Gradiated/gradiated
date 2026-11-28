@@ -1,0 +1,346 @@
+# Tuning & troubleshooting
+
+<DocsLead>
+  How recipe defaults are chosen, when to change them, how to check chat
+  templates before you pay, and how to fix common SFT and DPO failure modes.
+</DocsLead>
+
+The built-in [recipes](/docs/training/recipes/) resolve every hyperparameter for your base model and dataset, so your first run rarely needs tuning. `runs.plan()` and `--dry-run` print each resolved value. Use this page when you want to push quality further, watch a run closely, or diagnose a run that isn't converging. For every parameter and its default in one place, see the [training parameters reference](/docs/reference/training-parameters/).
+
+## Learning rate
+
+Every recipe defaults to `lr="auto"`. The resolved value depends on the base model, the recipe and the batch size, and it's printed in the dry run:
+
+```text
+Optimizer   AdamW(lr=5.00e-04, betas=(0.9, 0.95), grad_clip=1.0) · auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling
+```
+
+Resolved values at the default batch size of 128, for each recipe's default model and adapter. Always read the dry run for your exact setup:
+
+| Recipe                 | Default model            | `lr`   | Notes                                                                                              |
+| ---------------------- | ------------------------ | ------ | -------------------------------------------------------------------------------------------------- |
+| **SFT** (LoRA)         | `qwen/qwen3-8b`          | `5e-4` |                                                                                                    |
+| **DPO**                | `qwen/qwen3-8b`          | `2e-5` | With `losses.DPO(beta=0.1)`. Much lower than SFT, so the model keeps the formatting SFT taught it. |
+| **Model routers**      | `qwen/qwen3-0.6b`        | `5e-4` |                                                                                                    |
+| **Decision models**    | `gradiated/linden-1`     | `3e-4` |                                                                                                    |
+| **Context Cartridges** | `qwen/qwen3-8b`          | `1e-2` | Prefix KV tokens need a far higher LR than LoRA weights.                                           |
+| **Embeddings**         | `baai/bge-small-en-v1.5` | `2e-5` | Small encoders train fast end-to-end with a low LR.                                                |
+| **Distillation**       | `qwen/qwen3-4b`          | `2e-4` |                                                                                                    |
+| **Reward models**      | `qwen/qwen3-8b`          | `1e-4` | LoRA on the backbone plus a trained scoring head.                                                  |
+
+Rules of thumb behind `"auto"`:
+
+- **Batch size:** the learning rate scales with the square root of the batch size. Doubling `batch_size` raises the resolved `lr` by about 1.4x.
+- **Model size:** smaller models in a family want a higher learning rate than larger ones (SFT on `qwen/qwen3-0.6b` resolves to `8e-4`, on `qwen/qwen3-32b` to `3e-4`).
+- **Rank:** `alpha` defaults to `32` for every rank, so the right learning rate stays the same when you change `rank`.
+- **Objective:** as a sanity check, DPO runs at about 0.04x the SFT learning rate.
+
+### What `"auto"` assumes
+
+`"auto"` isn't a formula applied to any model. It's a table we calibrate with a learning-rate sweep on each base model before that model leaves preview. Each entry was measured at `batch_size=128`, `LoRA(rank=32, alpha=32)`, linear decay with 3% warmup and `AdamW(betas=(0.9, 0.95))`. When you change the batch size, the resolved value is scaled from that measured point by the square-root rule above:
+
+```text
+Optimizer   AdamW(lr=7.07e-04, betas=(0.9, 0.95), grad_clip=1.0) · auto@2: calibrated for qwen/qwen3-8b at batch 128, sqrt batch scaling
+```
+
+A model supports only the recipes it has a calibrated entry for. Any other pairing fails `runs.plan()` with `recipe_not_supported_for_model`, which lists the models that do support the recipe. On a [self-hosted](/docs/training/self-hosting/) server, register a custom checkpoint with `GRAD_EXTRA_MODELS_JSON` and give it a calibrated `lr` per recipe. Use the values above as a starting point, and sweep.
+
+### Sweeping around the default
+
+If you want to tune, sweep a small grid around the resolved value instead of guessing a number. `lr_scale` multiplies whatever `"auto"` resolves to, so the same sweep works for any model:
+
+```python
+from grad import Grad
+from grad.recipes import SFTRecipe
+
+client = Grad()
+dataset = client.datasets.get("support-sft")
+
+runs = [
+    client.runs.create(
+        dataset=dataset,
+        name=f"support-sft-lr{scale}",
+        recipe=SFTRecipe(model="qwen/qwen3-8b", lr_scale=scale),
+    )
+    for scale in (0.5, 1.0, 2.0)
+]
+for run in runs:
+    run.wait()
+    print(run.name, run.eval_report.eval_loss)
+```
+
+Keep the best one, then sweep again around it only if the best was at the edge of the grid.
+
+## LoRA rank
+
+The default is `adapters.LoRA(rank=32)`. Rank has little effect on cost, so you rarely need to go lower.
+
+- **Small datasets** (under ~5k records): ranks of `8`–`16` learn as well as `32`.
+- **SFT on large datasets** (over ~50k records): try `64`–`128`. Low ranks can underfit on broad, high-volume tasks.
+
+## Batch size and number of steps
+
+Every recipe defaults to `batch_size=128` for `epochs=1`. On a small dataset the default drops to a quarter of the training examples (at least 8), so 40 records still take a few optimizer steps per epoch instead of one; `EmbeddingRecipe` keeps 128 because its in-batch negatives need the batch. The `"auto"` learning rate follows the batch size. Defaults for every recipe are in the [reference](/docs/reference/training-parameters/#optimization).
+
+Each epoch is a whole number of batches (the last one may be short), so the plan's step count is exactly what the run reports. The plan warns when a run will take fewer than 100 optimizer steps, because short runs end before the learning rate schedule does its job. Fix it with a smaller batch, more epochs, or more data:
+
+```text
+  ! 40 training examples at batch 128 is 1 step per epoch, below the 100 steps we recommend; consider more data, more epochs or a smaller batch_size.
+```
+
+More than 2–3 epochs over the same SFT data usually overfits. Prefer more data, or a smaller batch for more steps.
+
+## Chat templates and loss masks
+
+Gradiated renders chat templates with the base model's pinned tokenizer, so you never hand-build tokens or special tokens. Three options control what gets trained:
+
+- **`thinking="auto" | "on" | "off"`:** `"auto"` keeps the base model's default. For Qwen3, thinking is on, and assistant turns without a `<think>` block train with thinking off so the model learns to answer directly. There are no effort levels (`"low"`, `"high"`): the Qwen3 chat template only switches thinking on or off.
+- **`preserve_thinking=False`:** whether earlier assistant turns keep their reasoning in the prompt. Most chat templates strip it, which is the default. Set `True` for agents that rely on reasoning from previous turns.
+- **`train_on="last" | "all_assistant"`:** `"last"` (the default for chat records) trains only the final assistant turn. Use `"all_assistant"` for multi-turn agent traces. Tool outputs and user turns are never trained.
+
+These settings are checked against your data rather than silently patched: a record whose target contains a `<think>` block when `thinking="off"`, or a target with no reasoning when `thinking="on"`, fails `runs.plan()` with the record ID.
+
+### One template everywhere
+
+Every run pins the template by ID and revision (for example `qwen3@3`), and the dry run prints it. The pinned template, `thinking` and `preserve_thinking` values are stored on each checkpoint and used by the run's held-out evaluations, so the scores you see match the format the model trained on. [Standalone evals](/docs/training/evaluations/) send plain chat messages to your inference endpoint, which applies the model's own chat template: serve the artifact with the same `thinking` setting you trained with. Hosted deployments, coming soon on Gradiated Cloud, will apply the pinned settings and return reasoning in `reasoning_content`, separate from `content`.
+
+We test each template revision so that generation prompts match the base model's Hugging Face chat template token for token. When a template has to change (for example to fix a tool-call format), it gets a new revision. Existing runs and checkpoints keep the revision they were trained with, and the changelog lists the change.
+
+Preview the rendering before paying for a run. Trained spans are marked, and the summary shows what fraction of each record is trained. Token counts in the preview are estimates (about 4 characters per token, reported as `token_counts: "estimated"`); exact counts come from the run's metrics:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad render support-sft --model qwen/qwen3-8b --limit 3
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+dataset = client.datasets.get("support-sft")
+
+preview = client.datasets.render(dataset, model="qwen/qwen3-8b", train_on="last", limit=3)
+print(preview)  # trained spans in [[...]], plus the trained-token share per record
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Try the rules on a sample record. This runs the same masking rules as the server's render preview:
+
+<DocsTokenMask />
+
+`runs.plan()` also warns about records longer than the model's context window, and counts every record the recipe can't use, with the reasons and a few example IDs: `120 of 2400 records cannot be used by 'sft' and will be skipped (record has no assistant turn to train on); for example 'r_12', 'r_40', 'r_77'.` The run's warnings report the same skips. The trainer caps each training sequence at 8,192 tokens and truncates longer ones; the run's eval report says how many were cut.
+
+## Checkpoints, resuming, and spend caps
+
+Managed recipe runs checkpoint automatically every 10% of steps (at least every 20 steps) or every 5 minutes, whichever comes first, including optimizer state, so losing a GPU costs a few minutes of training at most. Checkpoints are cheap: training pauses only to copy the adapter and optimizer state in memory, and the upload runs in the background. They evaluate on the held-out split every 25% of the run, at most every 20 steps, because an eval costs far more than a checkpoint (change it with `eval_every=`), and `run.artifact` is the best checkpoint by eval (`select="best"`: the lowest eval loss, or the highest score for recipes that report one; pass `select="last"` to keep the final one).
+
+- **What's kept:** the best checkpoint (the one that becomes `run.artifact` with `select="best"`) and the final checkpoint never expire, and both download as PEFT weights with no conversion step. While a run trains it keeps its last 3 checkpoints plus its best one, and those intermediate checkpoints are kept for 30 days unless you promote one with `ckpt.promote(name=...)`. Change the default with `checkpoint_ttl_days=` on the recipe.
+- **What each checkpoint records:** base model and revision, adapter config, chat template revision, `thinking` and `train_on`, the resolved `lr`, the resolved `loss` with its rule version, and the step. Evaluations and serving read these, so you never pass them again.
+
+Set `max_cost_usd=` on every run you start. When the cap is reached, the run stops gracefully, saves a checkpoint, and ends with status `stopped_budget`, so a mistake costs at most the cap. Resume a stopped, failed, or cancelled run from its latest checkpoint; a budget-stopped run needs a higher cap. (On Gradiated Cloud, a run whose workspace runs out of balance ends `stopped_balance` instead, and resumes with the same cap after a top-up.)
+
+```python
+from grad import Grad
+from grad.recipes import SFTRecipe
+
+client = Grad()
+run = client.runs.create(
+    dataset=client.datasets.get("support-sft"),
+    name="support-sft",
+    recipe=SFTRecipe(model="qwen/qwen3-8b"),
+    max_cost_usd=20,
+).wait(raise_on_failure=False)  # by default wait() raises RunFailedError unless the run completed
+
+if run.status == "stopped_budget":
+    run.resume(max_cost_usd=40).wait()
+```
+
+From the CLI, use `grad runs resume RUN --max-cost-usd 40 --wait`.
+
+A resumed or requeued run is billed only for the tokens it processes: the steps up to its checkpoint aren't billed again, and steps replayed after the last checkpoint are. `wait()` gives up after 24 hours by default (the run keeps going); pass `timeout=` to change that.
+
+## Watching a run
+
+Stream step metrics (loss, eval metrics, tokens, and cost) while a run trains:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad runs logs support-sft --follow
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+run = client.runs.list(limit=1).to_list()[0]
+
+for point in run.metrics(follow=True):
+    print(point.step, point.loss, point.eval_metrics, point.cost_usd)
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+In a terminal, `grad train --wait` and `grad runs watch RUN` open a full-screen view of the same stream (`--plain` keeps the line output). Attaching to a run that's already going replays it from its first event, so the loss chart covers every step from 0 to the last, and the phase clock counts from when the phase began:
+
+<DocsRunReplay />
+
+### Phases and events
+
+Every run reports what it is doing as a **phase**: `queued`, `waiting_for_compute` (no worker has picked it up yet), `starting` (a worker claimed it; the event names its GPU model and memory), `loading_model`, then `training`, `evaluating` and `checkpointing` as they alternate, `uploading` and `completing`. `run.phase` and `run.phase_since` hold the current one. While a run waits for compute, `run.workers_online` counts the workers that could take it, and on Gradiated Cloud `run.autoscaling` is true while new workers start. A queued run also says why it waits: `run.queue_position` is about how many runs start before it (workers are shared fairly between workspaces, so this counts other workspaces' runs too), and `run.queue_message` is a ready line such as `Queued behind 3 runs`, `Queued: workspace concurrency limit (8 running)` (your workspace already runs as many as it may at once) or `Waiting for a GPU with ≥46 GB; online workers have 24 GB`. A workspace may have 500 queued jobs at once; creating another answers `429 queue_limit`.
+
+`run.wait()` shows this for you: a live progress line in a terminal (phase, step, loss, cost and ETA), a small display that updates itself in Jupyter, and nothing in scripts, CI or logs. Pass `progress=False` to turn it off, or `GRAD_NO_PROGRESS=1`. `grad train --wait` prints the same lines (or the full-screen view in a terminal), for example `Queued behind 3 runs — 2m 10s` or `Waiting for a worker (none online) — 2m 10s`.
+
+For your own display or alerting, read the typed events. Each has a stable `type` (`phase`, `metric`, `checkpoint`, `attempt`, `warning`, `log`, and `completed` last), and the stream reconnects on its own after a dropped connection without repeating events:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import AttemptEvent, CheckpointEvent, Grad, PhaseEvent
+
+client = Grad()
+run = client.runs.list(limit=1).to_list()[0]
+
+for event in run.events(follow=True):
+    if isinstance(event, PhaseEvent):
+        print(event.phase, event.step)
+    elif isinstance(event, AttemptEvent):
+        print(event.message)
+    elif isinstance(event, CheckpointEvent):
+        print("checkpoint at step", event.step, event.eval_score)
+
+# Or let wait() call you for each event while it waits
+run.wait(on_event=lambda e: print(e.type, e.seq), progress=False, raise_on_failure=False)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+const run = await grad.runs.get("run_01J9X");
+for await (const event of grad.runs.events(run.id, { follow: true })) {
+  if (event.type === "phase") console.log(event.phase, event.step);
+  if (event.type === "attempt") console.log(event.message);
+}
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+run, err := client.Runs.Get(ctx, "run_01J9X")
+if err != nil {
+	return err
+}
+for ev, err := range client.Runs.Events(ctx, run.ID, grad.EventsOptions{Follow: true}) {
+	if err != nil {
+		return err
+	}
+	if ev.Type == grad.EventAttempt {
+		fmt.Println(*ev.Message)
+	}
+}
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Rust">
+
+```rust
+use grad::RunEvent;
+
+let run = client.runs().get("run_01J9X").await?;
+let mut events = client.runs().events(&run.id, true);
+while let Some(ev) = events.next().await {
+    if let RunEvent::Attempt(a) = ev? {
+        println!("{}", a.message);
+    }
+}
+// events.into_stream() gives a futures Stream for StreamExt combinators.
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad runs events support-sft --follow
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+The same events are served at `GET /v1/runs/{id}/events`, as JSON pages or as server-sent events (send `Accept: text/event-stream`; `Last-Event-ID` resumes). Ignore event types you don't know, so newer servers don't break your code.
+
+### Interruptions and automatic resume
+
+A run's worker can go away mid-run: the GPU is reclaimed, the machine crashes, or the network drops. The run then goes back to the queue and resumes from its latest checkpoint on a new worker, with no action from you, and you see it as an `attempt` event and in `run.last_interruption`:
+
+```
+⚠ attempt 1 interrupted at step 120: the GPU was reclaimed; resuming from step 120 on a new worker
+```
+
+- **When the GPU is reclaimed**, the worker gets a few seconds of notice. If the next step and a checkpoint fit in that time, it saves a checkpoint at the current step first, so the new worker resumes exactly there; otherwise it resumes from the previous checkpoint. These interruptions don't count toward the run's attempt limit, so a run survives many of them in a row.
+- **When a worker is lost** (it stops responding) or hits an error, the run resumes from its latest checkpoint and the attempt counts toward `max_attempts`; once that many attempts end without a result, the run fails with the last error. Running out of GPU memory is retried the same way.
+- **Billing stays exact:** you pay for the tokens each attempt processed. Steps before the checkpoint a run resumes from aren't billed again; steps replayed after it are, and a checkpoint at the current step means none are replayed.
+
+`run.attempt` counts every start, so it can be higher than `run.max_attempts` after reclaimed GPUs.
+
+### Experiment tracking (W&B and MLflow)
+
+Attach a logger to stream the run's metrics (loss, learning rate, eval metrics, tokens and cost) to Weights & Biases or MLflow. Store the tracker key once as a workspace secret; the trainer reads it when the run starts, and the key never appears on the run:
+
+```python
+from grad import Grad, loggers
+from grad.recipes import SFTRecipe
+
+client = Grad()
+client.secrets.set("wandb-key", "...")  # or: grad secrets set wandb-key
+
+run = client.runs.create(
+    dataset=client.datasets.get("support-sft"),
+    name="support-sft",
+    recipe=SFTRecipe(
+        model="qwen/qwen3-8b",
+        loggers=[
+            loggers.WandB("support-sft", secret="wandb-key"),
+            # or loggers.MLflow("https://mlflow.internal.example", experiment="support-sft")
+        ],
+    ),
+).wait()
+```
+
+In a run file for `grad train -f`, the same trackers go under `loggers:` (for example `- {kind: wandb, project: support-sft, secret: wandb-key}`, or `kind: mlflow` with `tracking_uri`). TypeScript uses `loggers.wandb({ project, secret })` and Go `grad.WandB(project, secret, entity)`.
+
+A misconfigured or unreachable tracker never blocks a run: the dry run warns about a secret it can't find, and a tracker that errors during training is dropped and reported once as a run warning. The secret must allow the tracker's host (`grad secrets set wandb-key --allowed-host api.wandb.ai`; W&B's public host is allowed by default). Self-hosted workers reach the tracker from their own network and, like source syncs, only public `https` hosts; for an MLflow server on a private address, set `GRAD_SOURCES_EGRESS_ALLOW` to its CIDR on the train workers (Helm: `workers.train.env`).
+
+## Troubleshooting common failure modes
+
+| Symptom                                                     | Likely cause                                                                                                                                       | What to do                                                                                                                                                              |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **DPO outputs get repetitive or degenerate**                | `lr` is too high, `beta` is too low, or `chosen` / `rejected` pairs come from a very different model than the starting weights.                    | Keep `lr="auto"` (or try `lr_scale=0.5` if you set your own), increase `losses.DPO(beta=0.1..0.2)`, and generate pairs from the same SFT checkpoint you start DPO from. |
+| **Answers cut off mid-sentence or mid-thought**             | SFT records were truncated at the 8,192-token training sequence cap, or the eval or serving `max_tokens` is too low.                               | Check the plan's and the eval report's truncation warnings; shorten records, or raise `max_tokens`.                                                                     |
+| **Model ignores or garbles the chat format after training** | Training data didn't match the base model's template (for example, thinking blocks on some turns but not others), or the wrong turns were trained. | Run `grad render <dataset> --model <base>` and check which spans are trained; set `thinking=` and `train_on=` explicitly.                                               |
+| **Eval score drops while train loss drops**                 | Overfitting on a small dataset or leakage between train and eval splits.                                                                           | Keep `epochs=1` (2 at most), keep `splits.BySession(eval_fraction=0.10)` and `select="best"`, or add more diverse examples.                                             |
+
+<DocsNext>
+  <a href="/docs/training/self-hosting/">
+    <small>Next</small>
+    <strong>Self-hosting</strong>
+  </a>
+  <a href="/docs/training/custom-loops/">
+    <small>Back</small>
+    <strong>Custom loops</strong>
+  </a>
+</DocsNext>

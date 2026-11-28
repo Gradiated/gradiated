@@ -30,3 +30,6 @@ a18b5b3125da03bf6dfb7502cd2e848feb4f6bc4:infra/environments/prod/us-east-1/kuber
 # Made-up UUID share tokens in a test and a Storybook mock; fixtures, not credentials. Removed when links became HMAC signatures.
 4f61004348157c36c71dca7d8b57f1d0aefe5890:product/services/api/test/report-shares.test.ts:generic-api-key:7
 4f61004348157c36c71dca7d8b57f1d0aefe5890:product/services/console/src/stories/pages/training.stories.tsx:generic-api-key:101
+
+# Example UUID Idempotency-Key header in the training API reference; a request identifier, not a credential.
+eeb7edad0e9a1af8046ac1bc85c22b1501b33f6d:product/website/src/docs/api-reference.mdx:generic-api-key:114

@@ -1,0 +1,173 @@
+# RL for agents
+
+<DocsLead>
+  Train a model with reinforcement learning by grading its answers with code or
+  another model.
+</DocsLead>
+
+<DocsCallout label="Coming soon" tone="warn">
+  `GRPORecipe` and environments are coming soon. Until then the SDKs raise
+  `NotAvailableInV0Error` for a GRPO recipe, and the API answers `422
+  recipe_deferred`.
+</DocsCallout>
+
+Use **`GRPORecipe`** when you can **grade whether an answer worked** (the right number, valid SQL, passing unit tests, the right API call) even when there is more than one right way to write it. The same managed recipe handles single-turn prompts and multi-turn agents that call tools or work inside containers: pass `rubric=` for prompts, or `env=` for an [`Environment`](/docs/training/environments/). Gradiated runs the sampling, grading, and training, checkpoints as it goes, and keeps running after you close your laptop.
+
+If the base model doesn't follow your output format yet, run a quick [Supervised fine-tuning (SFT)](/docs/training/recipes/sft/) run first and pass that [`Artifact`](/docs/training/artifacts/) as `model=`.
+
+## Train on prompts with a `Rubric`
+
+This example trains `qwen/qwen3-4b` on GSM8K math word problems from Hugging Face. `validators.NumericMatch` compares the last number in each answer with the dataset's `answer` column, so there is no judge to pay for. It runs as pasted:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, Rubric, Scorer, validators
+from grad.recipes import GRPORecipe
+
+client = Grad()
+tasks = client.datasets.from_hf(
+    "openai/gsm8k", subset="main", split="train", prompt="question", answer="answer"
+)
+
+recipe = GRPORecipe(
+    model="qwen/qwen3-4b",
+    rubric=Rubric([Scorer("correct", fn=validators.NumericMatch(field="answer"))]),
+)
+
+run = client.runs.create(dataset=tasks, name="gsm8k-grpo", recipe=recipe).wait()
+print(run.artifact.id)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad, Rubric, Scorer, recipes, validators } from "@gradiated/grad";
+
+const grad = new Grad();
+const tasks = await grad.datasets.fromHf("openai/gsm8k", {
+  subset: "main",
+  split: "train",
+  prompt: "question",
+  answer: "answer",
+});
+
+const recipe = recipes.grpo({
+  model: "qwen/qwen3-4b",
+  rubric: new Rubric([
+    new Scorer("correct", { fn: validators.numericMatch({ field: "answer" }) }),
+  ]),
+});
+
+const run = await grad.runs
+  .create({ dataset: tasks, name: "gsm8k-grpo", recipe })
+  .wait();
+console.log(run.artifact.id);
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Call `client.runs.plan(dataset=tasks, recipe=recipe)` before `create` to see the resolved settings and estimated cost for $0.
+
+For open-ended outputs, mix code checks (`validators.Regex(...)`, or your own Python `Scorer` that parses SQL or compiles TypeScript) with a `Judge` (a frontier model or your own [reward model](/docs/training/recipes/reward-models/) `Artifact`) in the same [`Rubric`](/docs/training/rubrics/).
+
+## Train a multi-turn tool agent with `env=`
+
+Give the model tools and let it call them as many times as it needs. [`environments.Tools`](/docs/training/environments/#tools-from-python-functions) turns plain Python functions into tools; it runs in Gradiated's sandbox, so this is still a fully managed run:
+
+```python
+from grad import Grad, Rubric, Scorer, environments, validators
+from grad.recipes import GRPORecipe
+
+client = Grad()
+tasks = client.datasets.from_hf(
+    "openai/gsm8k", subset="main", split="train", prompt="question", answer="answer"
+)
+
+def calculator(expression: str) -> str:
+    """Evaluate an arithmetic expression such as '12 * (3 + 4)' and return the result."""
+    if not set(expression) <= set("0123456789+-*/(). ") or "**" in expression:
+        return "error: use only numbers, spaces and + - * / ( )"
+    return str(eval(expression))
+
+env = environments.Tools(
+    [calculator],
+    tasks=tasks,
+    rubric=Rubric([Scorer("correct", fn=validators.NumericMatch(field="answer"))]),
+    max_turns=6,
+)
+
+run = client.runs.create(
+    dataset=tasks,
+    name="gsm8k-calculator",
+    recipe=GRPORecipe(model="qwen/qwen3-4b", env=env),
+).wait()
+```
+
+The same `env=` argument takes any environment:
+
+- **Containers and CLI agents:** `environments.Harbor(agent="claude-code")` runs Harbor task folders with Claude Code, Codex, OpenCode, or mini-SWE-agent driving the model. Train in the harness you will deploy in.
+- **Prime Intellect environments:** `environments.from_verifiers("owner/env@version")` runs an Environments Hub package.
+- **Your own state:** a [custom `Environment`](/docs/training/environments/#writing-a-custom-environment) for Postgres, internal APIs, or Compose stacks. To keep those containers on your machines, run `grad env serve` and pass `env=environments.Remote("name")`; see [Run rollouts on your own machines](/docs/training/environments/#run-rollouts-on-your-own-machines).
+
+Python tools and scorers are packaged and run in an isolated sandbox; see [Where your code runs](/docs/training/recipes/#where-your-code-runs).
+
+## Parameters you might change
+
+- **`group_size`** _(default `8`)_: how many attempts the model makes at each prompt; they're scored and compared against each other. Raise it to `16` when most prompts score all `0` or all `1`.
+- **`max_turns`**: the turn limit for a multi-turn environment, when you want a different one from the environment's own.
+- **`max_staleness`** _(default `0`)_: let rollouts run up to this many weight versions behind training. `1`–`2` keeps the GPUs busy when container rollouts are slow.
+- **`kl_coef`** _(default `0.0`)_: set `0.01`–`0.05` only if outputs drift away from your starting model's style.
+
+Every other setting has a default; see the [training parameters reference](/docs/reference/training-parameters/#grporecipe).
+
+## When to use RL vs. SFT vs. DPO
+
+- **Use [SFT](/docs/training/recipes/sft/)** first if the model doesn't reliably produce valid JSON, SQL, or tool calls yet, since RL works much better once formatting is solid.
+- **Use [DPO](/docs/training/recipes/dpo/)** when you already have offline `(chosen, rejected)` pairs and don't need the model to explore new solutions.
+- **Use RL (`GRPORecipe`)** when you can grade answers automatically (with code checks, tests, or a `Judge`) and want the model to keep improving beyond your existing examples.
+
+## Practical tips before scaling up
+
+1. **Check the base model first:** run `client.evals.create(model="qwen/qwen3-4b", tasks=tasks.take(200), rubric=..., samples=4)`. A base model that scores near 0% or near 100% leaves RL nothing to learn from.
+2. **Start with SFT if formatting is shaky:** if the base model outputs broken JSON or tool calls on more than 30% of tries, run a short [SFT](/docs/training/recipes/sft/) job on 200–500 good examples first, then pass `model=sft.artifact`.
+3. **Watch for all-pass or all-fail prompts:** if more than 70% of prompt groups score all `0.0` (too hard) or all `1.0` (too easy), add partial-credit checks to your [`Rubric`](/docs/training/rubrics/), raise `group_size`, or filter your dataset to medium-difficulty prompts.
+4. **Watch for cut-off answers:** if the run's `truncation_rate` metric is above 5%, answers are too long for the generation limit. Raise `max_new_tokens`, or use `thinking="off"` if the task doesn't need long reasoning.
+5. **Starting from logs?** See [Traces to environments](/docs/training/recipes/traces-to-environments/).
+
+## Deploy and call your agent
+
+Publish the trained [`Artifact`](/docs/training/artifacts/) as a model version on Gradiated Cloud and call `"your-org/gsm8k-calculator"` through the standard [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/), or download the LoRA weights to run on your own vLLM or SGLang servers (see [Deploying](/docs/training/deploying/)):
+
+```python
+import os
+from openai import OpenAI
+
+oai = OpenAI(
+    base_url="https://api.gradiated.com/v1",
+    api_key=os.environ["GRADIATED_API_KEY"],
+)
+res = oai.chat.completions.create(
+    model="your-org/gsm8k-calculator",
+    messages=[{"role": "user", "content": "A box holds 12 eggs. How many eggs are in 7 boxes?"}],
+)
+print(res.choices[0].message.content)
+```
+
+## Want more control?
+
+Writing a new RL algorithm, a custom advantage estimator, PPO with a value head, or your own loss? See [Custom loops](/docs/training/custom-loops/) and [Advanced objectives](/docs/training/advanced-objectives/). For everything else, `GRPORecipe` takes `loss=`, `advantage=`, and `env=` directly.
+
+<DocsNext>
+  <a href="/docs/training/recipes/distillation/">
+    <small>Next guide</small>
+    <strong>Model distillation</strong>
+  </a>
+  <a href="/docs/training/environments/">
+    <small>Multi-turn RL</small>
+    <strong>Environments</strong>
+  </a>
+</DocsNext>

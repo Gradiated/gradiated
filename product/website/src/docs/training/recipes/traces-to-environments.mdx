@@ -1,0 +1,232 @@
+# Building an environment from traces
+
+<DocsLead>
+  Turn your existing production logs into an RL environment, starting simple and
+  adding containers only when you need them.
+</DocsLead>
+
+<DocsCallout label="Coming soon" tone="warn">
+  Environments are coming soon. Today you can already push these traces and
+  train on them with [SFT](/docs/training/recipes/sft/) or a
+  [router](/docs/training/recipes/router/).
+</DocsCallout>
+
+Most teams start with thousands of logged requests in a [`Dataset`](/docs/training/trajectories/), not a ready-made RL simulator. You don't need to build containers on day one. Start at the simplest level that fits your task and move up using the same [`Task` and `Environment`](/docs/training/environments/) and [`Rubric`](/docs/training/rubrics/) classes:
+
+| Level                            | Best for                                                                  | Setup time | How it works                                                                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Trace → `Task` + `Rubric`** | SQL, diff-merge, JSON extraction, support replies, single-turn tool calls | Minutes    | Uses the prompt and tools from each log; graded by `validators.*`, unit tests, or a `Judge`.                                      |
+| **2. Trace → Mock tool sandbox** | Multi-turn tool-calling agents (`get_order`, `search_kb`, `issue_refund`) | An hour    | Seeds an in-memory store from the log's tool outputs; write tools update that store instead of production.                        |
+| **3. Trace → Harbor container**  | Coding agents, CLI debugging, full-stack web apps                         | 1–2 days   | Harbor container tasks (`Dockerfile`, `tests/test.sh`, `solution/solve.sh`) verified so tests fail before the fix and pass after. |
+
+## Step 0: Pick examples the model actually struggles on
+
+Running RL on prompts the model already gets right 100% of the time (or never solves) wastes money because every attempt gets the same score. Score your dataset first with a `Judge` or your existing outcome scores, then keep **failures, escalations, and human-edited answers**:
+
+```python
+from grad import Grad, Judge
+
+client = Grad()
+dataset = client.datasets.get("support-prod")
+
+judge = Judge(
+    name="resolved",
+    model="{{SONNET_MODEL}}",
+    prompt="Did the assistant resolve the user's request accurately without policy errors?",
+)
+scored = dataset.score(judge).wait()
+
+# Focus on failures or sessions where a human stepped in to fix the output
+hard_traces = scored.filter(
+    lambda t: t.scores["resolved"] < 0.8 or t.expected_output is not None
+)
+print(f"Selected {hard_traces.count()} candidate traces for environment tasks")
+```
+
+A Python function passed to `filter()` runs on your machine and saves the matching IDs as a server-side view, without copying any traces. Field filters such as `scored.filter(scores={"resolved": "<0.8"})` run entirely on the server.
+
+## Level 1: Trace to `Task` + `Rubric` (single-turn)
+
+If your task doesn't need multi-turn external state, train on the filtered logs directly. Each trace becomes a task with its original `messages`, `tools`, `expected_output`, and `metadata` (`Task.from_trajectory(t)` does the conversion if you want `Task` objects yourself):
+
+```python
+from grad import Grad, Judge, Rubric, Scorer, validators
+from grad.recipes import GRPORecipe
+
+client = Grad()
+hard_traces = client.datasets.get("sql-assistant-prod").filter(scores={"resolved": "<0.8"})
+
+sql_valid = validators.Regex(r"^\s*(SELECT|WITH)\b", flags="i")
+
+def valid_sql_syntax(traj) -> float:
+    return 1.0 if sql_valid(traj.text) else 0.0
+
+rubric = Rubric([
+    Scorer("sql_syntax", weight=0.3, fn=valid_sql_syntax),
+    Judge(
+        name="matches_intent",
+        model="{{SONNET_MODEL}}",
+        prompt="Compare the generated SQL against expected_output and verify it returns the exact requested result.",
+        weight=0.7,
+    ),
+])
+
+run = client.runs.create(
+    dataset=hard_traces,
+    name="sql-agent-grpo",
+    recipe=GRPORecipe(model="qwen/qwen3-8b", rubric=rubric),
+).wait()
+```
+
+`valid_sql_syntax` is plain Python, so it is packaged and runs in an isolated sandbox with the run; see [Where your code runs](/docs/training/recipes/#where-your-code-runs).
+
+If you already have a database fixture or unit tests that can execute the generated SQL or code patch, run them deterministically inside a `Scorer` and reserve `Judge` only for subjective quality checks.
+
+## Level 2: Trace to mock tool sandbox (multi-turn)
+
+Your multi-turn logs already contain the tool schemas, the read calls the agent made (`get_order`, `lookup_policy`), what your backend returned, and how the session ended. Turn each log into a sandbox so training never touches production:
+
+1. **Pull seed data from the log:** `Task.from_trajectory(t, seed=...)` keeps the read-tool responses (the order row, customer record, or help-center articles) on `task.seed`.
+2. **Load a fresh store per attempt:** `setup()` copies `task.seed` into a new in-memory store.
+3. **Answer tool calls from the store:** read tools look up the store, and write tools (`issue_refund`) update it instead of real APIs. Tool calls arrive already parsed in `action.tool_calls`.
+4. **Score against the store:** the default `evaluate()` runs your `Rubric` with the store as `state`, so a `StatefulScorer` can check what the agent changed.
+
+```python
+import copy
+import json
+from dataclasses import dataclass, field
+
+from grad import Environment, Grad, Judge, Observation, Rubric, StatefulScorer, Task
+from grad.recipes import GRPORecipe
+
+client = Grad()
+traces = client.datasets.get("support-prod").filter(scores={"resolved": "<0.8"})
+
+@dataclass
+class MockStore:
+    orders: dict[str, dict]
+    refunds: list[dict] = field(default_factory=list)
+
+class TraceReplayEnv(Environment[MockStore]):
+    def setup(self, task: Task, rollout_id: str) -> MockStore:
+        # Deep-copy the fixtures so parallel attempts never share mutable state
+        return MockStore(orders=copy.deepcopy(task.seed["orders"]))
+
+    def step(self, handle: MockStore, action) -> Observation:
+        if not action.tool_calls:
+            return Observation(done=True)  # final answer to the user
+
+        results = []
+        for call in action.tool_calls:
+            if call.name == "get_order":
+                results.append(handle.orders.get(call.arguments["order_id"], {"error": "not_found"}))
+            elif call.name == "issue_refund":
+                handle.refunds.append(call.arguments)
+                results.append({"status": "refunded"})
+            else:
+                results.append({"error": f"unknown tool {call.name}"})
+        return Observation(text=json.dumps(results), done=False)
+
+def correct_refund(traj, store: MockStore) -> float:
+    expected = traj.metadata.get("expected_refund")
+    return 1.0 if expected in store.refunds else 0.0
+
+rubric = Rubric([
+    StatefulScorer("refund_state", weight=0.7, fn=correct_refund),
+    Judge(
+        name="policy_compliance",
+        model="{{SONNET_MODEL}}",
+        prompt="Verify the assistant explained the refund policy clearly and accurately.",
+        weight=0.3,
+    ),
+])
+
+def seed_from_trace(t) -> dict:
+    # Collect every order the agent looked up in production, keyed by order_id
+    return {"orders": {r["order_id"]: r for r in t.tool_results("get_order")}}
+
+tasks = [Task.from_trajectory(t, seed=seed_from_trace(t)) for t in traces]
+env = TraceReplayEnv(rubric=rubric)
+
+run = client.runs.create(
+    dataset=tasks,
+    name="refund-agent",
+    recipe=GRPORecipe(model="qwen/qwen3-8b", env=env),
+).wait()
+```
+
+This environment is plain Python with no containers, so it is packaged and runs in Gradiated's sandbox. If your tools only need canned responses, [`environments.Tools`](/docs/training/environments/#tools-from-python-functions) with functions that read a fixture is even shorter.
+
+<DocsCallout label="Handling unexpected tool calls" tone="tip">
+  During RL, the model will try tool arguments that weren't in the original log.
+  Return a realistic `"not_found"` response from your local store (or fall back
+  to a small mock model) instead of crashing the run.
+</DocsCallout>
+
+## Level 3: Trace to Harbor containers (coding, CLI, and full-stack apps)
+
+For coding agents, DevOps debugging, or full-stack apps where you need real compilers, tests, or databases, package your traces as **Harbor** task folders so they work out of the box with `environments.Harbor`.
+
+### Mapping trace fields to a Harbor task folder
+
+```text
+harbor-tasks/<trace_id>/
+├── task.toml               # timeouts, CPU/memory limits, trace_id metadata
+├── instruction.md          # initial user prompt / issue description from input.messages
+├── environment/
+│   └── Dockerfile          # pinned pre-fix repo commit SHA / base image from metadata
+├── solution/
+│   └── solve.sh            # gold fix diff from expected_output (or merged PR)
+└── tests/
+    └── test.sh             # regression test from the PR or synthesized state check
+```
+
+### Sanity-check generated tasks before training
+
+Tasks generated from logs often have bugs: a test might already pass before any fix, a Docker image might fail to build, or the reference patch might fail the test. Run a two-step check before training on them:
+
+1. **Must fail at the start (`reward == 0.0`):** run `tests/test.sh` right after `setup()` with no agent changes. Drop any task that already passes.
+2. **Reference fix must pass (`reward == 1.0`):** run `solution/solve.sh` followed by `tests/test.sh` with `env.verify_oracles(...)`. Drop any task that fails or times out.
+
+```python
+from grad import Grad, environments
+from grad.recipes import GRPORecipe
+
+client = Grad()
+
+# 1. Load synthesized Harbor tasks and keep only verified fail-to-pass tasks
+env = environments.Harbor(agent="claude-code", max_turns=40)
+raw_tasks = environments.Harbor.load_tasks("./harbor-tasks/")
+verified_tasks = env.verify_oracles(raw_tasks, require_initial_fail=True)
+print(f"Kept {len(verified_tasks)}/{len(raw_tasks)} verified tasks")
+
+# 2. Train with the managed recipe on the verified Harbor suite
+run = client.runs.create(
+    dataset=verified_tasks,
+    name="code-agent-harbor",
+    recipe=GRPORecipe(model="qwen/qwen3-32b", env=env),
+).wait()
+print(run.artifact.id)
+```
+
+`agent="claude-code"` runs Claude Code inside each container against the training weights; pick the harness you will deploy the model in (`"codex"`, `"opencode"`, `"mini-swe-agent"`, or `"default"`). If the containers need access to private registries or code that must stay in your network, serve the environment yourself with `grad env serve` and pass `env=environments.Remote(...)` (see [Run rollouts on your own machines](/docs/training/environments/#run-rollouts-on-your-own-machines)).
+
+## Pre-training checklist before launching RL
+
+Run a quick 8–16 task smoke pass against your starting model before scaling up (`env.rollout_groups(artifact="qwen/qwen3-8b", tasks=tasks[:16], group_size=8)`):
+
+- **Check zero-variance rate:** If >70% of prompt groups get all `0.0` or all `1.0`, add partial-credit rubric terms or adjust your trace difficulty filter in Step 0.
+- **Keep test suites isolated:** Never bake `tests/` into the agent's container image; `environments.Harbor` copies `tests/` in only during `evaluate()`.
+- **Verify `loss_mask`:** Confirm tool and shell observations have `loss_mask = 0.0` (automatic when returning `Observation(text=...)`, using `environments.Tools` or `environments.Harbor`, or recording with `snap.openai_client()` / `snap.anthropic_client()`).
+- **Use a warm pool once the loop works:** Cold container startup is fine for validating 20 tasks, then switch to pre-warmed containers or template DB resets before scaling to thousands of rollouts.
+
+<DocsNext>
+  <a href="/docs/training/recipes/distillation/">
+    <small>Next guide</small>
+    <strong>Model distillation</strong>
+  </a>
+  <a href="/docs/training/recipes/rl-agents/">
+    <small>Related</small>
+    <strong>RL for agents</strong>
+  </a>
+</DocsNext>

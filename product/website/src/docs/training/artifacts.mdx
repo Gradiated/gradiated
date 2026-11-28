@@ -1,0 +1,180 @@
+# Artifacts
+
+<DocsLead>
+  Every training run saves a versioned `.grad` artifact with your trained
+  weights and evaluation results.
+</DocsLead>
+
+An **`Artifact`** is a saved, versioned model (`fast-diff-merge@2026-11-26-1`). A training run produces one, and so does [uploading or importing](#upload-or-import-an-artifact) weights you trained elsewhere. Artifacts are never overwritten: every new run or upload writes a new version. Each one is a `.grad.tar.gz` bundle holding the weights, the config needed to serve them, a `manifest.json` (base model repo and revision, recipe, checksums of every file) and, for a trained artifact, the held-out `eval_report.json`.
+
+Every artifact records where it came from in `provenance`: `source` is `run` (with the `run_id`), `upload` (with the `uploader`, the API key that uploaded it) or `import` (with the `uri`, `hf://owner/name@<commit>`).
+
+## What's inside
+
+The bundle's `format` depends on the recipe:
+
+| `format`              | Recipes                                         | Files                                                                                            |
+| --------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `peft_lora`           | SFT, DPO, distillation                          | `adapter_config.json`, `adapter_model.safetensors`: a standard PEFT LoRA for the base model      |
+| `merged_safetensors`  | SFT or distillation with `merge_on_export=True` | A standalone Hugging Face model (`config.json`, Safetensors weights, tokenizer)                  |
+| `cartridge`           | Cartridge                                       | `cartridge.safetensors`: the trained KV prefix                                                   |
+| `encoder_safetensors` | Embedding                                       | The full fine-tuned encoder directory with `grad_embedding.json` and Sentence Transformers files |
+| `router_bundle`       | Router                                          | The backbone adapter, `router_head.safetensors` and `router_config.json` (candidates, prices)    |
+| `decision_bundle`     | Decision model                                  | The backbone adapter, `decision_head.safetensors` and `decision_config.json` (questions, heads)  |
+| `reward_bundle`       | Reward model                                    | The backbone adapter, `reward_head.safetensors` and `reward_config.json`                         |
+
+The [artifact format spec](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md) documents every file, tensor and config field, with a reference Python loader for each format, so your serving stack never needs the trainer's code.
+
+## Inspect and test an artifact
+
+Load any saved artifact with `client.artifacts.get(...)` (or use `run.artifact` straight from a finished run) and check its held-out `eval_report` before you ship it. To compare it with other models on your own examples, pass it to an [evaluation](/docs/training/evaluations/):
+
+```python
+from grad import Grad
+
+client = Grad()
+art = client.artifacts.get("fast-diff-merge@2026-11-26-1")
+
+print(art.base_model, art.recipe_kind)
+print(art.eval_report)
+```
+
+You can pass an `Artifact` (trained, uploaded or imported) in place of a model name:
+
+- **Continue training:** `DPORecipe(model=sft.artifact, ...)` or `SFTRecipe(model=sft.artifact, ...)` (from SFT and DPO LoRA artifacts).
+- **Evaluate it:** `client.evals.create(models=[art, "qwen/qwen3-8b"], dataset=..., rubric=...)`. The eval calls the artifact by its ID on your inference endpoint, so load it there first (for example as a vLLM LoRA module named after the artifact).
+
+## Which checkpoint becomes the artifact
+
+Managed runs save checkpoints automatically as they train and evaluate each one on the held-out split. `run.artifact` is the checkpoint with the best held-out score (the lowest loss, for recipes that select on a loss), or the last one with `select="last"`. To pick a different one yourself, list the checkpoints and promote it:
+
+```python
+from grad import Grad
+
+client = Grad()
+run = client.runs.get("run_01J9Z2")
+
+for ckpt in run.checkpoints():
+    print(ckpt.step, ckpt.eval_score, ckpt.expires_at)
+
+art = run.checkpoints()[-1].promote(name="fast-diff-merge")  # save a checkpoint as a versioned Artifact
+```
+
+The best and final checkpoints never expire; other checkpoints are kept for 30 days unless you promote them. Each checkpoint remembers the settings it was trained with (base model, chat template, learning rate), so evaluations and exports reuse them automatically. If a run stops early, continue it from its latest checkpoint with `client.runs.resume("run_01J9Z2")`. Checkpoint frequency, retention and selection settings are in the [reference](/docs/reference/training-parameters/#checkpoints-and-evaluation).
+
+## Upload or import an artifact
+
+Bring weights you trained elsewhere into grad as an artifact: upload a local directory, or import a Hugging Face repo. Name the [catalog base model](/docs/training/models/) they were trained on with `--base` (`base=`). grad checks the files against the [artifact format spec](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md) and the base model's `config.json`. For a PEFT LoRA, that means `adapter_config.json`, its `base_model_name_or_path` and pinned revision, target modules that exist in the base model, and every tensor's shape. The result is a normal artifact, `my-lora@2026-11-27-1`, that you can download, evaluate or continue training from (SFT and DPO, as with a trained LoRA):
+
+<DocsCodeTabs>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad artifacts upload ./my-lora --base qwen/qwen3-8b
+grad artifacts import hf://acme/support-lora@main --base qwen/qwen3-8b
+grad artifacts inspect my-lora@latest
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad, SFTRecipe
+
+client = Grad()
+art = client.artifacts.upload("./my-lora", base="qwen/qwen3-8b").wait()
+print(art.id, art.provenance.source)
+
+recipe = SFTRecipe(model=art)  # continue training from the uploaded LoRA
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import { Grad } from "@gradiated/grad";
+
+const grad = new Grad();
+const art = await grad.artifacts
+  .upload("./my-lora", { base: "qwen/qwen3-8b" })
+  .wait();
+const imported = await grad.artifacts
+  .fromHf("hf://acme/support-lora@main", { base: "qwen/qwen3-8b" })
+  .wait();
+console.log(art.id, imported.provenance.uri);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Go">
+
+```go
+job, _ := client.Artifacts.Upload(ctx, "./my-lora", grad.UploadParams{Base: "qwen/qwen3-8b"})
+art, _ := job.Wait(ctx)
+fmt.Println(art.ID, art.Provenance.Source)
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+- **What you can upload:** a directory (grad tars it), a single file such as `cartridge.safetensors`, or a `.tar.gz`. Pick the format with `--format` (`format=`); the default is `peft_lora`, and every format in the table above is accepted. Files the format doesn't use, such as a README, are left out of the bundle. Pickle weights (`adapter_model.bin`, `.pt`, `.pth`, `.ckpt`) are refused: save them with `safe_serialization=True`. Uploads are capped at 5 GB, and a tar at 1,024 entries and 10 GiB uncompressed; links, special files and unsafe paths are refused. Each file must sit where the format expects it: a nested copy such as `sub/model.safetensors` is dropped, a router, decision or reward bundle's `head_file` must be the format's own head file, and JSON configs are at most 16 MiB.
+- **Names:** `--name` (`name=`) sets the artifact name. It defaults to the directory or file name, or to the repo name for an import.
+- **Hugging Face imports:** a repo on the Hugging Face Hub, at a branch, tag or commit (`hf://owner/name@revision`, default `main`; letters, digits and `. _ / -`, no `..`). The artifact pins the commit the revision pointed to. An import takes at most 1,024 of the format's files and one hour. For a gated or private repo, store an HF token as a [workspace secret](/docs/training/trajectories/#sync-from-observability-providers) and pass `--secret NAME` (`secret=`).
+- **When a check fails**, the upload fails with a `422` `invalid_artifact` error that names the file and the problem, for example `adapter_config.json: base_model_name_or_path is 'Qwen/Qwen3-4B', expected 'Qwen/Qwen3-8B' (the base qwen/qwen3-8b)`. The CLI exits with code 5. Python raises `grad.ArtifactImportFailedError`; the other SDKs raise their equivalent.
+
+An uploaded artifact has no held-out `eval_report`, because grad didn't train it. Evaluate it with an [evaluation](/docs/training/evaluations/) instead.
+
+## Delete an artifact
+
+`grad artifacts delete NAME@VERSION` (`client.artifacts.delete(...)`, or `art.delete()`) deletes an artifact and its bundle. On Gradiated Cloud, publishing an artifact as a model version pins it, so grad never deletes a published artifact: deleting one fails with `409 artifact_pinned`, naming the model versions that use it. Unpublish them first.
+
+Every `Artifact` lists what pins it in `pins` (`holder`, `reason`, `created_at`; `[]` when nothing does), in all four SDKs. The web UI's Artifacts page (`grad ui`) lists every artifact as `name@version` with its format, base model, provenance, size and pins, and downloads or deletes one.
+
+## Download and serve
+
+Download an artifact to serve it on your own vLLM or SGLang servers. `grad artifacts download` checks the bundle's SHA-256 and every file against the manifest before it extracts anything:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="CLI">
+
+```bash
+grad artifacts inspect fast-diff-merge@2026-11-26-1 --json
+grad artifacts download fast-diff-merge@2026-11-26-1 --output ./fast-diff-merge
+
+# Load the LoRA into vLLM on the same base model (the default rank is 32)
+vllm serve Qwen/Qwen3-8B --enable-lora --max-lora-rank 32 \
+  --lora-modules fast-diff-merge=./fast-diff-merge
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+art = client.artifacts.get("fast-diff-merge@2026-11-26-1")
+art.download("./fast-diff-merge")  # verified, then extracted
+print(art.manifest["base_model_repo"], art.manifest["recipe_kind"])
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Add `--archive ./fast-diff-merge.grad.tar.gz` to keep the verified bundle as well. See [Deploying](/docs/training/deploying/) for SGLang, router and decision bundles, and rollouts on your own stack.
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Publishing an artifact as a model version on Gradiated Cloud, and calling it
+  as `your-org/<name>` from the OpenAI, Anthropic or SystemOne SDK, isn't live
+  yet. Until then, serve the download yourself.
+</DocsCallout>
+
+<DocsNext>
+  <a href="/docs/training/deploying/">
+    <small>Next</small>
+    <strong>Deploying</strong>
+  </a>
+  <a href="/docs/training/recipes/">
+    <small>Train</small>
+    <strong>Recipes</strong>
+  </a>
+</DocsNext>

@@ -1,0 +1,135 @@
+# Deploying
+
+<DocsLead>
+  Download a trained artifact and serve it on your own vLLM or SGLang servers.
+  Hosted serving on Gradiated Cloud is coming soon.
+</DocsLead>
+
+Every training run produces a versioned [`Artifact`](/docs/training/artifacts/) (such as `fast-diff-merge@2026-11-26-1`). You download it as standard weights and serve it with the inference stack you already run:
+
+<DocsRunLifecycle start="artifact" />
+
+## Serve it yourself
+
+`grad artifacts download` fetches the bundle, checks its SHA-256 and every file against the manifest, and extracts it. SFT, DPO and distillation runs export a standard Hugging Face PEFT LoRA (`adapter_config.json` and `adapter_model.safetensors`) for the base model in the manifest's `base_model_repo`. Pass `--max-lora-rank 32`, because grad's default rank is 32 and vLLM's default cap is 16:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="vLLM">
+
+```bash
+grad artifacts download fast-diff-merge@2026-11-26-1 --output ./fast-diff-merge
+
+vllm serve Qwen/Qwen3-8B \
+  --enable-lora --max-lora-rank 32 \
+  --lora-modules fast-diff-merge=./fast-diff-merge
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="SGLang">
+
+```bash
+grad artifacts download fast-diff-merge@2026-11-26-1 --output ./fast-diff-merge
+
+python -m sglang.launch_server \
+  --model-path Qwen/Qwen3-8B \
+  --enable-lora --max-lora-rank 32 \
+  --lora-paths fast-diff-merge=./fast-diff-merge
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Python">
+
+```python
+from grad import Grad
+
+client = Grad()
+art = client.artifacts.get("fast-diff-merge@2026-11-26-1")
+art.download("./fast-diff-merge")
+
+# Serve on the exact base weights the adapter was trained on
+print(art.manifest["base_model_repo"], art.manifest["base_model_revision"])
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+To pin the base weights, add `--revision` with the manifest's `base_model_revision`. A run with `merge_on_export=True` exports standalone merged weights instead, which serve with a plain `vllm serve ./fast-diff-merge`.
+
+The other recipes export small bundles on top of a base model: a router or decision head, a reward head, a cartridge's KV prefix, or a full embedding encoder. The [artifact format spec](https://github.com/Gradiated/grad/blob/main/docs/ARTIFACT_FORMATS.md) documents each one's files and config and gives a reference Python loader for it; see [What's inside](/docs/training/artifacts/#what-s-inside).
+
+Handle traffic splitting and rollbacks with what you already use (feature flags, Envoy or Nginx weights, Argo Rollouts). Every artifact version is immutable, so rolling back means pointing your server at the previous version's download. Log requests and outcomes to your observability tool and [sync them](/docs/training/trajectories/#sync-from-observability-providers) into a dataset to train the next version; see [Send feedback from production](/docs/training/trajectories/#send-feedback-from-production).
+
+## Host on Gradiated Cloud
+
+<DocsCallout label="Coming soon on Gradiated Cloud">
+  Publishing artifacts as model versions and the gateway calls on this section
+  aren't live yet. Until they are, [serve the artifact
+  yourself](#serve-it-yourself).
+</DocsCallout>
+
+On Gradiated Cloud you won't manage GPUs or a serving stack. You publish an artifact (trained, [uploaded or imported](/docs/training/artifacts/#upload-or-import-an-artifact)) as a version of a model, `your-org/<name>`, from the Gradiated console or the Cloud Models API. grad itself has no deploy command: it owns the artifacts, and the inference side serves them straight from the artifact store.
+
+### Call a published model
+
+Your app calls the same [OpenAI SDK](/docs/openai-sdk/), [Anthropic SDK](/docs/anthropic-sdk/) or [SystemOne SDK](/docs/systemone-sdk/) it already uses; only the `model` string changes. The endpoint uses the chat template and `thinking` setting the artifact was trained with, and reasoning models return their reasoning in `reasoning_content`, separate from `content`:
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+import os
+from openai import OpenAI
+
+oai = OpenAI(
+    base_url="https://api.gradiated.com/v1",
+    api_key=os.environ["GRADIATED_API_KEY"],
+)
+res = oai.chat.completions.create(
+    model="your-org/fast-diff-merge",
+    messages=[{"role": "user", "content": "Merge these two diffs into one patch: ..."}],
+)
+print(res.choices[0].message.content)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="TypeScript">
+
+```ts
+import OpenAI from "openai";
+
+const oai = new OpenAI({
+  baseURL: "https://api.gradiated.com/v1",
+  apiKey: process.env.GRADIATED_API_KEY,
+});
+const res = await oai.chat.completions.create({
+  model: "your-org/fast-diff-merge",
+  messages: [
+    { role: "user", content: "Merge these two diffs into one patch: ..." },
+  ],
+});
+console.log(res.choices[0].message.content);
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+[Decision models](/docs/training/recipes/decision-model/) will be called through `TypeSafeClient` (`/v1/systemone`), [embedding models](/docs/training/recipes/embeddings/) through `openai.embeddings.create(model="your-org/<name>", ...)`, and [routers](/docs/training/recipes/router/) as a model name in the OpenAI or Anthropic SDK.
+
+### Versions and rollback
+
+Every artifact is a fixed version, so rolling forward or back is a pointer update on the model with no app redeploy: promote the new version, or roll back to the previous one, in the console or the Models API. A published version pins its artifact, so grad never deletes it (not by retention, cleanup or `grad artifacts delete`, which answers `409 artifact_pinned` and names the model versions using it).
+
+### Feed production back into training
+
+The Gradiated gateway will record every request to your deployed model along with its feedback, so you won't need a separate observability tool. The built-in `gradiated` [source](/docs/training/trajectories/#sync-from-observability-providers) syncs them into a dataset: each sync adds a new dataset version with the latest traces and scores, ready for your next run.
+
+<DocsNext>
+  <a href="/docs/training/artifacts/">
+    <small>Artifacts</small>
+    <strong>Artifacts</strong>
+  </a>
+  <a href="/docs/training/recipes/router/">
+    <small>Recipe guides</small>
+    <strong>Model router</strong>
+  </a>
+</DocsNext>

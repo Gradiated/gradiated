@@ -27,3 +27,6 @@ inference/runtimes/glm-sglang/autotune/sm103/
 inference/runtimes/deepseek-sglang/autotune/sm103/
 # Model benchmark outputs are published exactly as the model wrote them.
 website/public/benchmark/
+
+# A recording generated from grad's terminal renderer; kept compact.
+website/src/components/docs/training/run-replay.json

@@ -58,10 +58,18 @@ import { AppRoutes, MovedJourney } from "../src/App";
 import { getSeoPages } from "../src/entry-server";
 import { getPageMetadata } from "../src/metadata";
 
-const docsPaths = readdirSync(join(websiteRoot, "src", "docs"))
+const docsPaths = readdirSync(join(websiteRoot, "src", "docs"), {
+  recursive: true,
+})
+  .map((entry) => String(entry).replaceAll("\\", "/"))
   .filter((file) => file.endsWith(".mdx"))
   .map((file) => file.replace(/\.mdx$/, ""))
-  .map((slug) => (slug === "index" ? "/docs/" : `/docs/${slug}/`));
+  .map((slug) => {
+    if (slug === "index") return "/docs/";
+    if (slug.endsWith("/index"))
+      return `/docs/${slug.slice(0, -"/index".length)}/`;
+    return `/docs/${slug}/`;
+  });
 
 const redirectedAtTheEdge = new Set(
   vercel.redirects.map((redirect) => redirect.source),

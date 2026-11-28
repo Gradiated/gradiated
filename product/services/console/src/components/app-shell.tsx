@@ -46,6 +46,7 @@ export const AppShell = ({
     | "models"
     | "playground"
     | "tasks"
+    | "training"
     | "usage"
     | "settings"
     | "admin";

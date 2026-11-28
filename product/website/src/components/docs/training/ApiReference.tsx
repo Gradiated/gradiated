@@ -195,7 +195,7 @@ export const curlFor = (op: Operation): string => {
       `  -d '${JSON.stringify(body, null, 2).replace(/\n/g, "\n  ")}'`,
     );
   }
-  if (op.id === "downloadArtifact") lines.push("  -o bundle.tar");
+  if (op.id === "downloadArtifact") lines.push("  -o bundle.grad.tar.gz");
   return lines.join(" \\\n");
 };
 
@@ -225,12 +225,12 @@ const RequestSample = ({ op }: { op: Operation }): ReactElement => {
   const language = useSdkLanguage();
   const call = SDK_CALLS[op.id]?.[language];
   const [mode, setMode] = useState<"sdk" | "http" | null>(null);
-  const shown = mode ?? (call ? "sdk" : "http");
   const sdkCode = call
     ? language === "CLI"
       ? call
       : SDK_PREFIX[language](call)
     : null;
+  const shown = sdkCode && mode !== "http" ? "sdk" : "http";
 
   return (
     <div className="gr-api-sample">

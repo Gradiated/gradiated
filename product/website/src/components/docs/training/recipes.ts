@@ -271,7 +271,7 @@ _, _ = run.Download(ctx, "${out}")`,
     case "Rust":
       return {
         lang: "rust",
-        code: `use grad_sdk::{Client, DownloadOptions, PlanRunRequest, RecipeKind, RecipeSpec, WaitOptions};
+        code: `use grad::{Client, DownloadOptions, PlanRunRequest, RecipeKind, RecipeSpec, WaitOptions};
 
 let client = Client::new();
 let recipe = ${rustRecipe(info)}

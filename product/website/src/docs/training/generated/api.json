@@ -4977,19 +4977,24 @@
    ],
    "properties": {
     "model": {
-     "type": "string"
+     "type": "string",
+     "description": "The model this summary is for."
     },
     "overall": {
-     "type": "number"
+     "type": "number",
+     "description": "Mean task score (each task's score averages its samples)."
     },
     "ci_low": {
-     "type": "number"
+     "type": "number",
+     "description": "Lower bound of the bootstrap 95% confidence interval on `overall`."
     },
     "ci_high": {
-     "type": "number"
+     "type": "number",
+     "description": "Upper bound of the bootstrap 95% confidence interval on `overall`."
     },
     "pass_at_k": {
      "type": "object",
+     "description": "Unbiased pass@k per k (`pass@1`, ...): the chance that one of k samples scores at least `pass_threshold`.",
      "additionalProperties": {
       "type": "number"
      }
@@ -4999,6 +5004,7 @@
       "object",
       "null"
      ],
+     "description": "The mean paired difference from the baseline over the tasks both answered, with a bootstrap 95% interval; null for the baseline itself or without one.",
      "required": [
       "delta",
       "ci_low",
@@ -5018,20 +5024,24 @@
     },
     "tasks": {
      "type": "integer",
+     "description": "Tasks this model answered.",
      "minimum": 0
     },
     "errors": {
      "type": "integer",
+     "description": "Model or judge calls that failed.",
      "minimum": 0
     },
     "tokens_per_task": {
-     "type": "number"
+     "type": "number",
+     "description": "Mean tokens per task."
     },
     "cost_per_1k_tasks_usd": {
      "type": [
       "number",
       "null"
-     ]
+     ],
+     "description": "Cost per 1,000 tasks in USD; null when the model has no price."
     }
    }
   },
@@ -6861,22 +6871,27 @@
     },
     "dataset_version": {
      "type": "integer",
+     "description": "The dataset version the run would pin.",
      "minimum": 0
     },
     "usable_records": {
      "type": "integer",
+     "description": "Records the recipe can train on (the rest are skipped; a warning says why).",
      "minimum": 0
     },
     "total_records": {
      "type": "integer",
+     "description": "Records in the dataset version.",
      "minimum": 0
     },
     "estimated_steps": {
      "type": "integer",
+     "description": "Optimizer steps the run would take.",
      "minimum": 0
     },
     "estimated_tokens": {
      "type": "integer",
+     "description": "Tokens the run would process (billed tokens).",
      "minimum": 0
     },
     "estimated_cost_usd": {
@@ -6899,10 +6914,12 @@
     },
     "price_per_million_tokens": {
      "type": "number",
+     "description": "The base model's price, USD per million tokens.",
      "exclusiveMinimum": 0
     },
     "trained_token_fraction": {
      "type": "number",
+     "description": "The share of tokens that are trained on (the loss mask), the rest being prompt context.",
      "minimum": 0,
      "maximum": 1
     },

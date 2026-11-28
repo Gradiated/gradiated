@@ -278,6 +278,7 @@ export const SDK_CALLS: Record<string, Partial<Record<SdkLanguage, string>>> = {
   listEvalOutputs: {
     Python: "evals.outputs",
     TypeScript: "evals.outputs",
+    Go: "Evals.Outputs",
     Rust: "evals.outputs",
   },
   postEvalScores: {
@@ -287,6 +288,7 @@ export const SDK_CALLS: Record<string, Partial<Record<SdkLanguage, string>>> = {
   listEvalResults: {
     Python: "evals.results",
     TypeScript: "evals.results",
+    Go: "Evals.Results",
     Rust: "evals.results",
     CLI: "grad eval results eval_3f9c0a1b2c3d4e5f60718293",
   },

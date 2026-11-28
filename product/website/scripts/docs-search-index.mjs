@@ -14,11 +14,11 @@ const plain = (markdown) =>
     .replace(/<[^>]+>/g, " ")
     .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
     .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
-    .replace(/[`*_|>#]/g, " ")
+    .replace(/[`*|>#]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
-const MAX_TEXT = 1500;
+const MAX_TEXT = 4000;
 
 const sectionsOf = (source) => {
   const sections = [];

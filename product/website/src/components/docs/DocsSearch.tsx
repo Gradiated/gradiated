@@ -128,7 +128,8 @@ export const DocsSearch = (): ReactElement => {
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  });
+    // `open` reads only refs and state setters, so the first one stays valid.
+  }, []);
 
   const words = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
   const results = useMemo(

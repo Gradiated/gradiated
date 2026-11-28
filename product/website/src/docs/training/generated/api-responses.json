@@ -5,15 +5,15 @@
    "status": 201,
    "body": {
     "key": {
-     "id": "key_a03e56d554584935516f81fd",
+     "id": "key_77375459c27bf64426541752",
      "workspace_id": "ws_e2e",
      "name": "ci",
-     "prefix": "grad_d7948f4",
+     "prefix": "grad_d30efd3",
      "scopes": [
       "datasets:write",
       "runs:write"
      ],
-     "created_at": "2026-11-28T11:04:35.616Z",
+     "created_at": "2026-11-28T11:29:48.287Z",
      "revoked_at": null
     },
     "secret": "grad_\u2026"
@@ -22,7 +22,7 @@
   "createArtifactImport": {
    "status": 202,
    "body": {
-    "id": "imp_71a52cc514c3b2049a12f6df",
+    "id": "imp_00b01f8d6d9ee2b66caed221",
     "workspace_id": "ws_e2e",
     "status": "queued",
     "name": "support-lora",
@@ -38,27 +38,27 @@
     "error": null,
     "error_code": null,
     "attempt": 0,
-    "created_at": "2026-11-28T11:04:36.119Z",
-    "updated_at": "2026-11-28T11:04:36.119Z"
+    "created_at": "2026-11-28T11:29:48.833Z",
+    "updated_at": "2026-11-28T11:29:48.833Z"
    }
   },
   "createDataset": {
    "status": 201,
    "body": {
-    "id": "ds_cd4c3100a9757c14db6f7e53",
+    "id": "ds_a7d478cef1719fb69a80a332",
     "workspace_id": "ws_e2e",
     "name": "support-prod",
     "version": 0,
     "record_count": 0,
     "metadata": {},
-    "created_at": "2026-11-28T11:04:35.629Z",
-    "updated_at": "2026-11-28T11:04:35.629Z"
+    "created_at": "2026-11-28T11:29:48.305Z",
+    "updated_at": "2026-11-28T11:29:48.305Z"
    }
   },
   "createDatasetImport": {
    "status": 202,
    "body": {
-    "id": "imp_fa9a0be94b96251fb8e7797c",
+    "id": "imp_cf0bfd73eb0748af3a6963e9",
     "workspace_id": "ws_e2e",
     "dataset": "support-prod",
     "status": "queued",
@@ -77,14 +77,14 @@
     "drop_reasons": [],
     "dataset_version": null,
     "error": null,
-    "created_at": "2026-11-28T11:04:36.013Z",
-    "updated_at": "2026-11-28T11:04:36.013Z"
+    "created_at": "2026-11-28T11:29:48.719Z",
+    "updated_at": "2026-11-28T11:29:48.719Z"
    }
   },
   "createDatasetSource": {
    "status": 201,
    "body": {
-    "id": "src_5ba5c7f81cc450544d36b62f",
+    "id": "src_3fe691c981ecaf7266c82217",
     "workspace_id": "ws_e2e",
     "dataset": "support-prod",
     "provider": {
@@ -106,7 +106,7 @@
     "records_today": 0,
     "version_interval": 900,
     "pending_records": 0,
-    "next_sync_at": "2026-11-28T11:15:00.000Z",
+    "next_sync_at": "2026-11-28T11:30:00.000Z",
     "status": "active",
     "paused_reason": null,
     "last_error": null,
@@ -115,17 +115,17 @@
     "pending_full": false,
     "last_synced_at": null,
     "last_sync": null,
-    "created_at": "2026-11-28T11:04:36.198Z",
-    "updated_at": "2026-11-28T11:04:36.198Z"
+    "created_at": "2026-11-28T11:29:48.903Z",
+    "updated_at": "2026-11-28T11:29:48.903Z"
    }
   },
   "createRun": {
    "status": 202,
    "body": {
-    "id": "run_65fd31940655191642cea1b8",
+    "id": "run_333a10365bc1f91b998d2a6b",
     "workspace_id": "ws_e2e",
     "name": "support-sft",
-    "dataset_id": "ds_cd4c3100a9757c14db6f7e53",
+    "dataset_id": "ds_a7d478cef1719fb69a80a332",
     "dataset_name": "support-prod",
     "dataset_version": 1,
     "recipe_kind": "sft",
@@ -187,7 +187,7 @@
     "attempt": 0,
     "max_attempts": 10,
     "phase": "queued",
-    "phase_since": "2026-11-28T11:04:36.079Z",
+    "phase_since": "2026-11-28T11:29:48.781Z",
     "last_interruption": null,
     "workers_online": 0,
     "autoscaling": false,
@@ -199,8 +199,8 @@
     "checkpoint_evals": [],
     "artifact_id": null,
     "error": null,
-    "created_at": "2026-11-28T11:04:36.071Z",
-    "updated_at": "2026-11-28T11:04:36.071Z",
+    "created_at": "2026-11-28T11:29:48.769Z",
+    "updated_at": "2026-11-28T11:29:48.769Z",
     "finished_at": null,
     "warnings": [
      "The eval split is empty; eval metrics will be unavailable. Add records or raise split.eval_fraction.",
@@ -218,13 +218,13 @@
      "content-length": "52431",
      "x-amz-checksum-sha256": "nyxOGrDTxef5obPF1+nxo7XH2eHzpbfJ0eP1p7nB0+U="
     },
-    "expires_at": "2026-11-28T17:04:36.001Z"
+    "expires_at": "2026-11-28T17:29:48.710Z"
    }
   },
   "filterDataset": {
    "status": 201,
    "body": {
-    "id": "ds_b8332bda80b3b719e5309fcd",
+    "id": "ds_c58003267c250589040ede65",
     "workspace_id": "ws_e2e",
     "name": "support-good",
     "version": 1,
@@ -240,8 +240,8 @@
       "version": 1
      }
     },
-    "created_at": "2026-11-28T11:04:35.962Z",
-    "updated_at": "2026-11-28T11:04:35.970Z"
+    "created_at": "2026-11-28T11:29:48.663Z",
+    "updated_at": "2026-11-28T11:29:48.673Z"
    }
   },
   "getArtifact": {
@@ -251,13 +251,13 @@
     "workspace_id": "ws_e2e",
     "name": "support-sft",
     "version": "2026-11-28-1",
-    "run_id": "run_65fd31940655191642cea1b8",
+    "run_id": "run_333a10365bc1f91b998d2a6b",
     "checkpoint_id": null,
     "base_model": "qwen/qwen3-8b",
     "recipe_kind": "sft",
     "format": "reference",
-    "sha256": "22ba95a1a59fa804b1462afa6f4a8852edd069b58763c6ed46e1bf28c898f378",
-    "size_bytes": 1029,
+    "sha256": "f93d259359d315708d49acdd9c6baf7ea155850cd3c0fe11876ab6b509c27a30",
+    "size_bytes": 1028,
     "manifest": {
      "lr": 0.000125,
      "kind": "final",
@@ -266,7 +266,7 @@
       "reference_model.json": "59abd7749fec876cab4e168ea5a73ba432cbd5b568a7c8070258ec7f945b454b"
      },
      "format": "reference",
-     "run_id": "run_65fd31940655191642cea1b8",
+     "run_id": "run_333a10365bc1f91b998d2a6b",
      "schema": "grad.artifact/1",
      "select": "last",
      "status": "completed",
@@ -281,7 +281,7 @@
      },
      "deployable": false,
      "provenance": {
-      "run_id": "run_65fd31940655191642cea1b8",
+      "run_id": "run_333a10365bc1f91b998d2a6b",
       "source": "run"
      },
      "recipe_kind": "sft",
@@ -347,7 +347,7 @@
     },
     "provenance": {
      "source": "run",
-     "run_id": "run_65fd31940655191642cea1b8",
+     "run_id": "run_333a10365bc1f91b998d2a6b",
      "uploader": null,
      "uri": null
     },
@@ -369,88 +369,39 @@
      "reference_backend": true
     },
     "pins": [],
-    "created_at": "2026-11-28T11:04:36.470Z"
+    "created_at": "2026-11-28T11:29:49.247Z"
    }
   },
   "getArtifactDownloadUrl": {
    "status": 200,
    "body": {
-    "url": "https://storage.example.com/grad-test/artifacts/ws_e2e/22ba95a1a59fa804b1462afa6f4a8852edd069b58763c6ed46e1bf28c898f378?X-Amz-Algorithm=\u2026&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=\u2026&X-Amz-Date=\u2026&X-Amz-Expires=\u2026&X-Amz-Signature=\u2026&X-Amz-SignedHeaders=\u2026&response-content-disposition=attachment%3B%20filename%3D%22support-sft-2026-11-28-1.grad.tar.gz%22%3B%20filename%2A%3DUTF-8%27%27support\u2026",
-    "expires_at": "2026-11-28T11:19:37.360Z",
-    "sha256": "22ba95a1a59fa804b1462afa6f4a8852edd069b58763c6ed46e1bf28c898f378",
-    "size_bytes": 1029,
+    "url": "https://storage.example.com/grad-test/artifacts/ws_e2e/f93d259359d315708d49acdd9c6baf7ea155850cd3c0fe11876ab6b509c27a30?X-Amz-Algorithm=\u2026&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=\u2026&X-Amz-Date=\u2026&X-Amz-Expires=\u2026&X-Amz-Signature=\u2026&X-Amz-SignedHeaders=\u2026&response-content-disposition=attachment%3B%20filename%3D%22support-sft-2026-11-28-1.grad.tar.gz%22%3B%20filename%2A%3DUTF-8%27%27support\u2026",
+    "expires_at": "2026-11-28T11:44:50.079Z",
+    "sha256": "f93d259359d315708d49acdd9c6baf7ea155850cd3c0fe11876ab6b509c27a30",
+    "size_bytes": 1028,
     "filename": "support-sft-2026-11-28-1.grad.tar.gz"
-   }
-  },
-  "getArtifactImport": {
-   "status": 200,
-   "body": {
-    "id": "imp_71a52cc514c3b2049a12f6df",
-    "workspace_id": "ws_e2e",
-    "status": "failed",
-    "name": "support-lora",
-    "base_model": "qwen/qwen3-8b",
-    "format": "peft_lora",
-    "source": {
-     "kind": "hf",
-     "upload_id": null,
-     "repo": "acme/support-lora",
-     "revision": "main"
-    },
-    "artifact_id": null,
-    "error": "Can't import 'acme/support-lora' from the Hugging Face Hub: offline mode is on (HF_HUB_OFFLINE/GRAD_OFFLINE). Download it elsewhere and use `grad artifacts upload` instead.",
-    "error_code": "source_unavailable",
-    "attempt": 1,
-    "created_at": "2026-11-28T11:04:36.119Z",
-    "updated_at": "2026-11-28T11:04:36.535Z"
    }
   },
   "getDataset": {
    "status": 200,
    "body": {
-    "id": "ds_cd4c3100a9757c14db6f7e53",
+    "id": "ds_a7d478cef1719fb69a80a332",
     "workspace_id": "ws_e2e",
     "name": "support-prod",
     "version": 2,
     "record_count": 1,
     "metadata": {},
-    "created_at": "2026-11-28T11:04:35.629Z",
-    "updated_at": "2026-11-28T11:04:36.756Z"
-   }
-  },
-  "getImport": {
-   "status": 200,
-   "body": {
-    "id": "imp_fa9a0be94b96251fb8e7797c",
-    "workspace_id": "ws_e2e",
-    "dataset": "support-prod",
-    "status": "failed",
-    "source": {
-     "kind": "hf",
-     "repo": "HuggingFaceH4/ultrachat_200k",
-     "limit": 1000,
-     "split": "train_sft",
-     "columns": {}
-    },
-    "connector": "auto",
-    "attempt": 1,
-    "imported_count": 0,
-    "dropped_count": 0,
-    "detected_scores": [],
-    "drop_reasons": [],
-    "dataset_version": null,
-    "error": "Can't load Hugging Face dataset 'HuggingFaceH4/ultrachat_200k': offline mode is on (HF_HUB_OFFLINE/GRAD_OFFLINE). Download it elsewhere and import the JSONL file instead.",
-    "created_at": "2026-11-28T11:04:36.013Z",
-    "updated_at": "2026-11-28T11:04:36.143Z"
+    "created_at": "2026-11-28T11:29:48.305Z",
+    "updated_at": "2026-11-28T11:29:49.370Z"
    }
   },
   "getRun": {
    "status": 200,
    "body": {
-    "id": "run_65fd31940655191642cea1b8",
+    "id": "run_333a10365bc1f91b998d2a6b",
     "workspace_id": "ws_e2e",
     "name": "support-sft",
-    "dataset_id": "ds_cd4c3100a9757c14db6f7e53",
+    "dataset_id": "ds_a7d478cef1719fb69a80a332",
     "dataset_name": "support-prod",
     "dataset_version": 1,
     "recipe_kind": "sft",
@@ -512,7 +463,7 @@
     "attempt": 1,
     "max_attempts": 10,
     "phase": "completing",
-    "phase_since": "2026-11-28T11:04:36.438Z",
+    "phase_since": "2026-11-28T11:29:49.222Z",
     "last_interruption": null,
     "workers_online": null,
     "autoscaling": null,
@@ -529,8 +480,8 @@
      "attempt": 1,
      "cost_usd": 8e-06,
      "grad_norm": 0.7071067811865476,
-     "timestamp": "2026-11-28T11:04:36.290763Z",
-     "tokens_per_sec": 266842.34367437265
+     "timestamp": "2026-11-28T11:29:49.058195Z",
+     "tokens_per_sec": 262533.14825616934
     },
     "eval_report": {
      "warnings": [
@@ -552,9 +503,9 @@
     "checkpoint_evals": [],
     "artifact_id": "support-sft@2026-11-28-1",
     "error": null,
-    "created_at": "2026-11-28T11:04:36.071Z",
-    "updated_at": "2026-11-28T11:04:36.483Z",
-    "finished_at": "2026-11-28T11:04:36.460Z"
+    "created_at": "2026-11-28T11:29:48.769Z",
+    "updated_at": "2026-11-28T11:29:49.261Z",
+    "finished_at": "2026-11-28T11:29:49.240Z"
    }
   },
   "getSecret": {
@@ -566,14 +517,14 @@
      "cloud.langfuse.com",
      "us.cloud.langfuse.com"
     ],
-    "created_at": "2026-11-28T11:04:36.172Z",
-    "updated_at": "2026-11-28T11:04:36.172Z"
+    "created_at": "2026-11-28T11:29:48.875Z",
+    "updated_at": "2026-11-28T11:29:48.875Z"
    }
   },
   "getSource": {
    "status": 200,
    "body": {
-    "id": "src_5ba5c7f81cc450544d36b62f",
+    "id": "src_3fe691c981ecaf7266c82217",
     "workspace_id": "ws_e2e",
     "dataset": "support-prod",
     "provider": {
@@ -595,7 +546,7 @@
     "records_today": 0,
     "version_interval": 900,
     "pending_records": 0,
-    "next_sync_at": "2026-11-28T11:15:00.000Z",
+    "next_sync_at": "2026-11-28T11:30:00.000Z",
     "status": "active",
     "paused_reason": null,
     "last_error": null,
@@ -604,16 +555,16 @@
     "pending_full": false,
     "last_synced_at": null,
     "last_sync": {
-     "import_id": "imp_8c131bd5b6b4ee085a96ee97",
+     "import_id": "imp_991e5b1386d393344e11e396",
      "status": "running",
      "full": false,
      "dataset_version": null,
      "error": null,
-     "created_at": "2026-11-28T11:04:36.231Z",
+     "created_at": "2026-11-28T11:29:48.934Z",
      "finished_at": null
     },
-    "created_at": "2026-11-28T11:04:36.198Z",
-    "updated_at": "2026-11-28T11:04:36.233Z"
+    "created_at": "2026-11-28T11:29:48.903Z",
+    "updated_at": "2026-11-28T11:29:48.939Z"
    }
   },
   "getUsageSummary": {
@@ -634,7 +585,7 @@
     ],
     "top_runs": [
      {
-      "id": "run_65fd31940655191642cea1b8",
+      "id": "run_333a10365bc1f91b998d2a6b",
       "name": "support-sft",
       "kind": "training",
       "cost_usd": 8e-06,
@@ -651,15 +602,15 @@
    "body": {
     "data": [
      {
-      "id": "key_a03e56d554584935516f81fd",
+      "id": "key_77375459c27bf64426541752",
       "workspace_id": "ws_e2e",
       "name": "ci",
-      "prefix": "grad_d7948f4",
+      "prefix": "grad_d30efd3",
       "scopes": [
        "datasets:write",
        "runs:write"
       ],
-      "created_at": "2026-11-28T11:04:35.616Z",
+      "created_at": "2026-11-28T11:29:48.287Z",
       "revoked_at": null
      }
     ],
@@ -675,8 +626,8 @@
       "workspace_id": "ws_e2e",
       "name": "support-sft-step-400",
       "version": "2026-11-28-1",
-      "run_id": "run_65fd31940655191642cea1b8",
-      "checkpoint_id": "ckpt_7d40bb7700bff2ef4815299f",
+      "run_id": "run_333a10365bc1f91b998d2a6b",
+      "checkpoint_id": "ckpt_5cba56d596e259923e4dc49b",
       "base_model": "qwen/qwen3-8b",
       "recipe_kind": "sft",
       "format": "reference",
@@ -686,7 +637,7 @@
        "lr": 0.000125,
        "seed": 42,
        "step": 1,
-       "run_id": "run_65fd31940655191642cea1b8",
+       "run_id": "run_333a10365bc1f91b998d2a6b",
        "schema": "grad.artifact/1",
        "select": "best",
        "attempt": 1,
@@ -711,7 +662,7 @@
        "base_model": "qwen/qwen3-8b",
        "deployable": false,
        "provenance": {
-        "run_id": "run_65fd31940655191642cea1b8",
+        "run_id": "run_333a10365bc1f91b998d2a6b",
         "source": "run"
        },
        "metric_mode": "min",
@@ -721,7 +672,7 @@
        "rule_version": "auto@2",
        "tokens_total": 21,
        "base_artifact": null,
-       "upload_seconds": 0.015,
+       "upload_seconds": 0.025,
        "base_model_repo": null,
        "resolved_config": {
         "lr": 0.000125,
@@ -772,30 +723,30 @@
         "checkpoint_every_steps": 1
        },
        "base_model_revision": null,
-       "promoted_from_checkpoint": "ckpt_7d40bb7700bff2ef4815299f"
+       "promoted_from_checkpoint": "ckpt_5cba56d596e259923e4dc49b"
       },
       "provenance": {
        "source": "run",
-       "run_id": "run_65fd31940655191642cea1b8",
+       "run_id": "run_333a10365bc1f91b998d2a6b",
        "uploader": null,
        "uri": null
       },
       "eval_report": null,
       "pins": [],
-      "created_at": "2026-11-28T11:04:37.278Z"
+      "created_at": "2026-11-28T11:29:49.992Z"
      },
      {
       "id": "support-sft@2026-11-28-1",
       "workspace_id": "ws_e2e",
       "name": "support-sft",
       "version": "2026-11-28-1",
-      "run_id": "run_65fd31940655191642cea1b8",
+      "run_id": "run_333a10365bc1f91b998d2a6b",
       "checkpoint_id": null,
       "base_model": "qwen/qwen3-8b",
       "recipe_kind": "sft",
       "format": "reference",
-      "sha256": "22ba95a1a59fa804b1462afa6f4a8852edd069b58763c6ed46e1bf28c898f378",
-      "size_bytes": 1029,
+      "sha256": "f93d259359d315708d49acdd9c6baf7ea155850cd3c0fe11876ab6b509c27a30",
+      "size_bytes": 1028,
       "manifest": {
        "lr": 0.000125,
        "kind": "final",
@@ -804,7 +755,7 @@
         "reference_model.json": "59abd7749fec876cab4e168ea5a73ba432cbd5b568a7c8070258ec7f945b454b"
        },
        "format": "reference",
-       "run_id": "run_65fd31940655191642cea1b8",
+       "run_id": "run_333a10365bc1f91b998d2a6b",
        "schema": "grad.artifact/1",
        "select": "last",
        "status": "completed",
@@ -819,7 +770,7 @@
        },
        "deployable": false,
        "provenance": {
-        "run_id": "run_65fd31940655191642cea1b8",
+        "run_id": "run_333a10365bc1f91b998d2a6b",
         "source": "run"
        },
        "recipe_kind": "sft",
@@ -885,7 +836,7 @@
       },
       "provenance": {
        "source": "run",
-       "run_id": "run_65fd31940655191642cea1b8",
+       "run_id": "run_333a10365bc1f91b998d2a6b",
        "uploader": null,
        "uri": null
       },
@@ -907,7 +858,7 @@
        "reference_backend": true
       },
       "pins": [],
-      "created_at": "2026-11-28T11:04:36.470Z"
+      "created_at": "2026-11-28T11:29:49.247Z"
      }
     ],
     "next_cursor": null
@@ -1008,7 +959,7 @@
    "body": {
     "data": [
      {
-      "id": "ds_b8332bda80b3b719e5309fcd",
+      "id": "ds_c58003267c250589040ede65",
       "workspace_id": "ws_e2e",
       "name": "support-good",
       "version": 1,
@@ -1024,18 +975,18 @@
         "version": 1
        }
       },
-      "created_at": "2026-11-28T11:04:35.962Z",
-      "updated_at": "2026-11-28T11:04:35.970Z"
+      "created_at": "2026-11-28T11:29:48.663Z",
+      "updated_at": "2026-11-28T11:29:48.673Z"
      },
      {
-      "id": "ds_cd4c3100a9757c14db6f7e53",
+      "id": "ds_a7d478cef1719fb69a80a332",
       "workspace_id": "ws_e2e",
       "name": "support-prod",
       "version": 2,
       "record_count": 1,
       "metadata": {},
-      "created_at": "2026-11-28T11:04:35.629Z",
-      "updated_at": "2026-11-28T11:04:36.756Z"
+      "created_at": "2026-11-28T11:29:48.305Z",
+      "updated_at": "2026-11-28T11:29:49.370Z"
      }
     ],
     "next_cursor": null
@@ -1046,7 +997,7 @@
    "body": {
     "data": [
      {
-      "id": "eval_6463e8541a39592adb50a77a",
+      "id": "eval_9c3ada5d8228d1a52a404dcb",
       "workspace_id": "ws_e2e",
       "name": "support-prod-score",
       "status": "completed",
@@ -1100,62 +1051,9 @@
       "scored_dataset_version": 2,
       "error": null,
       "waiting_reason": null,
-      "created_at": "2026-11-28T11:04:35.932Z",
-      "updated_at": "2026-11-28T11:04:36.758Z",
-      "completed_at": "2026-11-28T11:04:36.758Z"
-     }
-    ],
-    "next_cursor": null
-   }
-  },
-  "listImports": {
-   "status": 200,
-   "body": {
-    "data": [
-     {
-      "id": "imp_8c131bd5b6b4ee085a96ee97",
-      "workspace_id": "ws_e2e",
-      "dataset": "support-prod",
-      "status": "running",
-      "source": {
-       "full": false,
-       "kind": "provider",
-       "provider": "langfuse",
-       "source_id": "src_5ba5c7f81cc450544d36b62f"
-      },
-      "connector": "auto",
-      "attempt": 1,
-      "imported_count": 0,
-      "dropped_count": 0,
-      "detected_scores": [],
-      "drop_reasons": [],
-      "dataset_version": null,
-      "error": null,
-      "created_at": "2026-11-28T11:04:36.231Z",
-      "updated_at": "2026-11-28T11:04:36.561Z"
-     },
-     {
-      "id": "imp_fa9a0be94b96251fb8e7797c",
-      "workspace_id": "ws_e2e",
-      "dataset": "support-prod",
-      "status": "failed",
-      "source": {
-       "kind": "hf",
-       "repo": "HuggingFaceH4/ultrachat_200k",
-       "limit": 1000,
-       "split": "train_sft",
-       "columns": {}
-      },
-      "connector": "auto",
-      "attempt": 1,
-      "imported_count": 0,
-      "dropped_count": 0,
-      "detected_scores": [],
-      "drop_reasons": [],
-      "dataset_version": null,
-      "error": "Can't load Hugging Face dataset 'HuggingFaceH4/ultrachat_200k': offline mode is on (HF_HUB_OFFLINE/GRAD_OFFLINE). Download it elsewhere and import the JSONL file instead.",
-      "created_at": "2026-11-28T11:04:36.013Z",
-      "updated_at": "2026-11-28T11:04:36.143Z"
+      "created_at": "2026-11-28T11:29:48.632Z",
+      "updated_at": "2026-11-28T11:29:49.375Z",
+      "completed_at": "2026-11-28T11:29:49.375Z"
      }
     ],
     "next_cursor": null
@@ -1166,9 +1064,9 @@
    "body": {
     "data": [
      {
-      "id": "ckpt_7d40bb7700bff2ef4815299f",
+      "id": "ckpt_5cba56d596e259923e4dc49b",
       "workspace_id": "ws_e2e",
-      "run_id": "run_65fd31940655191642cea1b8",
+      "run_id": "run_333a10365bc1f91b998d2a6b",
       "attempt": 1,
       "step": 1,
       "eval_score": null,
@@ -1207,14 +1105,14 @@
        "rule_version": "auto@2",
        "tokens_total": 21,
        "base_artifact": null,
-       "upload_seconds": 0.015,
+       "upload_seconds": 0.025,
        "base_model_repo": null,
        "base_model_revision": null
       },
       "best": false,
       "final": true,
       "expires_at": null,
-      "created_at": "2026-11-28T11:04:36.401Z"
+      "created_at": "2026-11-28T11:29:49.163Z"
      }
     ],
     "next_cursor": null
@@ -1223,15 +1121,15 @@
   "listRunEvents": {
    "status": 200,
    "body": {
-    "run_id": "run_65fd31940655191642cea1b8",
+    "run_id": "run_333a10365bc1f91b998d2a6b",
     "status": "completed",
     "data": [
      {
       "type": "phase",
-      "run_id": "run_65fd31940655191642cea1b8",
+      "run_id": "run_333a10365bc1f91b998d2a6b",
       "seq": 1,
       "attempt": 1,
-      "timestamp": "2026-11-28T11:04:36.079Z",
+      "timestamp": "2026-11-28T11:29:48.781Z",
       "phase": "queued",
       "step": 0,
       "workers_online": 0,
@@ -1242,10 +1140,10 @@
      },
      {
       "type": "warning",
-      "run_id": "run_65fd31940655191642cea1b8",
+      "run_id": "run_333a10365bc1f91b998d2a6b",
       "seq": 2,
       "attempt": 1,
-      "timestamp": "2026-11-28T11:04:36.082Z",
+      "timestamp": "2026-11-28T11:29:48.784Z",
       "step": null,
       "message": "The eval split is empty; eval metrics will be unavailable. Add records or raise split.eval_fraction."
      }
@@ -1257,7 +1155,7 @@
   "listRunMetrics": {
    "status": 200,
    "body": {
-    "run_id": "run_65fd31940655191642cea1b8",
+    "run_id": "run_333a10365bc1f91b998d2a6b",
     "status": "completed",
     "data": [
      {
@@ -1268,8 +1166,8 @@
       "tokens": 21,
       "cost_usd": 8e-06,
       "grad_norm": 0.7071067811865476,
-      "timestamp": "2026-11-28T11:04:36.290763Z",
-      "tokens_per_sec": 266842.34367437265,
+      "timestamp": "2026-11-28T11:29:49.058195Z",
+      "tokens_per_sec": 262533.14825616934,
       "seq": 11,
       "attempt": 1
      }
@@ -1283,10 +1181,10 @@
    "body": {
     "data": [
      {
-      "id": "run_65fd31940655191642cea1b8",
+      "id": "run_333a10365bc1f91b998d2a6b",
       "workspace_id": "ws_e2e",
       "name": "support-sft",
-      "dataset_id": "ds_cd4c3100a9757c14db6f7e53",
+      "dataset_id": "ds_a7d478cef1719fb69a80a332",
       "dataset_name": "support-prod",
       "dataset_version": 1,
       "recipe_kind": "sft",
@@ -1348,7 +1246,7 @@
       "attempt": 1,
       "max_attempts": 10,
       "phase": "completing",
-      "phase_since": "2026-11-28T11:04:36.438Z",
+      "phase_since": "2026-11-28T11:29:49.222Z",
       "last_interruption": null,
       "workers_online": null,
       "autoscaling": null,
@@ -1365,8 +1263,8 @@
        "attempt": 1,
        "cost_usd": 8e-06,
        "grad_norm": 0.7071067811865476,
-       "timestamp": "2026-11-28T11:04:36.290763Z",
-       "tokens_per_sec": 266842.34367437265
+       "timestamp": "2026-11-28T11:29:49.058195Z",
+       "tokens_per_sec": 262533.14825616934
       },
       "eval_report": {
        "warnings": [
@@ -1388,9 +1286,9 @@
       "checkpoint_evals": [],
       "artifact_id": "support-sft@2026-11-28-1",
       "error": null,
-      "created_at": "2026-11-28T11:04:36.071Z",
-      "updated_at": "2026-11-28T11:04:36.483Z",
-      "finished_at": "2026-11-28T11:04:36.460Z"
+      "created_at": "2026-11-28T11:29:48.769Z",
+      "updated_at": "2026-11-28T11:29:49.261Z",
+      "finished_at": "2026-11-28T11:29:49.240Z"
      }
     ],
     "next_cursor": null
@@ -1407,8 +1305,8 @@
        "cloud.langfuse.com",
        "us.cloud.langfuse.com"
       ],
-      "created_at": "2026-11-28T11:04:36.172Z",
-      "updated_at": "2026-11-28T11:04:36.172Z"
+      "created_at": "2026-11-28T11:29:48.875Z",
+      "updated_at": "2026-11-28T11:29:48.875Z"
      }
     ],
     "next_cursor": null
@@ -1419,7 +1317,7 @@
    "body": {
     "data": [
      {
-      "id": "src_5ba5c7f81cc450544d36b62f",
+      "id": "src_3fe691c981ecaf7266c82217",
       "workspace_id": "ws_e2e",
       "dataset": "support-prod",
       "provider": {
@@ -1441,7 +1339,7 @@
       "records_today": 0,
       "version_interval": 900,
       "pending_records": 0,
-      "next_sync_at": "2026-11-28T11:15:00.000Z",
+      "next_sync_at": "2026-11-28T11:30:00.000Z",
       "status": "active",
       "paused_reason": null,
       "last_error": null,
@@ -1450,16 +1348,16 @@
       "pending_full": false,
       "last_synced_at": null,
       "last_sync": {
-       "import_id": "imp_8c131bd5b6b4ee085a96ee97",
+       "import_id": "imp_991e5b1386d393344e11e396",
        "status": "running",
        "full": false,
        "dataset_version": null,
        "error": null,
-       "created_at": "2026-11-28T11:04:36.231Z",
+       "created_at": "2026-11-28T11:29:48.934Z",
        "finished_at": null
       },
-      "created_at": "2026-11-28T11:04:36.198Z",
-      "updated_at": "2026-11-28T11:04:36.233Z"
+      "created_at": "2026-11-28T11:29:48.903Z",
+      "updated_at": "2026-11-28T11:29:48.939Z"
      }
     ],
     "next_cursor": null
@@ -1472,7 +1370,7 @@
      {
       "id": "use_1",
       "kind": "training",
-      "ref_id": "run_65fd31940655191642cea1b8",
+      "ref_id": "run_333a10365bc1f91b998d2a6b",
       "attempt": 1,
       "tokens_from": 0,
       "tokens_through": 21,
@@ -1480,10 +1378,10 @@
       "cost_usd": 8e-06,
       "price_version": "p_9d9f73e3537a",
       "billed_by": "grad",
-      "idempotency_key": "run-usage:run_65fd31940655191642cea1b8:1:21",
-      "created_at": "2026-11-28T11:04:36.408Z",
+      "idempotency_key": "run-usage:run_333a10365bc1f91b998d2a6b:1:21",
+      "created_at": "2026-11-28T11:29:49.169Z",
       "ref_name": "support-sft",
-      "run_id": "run_65fd31940655191642cea1b8"
+      "run_id": "run_333a10365bc1f91b998d2a6b"
      }
     ],
     "next_cursor": null
@@ -1570,8 +1468,8 @@
     "workspace_id": "ws_e2e",
     "name": "support-sft-step-400",
     "version": "2026-11-28-1",
-    "run_id": "run_65fd31940655191642cea1b8",
-    "checkpoint_id": "ckpt_7d40bb7700bff2ef4815299f",
+    "run_id": "run_333a10365bc1f91b998d2a6b",
+    "checkpoint_id": "ckpt_5cba56d596e259923e4dc49b",
     "base_model": "qwen/qwen3-8b",
     "recipe_kind": "sft",
     "format": "reference",
@@ -1581,7 +1479,7 @@
      "lr": 0.000125,
      "seed": 42,
      "step": 1,
-     "run_id": "run_65fd31940655191642cea1b8",
+     "run_id": "run_333a10365bc1f91b998d2a6b",
      "schema": "grad.artifact/1",
      "select": "best",
      "attempt": 1,
@@ -1606,7 +1504,7 @@
      "base_model": "qwen/qwen3-8b",
      "deployable": false,
      "provenance": {
-      "run_id": "run_65fd31940655191642cea1b8",
+      "run_id": "run_333a10365bc1f91b998d2a6b",
       "source": "run"
      },
      "metric_mode": "min",
@@ -1616,7 +1514,7 @@
      "rule_version": "auto@2",
      "tokens_total": 21,
      "base_artifact": null,
-     "upload_seconds": 0.015,
+     "upload_seconds": 0.025,
      "base_model_repo": null,
      "resolved_config": {
       "lr": 0.000125,
@@ -1667,30 +1565,30 @@
       "checkpoint_every_steps": 1
      },
      "base_model_revision": null,
-     "promoted_from_checkpoint": "ckpt_7d40bb7700bff2ef4815299f"
+     "promoted_from_checkpoint": "ckpt_5cba56d596e259923e4dc49b"
     },
     "provenance": {
      "source": "run",
-     "run_id": "run_65fd31940655191642cea1b8",
+     "run_id": "run_333a10365bc1f91b998d2a6b",
      "uploader": null,
      "uri": null
     },
     "eval_report": null,
     "pins": [],
-    "created_at": "2026-11-28T11:04:37.278Z"
+    "created_at": "2026-11-28T11:29:49.992Z"
    }
   },
   "pushDatasetRecords": {
    "status": 200,
    "body": {
-    "id": "ds_cd4c3100a9757c14db6f7e53",
+    "id": "ds_a7d478cef1719fb69a80a332",
     "workspace_id": "ws_e2e",
     "name": "support-prod",
     "version": 1,
     "record_count": 1,
     "metadata": {},
-    "created_at": "2026-11-28T11:04:35.629Z",
-    "updated_at": "2026-11-28T11:04:35.894Z"
+    "created_at": "2026-11-28T11:29:48.305Z",
+    "updated_at": "2026-11-28T11:29:48.580Z"
    }
   },
   "renderDataset": {
@@ -1726,10 +1624,10 @@
   "resumeRun": {
    "status": 200,
    "body": {
-    "id": "run_65fd31940655191642cea1b8",
+    "id": "run_333a10365bc1f91b998d2a6b",
     "workspace_id": "ws_e2e",
     "name": "support-sft",
-    "dataset_id": "ds_cd4c3100a9757c14db6f7e53",
+    "dataset_id": "ds_a7d478cef1719fb69a80a332",
     "dataset_name": "support-prod",
     "dataset_version": 1,
     "recipe_kind": "sft",
@@ -1791,7 +1689,7 @@
     "attempt": 0,
     "max_attempts": 10,
     "phase": "queued",
-    "phase_since": "2026-11-28T11:04:36.079Z",
+    "phase_since": "2026-11-28T11:29:48.781Z",
     "last_interruption": null,
     "workers_online": 0,
     "autoscaling": false,
@@ -1803,15 +1701,15 @@
     "checkpoint_evals": [],
     "artifact_id": null,
     "error": null,
-    "created_at": "2026-11-28T11:04:36.071Z",
-    "updated_at": "2026-11-28T11:04:36.071Z",
+    "created_at": "2026-11-28T11:29:48.769Z",
+    "updated_at": "2026-11-28T11:29:48.769Z",
     "finished_at": null
    }
   },
   "scoreDataset": {
    "status": 202,
    "body": {
-    "id": "eval_6463e8541a39592adb50a77a",
+    "id": "eval_9c3ada5d8228d1a52a404dcb",
     "workspace_id": "ws_e2e",
     "name": "support-prod-score",
     "status": "queued",
@@ -1850,8 +1748,8 @@
     "scored_dataset_version": null,
     "error": null,
     "waiting_reason": null,
-    "created_at": "2026-11-28T11:04:35.932Z",
-    "updated_at": "2026-11-28T11:04:35.932Z",
+    "created_at": "2026-11-28T11:29:48.632Z",
+    "updated_at": "2026-11-28T11:29:48.632Z",
     "completed_at": null
    }
   },
@@ -1864,14 +1762,14 @@
      "cloud.langfuse.com",
      "us.cloud.langfuse.com"
     ],
-    "created_at": "2026-11-28T11:04:36.172Z",
-    "updated_at": "2026-11-28T11:04:36.172Z"
+    "created_at": "2026-11-28T11:29:48.875Z",
+    "updated_at": "2026-11-28T11:29:48.875Z"
    }
   },
   "syncSource": {
    "status": 202,
    "body": {
-    "id": "imp_8c131bd5b6b4ee085a96ee97",
+    "id": "imp_991e5b1386d393344e11e396",
     "workspace_id": "ws_e2e",
     "dataset": "support-prod",
     "status": "queued",
@@ -1879,7 +1777,7 @@
      "full": false,
      "kind": "provider",
      "provider": "langfuse",
-     "source_id": "src_5ba5c7f81cc450544d36b62f"
+     "source_id": "src_3fe691c981ecaf7266c82217"
     },
     "connector": "auto",
     "attempt": 0,
@@ -1889,14 +1787,14 @@
     "drop_reasons": [],
     "dataset_version": null,
     "error": null,
-    "created_at": "2026-11-28T11:04:36.231Z",
-    "updated_at": "2026-11-28T11:04:36.231Z"
+    "created_at": "2026-11-28T11:29:48.934Z",
+    "updated_at": "2026-11-28T11:29:48.934Z"
    }
   },
   "updateSource": {
    "status": 200,
    "body": {
-    "id": "src_5ba5c7f81cc450544d36b62f",
+    "id": "src_3fe691c981ecaf7266c82217",
     "workspace_id": "ws_e2e",
     "dataset": "support-prod",
     "provider": {
@@ -1918,7 +1816,7 @@
     "records_today": 0,
     "version_interval": 900,
     "pending_records": 0,
-    "next_sync_at": "2026-11-28T11:15:00.000Z",
+    "next_sync_at": "2026-11-28T11:30:00.000Z",
     "status": "active",
     "paused_reason": null,
     "last_error": null,
@@ -1927,8 +1825,8 @@
     "pending_full": false,
     "last_synced_at": null,
     "last_sync": null,
-    "created_at": "2026-11-28T11:04:36.198Z",
-    "updated_at": "2026-11-28T11:04:36.215Z"
+    "created_at": "2026-11-28T11:29:48.903Z",
+    "updated_at": "2026-11-28T11:29:48.914Z"
    }
   }
  }

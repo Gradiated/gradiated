@@ -6,12 +6,14 @@ import {
   fetchTrainingToken,
   publishArtifactVersion,
   tokenStaleTime,
+  trainingTokenQuery,
 } from "@/api/grad";
 import { ApiError } from "@/api/client";
-import { httpStatus } from "@/lib/errors";
 import { authorizedFetch } from "@/lib/grad/authorized-fetch";
 import {
-  signsOutOnUnauthorized,
+  GRAD_KEY,
+  gradKeys,
+  isGradKey,
   trainingAvailability,
 } from "@/lib/grad/config";
 
@@ -463,25 +465,16 @@ describe("training availability", () => {
 });
 
 describe("401s from grad", () => {
-  it("never sign the member out of the console", async () => {
-    const { fetch } = fakeFetch(() =>
-      Response.json(
-        { code: "invalid_token", detail: "The token was refused." },
-        { status: 401 },
-      ),
-    );
-    const session = createGradSession({
-      baseURL: API,
-      token: tokens().token,
-      fetch,
-    });
+  it("never sign the member out of the console", () => {
+    expect(isGradKey(gradKeys.runs("ws-1"))).toBe(true);
+    expect(isGradKey(gradKeys.run("ws-1", "run_1"))).toBe(true);
+    expect(isGradKey([...gradKeys.all("ws-1"), "usage"])).toBe(true);
+    expect(isGradKey(GRAD_KEY)).toBe(true);
+  });
 
-    const error: unknown = await session.grad.api
-      .listRuns({})
-      .catch((failure: unknown) => failure);
-
-    expect(httpStatus(error)).toBe(401);
-    expect(signsOutOnUnauthorized(error)).toBe(false);
-    expect(signsOutOnUnauthorized(new ApiError(401, {}))).toBe(true);
+  it("but a refused product session still does", () => {
+    expect(isGradKey(trainingTokenQuery("ws-1").queryKey)).toBe(false);
+    expect(isGradKey(["me"])).toBe(false);
+    expect(isGradKey(undefined)).toBe(false);
   });
 });

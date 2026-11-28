@@ -1,5 +1,3 @@
-import { GradError } from "@gradiated/grad";
-
 import { useFeatureFlag, type FeatureFlagState } from "@/lib/feature-flags";
 
 export const TRAINING_FLAG = "grad-training";
@@ -17,7 +15,26 @@ export const trainingAvailability = (
 export const useTrainingAvailable = () =>
   trainingAvailability(useFeatureFlag(TRAINING_FLAG), GRAD_API_URL);
 
-// A 401 from grad means the training token was refused or could not be
-// minted; it says nothing about the console session, so it never signs out.
-export const signsOutOnUnauthorized = (error: unknown) =>
-  !(error instanceof GradError);
+// Every grad query and mutation key starts with this. A 401 from grad means
+// the training token was refused or could not be minted; it says nothing
+// about the console session, so it never signs the member out. (Keys, not
+// the SDK's error class, keep the SDK out of the console's main chunk.)
+export const GRAD_KEY = ["grad"] as const;
+
+export const gradKeys = {
+  all: (workspaceId: string) => [...GRAD_KEY, workspaceId] as const,
+  runs: (workspaceId: string) => ["grad", workspaceId, "runs"] as const,
+  run: (workspaceId: string, id: string) =>
+    ["grad", workspaceId, "run", id] as const,
+  runEvents: (workspaceId: string, id: string) =>
+    ["grad", workspaceId, "run-events", id] as const,
+  checkpoints: (workspaceId: string, runId: string) =>
+    ["grad", workspaceId, "checkpoints", runId] as const,
+  datasets: (workspaceId: string) => ["grad", workspaceId, "datasets"] as const,
+  imports: (workspaceId: string) => ["grad", workspaceId, "imports"] as const,
+  sources: (workspaceId: string) => ["grad", workspaceId, "sources"] as const,
+  evals: (workspaceId: string) => ["grad", workspaceId, "evals"] as const,
+};
+
+export const isGradKey = (key: readonly unknown[] | undefined) =>
+  key?.[0] === GRAD_KEY[0];

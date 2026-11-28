@@ -15,7 +15,7 @@ import { createRoot } from "react-dom/client";
 import { needsStaffSessionRecovery } from "@/api/client";
 import { getCurrentUser } from "@/api/queries";
 import { httpStatus, isClientError } from "@/lib/errors";
-import { signsOutOnUnauthorized } from "@/lib/grad/config";
+import { isGradKey } from "@/lib/grad/config";
 import { loginSearchFor } from "@/lib/engineer-onboarding";
 import { toastMutationError } from "@/lib/mutation-errors";
 import { endSession } from "@/lib/session";
@@ -29,7 +29,6 @@ const signIn = () =>
   endSession(queryClient, router, loginSearchFor(router.state.location));
 
 const handleUnauthorized = (error: Error) => {
-  if (!signsOutOnUnauthorized(error)) return;
   if (needsStaffSessionRecovery(error)) {
     void getCurrentUser().catch((failure: unknown) => {
       if (httpStatus(failure) === 401) void signIn();
@@ -40,7 +39,7 @@ const handleUnauthorized = (error: Error) => {
 const queryFailed = (error: Error, { queryKey }: { queryKey: QueryKey }) => {
   const status = httpStatus(error);
 
-  if (status === 401 && signsOutOnUnauthorized(error)) {
+  if (status === 401 && !isGradKey(queryKey)) {
     handleUnauthorized(error);
     return;
   }
@@ -52,7 +51,7 @@ const queryClient: QueryClient = new QueryClient({
   queryCache: new QueryCache({ onError: queryFailed }),
   mutationCache: new MutationCache({
     onError: (error, variables, context, mutation) => {
-      handleUnauthorized(error);
+      if (!isGradKey(mutation.options.mutationKey)) handleUnauthorized(error);
       toastMutationError(error, variables, context, mutation);
     },
   }),

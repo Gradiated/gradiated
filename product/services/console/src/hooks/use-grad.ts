@@ -17,7 +17,14 @@ import {
   type GradSession,
 } from "@/api/grad";
 import { useProductContext } from "@/hooks/use-product-context";
-import { GRAD_API_URL, useTrainingAvailable } from "@/lib/grad/config";
+import {
+  GRAD_API_URL,
+  GRAD_KEY,
+  gradKeys,
+  useTrainingAvailable,
+} from "@/lib/grad/config";
+
+export { gradKeys };
 import { isTerminalEval, isTerminalRun } from "@/lib/grad/labels";
 import type { PlanRunRequest } from "@/lib/grad/types";
 import { sha256Hex, uploadHeaders, uploadTarget } from "@/lib/grad/upload";
@@ -50,21 +57,6 @@ const sessionFor = (
   byWorkspace.set(workspaceId, session);
 
   return session;
-};
-
-export const gradKeys = {
-  all: (workspaceId: string) => ["grad", workspaceId] as const,
-  runs: (workspaceId: string) => ["grad", workspaceId, "runs"] as const,
-  run: (workspaceId: string, id: string) =>
-    ["grad", workspaceId, "run", id] as const,
-  runEvents: (workspaceId: string, id: string) =>
-    ["grad", workspaceId, "run-events", id] as const,
-  checkpoints: (workspaceId: string, runId: string) =>
-    ["grad", workspaceId, "checkpoints", runId] as const,
-  datasets: (workspaceId: string) => ["grad", workspaceId, "datasets"] as const,
-  imports: (workspaceId: string) => ["grad", workspaceId, "imports"] as const,
-  sources: (workspaceId: string) => ["grad", workspaceId, "sources"] as const,
-  evals: (workspaceId: string) => ["grad", workspaceId, "evals"] as const,
 };
 
 // No session (so no token and no grad request) unless training is available.
@@ -342,6 +334,7 @@ export const useRunActions = (id: string) => {
   };
 
   const cancel = useMutation({
+    mutationKey: GRAD_KEY,
     mutationFn: () => requireSession(session).cancelRun(id),
     meta: { errorMessage: "Could not cancel the run." },
     onSuccess: (run) =>
@@ -350,6 +343,7 @@ export const useRunActions = (id: string) => {
   });
 
   const resume = useMutation({
+    mutationKey: GRAD_KEY,
     mutationFn: (maxCostUsd: number | undefined) =>
       requireSession(session).resumeRun(
         id,
@@ -369,6 +363,7 @@ export const usePlanRun = () => {
   const { session } = useGrad();
 
   return useMutation({
+    mutationKey: GRAD_KEY,
     mutationFn: (request: PlanRunRequest) =>
       requireSession(session).planRun(request),
   });
@@ -378,6 +373,7 @@ export const useCreateRun = () => {
   const { workspaceId, session, queryClient } = useGrad();
 
   return useMutation({
+    mutationKey: GRAD_KEY,
     mutationFn: ({
       request,
       idempotencyKey,
@@ -394,6 +390,7 @@ export const useSyncSource = () => {
   const { workspaceId, session, queryClient } = useGrad();
 
   return useMutation({
+    mutationKey: GRAD_KEY,
     mutationFn: (id: string) => requireSession(session).syncSource(id, {}),
     meta: { errorMessage: "Could not start the sync." },
     onSettled: async () => {
@@ -413,6 +410,7 @@ export const useImportFile = () => {
   const { workspaceId, session, queryClient } = useGrad();
 
   return useMutation({
+    mutationKey: GRAD_KEY,
     mutationFn: async ({
       dataset,
       file,
@@ -489,6 +487,7 @@ export const useDownloadArtifact = () => {
   const { session } = useGrad();
 
   return useMutation({
+    mutationKey: GRAD_KEY,
     mutationFn: async (id: string) => {
       const download = await requireSession(session).getArtifactDownloadUrl(id);
       if (!/^https?:$/.test(new URL(download.url).protocol))

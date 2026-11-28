@@ -9,6 +9,7 @@
 }
 
 .gr-collage-hero .gr-module-inner {
+  container-type: inline-size;
   position: relative;
   display: grid;
   grid-template-rows: var(--copy-rows, 1fr auto 1.7fr);
@@ -59,6 +60,9 @@
 
 .gr-collage-layer {
   position: absolute;
+  top: calc(var(--t) / var(--ch) * 100%);
+  left: calc(var(--l) / var(--cw) * 100%);
+  width: calc(var(--w) / var(--cw) * 100%);
   height: auto;
   transform: translate3d(0, calc(var(--drift, 0px) * var(--rate)), 0);
   will-change: transform;
@@ -92,8 +96,44 @@
   }
 }
 
-/* The copy first, then the whole collage under it. */
-@media (max-width: 60rem) {
+/* Over the collage, the copy is sized by the hero, not the window: it has
+   to fit the ~40% of the canvas left of the photo, which beside the rail is
+   far less than the window suggests. Sized by the window, it ran under the
+   photo at 1024. Landscape tablets beside the strip get this layout too:
+   stacked, a 945x827 window left the collage a fragment in the corner. */
+@media (min-width: 60.0625rem),
+  (min-width: 52.5rem) and (orientation: landscape) {
+  /* The collage bleeds to the top of the screen at every tier, as it does
+     at wide; the mid tier's module padding left a band above the map. */
+  .gr-rail-sheet
+    .gr-root[data-tier]:not([data-tier="wide"])
+    .gr-module.gr-collage-hero {
+    padding-block-start: 0;
+  }
+
+  /* Beside the rail below the wide tier, the hero is a screen tall rather
+     than the canvas's shape, which stopped ~190px short at 945x827. */
+  .gr-root[data-tier="mid"] .gr-collage-hero .gr-module-inner {
+    min-height: 100svh;
+    aspect-ratio: auto;
+  }
+
+  /* The copy has its own column here, so the figures can take more of the
+     height than when they sit under it. */
+  .gr-root[data-tier="mid"] .gr-collage {
+    --boost: 1.3;
+  }
+
+  .gr-collage-hero-title {
+    font-size: min(var(--text-masthead), 4.6cqi);
+  }
+
+  .gr-root .gr-collage-hero-copy .gr-body {
+    max-width: min(44ch, 34cqi);
+  }
+}
+
+@media (max-width: 52.4375rem), (max-width: 60rem) and (orientation: portrait) {
   /* One screen tall, the collage behind the copy and cut off on the left. */
   .gr-root .gr-collage-hero {
     display: grid;
@@ -107,16 +147,77 @@
     aspect-ratio: auto;
   }
 
+  /* The copy keeps to a reading width on tablets, so the title and the
+     paragraph stay left of the figures rather than running across them. */
   .gr-collage-hero-copy {
+    --gutter: calc((100% - var(--module-w)) / 2);
+
     transform: none;
     padding-block: 0 calc(2 * var(--u));
-    padding-inline: calc((100% - var(--module-w)) / 2);
+    padding-inline: var(--gutter)
+      max(var(--gutter), calc(100% - var(--gutter) - 30rem));
   }
 
-  .gr-collage {
-    top: auto;
-    height: var(--collage-h, 55svh);
+  /* The collage runs behind the copy, so each line of the paragraph sits on
+     its own strip of page, like type pasted onto the collage. */
+  .gr-root .gr-collage-hero-title {
+    margin-block-end: calc(1.5 * var(--u));
   }
+
+  .gr-root .gr-collage-hero-copy .gr-body {
+    display: inline;
+    padding: 0.15em 0.35em;
+    margin-inline-start: -0.35em;
+    background: var(--color-substrate);
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+}
+
+/* The hero is rarely the canvas's shape here, so the collage fills it
+   edge to edge and each layer is pinned on its own: the figures to the
+   right and grown with the height, the paper strips along the foot and
+   grown with the width. Scaled as one picture, it left a gap on one side
+   or cropped the people. Below the wide tier only; wide keeps the canvas. */
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-collage {
+  container-type: size;
+  inset: 0;
+  width: auto;
+  height: auto;
+  aspect-ratio: auto;
+}
+
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-collage-layer {
+  --k: calc(min(1, var(--share) * var(--boost, 1)) / var(--ch) * 100cqh);
+
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  width: calc(var(--w) * var(--k));
+}
+
+/* The strips span the width, but never shrink below about half the
+   canvas's height: on a tall phone, sized by width alone, they hid
+   behind the figures. Past the right edge they're cut off. */
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-collage-layer[data-by="width"] {
+  --k: max(calc(1cqw * 100 / var(--cw)), calc(1cqh * 55 / var(--ch)));
+}
+
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-collage-layer[data-x="left"] {
+  left: calc(var(--l) * var(--k));
+}
+
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-collage-layer[data-x="right"] {
+  right: calc((var(--cw) - var(--l) - var(--w)) * var(--k));
+}
+
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-collage-layer[data-y="top"] {
+  top: calc(var(--t) * var(--k));
+}
+
+.gr-root[data-tier]:not([data-tier="wide"]) .gr-collage-layer[data-y="bottom"] {
+  bottom: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -141,21 +242,4 @@
   .gr-hero-line
   + .gr-hero-line::before {
   content: " ";
-}
-
-/* Phones: the collage runs behind the copy, so each line of the paragraph
-   sits on its own strip of page, like type pasted onto the collage. */
-.gr-root[data-tier="narrow"] .gr-collage-hero-title,
-.gr-root[data-tier="compact"] .gr-collage-hero-title {
-  margin-block-end: calc(1.5 * var(--u));
-}
-
-.gr-root[data-tier="narrow"] .gr-collage-hero-copy .gr-body,
-.gr-root[data-tier="compact"] .gr-collage-hero-copy .gr-body {
-  display: inline;
-  padding: 0.15em 0.35em;
-  margin-inline-start: -0.35em;
-  background: var(--color-substrate);
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
 }

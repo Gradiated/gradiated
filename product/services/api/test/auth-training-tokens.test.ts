@@ -163,13 +163,27 @@ it.each([
 );
 
 it.each([
-  { service: "Inference", scopes: ["artifacts:pin" as const] },
+  { service: "Inference", scopes: ["artifacts:pin"] },
   { service: "inference", scopes: [] },
-])("refuses a service token for $service with $scopes", async (input) => {
-  await expect(
-    createAuth().signServiceToken({
-      ...input,
-      workspaceId: subject.workspaceId,
-    }),
-  ).rejects.toThrow();
-});
+  // Scopes grad must never see on a service token.
+  { service: "inference", scopes: ["admin"] },
+  { service: "inference", scopes: ["artifacts:pin", "trainer:worker"] },
+  { service: "inference", scopes: ["runs:write"] },
+  {
+    service: "inference",
+    scopes: ["artifacts:pin"],
+    workspaceId: "../other-workspace",
+  },
+])(
+  "refuses a service token for $service with $scopes",
+  async ({ workspaceId = subject.workspaceId, ...input }) => {
+    await expect(
+      createAuth().signServiceToken({
+        ...input,
+        workspaceId,
+        scopes: input.scopes as ["artifacts:pin"],
+      }),
+    ).rejects.toThrow();
+    expect(records.jwks).toHaveLength(0);
+  },
+);

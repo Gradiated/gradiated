@@ -382,13 +382,17 @@ const Endpoint = ({ op }: { op: Operation }): ReactElement => {
             </>
           ) : null}
           <h4>Returns</h4>
-          <p className="gr-api-returns">
-            <span className="gr-api-status">{response?.status}</span>{" "}
-            {returns ? (
-              <span className="gr-api-field-type">{typeLabel(returns)}</span>
-            ) : null}{" "}
-            {response ? prose(response.description) : null}
-          </p>
+          {op.responses.map((variant) => (
+            <p className="gr-api-returns" key={variant.status}>
+              <span className="gr-api-status">{variant.status}</span>{" "}
+              {variant.schema ? (
+                <span className="gr-api-field-type">
+                  {typeLabel(variant.schema)}
+                </span>
+              ) : null}{" "}
+              {prose(variant.description)}
+            </p>
+          ))}
           {returnsShape ? (
             <details className="gr-api-children">
               <summary>

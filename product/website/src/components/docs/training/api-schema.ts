@@ -297,7 +297,11 @@ export const example = (
     );
   }
   if (own.includes("integer") || own.includes("number")) {
-    return resolved.minimum ?? resolved.exclusiveMinimum ?? 0;
+    if (resolved.minimum !== undefined) return resolved.minimum;
+    if (resolved.exclusiveMinimum !== undefined) {
+      return resolved.exclusiveMinimum + 1;
+    }
+    return 0;
   }
   if (own.includes("boolean")) return false;
   if (own.includes("string")) {

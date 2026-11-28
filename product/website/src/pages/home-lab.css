@@ -746,10 +746,8 @@
     animation-play-state: paused;
   }
 
-  /* Taller buttons on touch screens: a comfortable target, and less flat. */
+  /* Height comes from the button scale, the same as every other CTA. */
   .gr-root .gr-lab-hero .gr-button {
-    min-height: 3rem;
-    padding-inline: calc(0.75 * var(--u));
     white-space: nowrap;
   }
 
@@ -959,9 +957,10 @@
   vertical-align: middle;
 }
 
-/* Every action button at one height, icon or not. */
+/* Row actions are small buttons, icon or not. */
 .gr-roadmap-actions .gr-button {
-  min-height: 2.375rem;
+  --button-h: 2rem;
+  --button-type: 0.6875rem;
 }
 
 .gr-roadmap-actions .gr-pixel-icon {

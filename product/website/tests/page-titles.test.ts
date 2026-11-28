@@ -50,6 +50,11 @@ vi.mock("../src/handbook", () => ({
   handbookSections: [],
 }));
 vi.mock("../src/pages/DocsNextPage", () => ({ DocsNextPage: () => null }));
+/* entry-server re-exports the generated docs for prerender, which import the
+   MDX documents; the titles under test don't depend on them. */
+vi.mock("../src/components/docs/training/generated-docs", () => ({
+  docsGenerated: () => ({}),
+}));
 vi.mock("../src/pages/ReadingPages", () => ({
   ArticleReadingPage: () => null,
 }));

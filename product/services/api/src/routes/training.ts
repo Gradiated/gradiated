@@ -121,7 +121,7 @@ const createUpload = createRoute({
   operationId: "createModelUpload",
   summary: "Create model upload",
   description:
-    "Creates a workspace-scoped upload for PEFT LoRA config and safetensors files. Grants expire after one hour.",
+    "Creates a workspace-scoped upload for PEFT LoRA config and safetensors files. Grants expire after one hour. Once uploads move to grad this answers 410 `use_grad_artifacts_upload`; uploads already started still complete.",
   tags: ["Training"],
   request: {
     params: WorkspacePathSchema,
@@ -132,6 +132,10 @@ const createUpload = createRoute({
   },
   responses: {
     201: json(ModelUploadSchema, "Private file upload grants."),
+    410: {
+      description: "New uploads go through `grad artifacts upload`.",
+      content: problemContent,
+    },
     ...errors,
   },
 });

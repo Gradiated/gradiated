@@ -27,6 +27,11 @@ const ApiOnlyEnvironmentSchema = z.object({
   GRAD_ARTIFACTS_BUCKET: z.string().min(1).optional(),
   // grad-server's internal listener, such as http://grad-internal.training.svc:8789.
   GRAD_SERVER_URL: z.url().optional(),
+  // New model uploads answer 410 and point at `grad artifacts upload`.
+  MODEL_UPLOADS_CLOSED: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
   // JSON map from grad's base model ID to the serving base that hosts its
   // adapters: {"qwen/qwen3-8b": {"model_id", "repository", "revision"}}. Bases
   // not listed fall back to the catalog's training profiles.

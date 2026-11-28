@@ -203,6 +203,7 @@ export {
   type GradArtifact,
   type GradArtifacts,
 } from "./training/grad.js";
+export { ModelUploadsClosedError } from "./training/uploads.js";
 export {
   ServingBasesSchema,
   type ServingBases,

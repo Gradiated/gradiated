@@ -144,13 +144,19 @@
      THE FLOOR IS SET BY THE LONGEST WORD, measured rather than guessed.
      "Subprocessors" is 13 characters and came to exactly 368px at the old
      2.2x floor — the full width of the band on a 430px phone, so it spilled
-     past the edge. At 2x it measures 332px and has 36 to spare. */
+     past the edge. At 2x it measures 332px and has 36 to spare.
+
+     1.5x on phones: at 2x the band beside the rail held one word per line
+     ("The / people / at / Gradiated"), and "Addendum" broke mid-word. */
   --text-masthead: clamp(
-    calc(2 * var(--text-heading)),
+    calc(1.5 * var(--text-heading)),
     7vw,
     calc(4 * var(--text-heading))
   );
-  --text-section: clamp(1.625rem, 2.4vw, 2.125rem);
+  /* Floored above --text-heading (26px): a section title must out-rank the
+     titles of the items under it. At 1.625rem it tied them on every screen
+     below ~1080px, so "Why Gradiated" read as one more reason. */
+  --text-section: clamp(2rem, 2.4vw, 2.125rem);
   /* 26px. The subheading is the workhorse of the product pages — it titles a
      feature, a column, a reel caption and a theme card — so it is set at the
      size those need rather than a step down from the section title. */

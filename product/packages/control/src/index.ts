@@ -282,3 +282,4 @@ export {
   type DeploymentStore,
   type ModelReplica,
 } from "./deployments/store.js";
+export { startGradWorkspaceStateSweep } from "./training/grad-workspace-states.js";

@@ -185,7 +185,9 @@
   .gr-team-overview .gr-team-map-globe {
     position: relative;
     top: auto;
-    width: min(100%, 36rem);
+    /* The band's width, not the sheet's: full width, it ran into the rail
+       and off the right edge on phones. */
+    width: min(var(--module-w, 100%), 36rem);
     margin-inline: auto;
     translate: none;
   }

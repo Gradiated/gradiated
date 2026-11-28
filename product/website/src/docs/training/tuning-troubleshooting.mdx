@@ -31,7 +31,7 @@ Resolved values at the default batch size of 128, for each recipe's default mode
 Rules of thumb behind `"auto"`:
 
 - **Batch size:** the learning rate scales with the square root of the batch size. Doubling `batch_size` raises the resolved `lr` by about 1.4x.
-- **Model size:** smaller models in a family want a higher learning rate than larger ones (SFT on `qwen/qwen3-0.6b` resolves to `8e-4`, on `qwen/qwen3-32b` to `3e-4`).
+- **Model size:** smaller models in a family want a higher learning rate than larger ones (SFT on `qwen/qwen3-0.6b` resolves to `8e-4`, on `qwen/qwen3-14b` to `4e-4`).
 - **Rank:** `alpha` defaults to `32` for every rank, so the right learning rate stays the same when you change `rank`.
 - **Objective:** as a sanity check, DPO runs at about 0.04x the SFT learning rate.
 
@@ -85,7 +85,7 @@ Every recipe defaults to `batch_size=128` for `epochs=1`. On a small dataset the
 Each epoch is a whole number of batches (the last one may be short), so the plan's step count is exactly what the run reports. The plan warns when a run will take fewer than 100 optimizer steps, because short runs end before the learning rate schedule does its job. Fix it with a smaller batch, more epochs, or more data:
 
 ```text
-  ! 40 training examples at batch 128 is 1 step per epoch, below the 100 steps we recommend; consider more data, more epochs or a smaller batch_size.
+  ! 40 training examples at batch 10 is 4 steps per epoch, below the 100 steps we recommend; consider more data, more epochs or a smaller batch_size.
 ```
 
 More than 2–3 epochs over the same SFT data usually overfits. Prefer more data, or a smaller batch for more steps.
@@ -199,7 +199,7 @@ In a terminal, `grad train --wait` and `grad runs watch RUN` open a full-screen 
 
 ### Phases and events
 
-Every run reports what it is doing as a **phase**: `queued`, `waiting_for_compute` (no worker has picked it up yet), `starting` (a worker claimed it; the event names its GPU model and memory), `loading_model`, then `training`, `evaluating` and `checkpointing` as they alternate, `uploading` and `completing`. `run.phase` and `run.phase_since` hold the current one. While a run waits for compute, `run.workers_online` counts the workers that could take it, and on Gradiated Cloud `run.autoscaling` is true while new workers start. A queued run also says why it waits: `run.queue_position` is about how many runs start before it (workers are shared fairly between workspaces, so this counts other workspaces' runs too), and `run.queue_message` is a ready line such as `Queued behind 3 runs`, `Queued: workspace concurrency limit (8 running)` (your workspace already runs as many as it may at once) or `Waiting for a GPU with ≥46 GB; online workers have 24 GB`. A workspace may have 500 queued jobs at once; creating another answers `429 queue_limit`.
+Every run reports what it is doing as a **phase**: `queued`, `waiting_for_compute` (no worker has picked it up yet), `starting` (a worker claimed it; the event names its GPU model and memory), `loading_model`, then `training`, `evaluating` and `checkpointing` as they alternate, `uploading` and `completing`. `run.phase` and `run.phase_since` hold the current one. While a run waits for compute, `run.workers_online` counts the train workers already busy with a job, and `run.autoscaling` is true when workers scale from zero (`GRAD_WORKER_AUTOSCALING`, which the Helm chart sets when KEDA scales a train pool), so a new one is starting. A queued run also says why it waits: `run.queue_position` is about how many runs start before it (workers are shared fairly between workspaces, so this counts other workspaces' runs too), and `run.queue_message` is a ready line such as `Queued behind 3 runs`, `Queued: workspace concurrency limit (8 running)` (your workspace already runs as many as it may at once) or `Waiting for a GPU with ≥46 GB; online workers have 24 GB`. A workspace may have 500 queued jobs at once; creating another answers `429 queue_limit`.
 
 `run.wait()` shows this for you: a live progress line in a terminal (phase, step, loss, cost and ETA), a small display that updates itself in Jupyter, and nothing in scripts, CI or logs. Pass `progress=False` to turn it off, or `GRAD_NO_PROGRESS=1`. `grad train --wait` prints the same lines (or the full-screen view in a terminal), for example `Queued behind 3 runs — 2m 10s` or `Waiting for a worker (none online) — 2m 10s`.
 

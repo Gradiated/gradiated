@@ -2,10 +2,11 @@ import { randomUUID } from "node:crypto";
 
 import {
   DEFAULT_EVALUATION_JUDGE,
+  MODEL_CATALOG,
   UsageEventSchema,
   type UsageEvent,
 } from "@gradiated/contracts";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import {
@@ -139,7 +140,23 @@ describe("training billing", () => {
       expect(price("inference:anthropic/claude-sonnet-5-5")).toBe(
         6_000_000_000n,
       );
-      expect(price("inference:qwen/qwen3-8b")).toBe(150_000_000n);
+      expect(price("inference:qwen/qwen3-0.6b")).toBe(50_000_000n);
+    });
+
+    // grad allows a judge only with an inference: SKU, so each must be servable.
+    it("prices only inference models the product serves", async () => {
+      const list = await service().priceList({ product: "training" });
+      const served = new Set(
+        MODEL_CATALOG.filter((model) =>
+          model.supportedUses.some((use) => use !== "training"),
+        ).map((model) => model.id.toLowerCase()),
+      );
+      const models = list.items
+        .filter((item) => item.sku.startsWith("inference:"))
+        .map((item) => item.sku.slice("inference:".length));
+
+      expect(models.length).toBeGreaterThan(0);
+      expect(models.filter((model) => !served.has(model))).toEqual([]);
     });
 
     it("never bills an inference SKU through ingest", async () => {
@@ -241,6 +258,22 @@ describe("training billing", () => {
         ],
         expect.any(Array),
       ]);
+    });
+
+    it("still refuses a source type outside the list", async () => {
+      const { organizationId } = await customer();
+      const insert = (sourceType: string) =>
+        testDatabase.database.execute(sql`
+          insert into balance_transactions
+            (id, organization_id, type, amount, balance_after, source_type, source_id)
+          values (${randomUUID()}, ${organizationId}, 'usage', -1, -1, ${sourceType}, ${randomUUID()})`);
+
+      await expect(insert("usage_event")).resolves.toBeDefined();
+      await expect(insert("training_usage")).rejects.toMatchObject({
+        cause: expect.objectContaining({
+          constraint: "balance_transactions_source_type_check",
+        }),
+      });
     });
 
     it("bills a suspended organization's usage", async () => {

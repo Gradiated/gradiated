@@ -93,7 +93,7 @@ const NAV_ITEMS: NavItem[] = [
     panel: {
       /* Says what the company IS, beside what it sells. The panel is the one
          place a reader stops long enough to take a sentence in. */
-      intro: "The research lab focused on inference.",
+      intro: "The AI lab focused on inference and training.",
       models: true,
       cards: [
         {

@@ -1,8 +1,9 @@
 -- PLACEHOLDER PRICES. Every price here is made up and is not final pricing.
 -- train: SKUs are scaled by model size from grad's catalog defaults; inference:
--- SKUs are blended prompt+completion prices grad uses only to estimate evals and
--- to allow judges (the gateway bills eval inference itself). The version says so
--- with placeholder = true; replace it with a new version, never by editing this one.
+-- SKUs, for served models only, are blended prompt+completion prices grad uses
+-- only to estimate evals and to allow judges (the gateway bills eval inference
+-- itself). The version says so with placeholder = true; replace it with a new
+-- version, never by editing this one.
 INSERT INTO "price_lists" ("id", "product", "effective_at", "placeholder")
 VALUES ('pv_training_2026_11_27_placeholder', 'training', '2026-11-27T00:00:00Z', true);
 --> statement-breakpoint
@@ -17,11 +18,6 @@ VALUES
   ('pv_training_2026_11_27_placeholder', 'train:gradiated/linden-1', 'token', 200000000),
   ('pv_training_2026_11_27_placeholder', 'train:baai/bge-small-en-v1.5', 'token', 80000000),
   ('pv_training_2026_11_27_placeholder', 'inference:qwen/qwen3-0.6b', 'token', 50000000),
-  ('pv_training_2026_11_27_placeholder', 'inference:qwen/qwen3-1.7b', 'token', 80000000),
-  ('pv_training_2026_11_27_placeholder', 'inference:qwen/qwen3-4b', 'token', 100000000),
-  ('pv_training_2026_11_27_placeholder', 'inference:qwen/qwen3-8b', 'token', 150000000),
-  ('pv_training_2026_11_27_placeholder', 'inference:qwen/qwen3-14b', 'token', 250000000),
-  ('pv_training_2026_11_27_placeholder', 'inference:qwen/qwen3-32b', 'token', 400000000),
   ('pv_training_2026_11_27_placeholder', 'inference:gradiated/linden-1', 'token', 200000000),
   ('pv_training_2026_11_27_placeholder', 'inference:moonshotai/kimi-k3.1-pro', 'token', 1500000000),
   ('pv_training_2026_11_27_placeholder', 'inference:deepseek/deepseek-v4.1-flash', 'token', 400000000),

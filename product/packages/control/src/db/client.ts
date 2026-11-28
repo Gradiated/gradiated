@@ -13,8 +13,9 @@ export interface ControlDatabaseClient {
 export const createControlDatabase = (
   connectionString: string,
   maxConnections = 10,
+  options?: string,
 ): ControlDatabaseClient => {
-  const pool = new Pool({ connectionString, max: maxConnections });
+  const pool = new Pool({ connectionString, max: maxConnections, options });
 
   return {
     database: drizzle({ client: pool, schema }),

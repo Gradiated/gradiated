@@ -16,12 +16,12 @@
   column-gap: calc(2 * var(--u));
 }
 
-/* The title and the card span the reasons: title level with the first,
-   card's foot level with the last. */
+/* The card sits under the title. Pinned to the reasons' foot, it left an
+   empty band above it once the reasons ran long beside the rail. */
 .gr-careers-why-lead {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: calc(1.5 * var(--u));
 }
 
@@ -39,16 +39,21 @@
   row-gap: calc(2.75 * var(--u));
 }
 
+/* The icon above the text, left-aligned, at every width. */
 .gr-careers-reason {
   display: grid;
-  grid-template-columns: calc(2.8 * var(--u)) minmax(0, 1fr);
-  column-gap: calc(1.6 * var(--u));
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
 }
 
 .gr-careers-reason-icon {
-  justify-self: center;
-  height: calc(2.4 * var(--u));
+  justify-self: start;
+  margin-block-end: var(--u);
+}
+
+.gr-careers-reason-icon,
+.gr-careers-reason-icon .gr-pixel-icon {
+  height: calc(2 * var(--u));
 }
 
 .gr-root .gr-careers-reason-title {
@@ -241,6 +246,17 @@
   .gr-careers-why {
     grid-template-columns: minmax(0, 1fr);
     row-gap: calc(2 * var(--u));
+  }
+
+  /* Single column: the title, then the reasons. The ID card belongs to the
+     two-column layout, where it fills the space beside them; stacked, it
+     was a screen of decoration between the title and the jobs. */
+  .gr-careers-why-lead {
+    display: contents;
+  }
+
+  .gr-careers-why .gr-idcard {
+    display: none;
   }
 
   .gr-careers-tiles {

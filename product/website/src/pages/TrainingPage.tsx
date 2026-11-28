@@ -48,7 +48,7 @@ export const TrainingPage = (): ReactElement => (
         <Features items={FEATURES} />
         <div className="gr-features-action">
           <WaitlistButton className="gr-button gr-button--main">
-            Join post-training waitlist
+            Start research
             <Arrow />
           </WaitlistButton>
         </div>
@@ -71,7 +71,7 @@ export const TrainingPage = (): ReactElement => (
             </p>
             <div style={{ marginBlockStart: "1.5rem" }}>
               <WaitlistButton className="gr-button gr-button--main">
-                Join post-training waitlist
+                Start research
                 <Arrow />
               </WaitlistButton>
             </div>

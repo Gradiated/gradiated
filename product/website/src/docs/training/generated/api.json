@@ -1096,6 +1096,50 @@
    ]
   },
   {
+   "id": "countRuns",
+   "method": "GET",
+   "path": "/v1/runs/counts",
+   "tag": "Runs",
+   "summary": "Count the workspace's runs per status",
+   "description": "One count per status (the web console's status tabs), narrowed by `q` like `GET /v1/runs`.",
+   "params": [
+    {
+     "name": "q",
+     "in": "query",
+     "required": false,
+     "description": "Only items whose name contains this text (any case), or whose id is exactly this.",
+     "schema": {
+      "type": "string",
+      "description": "Only items whose name contains this text (any case), or whose id is exactly this.",
+      "minLength": 1,
+      "maxLength": 200
+     }
+    }
+   ],
+   "body": null,
+   "bodyRequired": false,
+   "responses": [
+    {
+     "status": 200,
+     "description": "Runs per status.",
+     "contentType": "application/json",
+     "schema": {
+      "$ref": "RunCounts"
+     }
+    }
+   ],
+   "errors": [
+    400,
+    401,
+    403,
+    404,
+    409,
+    422,
+    500,
+    503
+   ]
+  },
+  {
    "id": "getRun",
    "method": "GET",
    "path": "/v1/runs/{id}",
@@ -1187,6 +1231,18 @@
       "description": "Page size (default 1000). Values above 5000 are clamped to 5000.",
       "default": 1000,
       "minimum": 1,
+      "maximum": 5000
+     }
+    },
+    {
+     "name": "max_points",
+     "in": "query",
+     "required": false,
+     "description": "Return the whole curve after `cursor` as one page, thinned to at most this many points spaced evenly from the newest (plus as many eval points, thinned the same way). Points a resumed attempt replayed are left out, so steps only increase. `limit` is ignored and `next_cursor` is null. Compare runs or draw a long run without paging every point.",
+     "schema": {
+      "type": "integer",
+      "description": "Return the whole curve after `cursor` as one page, thinned to at most this many points spaced evenly from the newest (plus as many eval points, thinned the same way). Points a resumed attempt replayed are left out, so steps only increase. `limit` is ignored and `next_cursor` is null. Compare runs or draw a long run without paging every point.",
+      "minimum": 2,
       "maximum": 5000
      }
     }
@@ -3559,7 +3615,14 @@
      "$ref": "ArtifactProvenance"
     },
     "eval_report": {
-     "$ref": "EvalReport"
+     "anyOf": [
+      {
+       "$ref": "EvalReport"
+      },
+      {
+       "type": "null"
+      }
+     ]
     },
     "pins": {
      "type": "array",
@@ -3609,11 +3672,7 @@
    }
   },
   "ArtifactFormat": {
-   "type": [
-    "string",
-    "null"
-   ],
-   "description": "Artifact format when this checkpoint is exportable (promotable); null for training state only.",
+   "type": "string",
    "enum": [
     "peft_lora",
     "merged_safetensors",
@@ -3623,15 +3682,11 @@
     "router_bundle",
     "decision_bundle",
     "reward_bundle",
-    "reference",
-    null
+    "reference"
    ]
   },
   "ArtifactImport": {
-   "type": [
-    "object",
-    "null"
-   ],
+   "type": "object",
    "required": [
     "id",
     "workspace_id",
@@ -3928,15 +3983,12 @@
      ]
     },
     "reason": {
-     "allOf": [
+     "anyOf": [
       {
        "$ref": "InterruptionReason"
       },
       {
-       "type": [
-        "string",
-        "null"
-       ]
+       "type": "null"
       }
      ]
     },
@@ -3965,11 +4017,7 @@
    }
   },
   "BaseArtifact": {
-   "type": [
-    "object",
-    "null"
-   ],
-   "description": "Continued training: the artifact whose adapter the run starts from (recipe.model was an artifact reference).",
+   "type": "object",
    "required": [
     "id",
     "recipe_kind",
@@ -4098,7 +4146,15 @@
      "description": "Held-out score at this step; null when it wasn't evaluated."
     },
     "format": {
-     "$ref": "ArtifactFormat"
+     "description": "Artifact format when this checkpoint is exportable (promotable); null for training state only.",
+     "anyOf": [
+      {
+       "$ref": "ArtifactFormat"
+      },
+      {
+       "type": "null"
+      }
+     ]
     },
     "sha256": {
      "type": "string",
@@ -4256,7 +4312,15 @@
      ]
     },
     "format": {
-     "$ref": "ArtifactFormat"
+     "description": "Artifact format when this checkpoint is exportable (promotable); null for training state only.",
+     "anyOf": [
+      {
+       "$ref": "ArtifactFormat"
+      },
+      {
+       "type": "null"
+      }
+     ]
     }
    }
   },
@@ -4706,7 +4770,14 @@
      "$ref": "TrajectoryInput"
     },
     "output": {
-     "$ref": "TrajectoryOutput"
+     "anyOf": [
+      {
+       "$ref": "TrajectoryOutput"
+      },
+      {
+       "type": "null"
+      }
+     ]
     },
     "prompt": {
      "anyOf": [
@@ -4836,10 +4907,7 @@
    }
   },
   "DecisionHeadReport": {
-   "type": [
-    "object",
-    "null"
-   ],
+   "type": "object",
    "required": [
     "type",
     "examples",
@@ -5129,10 +5197,7 @@
    }
   },
   "EvalReport": {
-   "type": [
-    "object",
-    "null"
-   ],
+   "type": "object",
    "required": [
     "metric_name",
     "selected_step",
@@ -5353,7 +5418,14 @@
      "type": "object",
      "description": "Written by: decision (one entry per question).",
      "additionalProperties": {
-      "$ref": "DecisionHeadReport"
+      "anyOf": [
+       {
+        "$ref": "DecisionHeadReport"
+       },
+       {
+        "type": "null"
+       }
+      ]
      }
     },
     "recall_at_1": {
@@ -5390,44 +5462,15 @@
      "minimum": 0
     },
     "baseline": {
-     "type": [
-      "object",
-      "null"
-     ],
      "description": "Retrieval metrics of the untrained base encoder. Written by: embedding.",
-     "required": [
-      "recall_at_1",
-      "recall_at_5",
-      "recall_at_10",
-      "mrr"
-     ],
-     "properties": {
-      "recall_at_1": {
-       "type": [
-        "number",
-        "null"
-       ]
+     "anyOf": [
+      {
+       "$ref": "RetrievalMetrics"
       },
-      "recall_at_5": {
-       "type": [
-        "number",
-        "null"
-       ]
-      },
-      "recall_at_10": {
-       "type": [
-        "number",
-        "null"
-       ]
-      },
-      "mrr": {
-       "type": [
-        "number",
-        "null"
-       ]
+      {
+       "type": "null"
       }
-     },
-     "additionalProperties": {}
+     ]
     }
    },
    "additionalProperties": {}
@@ -5784,11 +5827,7 @@
    ]
   },
   "GpuInfo": {
-   "type": [
-    "object",
-    "null"
-   ],
-   "description": "starting: the claiming worker's GPU (null without one, e.g. the reference backend). Never the worker id or host.",
+   "type": "object",
    "required": [
     "name",
     "memory_gb"
@@ -6377,10 +6416,7 @@
    }
   },
   "MetricPoint": {
-   "type": [
-    "object",
-    "null"
-   ],
+   "type": "object",
    "required": [
     "seq",
     "attempt",
@@ -6604,7 +6640,15 @@
      "description": "queued and waiting_for_compute: why the run waits, ready to show (\"Queued behind 3 runs\", \"Queued: workspace concurrency limit (8 running)\", \"Waiting for a GPU with ≥46 GB; online workers have 24 GB\"). Null when it is next in line."
     },
     "gpu": {
-     "$ref": "GpuInfo"
+     "description": "starting: the claiming worker's GPU (null without one, e.g. the reference backend). Never the worker id or host.",
+     "anyOf": [
+      {
+       "$ref": "GpuInfo"
+      },
+      {
+       "type": "null"
+      }
+     ]
     }
    }
   },
@@ -7788,7 +7832,15 @@
      "description": "The labeling eval whose answers the run trains on: router runs with a Judge/validator rubric, and off-policy distill runs (the teacher's answers)."
     },
     "base_artifact": {
-     "$ref": "BaseArtifact"
+     "description": "Continued training: the artifact whose adapter the run starts from (recipe.model was an artifact reference).",
+     "anyOf": [
+      {
+       "$ref": "BaseArtifact"
+      },
+      {
+       "type": "null"
+      }
+     ]
     },
     "recipe_params": {
      "type": "object",
@@ -7856,6 +7908,42 @@
      "exclusiveMinimum": 0
     }
    }
+  },
+  "RetrievalMetrics": {
+   "type": "object",
+   "required": [
+    "recall_at_1",
+    "recall_at_5",
+    "recall_at_10",
+    "mrr"
+   ],
+   "properties": {
+    "recall_at_1": {
+     "type": [
+      "number",
+      "null"
+     ]
+    },
+    "recall_at_5": {
+     "type": [
+      "number",
+      "null"
+     ]
+    },
+    "recall_at_10": {
+     "type": [
+      "number",
+      "null"
+     ]
+    },
+    "mrr": {
+     "type": [
+      "number",
+      "null"
+     ]
+    }
+   },
+   "additionalProperties": {}
   },
   "RolloutSpec": {
    "description": "DistillRecipe: on_policy (default) samples answers from the student and the trainer scores them with the teacher's top-k logits; off_policy has the teacher answer each prompt once through the inference endpoint and trains the student on those answers.",
@@ -8132,7 +8220,14 @@
      "description": "When the run entered its phase."
     },
     "last_interruption": {
-     "$ref": "RunInterruption"
+     "anyOf": [
+      {
+       "$ref": "RunInterruption"
+      },
+      {
+       "type": "null"
+      }
+     ]
     },
     "workers_online": {
      "type": [
@@ -8173,10 +8268,24 @@
      "exclusiveMinimum": 0
     },
     "latest_metric": {
-     "$ref": "MetricPoint"
+     "anyOf": [
+      {
+       "$ref": "MetricPoint"
+      },
+      {
+       "type": "null"
+      }
+     ]
     },
     "eval_report": {
-     "$ref": "EvalReport"
+     "anyOf": [
+      {
+       "$ref": "EvalReport"
+      },
+      {
+       "type": "null"
+      }
+     ]
     },
     "checkpoint_evals": {
      "type": "array",
@@ -8222,6 +8331,62 @@
      "description": "Only on the response that created the run (POST /v1/runs): the plan's warnings, such as another queued or running run with the same name. They're also the run's first warning events.",
      "items": {
       "type": "string"
+     }
+    }
+   }
+  },
+  "RunCounts": {
+   "type": "object",
+   "required": [
+    "total",
+    "by_status"
+   ],
+   "properties": {
+    "total": {
+     "type": "integer",
+     "minimum": 0
+    },
+    "by_status": {
+     "type": "object",
+     "description": "Runs per status (0 when none).",
+     "required": [
+      "queued",
+      "running",
+      "completed",
+      "failed",
+      "cancelled",
+      "stopped_budget",
+      "stopped_balance"
+     ],
+     "properties": {
+      "queued": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "running": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "completed": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "failed": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "cancelled": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "stopped_budget": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "stopped_balance": {
+       "type": "integer",
+       "minimum": 0
+      }
      }
     }
    }
@@ -8288,10 +8453,7 @@
    }
   },
   "RunInterruption": {
-   "type": [
-    "object",
-    "null"
-   ],
+   "type": "object",
    "required": [
     "attempt",
     "reason",
@@ -8645,7 +8807,15 @@
      "description": "When the last successful sync finished."
     },
     "last_sync": {
-     "$ref": "SourceSync"
+     "description": "The most recent sync, running or finished.",
+     "anyOf": [
+      {
+       "$ref": "SourceSync"
+      },
+      {
+       "type": "null"
+      }
+     ]
     },
     "created_at": {
      "type": "string",
@@ -8705,11 +8875,7 @@
    }
   },
   "SourceSync": {
-   "type": [
-    "object",
-    "null"
-   ],
-   "description": "The most recent sync, running or finished.",
+   "type": "object",
    "required": [
     "import_id",
     "status",
@@ -8916,10 +9082,7 @@
    "additionalProperties": {}
   },
   "TrajectoryOutput": {
-   "type": [
-    "object",
-    "null"
-   ],
+   "type": "object",
    "properties": {
     "turns": {
      "type": "array",
@@ -9050,18 +9213,14 @@
    }
   },
   "UsageGroupBy": {
-   "type": [
-    "string",
-    "null"
-   ],
+   "type": "string",
    "enum": [
     "day",
     "week",
     "month",
     "model",
     "recipe",
-    "kind",
-    null
+    "kind"
    ]
   },
   "UsageKind": {
@@ -9288,7 +9447,14 @@
      }
     },
     "group_by": {
-     "$ref": "UsageGroupBy"
+     "anyOf": [
+      {
+       "$ref": "UsageGroupBy"
+      },
+      {
+       "type": "null"
+      }
+     ]
     },
     "groups": {
      "type": "array",

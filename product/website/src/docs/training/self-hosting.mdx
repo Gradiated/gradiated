@@ -84,7 +84,7 @@ grad --profile local ui run_01J9X # one run
 grad ui --no-open                 # print the URL instead
 ```
 
-- **Runs**: status, phase, recipe, model, dataset version, cost against the cap and age, filtered by status or name.
+- **Runs**: status, phase, recipe, model, dataset version, cost against the cap and age, filtered by status (each tab with its count) or name. Tick 2 to 10 runs and choose **Compare**: one metric overlaid by step (train or eval loss, any eval metric, learning rate, grad norm, throughput or cost, with smoothing), final metrics, tokens, cost and time side by side, and the resolved settings that differ. The URL (`/runs/compare?ids=...`) keeps the view, so it can be shared.
 - **A run**: status, phase and attempt N/M, live loss and eval-loss, learning-rate, throughput and cost-versus-cap charts, the event timeline (phases, interruptions, resumes, warnings, checkpoints), checkpoints with a **Promote** button, the recipe's eval report, the artifact with its download command, the resolved config, and **Cancel** and **Resume**.
 - **Datasets**: versions, records with their merged scores, sources with their last sync status and error and a **Sync** button, and recent imports.
 - **Evals**: scores with 95% confidence intervals, pass@k, the delta against the baseline, and failures.

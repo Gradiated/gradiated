@@ -145,6 +145,7 @@ export {
   type ApiKeyRecord,
   type CreatedApiKey,
   type PlaygroundCredentialRecord,
+  type TrainingMemberRecord,
   type WorkspaceApiKeyService,
   type WorkspaceRecord,
 } from "./workspaces/service.js";

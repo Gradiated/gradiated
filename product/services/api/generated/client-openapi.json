@@ -5675,6 +5675,24 @@
           "size_bytes"
         ]
       },
+      "TrainingToken": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "An ES256 JWT for the training API with audience training. It names the member (sub user:<id>), organization (org), workspace (ws) and role, and is verified against the keys at /api/auth/jwks."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "token",
+          "expires_at"
+        ]
+      },
       "SystemOneResponse": {
         "type": "object",
         "properties": {
@@ -14981,6 +14999,89 @@
           },
           "503": {
             "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/training-tokens": {
+      "post": {
+        "operationId": "createTrainingToken",
+        "summary": "Create a training token",
+        "description": "Signs a ten-minute JWT with which the console calls the training API for this workspace as the signed-in member. Workspace credentials cannot call it.",
+        "tags": [
+          "Workspaces"
+        ],
+        "x-gradiated-audience": "console",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "A signed training token.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Prevents storage of the token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrainingToken"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The workspace is archived or the organization is suspended.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The workspace was not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The session store is unavailable.",
             "content": {
               "application/problem+json": {
                 "schema": {

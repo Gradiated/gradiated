@@ -17,7 +17,11 @@ import {
   requireWorkspaceMembership,
 } from "../access.js";
 import type { ControlDatabase } from "../db/client.js";
-import { apiKeys, workspaces } from "../db/schema/index.js";
+import {
+  apiKeys,
+  workspaces,
+  type OrganizationRole,
+} from "../db/schema/index.js";
 import { ControlServiceError } from "../errors.js";
 import { requireRow } from "../require-row.js";
 import { apiKeyDigest, generateApiKeySecret } from "./api-key-secret.js";
@@ -41,6 +45,12 @@ const PLAYGROUND_CREDENTIAL_LIFETIME_MS = 60 * 60 * 1000;
 export interface CreatedApiKey {
   apiKey: ApiKeyRecord;
   secret: string;
+}
+
+export interface TrainingMemberRecord {
+  organizationId: string;
+  workspaceId: string;
+  role: OrganizationRole;
 }
 
 export interface PlaygroundCredentialRecord {
@@ -101,6 +111,10 @@ export interface WorkspaceApiKeyService {
     workspaceId: string,
   ): Promise<void>;
   requirePlaygroundAccess(userId: string, workspaceId: string): Promise<void>;
+  describeTrainingMember(
+    userId: string,
+    workspaceId: string,
+  ): Promise<TrainingMemberRecord>;
 }
 
 const { digest: _digest, ...apiKeyColumns } = getTableColumns(apiKeys);
@@ -363,6 +377,27 @@ export const createWorkspaceApiKeyService = (
 
     async requirePlaygroundAccess(userId, workspaceId) {
       await requirePlayground(database, userId, workspaceId);
+    },
+
+    // The same rules auth_principals_v1 applies to an API key's creator.
+    async describeTrainingMember(userId, workspaceId) {
+      const { membership, workspace } = await requireWritableWorkspace(
+        database,
+        { userId, workspaceId },
+      ).catch((error: unknown) => {
+        if (error instanceof ControlServiceError && error.code === "forbidden")
+          throw new ControlServiceError(
+            "forbidden",
+            "Training is unavailable in an archived workspace or a suspended organization.",
+          );
+        throw error;
+      });
+
+      return {
+        organizationId: workspace.organizationId,
+        workspaceId: workspace.id,
+        role: membership.role,
+      };
     },
 
     authenticateCredential,

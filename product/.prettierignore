@@ -30,3 +30,4 @@ website/public/benchmark/
 
 # A recording generated from grad's terminal renderer; kept compact.
 website/src/components/docs/training/run-replay.json
+website/src/docs/training/generated/

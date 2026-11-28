@@ -81,7 +81,7 @@ Every run and eval records what it processed in a usage ledger as it goes: a row
 
 - **Zero-cost pre-flight estimate:** run `grad train --dry-run` or `client.runs.plan(...)` to see `estimated_tokens`, `estimated_cost_usd`, `estimated_duration_s` (on one H100, excluding queueing) and `min_gpu_memory_gb` before you start. The token estimate errs high, by about 15% for English chat, so the run usually costs a little less than planned.
 - **Spend cap:** pass `max_cost_usd=` on any run. It stops cleanly with status `stopped_budget` and saves a checkpoint when the cap is reached; resume it with a higher cap.
-- **Checkpoint retention:** the best and final checkpoints of every run never expire; other checkpoints expire after 30 days unless you promote them.
+- **Checkpoint retention:** the best and final checkpoints of every run never expire. While a run trains it keeps its last 3 checkpoints plus its best (an older one expires as soon as a newer one registers); those expire after 30 days (`checkpoint_ttl_days`) unless you promote one.
 - **The ledger:** `grad usage` totals this month by kind (training, eval, scoring, labeling, teacher) with the top runs and evals; `grad usage list` (or `client.usage.list()`) lists the billed rows, newest first, with their run or eval, attempt, tokens and cost. On Gradiated Cloud, eval rows say `billed_by: gateway`: the gateway bills them with your inference usage.
 
 ```bash

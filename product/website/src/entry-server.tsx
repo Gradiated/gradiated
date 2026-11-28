@@ -33,3 +33,7 @@ export const getNotFoundPage = () => ({
   structuredData: [],
   title: formatPageTitle(getPageMetadata("/404/").title),
 });
+
+/* What prerender needs to write the docs' Markdown copies and search index
+   for the pages a component renders from generated data. */
+export { docsGenerated } from "./components/docs/training/generated-docs";

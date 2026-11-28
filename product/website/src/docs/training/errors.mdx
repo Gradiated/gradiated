@@ -1,0 +1,23 @@
+# Errors
+
+<DocsLead>
+  Every `code` grad-server answers with, what it means and what to do about it.
+  A problem's `type` URL links here.
+</DocsLead>
+
+Every error is `application/problem+json`. Match on `code`, which is stable; `title` and `detail` are for people and may change. Quote `request_id` (also the `x-request-id` header) when you report a problem.
+
+```json
+{
+  "type": "https://gradiated.com/problems/artifact_pinned",
+  "title": "Artifact is pinned",
+  "status": 409,
+  "code": "artifact_pinned",
+  "detail": "Artifact 'support-sft@3' is pinned by inference:support-v3 (published model version), so it can't be deleted. Unpublish it there first (that removes the pin).",
+  "request_id": "req_6f1c3a0e-5d2b-4b8e-9f43-0a7d2c9e1b55"
+}
+```
+
+The SDKs raise a typed error per status that carries `status`, `code`, `message` and `request_id`, and retry 408, 429, 500, 502, 503 and 504 for you (see [Errors in the API overview](/docs/api-reference/#errors) for each language's classes). The CLI exits with 3 for 401 and 403, 4 for 404, 5 for 409 and 422, 6 when the server doesn't offer a feature (a 501, or `cloud_training_unavailable`), and 7 when a run, eval or import you waited for finished unsuccessfully; `--json` prints the problem as `{"ok": false, "error": {...}}` on stderr.
+
+<DocsErrorCodes />

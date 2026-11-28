@@ -1850,3 +1850,717 @@
 .gr-doc-main :not(pre) > code {
   overflow-wrap: anywhere;
 }
+
+/* -- wide reference pages: samples beside the fields ----------------------- */
+
+@container (min-width: 60rem) {
+  .gr-doc-layout[data-wide] {
+    grid-template-columns: minmax(0, 64rem) 12rem;
+  }
+}
+
+/* -- filter row (API reference, errors) ------------------------------------ */
+
+.gr-api-filter {
+  position: sticky;
+  top: var(--nav-h);
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4em 0.8em;
+  margin-block: var(--u);
+  padding-block: 0.6em;
+  background: var(--color-substrate);
+}
+
+.gr-root .gr-api-filter-label {
+  color: var(--color-text-muted);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.gr-api-filter-input {
+  flex: 1 1 14rem;
+  min-width: 0;
+  padding: 0.5em 0.7em;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  background: var(--color-panel);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.9375rem;
+}
+
+.gr-api-filter-input:focus-visible {
+  outline: 2px solid var(--color-interactive);
+  outline-offset: 1px;
+}
+
+.gr-api-filter-count {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- endpoint index -------------------------------------------------------- */
+
+.gr-api-index {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: var(--u) calc(1.5 * var(--u));
+  margin-block: var(--u) calc(2 * var(--u));
+}
+
+.gr-root .gr-api-index ul {
+  margin: 0.3em 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gr-root .gr-api-index-tag {
+  color: var(--color-text);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.gr-root .gr-api-index li a {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+  padding-block: 0.12em;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  text-decoration: none;
+}
+
+.gr-root .gr-api-index li a:hover {
+  color: var(--color-text);
+}
+
+.gr-root .gr-api-index li code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+  overflow-wrap: anywhere;
+}
+
+/* -- one endpoint ---------------------------------------------------------- */
+
+.gr-api-op {
+  container-type: inline-size;
+  margin-block: calc(2 * var(--u));
+  scroll-margin-top: calc(var(--nav-h) + 4rem);
+}
+
+.gr-root .gr-api-op-title {
+  margin-block-end: 0.3em;
+  scroll-margin-top: calc(var(--nav-h) + 4rem);
+}
+
+.gr-root .gr-api-route {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6em;
+  margin-block: 0 var(--u);
+}
+
+.gr-root .gr-api-route code {
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+}
+
+.gr-api-method {
+  flex: none;
+  min-width: 3.4em;
+  font-family: var(--font-code);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+}
+
+.gr-api-method[data-method="POST"],
+.gr-api-method[data-method="PATCH"] {
+  color: var(--color-interactive);
+}
+
+.gr-api-method[data-method="DELETE"] {
+  color: var(--color-emphasis);
+}
+
+.gr-api-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--u);
+}
+
+@container (min-width: 50rem) {
+  .gr-api-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: calc(1.5 * var(--u));
+    align-items: start;
+  }
+
+  .gr-api-samples {
+    position: sticky;
+    top: calc(var(--nav-h) + 4.5rem);
+  }
+}
+
+.gr-root .gr-api-spec h4 {
+  margin: 1.4em 0 0.4em;
+  color: var(--color-text);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.gr-root .gr-api-spec > p:first-child {
+  margin-block-start: 0;
+}
+
+/* -- fields ---------------------------------------------------------------- */
+
+.gr-root .gr-api-fields {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gr-root .gr-api-field {
+  margin: 0;
+  padding-block: 0.55em;
+  border-block-start: 1px solid var(--color-rule);
+}
+
+.gr-api-field-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15em 0.55em;
+}
+
+.gr-root .gr-api-field-name {
+  background: none;
+  padding: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.gr-api-field-type {
+  color: var(--color-text-muted);
+  font-family: var(--font-code);
+  font-size: 0.8125rem;
+}
+
+.gr-api-field-req {
+  color: var(--color-emphasis);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.gr-api-field-meta {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.gr-root .gr-api-field-desc,
+.gr-root .gr-api-field-enum {
+  margin: 0.25em 0 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.gr-api-field-enum {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em;
+}
+
+.gr-root .gr-api-field-enum code {
+  font-size: 0.75rem;
+}
+
+.gr-api-children {
+  margin-block-start: 0.4em;
+}
+
+.gr-api-children > summary {
+  width: fit-content;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.gr-api-children > summary:hover {
+  color: var(--color-text);
+}
+
+.gr-api-children[open] > .gr-api-fields,
+.gr-api-children[open] > .gr-api-variants {
+  margin-block-start: 0.4em;
+  padding-inline-start: 0.9em;
+  border-inline-start: 1px solid var(--color-rule);
+}
+
+.gr-root .gr-api-variants {
+  margin: 0;
+  padding-inline-start: 0.9em;
+  list-style: none;
+}
+
+.gr-root .gr-api-variants > li + li {
+  margin-block-start: 0.6em;
+}
+
+.gr-root .gr-api-returns,
+.gr-root .gr-api-errors {
+  margin: 0.2em 0;
+  font-size: 0.875rem;
+}
+
+.gr-api-errors {
+  margin-block-start: 1em;
+  color: var(--color-text-muted);
+}
+
+.gr-api-status {
+  font-family: var(--font-code);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+/* -- samples --------------------------------------------------------------- */
+
+.gr-api-samples {
+  display: grid;
+  gap: calc(0.75 * var(--u));
+  min-width: 0;
+}
+
+.gr-api-sample-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6em;
+  margin-block-end: 0.35em;
+}
+
+.gr-api-sample-title {
+  color: var(--color-text-muted);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.gr-api-sample-modes {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+}
+
+.gr-api-sample-modes button {
+  padding: 0.25em 0.6em;
+  border: 0;
+  border-radius: calc(var(--radius) - 2px);
+  background: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.gr-api-sample-modes button[aria-pressed="true"] {
+  background: var(--color-text);
+  color: var(--color-inverse);
+}
+
+.gr-api-sample-modes button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.gr-api-sample {
+  min-width: 0;
+}
+
+.gr-api-sample .gr-doc-code {
+  margin: 0;
+}
+
+.gr-root .gr-api-sample pre {
+  max-height: 26rem;
+  margin: 0;
+  overflow: auto;
+}
+
+.gr-root .gr-api-empty {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+/* -- errors ---------------------------------------------------------------- */
+
+.gr-root .gr-errors-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3em 0.9em;
+  font-family: var(--font-code);
+  font-size: 0.875rem;
+}
+
+.gr-root .gr-errors-list,
+.gr-root .gr-errors-bystatus {
+  margin: 0;
+}
+
+.gr-root .gr-errors-entry {
+  padding-block: 0.7em;
+  border-block-start: 1px solid var(--color-rule);
+  scroll-margin-top: calc(var(--nav-h) + 4rem);
+}
+
+.gr-errors-entry[data-current] {
+  box-shadow: inset 2px 0 0 var(--color-interactive);
+  padding-inline-start: 0.8em;
+}
+
+.gr-root .gr-errors-entry dt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2em 0.6em;
+}
+
+.gr-root .gr-errors-code {
+  text-decoration: none;
+}
+
+.gr-root .gr-errors-code code {
+  font-weight: 600;
+}
+
+.gr-root .gr-errors-entry dd {
+  margin: 0.3em 0 0;
+}
+
+.gr-root .gr-errors-entry dd p {
+  margin: 0.2em 0 0;
+  font-size: 0.9375rem;
+}
+
+.gr-errors-fix > span {
+  margin-inline-end: 0.3em;
+  color: var(--color-text-muted);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.gr-root .gr-errors-bystatus > div {
+  padding-block: 0.5em;
+  border-block-start: 1px solid var(--color-rule);
+  scroll-margin-top: calc(var(--nav-h) + 4rem);
+}
+
+.gr-root .gr-errors-bystatus dd {
+  margin: 0.25em 0 0;
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
+
+/* -- changelog ------------------------------------------------------------- */
+
+.gr-changelog-date {
+  margin-inline-start: 0.7em;
+  color: var(--color-text-muted);
+  font-family: var(--font-code);
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+
+.gr-root .gr-changelog-links {
+  margin-block: 0.2em 0.8em;
+  font-size: 0.875rem;
+}
+
+.gr-root .gr-changelog-body li + li {
+  margin-block-start: 0.45em;
+}
+
+/* -- search ---------------------------------------------------------------- */
+
+.gr-doc-search-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  padding: 0.5em 0.6em 0.5em 0.85em;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  background: var(--color-panel);
+  color: var(--color-text-muted);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.gr-doc-search-open:hover {
+  color: var(--color-text);
+}
+
+.gr-doc-search-open kbd {
+  min-width: 1.5em;
+  padding: 0.05em 0.35em;
+  border: 1px solid var(--color-rule);
+  border-radius: calc(var(--radius) - 2px);
+  font-family: var(--font-code);
+  font-size: 0.75rem;
+  text-align: center;
+  text-transform: none;
+}
+
+.gr-doc-search {
+  width: min(42rem, calc(100vw - 2rem));
+  max-height: min(36rem, calc(100vh - 6rem));
+  margin: 12vh auto auto;
+  padding: 0;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  background: var(--color-module);
+  color: var(--color-text);
+  box-shadow: var(--shadow-raise);
+}
+
+.gr-doc-search::backdrop {
+  background: color-mix(in srgb, var(--color-text) 28%, transparent);
+}
+
+.gr-doc-search-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  max-height: inherit;
+}
+
+.gr-doc-search-input {
+  width: 100%;
+  padding: 0.95em 1.1em;
+  border: 0;
+  border-block-end: 1px solid var(--color-rule);
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.gr-doc-search-input:focus-visible {
+  outline: 2px solid var(--color-interactive);
+  outline-offset: -2px;
+}
+
+.gr-root .gr-doc-search-results,
+.gr-doc-search-results {
+  margin: 0;
+  padding: 0.3em;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.gr-doc-search-results li {
+  display: grid;
+  gap: 0.1em;
+  margin: 0;
+  padding: 0.6em 0.8em;
+  border-radius: calc(var(--radius) - 2px);
+  cursor: pointer;
+}
+
+.gr-doc-search-results li[aria-selected="true"] {
+  background: color-mix(in srgb, var(--color-interactive) 12%, transparent);
+}
+
+.gr-doc-search-where {
+  color: var(--color-text-muted);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.gr-doc-search-heading {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.gr-doc-search-text {
+  color: color-mix(in srgb, var(--color-text) 80%, var(--color-text-muted));
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.gr-doc-search-text mark {
+  background: color-mix(in srgb, var(--color-interactive) 22%, transparent);
+  color: inherit;
+}
+
+.gr-root .gr-doc-search-status {
+  margin: 0;
+  padding: 0.6em 1.1em;
+  border-block-start: 1px solid var(--color-rule);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 40rem) {
+  .gr-doc-search-open span,
+  .gr-doc-search-open kbd {
+    display: none;
+  }
+
+  .gr-doc-search {
+    margin-block-start: 1rem;
+  }
+}
+
+/* -- tutorial steps -------------------------------------------------------- */
+
+.gr-root .gr-doc-steps-progress {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4em 0.9em;
+  margin-block: var(--u);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gr-doc-steps-bar {
+  position: relative;
+  flex: 1 1 8rem;
+  max-width: 14rem;
+  height: 3px;
+  background: var(--color-rule);
+}
+
+.gr-doc-steps-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--done, 0%);
+  background: var(--color-interactive);
+  transition: width var(--dur-fast) var(--ease-response);
+}
+
+.gr-doc-steps-progress button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.gr-root .gr-doc-steps-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gr-root .gr-doc-step {
+  position: relative;
+  margin: 0;
+  padding: 0 0 calc(1.2 * var(--u)) 2.6em;
+}
+
+.gr-doc-step::before {
+  content: "";
+  position: absolute;
+  top: 2.2em;
+  bottom: 0;
+  left: 0.85em;
+  width: 1px;
+  background: var(--color-rule);
+}
+
+.gr-doc-step:last-child::before {
+  display: none;
+}
+
+.gr-root .gr-doc-step-title {
+  margin-block-start: calc(0.6 * var(--u));
+}
+
+.gr-doc-step-number {
+  position: absolute;
+  left: 0;
+  display: inline-grid;
+  place-items: center;
+  width: 1.75em;
+  height: 1.75em;
+  border: 1px solid var(--color-rule);
+  border-radius: 50%;
+  background: var(--color-substrate);
+  font-family: var(--font-code);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1;
+  transform: translateY(0.15em);
+}
+
+.gr-doc-step[data-done] .gr-doc-step-number {
+  border-color: var(--color-interactive);
+  background: var(--color-interactive);
+  color: var(--color-inverse);
+}
+
+.gr-root .gr-doc-step-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.gr-doc-step-check input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--color-interactive);
+}
+
+@media (max-width: 40rem) {
+  .gr-root .gr-doc-step {
+    padding-inline-start: 0;
+  }
+
+  .gr-doc-step::before {
+    display: none;
+  }
+
+  .gr-doc-step-number {
+    position: static;
+    margin-inline-end: 0.5em;
+  }
+}

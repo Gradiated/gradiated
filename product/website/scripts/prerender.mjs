@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { buildSearchIndex } from "./docs-search-index.mjs";
 import { renderFeed } from "./feed.mjs";
 
 const require = createRequire(import.meta.url);
@@ -13,7 +14,9 @@ const outputRoot = join(websiteRoot, "dist");
 const serverRoot = join(outputRoot, "server");
 const serverEntry = join(serverRoot, "entry-server.js");
 
-const { getNotFoundPage, getSeoPages, renderPage } = await import(serverEntry);
+const { docsGenerated, getNotFoundPage, getSeoPages, renderPage } =
+  await import(serverEntry);
+const generated = docsGenerated();
 
 const template = await readFile(join(outputRoot, "index.html"), "utf8");
 
@@ -113,6 +116,7 @@ const toPortableMarkdown = (source) =>
       (_match, content) => `${content.replace(/^ {2}/gm, "").trim()}\n`,
     )
     .replace(/<DocsCodeTab label="([^"]+)">/g, "\n### $1\n")
+    .replace(/<DocsStep title="([^"]+)">/g, "\n### $1\n")
     .replace(/<DocsCodeVariant label="([^"]+)">/g, "\n#### $1\n")
     .replace(/<DocsNext>\s*([\s\S]*?)\s*<\/DocsNext>/g, (_match, content) =>
       [
@@ -146,6 +150,10 @@ const toPortableMarkdown = (source) =>
     )
     .replace(/<DocsApiKeyAction\s*\/>/g, "")
     .replace(
+      /<(DocsApiReference|DocsErrorCodes|DocsChangelog)\s*\/>/g,
+      (_match, name) => generated.markdown[name],
+    )
+    .replace(
       /<Docs(?:RunLifecycle|RecipeFinder|CostEstimator|TokenMask|RunReplay|RouterFrontier|PipelineSchematic|DatumAnatomy)(?:\s[^>]*)?\s*\/>/g,
       "",
     )
@@ -173,6 +181,7 @@ const markdownPages = await Promise.all(
   docsPages.map(async ({ path }) => {
     const source = await readFile(await resolveDocsMdxPath(path), "utf8");
     return {
+      source,
       content: toPortableMarkdown(source),
       path:
         path === "/docs/" ? "/docs/index.md" : `${path.replace(/\/$/, "")}.md`,
@@ -184,6 +193,20 @@ for (const page of markdownPages) {
   await mkdir(dirname(outputPath), { recursive: true });
   await writeFile(outputPath, page.content);
 }
+
+await writeFile(
+  join(outputRoot, "docs", "search.json"),
+  JSON.stringify(
+    buildSearchIndex(
+      markdownPages.map((page, index) => ({
+        ...page,
+        path: docsPages[index].path,
+        title: docsPages[index].metadata.title,
+      })),
+      generated,
+    ),
+  ),
+);
 
 const sitemap = [
   '<?xml version="1.0" encoding="UTF-8"?>',

@@ -201,6 +201,7 @@ let run = client.runs().wait(&run.id, &WaitOptions::default()).await?;
 println!("{} {}", run.status, run.artifact_id.unwrap_or_default());
 ```
 
+  </DocsCodeTab>
   <DocsCodeTab label="CLI">
 
 ```bash

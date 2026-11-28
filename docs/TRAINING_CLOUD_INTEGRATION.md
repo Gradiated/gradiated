@@ -1,11 +1,11 @@
 # Training ↔ Cloud integration
 
-- status: design, with the grad side on grad `main` and the product, fleet and infra sides in draft PRs (below)
+- status: training, auth and billing live in prod on grad 0.2.0-alpha.5 (2026-11-28); publish, Cloud evals and GPU leases land Monday (see [Where it stands](#where-it-stands))
 - related: [TRAINING_PLATFORM_ARCHITECTURE.md](TRAINING_PLATFORM_ARCHITECTURE.md), [DATA_MODEL.md](DATA_MODEL.md), [TASK_FINE_TUNING_SERVING_CONTRACT.md](TASK_FINE_TUNING_SERVING_CONTRACT.md), [virtual-kubelet README](../tools/virtual-kubelet/README.md) (gpu-fleet operator, host leases); in grad: `docs/CLOUD_MODE.md` (every Cloud setting and contract, grad's view), `docs/ARTIFACT_FORMATS.md`, `docs/SELF_HOSTING.md` (worker authentication)
-- draft PRs:
-  - product (Gradiated/gradiated): [#83](https://github.com/Gradiated/gradiated/pull/83) auth view, [#84](https://github.com/Gradiated/gradiated/pull/84) JWTs, [#86](https://github.com/Gradiated/gradiated/pull/86) price lists and ingest, [#87](https://github.com/Gradiated/gradiated/pull/87) private training listener, [#88](https://github.com/Gradiated/gradiated/pull/88) inference usage plan, [#89](https://github.com/Gradiated/gradiated/pull/89) console, [#90](https://github.com/Gradiated/gradiated/pull/90) publish, [#91](https://github.com/Gradiated/gradiated/pull/91) LoRA rank 32, [#92](https://github.com/Gradiated/gradiated/pull/92) eval-only versions and eval lane, [#93](https://github.com/Gradiated/gradiated/pull/93) model uploads on grad, [#94](https://github.com/Gradiated/gradiated/pull/94) retire the old stack
-  - fleet: [#85](https://github.com/Gradiated/gradiated/pull/85) gpu-fleet grad tenancy
-  - infra (Gradiated/infrastructure): [#9](https://github.com/Gradiated/infrastructure/pull/9) bucket, KMS, roles, DB bootstrap; [#10](https://github.com/Gradiated/infrastructure/pull/10) secrets and namespace; [#11](https://github.com/Gradiated/infrastructure/pull/11) Argo release, network policies, tailnet console; [#12](https://github.com/Gradiated/infrastructure/pull/12) alerts and dashboard; [#13](https://github.com/Gradiated/infrastructure/pull/13) tailnet ACL
+- PRs (merged unless marked draft):
+  - product (Gradiated/gradiated): [#83](https://github.com/Gradiated/gradiated/pull/83) auth view, [#84](https://github.com/Gradiated/gradiated/pull/84) JWTs, [#86](https://github.com/Gradiated/gradiated/pull/86) price lists and ingest, [#87](https://github.com/Gradiated/gradiated/pull/87) private training listener, [#88](https://github.com/Gradiated/gradiated/pull/88) inference usage plan, [#89](https://github.com/Gradiated/gradiated/pull/89) console, [#97](https://github.com/Gradiated/gradiated/pull/97) workspace state hooks; drafts: [#90](https://github.com/Gradiated/gradiated/pull/90) publish, [#91](https://github.com/Gradiated/gradiated/pull/91) LoRA rank 32, [#92](https://github.com/Gradiated/gradiated/pull/92) eval-only versions and eval lane, [#93](https://github.com/Gradiated/gradiated/pull/93) model uploads on grad, [#94](https://github.com/Gradiated/gradiated/pull/94) retire the old stack; open: [#96](https://github.com/Gradiated/gradiated/pull/96) Qwen3-8B SGLang runtime with LoRA
+  - fleet (draft): [#85](https://github.com/Gradiated/gradiated/pull/85) gpu-fleet grad tenancy
+  - infra (Gradiated/infrastructure): [#9](https://github.com/Gradiated/infrastructure/pull/9) bucket, KMS, roles, DB bootstrap; [#10](https://github.com/Gradiated/infrastructure/pull/10) secrets and namespace; [#11](https://github.com/Gradiated/infrastructure/pull/11) Argo release, network policies, tailnet console; [#12](https://github.com/Gradiated/infrastructure/pull/12) alerts and dashboard; [#13](https://github.com/Gradiated/infrastructure/pull/13) tailnet ACL; [#15](https://github.com/Gradiated/infrastructure/pull/15) prod dashboard and warning-only alerts; [#16](https://github.com/Gradiated/infrastructure/pull/16) JWKS, internal token and private listener Services; [#17](https://github.com/Gradiated/infrastructure/pull/17) grad 0.2.0-alpha.5, billing on, internal listener
 
 grad (github.com/Gradiated/grad, MIT) is the open-source training platform: `grad-server` (API, Postgres queue, S3), `grad-trainer` and eval workers (pull workers), the Python, TypeScript, Go and Rust SDKs and the CLI. This document defines how Gradiated Cloud runs it next to the product and inference stack.
 
@@ -13,6 +13,26 @@ Names used below:
 
 - **Model** is a product `tasks` row and **Version** a `task_versions` row (`product/packages/control/src/db/schema/training.ts`). Promote is `PUT /api/v1/workspaces/{ws}/tasks/{task}/production`; rollback and history are existing inference features.
 - **Product API** is `product/services/api`; **gateway** is `product/services/gateway`; **operator** is `product/services/gpu-fleet`; **host agent** is the virtual-kubelet host agent (`tools/virtual-kubelet`, `product/inference/host`).
+
+## Where it stands
+
+**Live in prod (2026-11-28).**
+
+- The `training` namespace runs grad 0.2.0-alpha.5 (infra #17): 2 API replicas and one CPU pool for imports, source syncs and evals, with `kubernetes` worker auth. Migrations are through 0010. No GPU workers yet; the train pool is off.
+- Auth (§3): grad reads `auth_principals_v1` (#83) and verifies console JWTs against the product's JWKS (#84, `http://api.gradiated.svc:3001/api/auth/jwks`).
+- Internal listeners, both ways: grad calls the product on `api-training-internal.gradiated.svc:3005` (#87, infra #16), and the product calls grad on `grad-server-internal.training.svc:8788` (`api.internalPort`, infra #17) for workspace state (#97), resolve and pins.
+- Billing (§4) is on: `BILLING_MODE=cloud` with the placeholder price list (#86). Usage is pushed, and balances are checked at create and on every heartbeat.
+- The console training pages (#89) are behind the `grad-training` flag. There's no public ALB route to grad yet (I8).
+- Merged: product #83, #84, #86, #87, #88 (plan only), #89 and #97; infra #9 to #17.
+
+**Not live yet.** Cloud evals answer `501 inference_unavailable` ("coming soon") because `GRAD_CLOUD_GATEWAY_URL` is unset. The `gradiated` source answers `501 source_unavailable`. Checkpoint evals are refused on Cloud for good (`422 checkpoint_evals_unsupported_on_cloud`, §5). Publishing (#90) isn't merged.
+
+**Monday, hand-held:**
+
+- #85, the operator half only.
+- #90 to #94, and #96 (the Qwen3-8B SGLang runtime with LoRA rank 32).
+- A Qwen3-8B pool that scales to zero, with its gateway and probe changes.
+- The eval lane (#92), then `GRAD_CLOUD_GATEWAY_URL` and `GRAD_CLOUD_GATEWAY_TOKEN` on grad, which turns Cloud evals on.
 
 ## Decisions
 
@@ -145,7 +165,7 @@ A `security_barrier` view in the product database, owned by the product's migrat
 - Revoked, expired and hidden keys and non-customer organizations have no row.
 - grad: `SELECT … FROM auth_principals_v1 WHERE key_hash = $1`. No row or `expires_at <= now()` → 401; `status <> 'active'` → `403 workspace_suspended`.
 - **Cache:** in-process, by token hash, 5 s for hits and misses alike, 10,000 entries LRU; concurrent requests for one key share one query. There is no instant revocation (no LISTEN/NOTIFY, no Redis): revocation and suspension take effect within 5 s.
-- Pool: 4 connections per replica, 2 s connect and statement timeouts. Product DB unreachable and the key not cached → `503 auth_unavailable` (fails closed).
+- Pool: 4 connections per replica, 2 s connect and statement timeouts. Product DB unreachable: a key answered in the last 5 minutes keeps its last answer (never past `expires_at`), so a revoked key can work up to 5 minutes during the outage; any other key → `503 auth_unavailable` (fails closed).
 - Versioning: columns are only added. A breaking change ships `auth_principals_v2` beside it.
 
 ### 3.3 Console JWTs (#84)
@@ -159,7 +179,7 @@ POST /api/v1/workspaces/{workspace_id}/training-tokens   (session only; API keys
 
 - ES256 with `kid`. Claims: `iss` = `BETTER_AUTH_URL` (`https://api.gradiated.com`), `aud = training`, `sub = user:<user_id>`, `org`, `ws`, `role`, `jti`, `iat`, `exp = iat + 600` (10 minutes).
 - JWKS at `GET https://api.gradiated.com/api/auth/jwks`. Keys live in the product DB, rotate every 90 days and stay published 30 days after.
-- grad accepts EdDSA, ES256 or RS256 (≥ 2048 bits) with a matching key type, requires `kid`, refuses `crit`, checks `iss`, `aud`, `exp` and `nbf` with 60 s skew, and caches the JWKS 10 minutes (refetched on an unknown `kid` at most every 30 s). No DB read on the JWT path. Bearer only, never cookies.
+- grad accepts EdDSA, ES256 or RS256 (≥ 2048 bits) with a matching key type, requires `kid`, refuses `crit`, checks `iss`, `aud`, `exp` and `nbf` with 60 s skew, refuses an `exp` more than an hour ahead, and caches the JWKS 10 minutes (refetched on an unknown `kid` at most every 30 s). No DB read on the JWT path. Bearer only, never cookies.
 - Retiring hidden keys: console training pages never mint a hidden key; then the gateway accepts `aud=inference` JWTs for the playground and the OAuth/MCP credential; then `createHiddenCredential` and `api_keys.hidden` go.
 
 ### 3.4 Service calls
@@ -173,7 +193,7 @@ grad accepts three worker credentials (`GRAD_WORKER_AUTH`), tried in order:
 
 | Mode         | Token                                                                                                            | On Cloud                                           |
 | ------------ | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| `static`     | A key in `TRAINER_KEYS_JSON`, scoped by job kind                                                                 | First release only (infra #11, grad 0.2.0-alpha.3) |
+| `static`     | A key in `TRAINER_KEYS_JSON`, scoped by job kind                                                                 | Not used (it was only in the first release)        |
 | `kubernetes` | The pod's projected service-account token (audience `grad`), checked with TokenReview; the account maps to kinds | CPU `import` and `eval` workers in EKS             |
 | `lease`      | A `gradwt_` token the operator mints per host and lease                                                          | GPU workers on leased fleet hosts (§6)             |
 
@@ -189,7 +209,7 @@ DELETE /internal/v1/worker-tokens/{lease_id} → 200 {"lease_id", "revoked"}    
 - A token is bound to its orchestrator, host and lease together. The worker runs with `GRAD_WORKER_ID=<host_id>` (`403 worker_host_mismatch` otherwise) and can't report more GPU memory than the token allows (`403 gpu_memory_exceeds_token`).
 - Rotation re-mints with the same `host_id` and `lease_id` into `GRAD_WORKER_TOKEN_FILE`, which the worker re-reads on every request.
 - Lease tokens are checked on every request, never cached, so revoke after the drain takes effect at once.
-- TokenReview: only JWTs naming audience `grad`, a mapped account and a future `exp` are reviewed, at most 8 at once per replica (past that `503 worker_auth_unavailable`); positive reviews are cached 60 s at most. grad-server's ClusterRole only creates `tokenreviews`.
+- TokenReview: only JWTs naming audience `grad`, a mapped account and a future `exp` are reviewed, at most 8 at once per replica (past that `503 worker_auth_unavailable`); positive reviews are cached 60 s at most. While the Kubernetes API is down or saturated, a token reviewed in the last 15 minutes keeps working (never past its `exp`). grad-server's ClusterRole only creates `tokenreviews`.
 - The operator reaches `INTERNAL_PORT` over the private network only.
 
 ### 3.6 Later: SDK key → JWT exchange
@@ -251,7 +271,8 @@ POST /api/internal/v1/billing/usage-events   (port 3005, ≤ 500 events)
 - Billing posts one `balance_transactions` row per nonzero event (`type = usage`, `source_type = usage_event`, `source_id = event_id`), so replays are free, then inserts into ClickHouse. If ClickHouse fails, the ledger stays committed. The gateway replays non-settlement ledger rows into its Valkey balances, so admission sees training spend with no gateway change.
 - Only `billed_by = grad` rows (training) are pushed; eval rows are the gateway's (§5).
 - grad's exporter keeps a `(txid, seq)` cursor and reads only rows from transactions older than every open one, so a late commit is never skipped.
-- **Ingest down or refusing:** training goes on and usage buffers in grad's ledger. The push retries with backoff (15 s doubling to 5 min) and never drops a row. Alert on `grad_usage_export_lag_seconds` above 15 minutes. Balance checks see only pushed usage; that lag is accepted.
+- **Ingest down or failing** (5xx, timeouts): training goes on and usage buffers in grad's ledger. The push retries with backoff (15 s doubling to 5 min) and never drops a row. `GradUsagePushLagging` fires after 30 minutes. Balance checks see only pushed usage; that lag is accepted.
+- **Ingest refusing a row for good** (422, 409): grad parks that row (`grad_usage.parked_code`, `parked_at`) and keeps pushing the rest, so one bad row can't hold back the ledger. Parked rows are never deleted or retried by themselves; `GradUsageRowsParked` (warning) fires while any exist. Runbook: list them, fix the cause in billing (a missing price version, SKU or workspace), then clear `parked_at` and re-stamp `txid`, as in grad's `docs/CLOUD_MODE.md` "Parked usage rows". The next maintenance tick pushes them again.
 
 ### 4.4 Balance check
 
@@ -269,7 +290,7 @@ The inference money path (gateway Valkey balances → settlement → `balance_tr
 
 ## 5. Evals on Cloud
 
-Evals are a grad job kind run by CPU eval workers. On Cloud their model and judge calls go through the gateway's eval lane (#92):
+Evals are a grad job kind run by CPU eval workers. On Cloud their model and judge calls go through the gateway's eval lane (#92). Until `GRAD_CLOUD_GATEWAY_URL` is set, eval plans and creates answer `501 inference_unavailable` ("Evals aren't available on Gradiated Cloud yet").
 
 ```
 POST {GRAD_CLOUD_GATEWAY_URL}/chat/completions
@@ -282,6 +303,8 @@ X-Gradiated-Eval-Id: ev_…
 - **Credential.** One gateway service credential (`GATEWAY_EVAL_SERVICE_TOKENS` on the gateway, two values while rotating, compared as SHA-256 in constant time). It is not an `api_keys` row, is accepted only with `X-Gradiated-Source: eval` (else 401) and bills the workspace in `X-Gradiated-Workspace` (missing or unknown → 400). Only grad's eval worker pods hold it, and every use is audit-logged.
 - **Lane.** Runtime priority below every service tier; its own per-workspace limit (20 in flight, 600 per minute) before the organization's admission; a full lane answers `429 eval_lane_limited` with `Retry-After: 5`. grad retries 408, 425, 429 and 5xx six times, backing off from 1 s.
 - **Eval-only versions.** To evaluate an artifact, grad calls `POST /api/internal/v1/training/eval-versions {workspace_id, artifact_id: "name@version"}` once per artifact target at eval create → `{model: "<org_slug>/grad-eval-<ws>/<name>.<version>", version_id}`. The Version lives in a hidden per-workspace Model, is never listed or promotable, is callable only from the eval lane, and is deleted and unpinned 7 days after its last eval call. It is `available` at once, with no serving probe. A refusal (409/422) is `422 artifact_not_servable` with the product's detail; unreachable → `503 inference_unavailable`. Catalog models are called by their ids.
+- **Cold pools and a full lane.** The gateway holds a call to a pool at zero for up to 90 s while it wakes, then answers `503 capacity_unavailable` with `Retry-After`. grad waits that out in place, and a 429 past its retries too, for up to `GRAD_EVAL_CAPACITY_WAIT_SECONDS` (720) per call, keeping the lease and spending no attempt; the eval shows `waiting_reason`. The gateway is called with each model's canonical-case id (`Qwen/Qwen3-8B`; `serving_id` in `GRAD_EXTRA_MODELS_JSON` overrides it).
+- **No checkpoint evals.** A checkpoint has no eval-only Version, so a run with `recipe.evals` is `422 checkpoint_evals_unsupported_on_cloud` at plan and create, before and after the gateway lands.
 - **Billed once.** The gateway bills model and judge tokens as normal generations tagged `lane=eval, eval_id`. grad records its eval usage rows with `billed_by = gateway`, shows them in `/v1/usage` and never pushes them.
 
 ## 6. GPU sharing (#85)
@@ -329,7 +352,7 @@ grad needed nothing else: lease tokens, pull workers, heartbeats, `compute_recla
 | ALB routes     | Later: `api.gradiated.com` `/v1/{datasets,runs,checkpoints,artifacts,artifact-imports,evals,imports,uploads,sources,secrets,base-models,usage}` → grad-server `:8787`. Never `/v1/keys`, `/v1/trainer-jobs` or `/internal`.                                                                                                                                                            |
 | Monitoring     | grad's alerts and dashboard (#12), plus export lag and the operator's grad metrics                                                                                                                                                                                                                                                                                                     |
 
-The first release (#9–#13) is smaller: grad 0.2.0-alpha.3 with a static worker key, `BILLING_MODE=noop`, no GPU workers, no evals and no public route. Cloud auth, billing and evals switch on with a grad release that has them.
+Today (infra #17) it's smaller: no GPU workers, `GRAD_CLOUD_GATEWAY_URL` unset (no evals), no public route, and the chart's network policy, dashboards and PrometheusRule off in favour of the repository's own (#12, #15). Cloud auth and billing are on.
 
 Network policies (default deny in `training`; enforced once the VPC CNI policy agent is on):
 
@@ -352,7 +375,7 @@ Nothing in `gradiated` or `gpu-inference` calls grad on a request path; the gate
 | Down                   | Still works                                                                    | Stops or degrades                                                                                                         |
 | ---------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
 | grad-server or grad DB | All inference, including published Versions, promote and rollback              | Training API and console training pages; new publishes (resolve, pin); workers retry, then leases expire and jobs requeue |
-| Product DB (auth view) | Running jobs; console JWT calls (JWKS cached); keys cached < 5 s               | Other key calls `503 auth_unavailable`; balance checks, so new jobs `503`; inference itself                               |
+| Product DB (auth view) | Running jobs; console JWT calls (JWKS cached); keys seen < 5 min ago               | Other key calls `503 auth_unavailable`; balance checks, so new jobs `503`; inference itself                               |
 | Product API            | Running jobs (a billing outage never stops them); cached keys; prices for 24 h | Console tokens, new jobs (balance check), usage push (buffers in `grad_usage`), eval-only versions, publish               |
 | Gateway                | Training, imports, downloads                                                   | Evals (retried, then failed); all inference                                                                               |
 | ClickHouse             | Training, inference, balances (ingest commits the ledger first)                | Usage views go stale                                                                                                      |
@@ -402,7 +425,7 @@ The old stack: Temporal workflows in `product/services/temporal-worker/src/train
 | P4  | 1   | Publish from artifact (LoRA, cartridge), pins and unpin outbox, grants for `artifacts/`, no base fallback; rank cap 32                                     | #90, #91   |
 | P5  | 1   | Eval-only versions; gateway eval lane                                                                                                                      | #92        |
 | P6  | 1   | Console training pages on the TS SDK with JWTs, including deploy                                                                                           | #89        |
-| P7  | 1   | Workspace suspend, reinstate and delete hooks to grad                                                                                                      |            |
+| P7  | 1   | Workspace suspend, reinstate and delete hooks to grad                                                                                                      | #97        |
 | P8  | 1   | Model uploads on grad artifacts: upload page, `410`, backfill                                                                                              | #93        |
 | P9  | 2   | Serving for `encoder_safetensors`, `router_bundle`, `decision_bundle`, `reward_bundle`                                                                     |            |
 | P10 | 2   | Gateway feedback → ClickHouse with traces; `training/traces:pull` with the late-score watermark                                                            |            |
@@ -424,7 +447,7 @@ The old stack: Temporal workflows in `product/services/temporal-worker/src/train
 
 ## Open items
 
-1. **No pool serves grad's bases.** Today's LoRA pools are GLM-5.3 Flash and DeepSeek V4.1 Flash; grad trains Qwen3. Until a Qwen3 LoRA pool exists (I7), every grad artifact gets `base_model_not_servable`, for evals and deploys alike.
-2. **Evals against pools scaled to zero.** Pools scale on `model_busy_slots`, and eval traffic must not count as demand, so a cold pool never wakes for an eval. Either eval-lane requests wake a pool, or evals wait for other traffic (#92).
+1. **No pool serves grad's bases.** Today's LoRA pools are GLM-5.3 Flash and DeepSeek V4.1 Flash; grad trains Qwen3. Until a Qwen3 LoRA pool exists (I7), every grad artifact gets `base_model_not_servable`, for evals and deploys alike. The Qwen3-8B pool (#96, scaling to zero) lands Monday.
+2. **Evals against pools scaled to zero.** Pools scale on `model_busy_slots`, and eval traffic must not count as demand, so a cold pool never wakes for an eval. Monday's scale-to-zero gateway change wakes the pool and holds the call up to 90 s; grad already waits out the `503 capacity_unavailable` that follows (§5).
 3. **Per-workspace scoping of worker tokens** is deferred until tenant code runs on workers. Today a lease token can claim any workspace's `train` jobs, and the gateway credential can spend in any workspace; both stay inside `training` and the fleet.
 4. **Artifact key.** grad writes `artifacts/<ws>/<sha256>`; #90 builds `artifacts/<ws>/<sha256>.grad.tar.gz` for reads and grants. #90 should use the resolve's `object.key`.
